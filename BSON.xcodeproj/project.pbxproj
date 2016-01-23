@@ -13,6 +13,8 @@
 		F20A956E1C5383590054AB52 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20A956D1C5383590054AB52 /* Document.swift */; };
 		F20A957C1C5392D40054AB52 /* Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20A957B1C5392D40054AB52 /* Element.swift */; };
 		F20A957E1C5394580054AB52 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20A957D1C5394580054AB52 /* Error.swift */; };
+		F25272601C53AAC600CBB42E /* Double.swift in Sources */ = {isa = PBXBuildFile; fileRef = F252725F1C53AAC600CBB42E /* Double.swift */; };
+		F25272621C53AADD00CBB42E /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25272611C53AADD00CBB42E /* String.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +37,8 @@
 		F20A956D1C5383590054AB52 /* Document.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		F20A957B1C5392D40054AB52 /* Element.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Element.swift; sourceTree = "<group>"; };
 		F20A957D1C5394580054AB52 /* Error.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
+		F252725F1C53AAC600CBB42E /* Double.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Double.swift; sourceTree = "<group>"; };
+		F25272611C53AADD00CBB42E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +81,7 @@
 		F20A95551C5383440054AB52 /* BSON */ = {
 			isa = PBXGroup;
 			children = (
+				F252725E1C53AABC00CBB42E /* Elements */,
 				F20A95561C5383440054AB52 /* BSON.h */,
 				F20A95581C5383440054AB52 /* Info.plist */,
 				F20A956D1C5383590054AB52 /* Document.swift */,
@@ -93,6 +98,15 @@
 				F20A95641C5383440054AB52 /* Info.plist */,
 			);
 			path = BSONTests;
+			sourceTree = "<group>";
+		};
+		F252725E1C53AABC00CBB42E /* Elements */ = {
+			isa = PBXGroup;
+			children = (
+				F252725F1C53AAC600CBB42E /* Double.swift */,
+				F25272611C53AADD00CBB42E /* String.swift */,
+			);
+			name = Elements;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -205,6 +219,8 @@
 			files = (
 				F20A957C1C5392D40054AB52 /* Element.swift in Sources */,
 				F20A957E1C5394580054AB52 /* Error.swift in Sources */,
+				F25272621C53AADD00CBB42E /* String.swift in Sources */,
+				F25272601C53AAC600CBB42E /* Double.swift in Sources */,
 				F20A956E1C5383590054AB52 /* Document.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -394,6 +410,7 @@
 				F20A95691C5383440054AB52 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F20A956A1C5383440054AB52 /* Build configuration list for PBXNativeTarget "BSONTests" */ = {
 			isa = XCConfigurationList;
@@ -402,6 +419,7 @@
 				F20A956C1C5383440054AB52 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
