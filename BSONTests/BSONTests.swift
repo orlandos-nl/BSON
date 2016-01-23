@@ -42,4 +42,24 @@ class BSONTests: XCTestCase {
         
         XCTAssert(trueBoolean, "Checking if 0x01 is true")
     }
+    
+    func testInt32Serialization() {
+        // This is 5.05
+        let rawData: [UInt8] = [0xc2, 0x07, 0x00, 0x00]
+        let double = try! Int32.instantiate(bsonData: rawData)
+        XCTAssertEqual(double, 1986, "Instantiating an int32 from BSON data works correctly")
+        
+        let generatedData = (1986 as Int32).bsonData
+        XCTAssert(generatedData == rawData, "Converting an int32 to BSON data results in the correct data")
+    }
+    
+    func testInt64Serialization() {
+        // This is 5.05
+        let rawData: [UInt8] = [0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        let double = try! Int.instantiate(bsonData: rawData)
+        XCTAssertEqual(double, 1, "Instantiating an integer from BSON data works correctly")
+        
+        let generatedData = (1 as Int).bsonData
+        XCTAssert(generatedData == rawData, "Converting an integer to BSON data results in the correct data")
+    }
 }
