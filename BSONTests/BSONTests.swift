@@ -21,9 +21,14 @@ class BSONTests: XCTestCase {
         super.tearDown()
     }
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    func testDoubleSerialization() {
+        // This is 5.05
+        let rawData: [UInt8] = [0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40]
+        let double = try! Double.instantiate(bsonData: rawData)
+        XCTAssertEqual(double, 5.05, "Instantiating a Double from BSON data works correctly")
+        
+        let generatedData = 5.05.bsonData
+        XCTAssert(generatedData == rawData, "Converting a Double to BSON data results in the correct data")
     }
     
     func testPerformanceExample() {
