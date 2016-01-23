@@ -8,10 +8,6 @@
 
 import Foundation
 
-public enum DeserializationError : ErrorType {
-    case InvalidDocumentLength
-}
-
 public struct Document {
     init(data: NSData) throws {
         var byteArray = [UInt8](count: data.length, repeatedValue: 0)

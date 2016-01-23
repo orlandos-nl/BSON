@@ -12,6 +12,7 @@
 		F20A95631C5383440054AB52 /* BSONTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20A95621C5383440054AB52 /* BSONTests.swift */; };
 		F20A956E1C5383590054AB52 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20A956D1C5383590054AB52 /* Document.swift */; };
 		F20A957C1C5392D40054AB52 /* Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20A957B1C5392D40054AB52 /* Element.swift */; };
+		F20A957E1C5394580054AB52 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20A957D1C5394580054AB52 /* Error.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,6 +34,7 @@
 		F20A95641C5383440054AB52 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F20A956D1C5383590054AB52 /* Document.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		F20A957B1C5392D40054AB52 /* Element.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Element.swift; sourceTree = "<group>"; };
+		F20A957D1C5394580054AB52 /* Error.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +81,7 @@
 				F20A95581C5383440054AB52 /* Info.plist */,
 				F20A956D1C5383590054AB52 /* Document.swift */,
 				F20A957B1C5392D40054AB52 /* Element.swift */,
+				F20A957D1C5394580054AB52 /* Error.swift */,
 			);
 			path = BSON;
 			sourceTree = "<group>";
@@ -201,6 +204,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F20A957C1C5392D40054AB52 /* Element.swift in Sources */,
+				F20A957E1C5394580054AB52 /* Error.swift in Sources */,
 				F20A956E1C5383590054AB52 /* Document.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
