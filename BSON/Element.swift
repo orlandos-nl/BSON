@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal enum ElementType : UInt8 {
+public enum ElementType : UInt8 {
     case Double = 0x01
     case String = 0x02
     case Document = 0x03
@@ -30,3 +30,36 @@ internal enum ElementType : UInt8 {
     case MinKey = 0xFF
     case MaxKey = 0x7F
 }
+
+public protocol BSONElementConvertible {
+    var elementType: ElementType { get }
+    
+    /// Here, return the same data as you would accept in the initializer
+    var bsonData: [UInt8] { get }
+    
+    /// The initializer expects the data for this element, starting AFTER the element type
+    static func instantiate(bsonData data: [UInt8]) throws -> Self
+}
+
+extension Double : BSONElementConvertible {
+    public var elementType: ElementType {
+        return .Double
+    }
+    
+    public static func instantiate(bsonData data: [UInt8]) throws -> Double {
+        guard data.count == 8 else {
+            throw DeserializationError.InvalidElementSize
+        }
+        
+        let double = UnsafePointer<Double>(data).memory
+        return double
+    }
+    
+    public var bsonData: [UInt8] {
+        var double = self
+        return withUnsafePointer(&double) {
+            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Double)))
+        }
+    }
+}
+

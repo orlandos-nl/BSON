@@ -9,6 +9,8 @@
 import Foundation
 
 public struct Document {
+    var elements: [String : BSONElementConvertible]
+    
     init(data: NSData) throws {
         var byteArray = [UInt8](count: data.length, repeatedValue: 0)
         data.getBytes(&byteArray, length: byteArray.count)
@@ -28,6 +30,6 @@ public struct Document {
             throw DeserializationError.InvalidDocumentLength
         }
         
-        
+        self.elements = [:]
     }
 }
