@@ -62,4 +62,14 @@ class BSONTests: XCTestCase {
         let generatedData = (1 as Int).bsonData
         XCTAssert(generatedData == rawData, "Converting an integer to BSON data results in the correct data")
     }
+    
+    func testTimestampSerialization() {
+        let rawData: [UInt8] = [0x12, 0x03, 0xa4, 0x56, 0x00, 0x00, 0x00, 0x00]
+        let date = try! NSDate.instantiate(bsonData: rawData)
+        
+        XCTAssertEqual(date.timeIntervalSince1970, 1453589266, "Instantiating NSDate from BSON data works correctly")
+        
+        let generatedData = NSDate(timeIntervalSince1970: Double(1453589266)).bsonData
+        XCTAssert(generatedData == rawData, "Converting NSDate to BSON data results in the corrrect timestamp")
+    }
 }
