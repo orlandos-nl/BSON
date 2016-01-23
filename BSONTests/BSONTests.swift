@@ -31,4 +31,15 @@ class BSONTests: XCTestCase {
         XCTAssert(generatedData == rawData, "Converting a String to BSON data results in the correct data")
     }
     
+    func testBooleanSerialization() {
+        let falseData: [UInt8] = [0x00]
+        let falseBoolean = try! Bool.instantiate(bsonData: falseData)
+        
+        XCTAssert(!falseBoolean, "Checking if 0x00 is false")
+        
+        let trueData: [UInt8] = [0x01]
+        let trueBoolean = try! Bool.instantiate(bsonData: trueData)
+        
+        XCTAssert(trueBoolean, "Checking if 0x01 is true")
+    }
 }
