@@ -35,21 +35,22 @@ extension ElementType {
     var type: BSONElementConvertible.Type {
         switch self {
         case .Double:
-            return Double.type
+            return Swift.Double.self
         case .String:
-            return String.type
+            return Swift.String.self
         case .Document:
-            return Document.type
+            return BSON.Document.self
         case .Array:
-            return Document.type
+            return BSON.Document.self
         case .Binary:
             abort()
         case .ObjectId:
-            return ObjectId.type
+            abort()
+//            return BSON.ObjectId.self
         case .Boolean:
-            return Bool.self
+            return Swift.Bool.self
         case .DateTime:
-            return NSDate.self
+            return Foundation.NSDate.self
         case .NullValue:
             abort()
         case .RegularExpression:
@@ -59,11 +60,11 @@ extension ElementType {
         case .JavascriptCodeWithScope:
             abort()
         case .Int32:
-            return Int32.type
+            return Swift.Int32.self
         case .Timestamp:
             abort()
         case .Int64:
-            return Int.self
+            return Swift.Int.self
         case .MinKey:
             abort()
         case .MaxKey:
@@ -87,5 +88,6 @@ public protocol BSONElementConvertible {
     static var bsonLength: BsonLength { get }
     
     /// The initializer expects the data for this element, starting AFTER the element type
+    static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Self
     static func instantiate(bsonData data: [UInt8]) throws -> Self
 }

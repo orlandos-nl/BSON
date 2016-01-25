@@ -13,8 +13,14 @@ extension Bool : BSONElementConvertible {
         return .Boolean
     }
     
-    /// The initializer expects the data for this element, starting AFTER the element type
     public static func instantiate(bsonData data: [UInt8]) throws -> Bool {
+        var ditched = 0
+        
+        return try instantiate(bsonData: data, consumedBytes: &ditched)
+    }
+    
+    /// The initializer expects the data for this element, starting AFTER the element type
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Bool {
         guard data.count == 1 else {
             throw DeserializationError.InvalidDocumentLength
         }
@@ -22,6 +28,8 @@ extension Bool : BSONElementConvertible {
         guard data.first == 0x00 || data.first == 0x01 else {
             throw DeserializationError.InvalidElementContents
         }
+        
+        consumedBytes = 1
         
         return data.first == 0x00 ? false : true
     }

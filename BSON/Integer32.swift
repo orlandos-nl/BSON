@@ -14,11 +14,18 @@ extension Int32 : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8]) throws -> Int32 {
+        var ditched = 0
+        
+        return try instantiate(bsonData: data, consumedBytes: &ditched)
+    }
+    
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Int32 {
         guard data.count == 4 else {
             throw DeserializationError.InvalidElementSize
         }
         
         let integer = UnsafePointer<Int32>(data).memory
+        consumedBytes = 4
         return integer
     }
     

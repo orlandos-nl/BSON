@@ -3,17 +3,59 @@ extension String : BSONElementConvertible {
         return .String
     }
     
+    public static func instantiate(bsonData data: [UInt8]) throws -> String {
+        var ditched = 0
+        
+        return try instantiate(bsonData: data, consumedBytes: &ditched)
+    }
+    
     /// The initializer expects the data for this element, starting AFTER the element type
-    public static func instantiate(var bsonData data: [UInt8]) throws -> String {
-        guard data.count > 0 && data.removeLast() == 0x00 else {
+    public static func instantiate(var bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
+        // Check for null-termination and at least 5 bytes (length spec + terminator)
+        guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.InvalidLastElement
         }
         
-        guard let instance = String(data: NSData(bytes: data, length: data.count), encoding: NSUTF8StringEncoding) else {
-            throw DeserializationError.InvalidElementContents
+        // Get the length
+        var ditched = 0
+        
+        let length = try Int.instantiate(bsonData: Array(data[0...3]), consumedBytes: &ditched)
+        
+        // Check if the data is at least the right size
+        guard data.count >= Int(length) + 4 else {
+            throw DeserializationError.ParseError
         }
         
-        return instance
+        // Empty string
+        if length == 1 {
+            return ""
+        }
+        
+        var stringData = Array(data[4..<Int(length)])
+        
+        guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
+            throw DeserializationError.ParseError
+        }
+        
+        consumedBytes = length
+        
+        return string
+    }
+
+    internal static func instantiateFromCString(bsonData data: [UInt8]) throws -> String {
+        var ditched = 0
+        
+        return try instantiateFromCString(bsonData: data, bytesConsumed: &ditched)
+    }
+    
+    internal static func instantiateFromCString(bsonData data: [UInt8], inout bytesConsumed: Int) throws -> String {
+        bytesConsumed = data.count
+        
+        guard let string = String(bytes: data, encoding: NSUTF8StringEncoding) else {
+            throw DeserializationError.ParseError
+        }
+        
+        return string
     }
     
     /// Here, return the same data as you would accept in the initializer

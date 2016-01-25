@@ -15,10 +15,12 @@ public struct Document {
         var byteArray = [UInt8](count: data.length, repeatedValue: 0)
         data.getBytes(&byteArray, length: byteArray.count)
         
-        try self.init(data: byteArray)
+        var ditched = 0
+        
+        try self.init(data: byteArray, consumedBytes: &ditched)
     }
     
-    init(data: [UInt8]) throws {
+    init(data: [UInt8], inout consumedBytes: Int) throws {
         // A BSON document cannot be smaller than 5 bytes (which would be an empty document)
         guard data.count >= 5 else {
             throw DeserializationError.InvalidDocumentLength
@@ -43,12 +45,12 @@ public struct Document {
             }
             
             // Now that we have the type, parse the name
-            guard let stringTerminatorIndex = data[position...data.endIndex].indexOf(0) else {
+            guard let stringTerminatorIndex = data[position..<data.endIndex].indexOf(0) else {
                 throw DeserializationError.ParseError
             }
             
             let keyData = Array(data[position...stringTerminatorIndex])
-            let elementName = try String.instantiate(bsonData: keyData)
+            let elementName = try String.instantiateFromCString(bsonData: keyData)
             
             position = stringTerminatorIndex + 1
             
@@ -61,16 +63,19 @@ public struct Document {
             case .Undefined:
                 elementData = data
             case .NullTerminated:
-                guard let terminatorIndex = data[position...data.endIndex].indexOf(0) else {
+                guard let terminatorIndex = data[position..<data.endIndex].indexOf(0) else {
                     throw DeserializationError.ParseError
                 }
                 
                 elementData = Array(data[position...terminatorIndex])
             }
             
-            let instance = try elementType.type.instantiate(bsonData: elementData)
+            var consumedBytes = 0
+            let result = try elementType.type.instantiate(bsonData: elementData, consumedBytes: &consumedBytes)
             
-            self.elements[elementName] = instance
+            position += consumedBytes
+            
+            self.elements[elementName] = result
         }
     }
 }
@@ -100,11 +105,34 @@ extension Document : BSONElementConvertible {
     }
     
     public var bsonData: [UInt8] {
-        abort()
+        var body = [UInt8]()
+        var length = 4
+        
+        for (key, element) in elements {
+            body += [element.elementType.rawValue]
+            body += key.bsonData
+            body += (Int32(element.bsonData.count)).bsonData
+            body += element.bsonData
+            body += [0x00]
+        }
+        
+        body += [0x00]
+        length += body.count
+        
+        var finalData = Int32(length).bsonData
+        finalData.appendContentsOf(body)
+        
+        return finalData
     }
     
     public static func instantiate(bsonData data: [UInt8]) throws -> Document {
-        abort()
+        var ditched = 0
+        
+        return try instantiate(bsonData: data, consumedBytes: &ditched)
+    }
+    
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Document {
+        return try Document.init(data: data, consumedBytes: &consumedBytes)
     }
     
     public static let bsonLength = BsonLength.Undefined
