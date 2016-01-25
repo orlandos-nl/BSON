@@ -9,7 +9,7 @@
 import Foundation
 
 public struct Document {
-    var elements: [String : BSONElementConvertible]
+    var elements = [String : BSONElementConvertible]()
     
     init(data: NSData) throws {
         var byteArray = [UInt8](count: data.length, repeatedValue: 0)
@@ -29,7 +29,37 @@ public struct Document {
         guard Int(documentLength) == data.count else {
             throw DeserializationError.InvalidDocumentLength
         }
-        
-        self.elements = [:]
+    }
+}
+
+extension Document {
+    func validatesAsArray() -> Bool {
+        var current = -1
+        for (key, _) in self.elements {
+            guard let index = Int(key) else {
+                return false
+            }
+            
+            if current == index-1 {
+                current++
+            } else {
+                return false
+            }
+        }
+        return true
+    }
+}
+
+extension Document : BSONElementConvertible {
+    public var elementType: ElementType {
+        return self.validatesAsArray() ? .Array : .Document
+    }
+    
+    public var bsonData: [UInt8] {
+        abort()
+    }
+    
+    public static func instantiate(bsonData data: [UInt8]) throws -> Document {
+        abort()
     }
 }

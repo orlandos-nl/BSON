@@ -100,7 +100,6 @@
 				F252725E1C53AABC00CBB42E /* Elements */,
 				F20A95561C5383440054AB52 /* BSON.h */,
 				F20A95581C5383440054AB52 /* Info.plist */,
-				F20A956D1C5383590054AB52 /* Document.swift */,
 				F20A957B1C5392D40054AB52 /* Element.swift */,
 				F20A957D1C5394580054AB52 /* Error.swift */,
 			);
@@ -129,6 +128,7 @@
 				0AEAD4A41C5436DC00D1CBC3 /* Timestamp.swift */,
 				0A1823DD1C54FB21000AA18C /* UTCDateTime.swift */,
 				0A4611711C54206900963114 /* Integer64.swift */,
+				F20A956D1C5383590054AB52 /* Document.swift */,
 			);
 			name = Elements;
 			sourceTree = "<group>";
