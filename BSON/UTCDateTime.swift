@@ -25,4 +25,6 @@ extension NSDate : BSONElementConvertible {
             Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int)))
         }
     }
+    
+    public static let bsonLength = BsonLength.Fixed(length: 8)
 }

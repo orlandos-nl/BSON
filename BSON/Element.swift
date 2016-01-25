@@ -31,11 +31,60 @@ public enum ElementType : UInt8 {
     case MaxKey = 0x7F
 }
 
+extension ElementType {
+    var type: BSONElementConvertible.Type {
+        switch self {
+        case .Double:
+            return Double.type
+        case .String:
+            return String.type
+        case .Document:
+            return Document.type
+        case .Array:
+            return Document.type
+        case .Binary:
+            abort()
+        case .ObjectId:
+            return ObjectId.type
+        case .Boolean:
+            return Bool.self
+        case .DateTime:
+            return NSDate.self
+        case .NullValue:
+            abort()
+        case .RegularExpression:
+            abort()
+        case .JavaScriptCode:
+            abort()
+        case .JavascriptCodeWithScope:
+            abort()
+        case .Int32:
+            return Int32.type
+        case .Timestamp:
+            abort()
+        case .Int64:
+            return Int.self
+        case .MinKey:
+            abort()
+        case .MaxKey:
+            abort()
+        }
+    }
+}
+
+public enum BsonLength {
+    case Undefined
+    case Fixed(length: Int)
+    case NullTerminated
+}
+
 public protocol BSONElementConvertible {
     var elementType: ElementType { get }
     
     /// Here, return the same data as you would accept in the initializer
     var bsonData: [UInt8] { get }
+    
+    static var bsonLength: BsonLength { get }
     
     /// The initializer expects the data for this element, starting AFTER the element type
     static func instantiate(bsonData data: [UInt8]) throws -> Self

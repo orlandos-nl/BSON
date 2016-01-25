@@ -30,4 +30,6 @@ extension Bool : BSONElementConvertible {
     public var bsonData: [UInt8] {
         return self ? [0x01] : [0x00]
     }
+    
+    public static let bsonLength = BsonLength.Fixed(length: 1)
 }

@@ -9,5 +9,10 @@
 import Foundation
 
 public enum DeserializationError : ErrorType {
-    case InvalidDocumentLength, InvalidElementSize, InvalidElementContents, InvalidLastElement
+    case InvalidDocumentLength
+    case InvalidElementSize
+    case InvalidElementContents
+    case UnknownElementType
+    case InvalidLastElement
+    case ParseError
 }

@@ -18,4 +18,6 @@ extension Double : BSONElementConvertible {
             Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Double)))
         }
     }
+    
+    public static let bsonLength = BsonLength.Fixed(length: 8)
 }

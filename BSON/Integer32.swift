@@ -28,4 +28,6 @@ extension Int32 : BSONElementConvertible {
             Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int32)))
         }
     }
+    
+    public static let bsonLength = BsonLength.Fixed(length: 4)
 }

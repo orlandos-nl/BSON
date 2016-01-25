@@ -23,4 +23,6 @@ extension String : BSONElementConvertible {
         
         return byteArray
     }
+    
+    public static let bsonLength = BsonLength.NullTerminated
 }
