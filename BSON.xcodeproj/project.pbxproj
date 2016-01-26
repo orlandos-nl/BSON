@@ -10,6 +10,7 @@
 		0A1823DE1C54FB21000AA18C /* UTCDateTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1823DD1C54FB21000AA18C /* UTCDateTime.swift */; };
 		0A216CE61C541DFC005C959A /* ObjectID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A216CE51C541DFC005C959A /* ObjectID.swift */; };
 		0A216CE81C541E02005C959A /* Boolean.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A216CE71C541E02005C959A /* Boolean.swift */; };
+		0A3ABBA81C57BA3800FAC1D3 /* Integer16.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */; };
 		0A4611721C54206900963114 /* Integer64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4611711C54206900963114 /* Integer64.swift */; };
 		0A4611741C54208C00963114 /* Integer32.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4611731C54208C00963114 /* Integer32.swift */; };
 		0A549A6A1C5409610049A1A2 /* Binary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A549A691C5409610049A1A2 /* Binary.swift */; };
@@ -38,6 +39,7 @@
 		0A1823DD1C54FB21000AA18C /* UTCDateTime.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UTCDateTime.swift; sourceTree = "<group>"; };
 		0A216CE51C541DFC005C959A /* ObjectID.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectID.swift; sourceTree = "<group>"; };
 		0A216CE71C541E02005C959A /* Boolean.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Boolean.swift; sourceTree = "<group>"; };
+		0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer16.swift; sourceTree = "<group>"; };
 		0A4611711C54206900963114 /* Integer64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer64.swift; sourceTree = "<group>"; };
 		0A4611731C54208C00963114 /* Integer32.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer32.swift; sourceTree = "<group>"; };
 		0A549A691C5409610049A1A2 /* Binary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Binary.swift; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 				0A216CE51C541DFC005C959A /* ObjectID.swift */,
 				0A216CE71C541E02005C959A /* Boolean.swift */,
 				0A4611731C54208C00963114 /* Integer32.swift */,
+				0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */,
 				0AEAD4A41C5436DC00D1CBC3 /* Timestamp.swift */,
 				0A1823DD1C54FB21000AA18C /* UTCDateTime.swift */,
 				0A4611711C54206900963114 /* Integer64.swift */,
@@ -244,6 +247,7 @@
 				0A4611741C54208C00963114 /* Integer32.swift in Sources */,
 				0A549A6A1C5409610049A1A2 /* Binary.swift in Sources */,
 				F20A957E1C5394580054AB52 /* Error.swift in Sources */,
+				0A3ABBA81C57BA3800FAC1D3 /* Integer16.swift in Sources */,
 				F25272621C53AADD00CBB42E /* String.swift in Sources */,
 				0AEAD4A51C5436DC00D1CBC3 /* Timestamp.swift in Sources */,
 				0A4611721C54206900963114 /* Integer64.swift in Sources */,
