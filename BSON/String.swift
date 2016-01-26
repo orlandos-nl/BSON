@@ -19,7 +19,7 @@ extension String : BSONElementConvertible {
         // Get the length
         var ditched = 0
         
-        let length = try Int.instantiate(bsonData: Array(data[0...3]), consumedBytes: &ditched)
+        let length = try Int32.instantiate(bsonData: Array(data[0...3]), consumedBytes: &ditched)
         
         // Check if the data is at least the right size
         guard data.count >= Int(length) + 4 else {
@@ -28,16 +28,18 @@ extension String : BSONElementConvertible {
         
         // Empty string
         if length == 1 {
+            consumedBytes = 5
+            
             return ""
         }
         
-        var stringData = Array(data[4..<Int(length)])
+        var stringData = Array(data[4..<Int(length + 3)])
         
         guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
             throw DeserializationError.ParseError
         }
         
-        consumedBytes = length
+        consumedBytes = Int(length + 4)
         
         return string
     }

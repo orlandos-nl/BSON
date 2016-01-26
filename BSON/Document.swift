@@ -32,6 +32,8 @@ public struct Document {
             throw DeserializationError.InvalidDocumentLength
         }
         
+        print(data)
+        
         // Parse! Loop over the element list.
         var position = 4
         while position < Int(documentLength) {
@@ -40,7 +42,10 @@ public struct Document {
             position += 1
             
             guard let elementType = ElementType(rawValue: elementTypeValue) else {
-                // TODO: Handle 0000 0000 here. That's the end of the document.
+                if elementTypeValue == 0x00 {
+                    return
+                }
+                
                 throw DeserializationError.UnknownElementType
             }
             
@@ -58,24 +63,31 @@ public struct Document {
             let length = elementType.type.bsonLength
             let elementData: [UInt8]
             switch length {
-            case .Fixed(let length):
-                elementData = Array(data[position...position+length])
+            case .Fixed(let bsonLength):
+                elementData = Array(data[position..<position+bsonLength])
             case .Undefined:
-                elementData = data
+                let arrayLength = Int(try Int32.instantiate(bsonData: Array(data[position...position+3])))
+                
+                elementData = Array(data[position...Int(position+arrayLength-1)])
             case .NullTerminated:
-                guard let terminatorIndex = data[position..<data.endIndex].indexOf(0) else {
+                guard let terminatorIndex = data[(position + 4)..<data.endIndex].indexOf(0) else {
                     throw DeserializationError.ParseError
                 }
                 
                 elementData = Array(data[position...terminatorIndex])
             }
             
-            var consumedBytes = 0
-            let result = try elementType.type.instantiate(bsonData: elementData, consumedBytes: &consumedBytes)
+            var consumedElementBytes = 0
+            let result = try elementType.type.instantiate(bsonData: elementData, consumedBytes: &consumedElementBytes)
             
-            position += consumedBytes
+            if consumedElementBytes == 0 {
+                consumedElementBytes = elementData.count
+            }
+            
+            position += consumedElementBytes
             
             self.elements[elementName] = result
+            print(elementName)
         }
     }
 }
