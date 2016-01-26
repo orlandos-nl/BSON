@@ -144,3 +144,26 @@ extension Document : BSONElementConvertible {
     
     public static let bsonLength = BsonLength.Undefined
 }
+
+extension Document : ArrayLiteralConvertible {
+    public typealias Element = BSONElementConvertible
+    
+    /// For now.. only accept BSONElementConvertible
+    public init(arrayLiteral arrayElements: Document.Element...) {
+        for element in arrayElements {
+            elements[elements.count.description] = element
+        }
+    }
+}
+
+extension Document : DictionaryLiteralConvertible {
+    public typealias Key = String
+    public typealias Value = BSONElementConvertible
+
+    /// Create an instance initialized with `elements`.
+    public init(dictionaryLiteral dictionaryElements: (Document.Key, Document.Value)...) {
+        for (key, element) in dictionaryElements {
+            elements[key] = element
+        }
+    }
+}

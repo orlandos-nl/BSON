@@ -97,4 +97,24 @@ class BSONTests: XCTestCase {
         
         XCTAssert(subscripted.elements["0"] as! String == "awesome")
     }
+    
+    func testArrayConvertableToDocument() {
+        let docOne: Document = ["a", "b", "c"]
+        
+        XCTAssert(docOne.elements.count == 3)
+        XCTAssert(docOne.elementType == .Array)
+        
+        XCTAssert(docOne.elements["1"] as! String == "b")
+    }
+    
+    func testDictionaryConvertableToDocument() {
+        let docOne: Document = ["hai": Int32(3), "henk": "Hont", "kat": true]
+        
+        XCTAssert(docOne.elements.count == 3)
+        XCTAssert(docOne.elementType == .Document)
+        
+        XCTAssert(docOne.elements["hai"] as! Int32 == 3)
+        XCTAssert(docOne.elements["henk"] as! String == "Hont")
+        XCTAssert(docOne.elements["kat"] as! Bool == true)
+    }
 }
