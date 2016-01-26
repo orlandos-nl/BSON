@@ -29,8 +29,8 @@ class BSONTests: XCTestCase {
         let string = try! String.instantiateFromCString(bsonData: Array(rawData[0...rawData.count - 2]))
         XCTAssertEqual(string, result, "Instantiating a String from BSON data works correctly")
         
-        let generatedData = result.bsonData
-        XCTAssertEqual(generatedData, Array(rawData[0...rawData.count - 1]), "Converting a String to BSON data results in the correct data")
+        let generatedData = result.cStringBsonData
+        XCTAssertEqual(generatedData, rawData, "Converting a String to BSON data results in the correct data")
     }
     
     func testBooleanSerialization() {
@@ -76,18 +76,25 @@ class BSONTests: XCTestCase {
     }
     
     func testDocumentSerialization() {
-        // {"BSON": ["awesome", 5.05, 1986]}
-        let firstDocument = try! Document.instantiate(bsonData: [0x31, 0x00, 0x00, 0x00, 0x04, 0x42, 0x53, 0x4f, 0x4e, 0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00, 0x61, 0x77, 0x65, 0x73, 0x6f, 0x6d, 0x65, 0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00])
+        // {"hello": "world"}
+        let firstBSON: [UInt8] = [0x16, 0x00, 0x00, 0x00, 0x02, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x00, 0x06, 0x00, 0x00, 0x00, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x00, 0x00]
+        let secondBSON: [UInt8] = [0x31, 0x00, 0x00, 0x00, 0x04, 0x42, 0x53, 0x4f, 0x4e, 0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00, 0x61, 0x77, 0x65, 0x73, 0x6f, 0x6d, 0x65, 0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00]
         
-        guard let subscripted: Document = firstDocument.elements["BSON"] as? Document else {
+        let firstDocument = try! Document.instantiate(bsonData: firstBSON)
+  
+        XCTAssert(firstDocument.elements["hello"] as! String == "world", "Our document contains the proper information")
+        
+        XCTAssertEqual(firstDocument.bsonData, firstBSON, "FirstBSON has an equal output to the instantiation array")
+        
+        // {"BSON": ["awesome", 5.05, 1986]}
+        let secondDocument = try! Document.instantiate(bsonData: secondBSON)
+        
+        XCTAssertEqual(secondDocument.bsonData, secondBSON, "SecondBSON has an equal output to the instantiation array")
+        
+        guard let subscripted: Document = secondDocument.elements["BSON"] as? Document else {
             abort()
         }
         
         XCTAssert(subscripted.elements["0"] as! String == "awesome")
-        
-        // {"hello": "world"}
-        let secondDocument = try! Document.instantiate(bsonData: [0x16, 0x00, 0x00, 0x00, 0x02, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x00, 0x06, 0x00, 0x00, 0x00, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x00, 0x00])
-  
-        XCTAssert(secondDocument.elements["hello"] as! String == "world", "Our document contains the proper information")
     }
 }

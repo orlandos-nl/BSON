@@ -62,6 +62,14 @@ extension String : BSONElementConvertible {
     
     /// Here, return the same data as you would accept in the initializer
     public var bsonData: [UInt8] {
+        var byteArray = Int32(utf8.count + 1).bsonData
+        byteArray.appendContentsOf(utf8)
+        byteArray.append(0x00)
+        
+        return byteArray
+    }
+    
+    public var cStringBsonData: [UInt8] {
         var byteArray = Array(utf8)
         byteArray.append(0x00)
         

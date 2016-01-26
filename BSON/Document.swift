@@ -32,8 +32,6 @@ public struct Document {
             throw DeserializationError.InvalidDocumentLength
         }
         
-        print(data)
-        
         // Parse! Loop over the element list.
         var position = 4
         while position < Int(documentLength) {
@@ -54,7 +52,7 @@ public struct Document {
                 throw DeserializationError.ParseError
             }
             
-            let keyData = Array(data[position...stringTerminatorIndex])
+            let keyData = Array(data[position...stringTerminatorIndex - 1])
             let elementName = try String.instantiateFromCString(bsonData: keyData)
             
             position = stringTerminatorIndex + 1
@@ -87,7 +85,6 @@ public struct Document {
             position += consumedElementBytes
             
             self.elements[elementName] = result
-            print(elementName)
         }
     }
 }
@@ -122,10 +119,8 @@ extension Document : BSONElementConvertible {
         
         for (key, element) in elements {
             body += [element.elementType.rawValue]
-            body += key.bsonData
-            body += (Int32(element.bsonData.count)).bsonData
+            body += key.cStringBsonData
             body += element.bsonData
-            body += [0x00]
         }
         
         body += [0x00]
