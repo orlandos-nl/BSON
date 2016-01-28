@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftSequence
 
 public struct ObjectID {
     public private(set) var data: [UInt8]
@@ -18,7 +19,25 @@ public struct ObjectID {
     private static var counter: Int16 = 0
     
     public init(hexString: String) throws {
-        data = hexString.characters.map { UInt8(String($0), radix: 16) }.flatMap{$0}
+        guard hexString.characters.count == 24 else {
+            throw DeserializationError.ParseError
+        }
+        
+        data = []
+        
+        charLoop: for s in hexString.characters.chunk(2) {
+            guard let a = s.first, b = s.last else {
+                break charLoop
+            }
+            
+            let c = String([a, b])
+            
+            guard let d = UInt8(c, radix: 16) else {
+                break charLoop
+            }
+            
+            data.append(d)
+        }
         
         guard data.count == 12 else {
             throw DeserializationError.ParseError
@@ -87,5 +106,11 @@ extension ObjectID : BSONElementConvertible {
     
     public static func instantiate(bsonData data: [UInt8]) throws -> ObjectID {
         return try self.init(bsonData: data)
+    }
+}
+
+extension ObjectID : CustomDebugStringConvertible {
+    public var debugDescription: String {
+        return "ObjectID(\"\(self.hexString)\")"
     }
 }

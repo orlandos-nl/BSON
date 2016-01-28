@@ -131,4 +131,12 @@ class BSONTests: XCTestCase {
         XCTAssert(docOne.elements["henk"] as! String == "Hont")
         XCTAssert(docOne.elements["kat"] as! Bool == true)
     }
+    
+    func testObjectID() {
+        // ObjectID initialization and reading
+        let sampleHex1 = "56a78f3e308b914cac362bb8"
+        
+        let id = try! ObjectID(hexString: sampleHex1)
+        XCTAssertEqual(id.hexString, sampleHex1)
+    }
 }

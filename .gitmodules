@@ -1,0 +1,3 @@
+[submodule "Carthage/Checkouts/SwiftSequence"]
+	path = Carthage/Checkouts/SwiftSequence
+	url = https://github.com/oisdk/SwiftSequence.git
