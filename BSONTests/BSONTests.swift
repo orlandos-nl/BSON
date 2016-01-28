@@ -6,10 +6,24 @@
 //  Copyright © 2016 Robbert Brandsma. All rights reserved.
 //
 
+import Foundation
 import XCTest
 @testable import BSON
 
 class BSONTests: XCTestCase {
+    var allTests : [(String, () throws -> Void)] {
+        return [
+                ("testDoubleSerialization", testDoubleSerialization),
+                ("testStringSerialization", testStringSerialization),
+                ("testBooleanSerialization", testBooleanSerialization),
+                ("testInt32Serialization", testInt32Serialization),
+                ("testInt64Serialization", testInt64Serialization),
+                ("testTimestampSerialization", testTimestampSerialization),
+                ("testDocumentSerialization", testDocumentSerialization),
+                ("testArrayConvertableToDocument", testArrayConvertableToDocument),
+                ("testDictionaryConvertableToDocument", testDictionaryConvertableToDocument),
+        ]
+    }
     
     func testDoubleSerialization() {
         // This is 5.05

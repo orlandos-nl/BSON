@@ -23,7 +23,7 @@ extension NSDate : BSONElementConvertible {
         var ditched = 0
         
         let interval = try Int.instantiate(bsonData: data, consumedBytes: &ditched)
-        let date = self.init(timeIntervalSince1970: Double(interval))
+        let date = self.init(timeIntervalSinceReferenceDate: Double(interval) - NSTimeIntervalSince1970)
         consumedBytes = 8
         return date
     }

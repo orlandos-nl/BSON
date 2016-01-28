@@ -99,7 +99,7 @@ extension Document {
             }
             
             if current == index-1 {
-                current++
+                current += 1
             } else {
                 return false
             }

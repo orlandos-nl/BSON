@@ -10,7 +10,11 @@ import Foundation
 
 public struct ObjectID {
     public private(set) var data: [UInt8]
-    private static var random = UInt8(arc4random_uniform(255))
+#if os(Linux)
+    private static var random: UInt8 = Int32(rand()).bsonData[0]
+#else
+    private static var random: Uint8 = UInt8(arc4random_uniform(255))
+#endif
     private static var counter: Int16 = 0
     
     public init(hexString: String) throws {

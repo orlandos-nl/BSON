@@ -1,3 +1,5 @@
+import Foundation
+
 extension String : BSONElementConvertible {
     public var elementType: ElementType {
         return .String
@@ -10,7 +12,7 @@ extension String : BSONElementConvertible {
     }
     
     /// The initializer expects the data for this element, starting AFTER the element type
-    public static func instantiate(var bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.InvalidLastElement
