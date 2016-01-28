@@ -15,4 +15,5 @@ public enum DeserializationError : ErrorType {
     case UnknownElementType
     case InvalidLastElement
     case ParseError
+    case InvalidOperation
 }

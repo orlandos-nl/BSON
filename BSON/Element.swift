@@ -45,8 +45,7 @@ extension ElementType {
         case .Binary:
             abort()
         case .ObjectId:
-            abort()
-//            return BSON.ObjectId.self
+            return BSON.ObjectId.self
         case .Boolean:
             return Swift.Bool.self
         case .DateTime:

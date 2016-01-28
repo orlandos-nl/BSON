@@ -146,10 +146,8 @@ extension Document : BSONElementConvertible {
 }
 
 extension Document : ArrayLiteralConvertible {
-    public typealias Element = BSONElementConvertible
-    
     /// For now.. only accept BSONElementConvertible
-    public init(arrayLiteral arrayElements: Document.Element...) {
+    public init(arrayLiteral arrayElements: BSONElementConvertible...) {
         for element in arrayElements {
             elements[elements.count.description] = element
         }
@@ -157,13 +155,16 @@ extension Document : ArrayLiteralConvertible {
 }
 
 extension Document : DictionaryLiteralConvertible {
-    public typealias Key = String
-    public typealias Value = BSONElementConvertible
-
     /// Create an instance initialized with `elements`.
-    public init(dictionaryLiteral dictionaryElements: (Document.Key, Document.Value)...) {
+    public init(dictionaryLiteral dictionaryElements: (String, BSONElementConvertible)...) {
         for (key, element) in dictionaryElements {
             elements[key] = element
         }
     }
+}
+
+extension Document : Equatable {}
+public func ==(lhs: Document, rhs: Document) -> Bool {
+    // TODO: CARE ABOUT PERFORMANCE
+    return lhs.bsonData == rhs.bsonData
 }
