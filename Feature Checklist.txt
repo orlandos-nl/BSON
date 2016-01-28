@@ -8,10 +8,10 @@ HAVE:
 09 UTC DateTime
 10 32-bit integer
 12 64-bit integer
+0A Null or Nil
+05 Binary
 
 DON'T HAVE:
-05 Binary
-0A Null or Nil
 0B Regular Expression
 0D JavaScript code
 0F JavaScript code w/ Scope

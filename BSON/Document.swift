@@ -117,7 +117,7 @@ extension Document : BSONElementConvertible {
         var body = [UInt8]()
         var length = 4
         
-        for (key, element) in elements {
+        for (key, element) in elements.sort({ $0.0 < $1.0 }) {
             body += [element.elementType.rawValue]
             body += key.cStringBsonData
             body += element.bsonData
@@ -161,10 +161,4 @@ extension Document : DictionaryLiteralConvertible {
             elements[key] = element
         }
     }
-}
-
-extension Document : Equatable {}
-public func ==(lhs: Document, rhs: Document) -> Bool {
-    // TODO: CARE ABOUT PERFORMANCE
-    return lhs.bsonData == rhs.bsonData
 }

@@ -24,6 +24,7 @@
 		F212DC881C58C57600B36A19 /* SwiftSequence.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F212DC871C58C57600B36A19 /* SwiftSequence.framework */; };
 		F25272601C53AAC600CBB42E /* Double.swift in Sources */ = {isa = PBXBuildFile; fileRef = F252725F1C53AAC600CBB42E /* Double.swift */; };
 		F25272621C53AADD00CBB42E /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25272611C53AADD00CBB42E /* String.swift */; };
+		F273753A1C5A61E400CDE296 /* Null.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27375391C5A61E400CDE296 /* Null.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +61,7 @@
 		F252725F1C53AAC600CBB42E /* Double.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Double.swift; sourceTree = "<group>"; };
 		F25272611C53AADD00CBB42E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
 		F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Feature Checklist.txt"; sourceTree = "<group>"; };
+		F27375391C5A61E400CDE296 /* Null.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Null.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,9 +145,10 @@
 				0A216CE71C541E02005C959A /* Boolean.swift */,
 				0A4611731C54208C00963114 /* Integer32.swift */,
 				0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */,
-				0AEAD4A41C5436DC00D1CBC3 /* Timestamp.swift */,
 				0A1823DD1C54FB21000AA18C /* UTCDateTime.swift */,
+				0AEAD4A41C5436DC00D1CBC3 /* Timestamp.swift */,
 				0A4611711C54206900963114 /* Integer64.swift */,
+				F27375391C5A61E400CDE296 /* Null.swift */,
 				F20A956D1C5383590054AB52 /* Document.swift */,
 			);
 			name = Elements;
@@ -267,6 +270,7 @@
 				F20A957E1C5394580054AB52 /* Error.swift in Sources */,
 				0A3ABBA81C57BA3800FAC1D3 /* Integer16.swift in Sources */,
 				F25272621C53AADD00CBB42E /* String.swift in Sources */,
+				F273753A1C5A61E400CDE296 /* Null.swift in Sources */,
 				0AEAD4A51C5436DC00D1CBC3 /* Timestamp.swift in Sources */,
 				0A4611721C54206900963114 /* Integer64.swift in Sources */,
 				0A216CE61C541DFC005C959A /* ObjectId.swift in Sources */,

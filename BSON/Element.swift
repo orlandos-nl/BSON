@@ -55,7 +55,7 @@ extension ElementType {
         case .DateTime:
             return Foundation.NSDate.self
         case .NullValue:
-            abort()
+            return BSON.Null.self
         case .RegularExpression:
             abort()
         case .JavaScriptCode:
