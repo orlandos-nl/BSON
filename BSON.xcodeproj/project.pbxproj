@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A1823DE1C54FB21000AA18C /* UTCDateTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1823DD1C54FB21000AA18C /* UTCDateTime.swift */; };
-		0A216CE61C541DFC005C959A /* ObjectID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A216CE51C541DFC005C959A /* ObjectID.swift */; };
+		0A216CE61C541DFC005C959A /* ObjectId.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A216CE51C541DFC005C959A /* ObjectId.swift */; };
 		0A216CE81C541E02005C959A /* Boolean.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A216CE71C541E02005C959A /* Boolean.swift */; };
 		0A3ABBA81C57BA3800FAC1D3 /* Integer16.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */; };
 		0A4611721C54206900963114 /* Integer64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4611711C54206900963114 /* Integer64.swift */; };
@@ -38,7 +38,7 @@
 
 /* Begin PBXFileReference section */
 		0A1823DD1C54FB21000AA18C /* UTCDateTime.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UTCDateTime.swift; sourceTree = "<group>"; };
-		0A216CE51C541DFC005C959A /* ObjectID.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectID.swift; sourceTree = "<group>"; };
+		0A216CE51C541DFC005C959A /* ObjectId.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectId.swift; sourceTree = "<group>"; };
 		0A216CE71C541E02005C959A /* Boolean.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Boolean.swift; sourceTree = "<group>"; };
 		0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer16.swift; sourceTree = "<group>"; };
 		0A4611711C54206900963114 /* Integer64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer64.swift; sourceTree = "<group>"; };
@@ -59,6 +59,7 @@
 		F212DC871C58C57600B36A19 /* SwiftSequence.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSequence.framework; path = Carthage/Checkouts/SwiftSequence/build/Debug/SwiftSequence.framework; sourceTree = "<group>"; };
 		F252725F1C53AAC600CBB42E /* Double.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Double.swift; sourceTree = "<group>"; };
 		F25272611C53AADD00CBB42E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
+		F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Feature Checklist.txt"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +85,7 @@
 		F20A95491C5383440054AB52 = {
 			isa = PBXGroup;
 			children = (
+				F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */,
 				F212DC861C58C3FA00B36A19 /* README.md */,
 				F212DC8A1C58C5D900B36A19 /* Dependencies */,
 				F20A95551C5383440054AB52 /* BSON */,
@@ -137,7 +139,7 @@
 				F252725F1C53AAC600CBB42E /* Double.swift */,
 				F25272611C53AADD00CBB42E /* String.swift */,
 				0A549A691C5409610049A1A2 /* Binary.swift */,
-				0A216CE51C541DFC005C959A /* ObjectID.swift */,
+				0A216CE51C541DFC005C959A /* ObjectId.swift */,
 				0A216CE71C541E02005C959A /* Boolean.swift */,
 				0A4611731C54208C00963114 /* Integer32.swift */,
 				0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */,
@@ -267,7 +269,7 @@
 				F25272621C53AADD00CBB42E /* String.swift in Sources */,
 				0AEAD4A51C5436DC00D1CBC3 /* Timestamp.swift in Sources */,
 				0A4611721C54206900963114 /* Integer64.swift in Sources */,
-				0A216CE61C541DFC005C959A /* ObjectID.swift in Sources */,
+				0A216CE61C541DFC005C959A /* ObjectId.swift in Sources */,
 				F25272601C53AAC600CBB42E /* Double.swift in Sources */,
 				F20A956E1C5383590054AB52 /* Document.swift in Sources */,
 			);

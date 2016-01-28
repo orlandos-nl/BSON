@@ -18,7 +18,7 @@ class BSONTests: XCTestCase {
                 ("testBooleanSerialization", testBooleanSerialization),
                 ("testInt32Serialization", testInt32Serialization),
                 ("testInt64Serialization", testInt64Serialization),
-                ("testTimestampSerialization", testTimestampSerialization),
+                ("testTimestampSerialization", testDateTimeSerialization),
                 ("testDocumentSerialization", testDocumentSerialization),
                 ("testArrayConvertableToDocument", testArrayConvertableToDocument),
                 ("testDictionaryConvertableToDocument", testDictionaryConvertableToDocument),
@@ -79,7 +79,8 @@ class BSONTests: XCTestCase {
         XCTAssert(generatedData == rawData, "Converting an integer to BSON data results in the correct data")
     }
     
-    func testTimestampSerialization() {
+    func testDateTimeSerialization() {
+        // 2016-01-23 22:47:46 UTC
         let rawData: [UInt8] = [0x12, 0x03, 0xa4, 0x56, 0x00, 0x00, 0x00, 0x00]
         let date = try! NSDate.instantiate(bsonData: rawData)
         
@@ -132,15 +133,15 @@ class BSONTests: XCTestCase {
         XCTAssert(docOne.elements["kat"] as! Bool == true)
     }
     
-    func testObjectID() {
-        // ObjectID initialization and reading
+    func testObjectId() {
+        // ObjectId initialization and reading
         let sampleHex1 = "56a78f3e308b914cac362bb8"
         
-        let id = try! ObjectID(hexString: sampleHex1)
+        let id = try! ObjectId(hexString: sampleHex1)
         XCTAssertEqual(id.hexString, sampleHex1)
         
-        // ObjectID generation
-        let randomId = ObjectID()
+        // ObjectId generation
+        let randomId = ObjectId()
         XCTAssertEqual(randomId.data.count, 12)
     }
 }

@@ -5,10 +5,14 @@
 import PackageDescription
 
 let package = Package(name: "BSON",
-        targets: [
-                Target(name: "BSON"),
-                Target(name: "BSONTests",
-                        dependencies: [.Target(name: "BSON")])
-        ]
+    exclude: ["Carthage"],
+    dependencies: [
+        .Package(url: "https://github.com/oisdk/SwiftSequence", majorVersion: 1)
+    ],
+    targets: [
+        Target(name: "BSON"),
+        Target(name: "BSONTests",
+            dependencies: [.Target(name: "BSON")])
+    ]
 )
 

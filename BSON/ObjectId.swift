@@ -1,5 +1,5 @@
 //
-//  ObjectID.swift
+//  ObjectId.swift
 //  BSON
 //
 //  Created by Joannis Orlandos on 23/01/16.
@@ -9,7 +9,7 @@
 import Foundation
 import SwiftSequence
 
-public struct ObjectID {
+public struct ObjectId {
     public private(set) var data: [UInt8]
 #if os(Linux)
     private static var random: UInt8 = Int32(rand()).bsonData[0]
@@ -72,17 +72,17 @@ public struct ObjectID {
         data += Array(NSProcessInfo.processInfo().processIdentifier.bsonData[0...1])
         
         // Take a random number
-        data += [ObjectID.random]
+        data += [ObjectId.random]
         
         // And add a counter as 2 bytes and increment it
-        data += ObjectID.counter.bsonData
-        ObjectID.counter += 1
+        data += ObjectId.counter.bsonData
+        ObjectId.counter += 1
         
         self.data = data
     }
 }
 
-extension ObjectID : BSONElementConvertible {
+extension ObjectId : BSONElementConvertible {
     public var elementType: ElementType {
         return .ObjectId
     }
@@ -97,20 +97,20 @@ extension ObjectID : BSONElementConvertible {
     }
     
     /// The initializer expects the data for this element, starting AFTER the element type
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> ObjectID {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> ObjectId {
         let objectID = try self.init(bsonData: data)
         consumedBytes = data.count
         
         return objectID
     }
     
-    public static func instantiate(bsonData data: [UInt8]) throws -> ObjectID {
+    public static func instantiate(bsonData data: [UInt8]) throws -> ObjectId {
         return try self.init(bsonData: data)
     }
 }
 
-extension ObjectID : CustomDebugStringConvertible {
+extension ObjectId : CustomDebugStringConvertible {
     public var debugDescription: String {
-        return "ObjectID(\"\(self.hexString)\")"
+        return "ObjectId(\"\(self.hexString)\")"
     }
 }
