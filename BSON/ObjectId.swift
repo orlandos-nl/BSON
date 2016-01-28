@@ -9,6 +9,10 @@
 import Foundation
 import SwiftSequence
 
+#if os(Linux)
+    import Glibc
+#endif
+
 public struct ObjectId {
     public private(set) var data: [UInt8]
 #if os(Linux)

@@ -8,6 +8,10 @@
 
 import Foundation
 
+#if os(Linux)
+    import Glibc
+#endif
+
 public enum ElementType : UInt8 {
     case Double = 0x01
     case String = 0x02

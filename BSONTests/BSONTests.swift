@@ -10,8 +10,14 @@ import Foundation
 import XCTest
 @testable import BSON
 
+#if os(Linux)
+    import Glibc
+#endif
+
 class BSONTests: XCTestCase {
-    var allTests : [(String, () throws -> Void)] {
+    
+    // for old snapshot, removed throws
+    var allTests : [(String, () -> Void)] {
         return [
                 ("testDocumentOne", testDocumentOne),
                 ("testDoubleSerialization", testDoubleSerialization),
