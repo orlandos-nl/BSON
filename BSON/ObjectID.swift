@@ -56,13 +56,13 @@ public struct ObjectID {
         return data.map{String($0, radix: 16, uppercase: false)}.joinWithSeparator("")
     }
     
-    public static func generate() throws -> ObjectID {
+    public init() {
         let currentTime = NSDate()
         
         var data = [UInt8]()
         
         // Take the current UNIX epoch as Int32 and take it's bytes
-        data += try Int32.instantiate(bsonData: Array(currentTime.bsonData[0...3])).bsonData
+        data += Int32(currentTime.timeIntervalSince1970).bsonData
         
         // Take the machine identifier
         // TODO: Change this to a MAC address
@@ -72,13 +72,13 @@ public struct ObjectID {
         data += Array(NSProcessInfo.processInfo().processIdentifier.bsonData[0...1])
         
         // Take a random number
-        data += [random]
+        data += [ObjectID.random]
         
         // And add a counter as 2 bytes and increment it
-        data += counter.bsonData
-        counter += 1
+        data += ObjectID.counter.bsonData
+        ObjectID.counter += 1
         
-        return try self.init(bsonData: data)
+        self.data = data
     }
 }
 

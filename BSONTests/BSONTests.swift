@@ -138,5 +138,9 @@ class BSONTests: XCTestCase {
         
         let id = try! ObjectID(hexString: sampleHex1)
         XCTAssertEqual(id.hexString, sampleHex1)
+        
+        // ObjectID generation
+        let randomId = ObjectID()
+        XCTAssertEqual(randomId.data.count, 12)
     }
 }
