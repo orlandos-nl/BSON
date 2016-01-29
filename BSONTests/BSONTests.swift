@@ -29,6 +29,10 @@ class BSONTests: XCTestCase {
                 ("testDocumentSerialization", testDocumentSerialization),
                 ("testArrayConvertableToDocument", testArrayConvertableToDocument),
                 ("testDictionaryConvertableToDocument", testDictionaryConvertableToDocument),
+                ("testObjectIdSerialization", testObjectIdSerialization),
+                ("testNullSerialization", testNullSerialization),
+                ("testBinarySerialization", testBinarySerialization),
+                ("testRegexSerialization", testRegexSerialization),
         ]
     }
     
@@ -169,7 +173,7 @@ class BSONTests: XCTestCase {
         XCTAssert(docOne.elements["kat"] as! Bool == true)
     }
     
-    func testObjectId() {
+    func testObjectIdSerialization() {
         // ObjectId initialization and reading
         let sampleHex1 = "56a78f3e308b914cac362bb8"
         
@@ -181,7 +185,7 @@ class BSONTests: XCTestCase {
         XCTAssertEqual(randomId.data.count, 12)
     }
     
-    func testNull() {
+    func testNullSerialization() {
         // Yes, really.
         
         let null = Null()
@@ -191,7 +195,7 @@ class BSONTests: XCTestCase {
         XCTAssert(othernull.bsonData == [])
     }
     
-    func testBinary() {
+    func testBinarySerialization() {
         let data: [UInt8] = [0x01, 0x02, 0x03, 0x06, 0x0c, 0x18, 0x30, 0x60]
         let binary = Binary(binaryData: data)
         
@@ -202,5 +206,12 @@ class BSONTests: XCTestCase {
         
         XCTAssert(otherBinary.data == data)
         XCTAssert(otherBinary.bsonData == ([8, 0, 0, 0, 144] as [UInt8] + data))
+    }
+
+    func testRegexSerialization() {
+        // RegularExpression initialization and testing
+        //let sampleRegex = try! RegularExpression(pattern: "/^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?$/", options: "")
+
+        //XCTAssert(sampleRegex.test("https://www.fsf.org/about/", options: []))
     }
 }
