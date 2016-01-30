@@ -195,10 +195,6 @@ class BSONTests: XCTestCase {
         // IF I instantiate null without data.. will it work?
         let othernull = try! Null.instantiate(bsonData: [])
         XCTAssert(othernull.bsonData == [])
-        
-        let nilConverted: Null = nil
-        
-        XCTAssert(nilConverted.bsonData == [])
     }
     
     func testBinarySerialization() {
