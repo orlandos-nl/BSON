@@ -33,6 +33,7 @@ class BSONTests: XCTestCase {
                 ("testNullSerialization", testNullSerialization),
                 ("testBinarySerialization", testBinarySerialization),
                 ("testRegexSerialization", testRegexSerialization),
+                ("testDocumentSubscript", testDocumentSubscript),
         ]
     }
     
@@ -185,14 +186,19 @@ class BSONTests: XCTestCase {
         XCTAssertEqual(randomId.data.count, 12)
     }
     
+    // Yes, really.
     func testNullSerialization() {
-        // Yes, really.
-        
+        // Does null contain no data?
         let null = Null()
         XCTAssert(null.bsonData == [])
         
+        // IF I instantiate null without data.. will it work?
         let othernull = try! Null.instantiate(bsonData: [])
         XCTAssert(othernull.bsonData == [])
+        
+        let nilConverted: Null = nil
+        
+        XCTAssert(nilConverted.bsonData == [])
     }
     
     func testBinarySerialization() {
@@ -213,5 +219,61 @@ class BSONTests: XCTestCase {
         //let sampleRegex = try! RegularExpression(pattern: "/^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?$/", options: "")
 
         //XCTAssert(sampleRegex.test("https://www.fsf.org/about/", options: []))
+    }
+    
+    func testDocumentSubscript() {
+        let testDocument: Document = ["a": 0, "b": Null(), "c": [
+                "aa": "bb", "cc": [1, 2, 3] as Document
+            ] as Document,
+        "d": 3.14]
+        
+        if let a: Int = testDocument["a"] as? Int {
+            XCTAssert(a == 0)
+            
+        } else {
+            XCTFail()
+        }
+        
+        XCTAssert(testDocument["b"]! is Null)
+        
+        if let c: Document = testDocument["c"] as? Document {
+            let subDoc: Document = ["aa": "bb", "cc": [1, 2, 3] as Document]
+            
+            XCTAssert(c.bsonData == subDoc.bsonData)
+            
+            XCTAssert(c["aa"] as? String == "bb")
+            
+            if let cc: Document = c["cc"] as? Document {
+                XCTAssert(cc.bsonData == ([1, 2, 3] as Document).bsonData)
+                XCTAssert(cc[0] as! Int == 1)
+                XCTAssert(cc[2] as! Int == 3)
+                XCTAssert(cc.count == 3)
+                
+                var ccCopy = cc
+                
+                for (key, value) in ccCopy {
+                    guard let newValue = ccCopy.removeValueForKey(key) else {
+                        XCTFail()
+                        break
+                    }
+                    
+                    if newValue.bsonData != value.bsonData {
+                        XCTFail()
+                    }
+                }
+                
+            } else {
+                XCTFail()
+            }
+            
+        } else {
+            XCTFail()
+        }
+        
+        if let d: Double = testDocument["d"] as? Double {
+            XCTAssert(d == 3.14)
+        } else {
+            XCTFail()
+        }
     }
 }

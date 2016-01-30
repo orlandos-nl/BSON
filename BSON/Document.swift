@@ -9,9 +9,9 @@
 import Foundation
 
 public struct Document {
-    var elements = [String : BSONElementConvertible]()
+    internal var elements = [String : BSONElementConvertible]()
     
-    init(data: NSData) throws {
+    public init(data: NSData) throws {
         var byteArray = [UInt8](count: data.length, repeatedValue: 0)
         data.getBytes(&byteArray, length: byteArray.count)
         
@@ -20,7 +20,7 @@ public struct Document {
         try self.init(data: byteArray, consumedBytes: &ditched)
     }
     
-    init(data: [UInt8], inout consumedBytes: Int) throws {
+    public init(data: [UInt8], inout consumedBytes: Int) throws {
         // A BSON document cannot be smaller than 5 bytes (which would be an empty document)
         guard data.count >= 5 else {
             throw DeserializationError.InvalidDocumentLength
@@ -139,7 +139,7 @@ extension Document : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Document {
-        return try Document.init(data: data, consumedBytes: &consumedBytes)
+        return try Document(data: data, consumedBytes: &consumedBytes)
     }
     
     public static let bsonLength = BsonLength.Undefined
@@ -149,7 +149,7 @@ extension Document : ArrayLiteralConvertible {
     /// For now.. only accept BSONElementConvertible
     public init(arrayLiteral arrayElements: BSONElementConvertible...) {
         for element in arrayElements {
-            elements[elements.count.description] = element
+            self.elements[self.elements.count.description] = element
         }
     }
 }
@@ -158,7 +158,76 @@ extension Document : DictionaryLiteralConvertible {
     /// Create an instance initialized with `elements`.
     public init(dictionaryLiteral dictionaryElements: (String, BSONElementConvertible)...) {
         for (key, element) in dictionaryElements {
-            elements[key] = element
+            self.elements[key] = element
         }
+    }
+}
+
+extension Document : SequenceType {
+    public typealias Key = String
+    public typealias Value = BSONElementConvertible
+    public typealias Index = DictionaryIndex<Key, Value>
+    
+    // Remap everything to elements
+    public var startIndex: DictionaryIndex<Key, Value> {
+        return elements.startIndex
+    }
+    
+    public var endIndex: DictionaryIndex<Key, Value> {
+        return elements.endIndex
+    }
+    
+    public func indexForKey(key: Key) -> DictionaryIndex<Key, Value>? {
+        return elements.indexForKey(key)
+    }
+    
+    public subscript (key: Key) -> Value? {
+        return elements[key]
+    }
+    
+    // Add extra subscript for Integers since a Document can also be a BSON Array
+    public subscript (key: Int) -> BSONElementConvertible? {
+        return self["\(key)"]
+    }
+    
+    public subscript (position: DictionaryIndex<Key, Value>) -> (Key, Value) {
+        return elements[position]
+    }
+    
+    public mutating func updateValue(value: Value, forKey key: Key) -> Value? {
+        return elements.updateValue(value, forKey: key)
+    }
+    
+    // WORKS?
+    public mutating func removeAtIndex(index: DictionaryIndex<Key, Value>) -> (Key, Value) {
+        return elements.removeAtIndex(index)
+    }
+    
+    public mutating func removeValueForKey(key: Key) -> Value? {
+        return elements.removeValueForKey(key)
+    }
+    
+    public mutating func removeAll(keepCapacity keepCapacity: Bool = false) {
+        elements.removeAll()
+    }
+    
+    public var count: Int {
+        return elements.count
+    }
+    
+    public func generate() -> DictionaryGenerator<Key, Value> {
+        return elements.generate()
+    }
+    
+    public var keys: LazyMapCollection<[Key : Value], Key> {
+        return elements.keys
+    }
+    
+    public var values: LazyMapCollection<[Key : Value], Value> {
+        return elements.values
+    }
+    
+    public var isEmpty: Bool {
+        return elements.isEmpty
     }
 }
