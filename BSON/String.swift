@@ -77,5 +77,5 @@ extension String : BSONElementConvertible {
         return byteArray
     }
     
-    public static let bsonLength = BsonLength.NullTerminated
+    public static let bsonLength = BsonLength.Undefined
 }
