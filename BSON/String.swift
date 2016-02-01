@@ -71,7 +71,7 @@ extension String : BSONElementConvertible {
     }
     
     public var cStringBsonData: [UInt8] {
-        var byteArray = Array(utf8)
+        var byteArray = Array(self.stringByReplacingOccurrencesOfString("\0", withString: "").utf8)
         byteArray.append(0x00)
         
         return byteArray
