@@ -37,7 +37,7 @@ var anotherDocument: Document = [
     "datetime": NSDate(),
     "bool": false,
     "null": Null(),
-    "binary": Binary(binaryData: [0x01, 0x02]),
+    "binary": Binary(data: [0x01, 0x02]),
     "string": "Hello, I'm a string!"
 ]
 //: As you can see, to embed an array or document (dictionary) in a document, you must prefix the declaration with the *-operator. This is needed for the compiler to infer the type of the declaration.

@@ -68,8 +68,8 @@ public struct Binary : BSONElementConvertible {
     }
 }
 
-/// NSData is extended so it can be initialized with a BSON `Binary`.
 extension NSData {
+    /// Initialize the NSData object with a BSON binary
     public convenience init(_ binary: Binary) {
         var binary = binary
         self.init(bytes: &binary.data, length: binary.data.count)
