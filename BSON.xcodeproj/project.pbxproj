@@ -28,6 +28,7 @@
 		F25272621C53AADD00CBB42E /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25272611C53AADD00CBB42E /* String.swift */; };
 		F273753A1C5A61E400CDE296 /* Null.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27375391C5A61E400CDE296 /* Null.swift */; };
 		F2F4C3391C6000D700CB84C7 /* RegularExpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F4C3381C6000D700CB84C7 /* RegularExpression.swift */; };
+		F2F4C33B1C60090800CB84C7 /* MinMaxKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F4C33A1C60090800CB84C7 /* MinMaxKey.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,6 +93,7 @@
 		F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .jazzy.yaml; sourceTree = "<group>"; };
 		F2F4C3361C5FE60100CB84C7 /* Tutorial.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = Tutorial.playground; sourceTree = "<group>"; };
 		F2F4C3381C6000D700CB84C7 /* RegularExpression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegularExpression.swift; sourceTree = "<group>"; };
+		F2F4C33A1C60090800CB84C7 /* MinMaxKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MinMaxKey.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +197,7 @@
 				F27375391C5A61E400CDE296 /* Null.swift */,
 				F20A956D1C5383590054AB52 /* Document.swift */,
 				0A332A5D1C5FA40C00FD8613 /* ArrayDictionaryDocument.swift */,
+				F2F4C33A1C60090800CB84C7 /* MinMaxKey.swift */,
 			);
 			name = Elements;
 			sourceTree = "<group>";
@@ -346,6 +349,7 @@
 				0A4611721C54206900963114 /* Integer64.swift in Sources */,
 				0A216CE61C541DFC005C959A /* ObjectId.swift in Sources */,
 				F25272601C53AAC600CBB42E /* Double.swift in Sources */,
+				F2F4C33B1C60090800CB84C7 /* MinMaxKey.swift in Sources */,
 				F20A956E1C5383590054AB52 /* Document.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

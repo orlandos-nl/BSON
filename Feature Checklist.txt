@@ -11,10 +11,10 @@ HAVE:
 0A Null or Nil
 05 Binary
 11 Timestamp
-
-DON'T HAVE:
 0B Regular Expression
-0D JavaScript code
-0F JavaScript code w/ Scope
 FF Min key
 7F Max key
+
+DON'T HAVE:
+0D JavaScript code
+0F JavaScript code w/ Scope

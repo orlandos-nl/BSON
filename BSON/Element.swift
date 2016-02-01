@@ -83,13 +83,13 @@ extension ElementType {
         case .Int32:
             return Swift.Int32.self
         case .Timestamp:
-            abort()
+            return BSON.Timestamp.self
         case .Int64:
             return Swift.Int.self
         case .MinKey:
-            abort()
+            return BSON.MinKey.self
         case .MaxKey:
-            abort()
+            return BSON.MaxKey.self
         }
     }
 }
