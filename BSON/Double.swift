@@ -1,3 +1,5 @@
+import Foundation
+
 extension Double : BSONElementConvertible {
     public var elementType: ElementType {
         return .Double
