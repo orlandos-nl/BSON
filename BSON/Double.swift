@@ -1,5 +1,6 @@
 import Foundation
 
+/// The 64-bit Double (0x01) BSON-type
 extension Double : BSONElementConvertible {
     public var elementType: ElementType {
         return .Double

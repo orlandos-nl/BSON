@@ -31,7 +31,6 @@ class BSONInternalTests: XCTestCase {
                 ("testDictionaryConvertableToDocument", testDictionaryConvertableToDocument),
                 ("testObjectIdSerialization", testObjectIdSerialization),
                 ("testNullSerialization", testNullSerialization),
-                ("testBinarySerialization", testBinarySerialization),
                 ("testRegexSerialization", testRegexSerialization),
                 ("testDocumentSubscript", testDocumentSubscript),
         ]
@@ -238,19 +237,6 @@ class BSONInternalTests: XCTestCase {
         // IF I instantiate null without data.. will it work?
         let othernull = try! Null.instantiate(bsonData: [])
         XCTAssert(othernull.bsonData == [])
-    }
-    
-    func testBinarySerialization() {
-        let data: [UInt8] = [0x01, 0x02, 0x03, 0x06, 0x0c, 0x18, 0x30, 0x60]
-        let binary = Binary(binaryData: data)
-        
-        XCTAssert(binary.data == data)
-        XCTAssert(binary.bsonData == ([8, 0, 0, 0, 0] as [UInt8] + data))
-        
-        let otherBinary = Binary(binaryData: data, subType: 0x90)
-        
-        XCTAssert(otherBinary.data == data)
-        XCTAssert(otherBinary.bsonData == ([8, 0, 0, 0, 144] as [UInt8] + data))
     }
 
     func testRegexSerialization() {
