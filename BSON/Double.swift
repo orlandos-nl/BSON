@@ -7,9 +7,9 @@ extension Double : BSONElementConvertible {
     }
 
     public static func instantiate(bsonData data: [UInt8]) throws -> Double {
-        var ditched = 0
+        var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &ditched)
+        return try instantiate(bsonData: data, consumedBytes: &🖕)
     }
     
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Double {

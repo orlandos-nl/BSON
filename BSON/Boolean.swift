@@ -14,9 +14,9 @@ extension Bool : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8]) throws -> Bool {
-        var ditched = 0
+        var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &ditched)
+        return try instantiate(bsonData: data, consumedBytes: &🖕)
     }
     
     /// The initializer expects the data for this element, starting AFTER the element type

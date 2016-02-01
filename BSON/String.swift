@@ -7,9 +7,9 @@ extension String : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8]) throws -> String {
-        var ditched = 0
+        var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &ditched)
+        return try instantiate(bsonData: data, consumedBytes: &🖕)
     }
     
     /// The initializer expects the data for this element, starting AFTER the element type
@@ -20,9 +20,7 @@ extension String : BSONElementConvertible {
         }
         
         // Get the length
-        var ditched = 0
-        
-        let length = try Int32.instantiate(bsonData: Array(data[0...3]), consumedBytes: &ditched)
+        let length = try Int32.instantiate(bsonData: Array(data[0...3]))
         
         // Check if the data is at least the right size
         guard data.count >= Int(length) + 4 else {
@@ -48,9 +46,9 @@ extension String : BSONElementConvertible {
     }
 
     internal static func instantiateFromCString(bsonData data: [UInt8]) throws -> String {
-        var ditched = 0
+        var 🖕 = 0
         
-        return try instantiateFromCString(bsonData: data, bytesConsumed: &ditched)
+        return try instantiateFromCString(bsonData: data, bytesConsumed: &🖕)
     }
     
     internal static func instantiateFromCString(bsonData data: [UInt8], inout bytesConsumed: Int) throws -> String {

@@ -65,7 +65,7 @@ extension ElementType {
         case .Array:
             return BSON.Document.self
         case .Binary:
-            abort()
+            return BSON.Binary.self
         case .ObjectId:
             return BSON.ObjectId.self
         case .Boolean:
@@ -75,7 +75,7 @@ extension ElementType {
         case .NullValue:
             return BSON.Null.self
         case .RegularExpression:
-            abort()
+            return BSON.RegularExpression.self
         case .JavaScriptCode:
             abort()
         case .JavascriptCodeWithScope:

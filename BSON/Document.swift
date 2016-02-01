@@ -15,9 +15,9 @@ public struct Document {
         var byteArray = [UInt8](count: data.length, repeatedValue: 0)
         data.getBytes(&byteArray, length: byteArray.count)
         
-        var ditched = 0
+        var 🖕 = 0
         
-        try self.init(data: byteArray, consumedBytes: &ditched)
+        try self.init(data: byteArray, consumedBytes: &🖕)
     }
     
     public init(data: [UInt8]) throws {
@@ -138,9 +138,9 @@ extension Document : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8]) throws -> Document {
-        var ditched = 0
+        var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &ditched)
+        return try instantiate(bsonData: data, consumedBytes: &🖕)
     }
     
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Document {

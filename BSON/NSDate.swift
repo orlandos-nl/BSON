@@ -1,5 +1,5 @@
 //
-//  UTCDateTime.swift
+//  NSDate.swift
 //  BSON
 //
 //  Created by Joannis Orlandos on 24/01/16.
@@ -14,15 +14,13 @@ extension NSDate : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8]) throws -> Self {
-        var ditched = 0
+        var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &ditched)
+        return try instantiate(bsonData: data, consumedBytes: &🖕)
     }
     
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Self {
-        var ditched = 0
-        
-        let interval = try Int.instantiate(bsonData: data, consumedBytes: &ditched)
+        let interval = try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes)
         let date = self.init(timeIntervalSinceReferenceDate: Double(interval) - NSTimeIntervalSince1970)
         consumedBytes = 8
         return date
