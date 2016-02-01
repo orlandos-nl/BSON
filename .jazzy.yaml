@@ -13,7 +13,6 @@ custom_categories:
     - Bool
     - Double
     - Int
-    - Int16
     - Int32
     - NSData
     - NSDate
@@ -29,3 +28,4 @@ custom_categories:
     - ElementType
     - AbstractBSONBase
     - BSONElementConvertible
+    - Int16
