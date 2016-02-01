@@ -146,42 +146,80 @@ extension Document : BSONElementConvertible {
 }
 
 extension Document : ArrayLiteralConvertible {
-    /// For now.. only accept BSONElementConvertible
-    public init(arrayLiteral arrayElements: BSONElementConvertible...) {
-        for element in arrayElements {
-            self.elements[self.elements.count.description] = element
+    public init(array: [BSONElementConvertible]) {
+        for e in array {
+            self.elements[self.elements.count.description] = e
         }
+    }
+    
+    /// For now.. only accept BSONElementConvertible
+    public init(arrayLiteral arrayElements: AbstractBSONBase...) {
+        self.init(native: arrayElements)
     }
 }
 
 extension Document : DictionaryLiteralConvertible {
     /// Create an instance initialized with `elements`.
-    public init(dictionaryLiteral dictionaryElements: (String, BSONElementConvertible)...) {
-        for (key, element) in dictionaryElements {
-            self.elements[key] = element
+    public init(dictionaryLiteral dictionaryElements: (String, AbstractBSONBase)...) {
+        var dict = [String:AbstractBSONBase]()
+        
+        for (k, v) in dictionaryElements {
+            dict[k] = v
+        }
+        
+        self.init(native: dict)
+    }
+}
+
+// TODO: Add assignment subscript
+
+extension Document {
+    private init(native: [AbstractBSONBase]) {
+        // TODO: Call other initializer with a dictionary from this array
+        var d = [String:AbstractBSONBase]()
+        
+        for e in native {
+            d[String(d.count)] = e
+        }
+        
+        self.init(native: d)
+    }
+    
+    private init(native: [String: AbstractBSONBase]) {
+        for (key, element) in native {
+            switch element {
+            case let element as BSONElementConvertible:
+                elements[key] = element
+            case let element as BSONArrayConversionProtocol:
+                elements[key] = Document(native: element.getAbstractArray())
+            case let element as BSONDictionaryConversionProtocol:
+                elements[key] = Document(native: element.getAbstractDictionary())
+            default:
+                print("WARNING: Document cannot be initialized with an element of type \(element.dynamicType)")
+            }
         }
     }
 }
 
 extension Document : SequenceType {
     public typealias Key = String
-    public typealias Value = BSONElementConvertible
-    public typealias Index = DictionaryIndex<Key, Value>
+    public typealias FooValue = BSONElementConvertible
+    public typealias Index = DictionaryIndex<Key, FooValue>
     
     // Remap everything to elements
-    public var startIndex: DictionaryIndex<Key, Value> {
+    public var startIndex: DictionaryIndex<Key, FooValue> {
         return elements.startIndex
     }
     
-    public var endIndex: DictionaryIndex<Key, Value> {
+    public var endIndex: DictionaryIndex<Key, FooValue> {
         return elements.endIndex
     }
     
-    public func indexForKey(key: Key) -> DictionaryIndex<Key, Value>? {
+    public func indexForKey(key: Key) -> DictionaryIndex<Key, FooValue>? {
         return elements.indexForKey(key)
     }
     
-    public subscript (key: Key) -> Value? {
+    public subscript (key: Key) -> FooValue? {
         return elements[key]
     }
     
@@ -190,20 +228,20 @@ extension Document : SequenceType {
         return self["\(key)"]
     }
     
-    public subscript (position: DictionaryIndex<Key, Value>) -> (Key, Value) {
+    public subscript (position: DictionaryIndex<Key, FooValue>) -> (Key, FooValue) {
         return elements[position]
     }
     
-    public mutating func updateValue(value: Value, forKey key: Key) -> Value? {
+    public mutating func updateValue(value: FooValue, forKey key: Key) -> FooValue? {
         return elements.updateValue(value, forKey: key)
     }
     
     // WORKS?
-    public mutating func removeAtIndex(index: DictionaryIndex<Key, Value>) -> (Key, Value) {
+    public mutating func removeAtIndex(index: DictionaryIndex<Key, FooValue>) -> (Key, FooValue) {
         return elements.removeAtIndex(index)
     }
     
-    public mutating func removeValueForKey(key: Key) -> Value? {
+    public mutating func removeValueForKey(key: Key) -> FooValue? {
         return elements.removeValueForKey(key)
     }
     
@@ -215,15 +253,15 @@ extension Document : SequenceType {
         return elements.count
     }
     
-    public func generate() -> DictionaryGenerator<Key, Value> {
+    public func generate() -> DictionaryGenerator<Key, FooValue> {
         return elements.generate()
     }
     
-    public var keys: LazyMapCollection<[Key : Value], Key> {
+    public var keys: LazyMapCollection<[Key : FooValue], Key> {
         return elements.keys
     }
     
-    public var values: LazyMapCollection<[Key : Value], Value> {
+    public var values: LazyMapCollection<[Key : FooValue], FooValue> {
         return elements.values
     }
     

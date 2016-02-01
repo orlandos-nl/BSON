@@ -12,6 +12,8 @@ import Foundation
     import Glibc
 #endif
 
+public protocol AbstractBSONBase {}
+
 public enum ElementType : UInt8 {
     case Double = 0x01
     case String = 0x02
@@ -82,7 +84,7 @@ public enum BsonLength {
     case NullTerminated
 }
 
-public protocol BSONElementConvertible {
+public protocol BSONElementConvertible : AbstractBSONBase {
     var elementType: ElementType { get }
     
     /// Here, return the same data as you would accept in the initializer

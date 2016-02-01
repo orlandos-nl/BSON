@@ -14,7 +14,7 @@ import XCTest
     import Glibc
 #endif
 
-class BSONTests: XCTestCase {
+class BSONInternalTests: XCTestCase {
     
     // for old snapshot, removed throws
     var allTests : [(String, () -> Void)] {
@@ -44,16 +44,19 @@ class BSONTests: XCTestCase {
         let kittenDocument: Document = [
             "doubleTest": 0.04,
             "stringTest": "foo",
-            "documentTest": [
+            "documentTest": *[
                 "documentSubDoubleTest": 13.37,
-                "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
-            ] as Document,
+                "subArray": ["henk", "fred", "kaas", "goudvis"]
+            ],
             "nonRandomObjectId": try! ObjectId(hexString: "0123456789ABCDEF01234567"),
             "currentTime": NSDate(timeIntervalSince1970: Double(1453589266)),
             "cool32bitNumber": Int32(9001),
             "cool64bitNumber": 21312153544,
             "nothing": Null()
         ]
+        
+        print(expected)
+        print(kittenDocument.bsonData)
         
         XCTAssert(expected == kittenDocument.bsonData)
         
@@ -218,9 +221,9 @@ class BSONTests: XCTestCase {
     }
     
     func testDocumentSubscript() {
-        let testDocument: Document = ["a": 0, "b": Null(), "c": [
-                "aa": "bb", "cc": [1, 2, 3] as Document
-            ] as Document,
+        let testDocument: Document = ["a": 0, "b": Null(), "c": *[
+                "aa": "bb", "cc": [1, 2, 3]
+            ],
         "d": 3.14]
         
         if let a: Int = testDocument["a"] as? Int {
@@ -233,7 +236,7 @@ class BSONTests: XCTestCase {
         XCTAssert(testDocument["b"]! is Null)
         
         if let c: Document = testDocument["c"] as? Document {
-            let subDoc: Document = ["aa": "bb", "cc": [1, 2, 3] as Document]
+            let subDoc: Document = ["aa": "bb", "cc": [1, 2, 3]]
             
             XCTAssert(c.bsonData == subDoc.bsonData)
             
