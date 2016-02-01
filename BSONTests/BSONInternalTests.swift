@@ -220,7 +220,7 @@ class BSONInternalTests: XCTestCase {
         
         // Test errors
         do {
-            let _ = ObjectId(bsonData: [0x04, 0x04, 0x02])
+            let _ = try ObjectId(bsonData: [0x04, 0x04, 0x02])
             XCTFail()
         } catch DeserializationError.InvalidElementSize {
             XCTAssert(true)

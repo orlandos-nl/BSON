@@ -17,6 +17,7 @@ class BSONPublicTests: XCTestCase {
             "hello": "I am a document created trough the public API",
             "subdocument": *["hello", "mother of god"]
         ]
+        
         XCTAssert(document.count == 2)
     }
     

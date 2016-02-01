@@ -9,6 +9,8 @@
 import Foundation
 
 public struct Null : BSONElementConvertible {
+    public init() {}
+    
     public var elementType: ElementType {
         return .NullValue
     }

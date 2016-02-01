@@ -89,6 +89,7 @@
 		F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Feature Checklist.txt"; sourceTree = "<group>"; };
 		F27375391C5A61E400CDE296 /* Null.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Null.swift; sourceTree = "<group>"; };
 		F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .jazzy.yaml; sourceTree = "<group>"; };
+		F2F4C3361C5FE60100CB84C7 /* Tutorial.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = Tutorial.playground; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +124,7 @@
 		F20A95491C5383440054AB52 = {
 			isa = PBXGroup;
 			children = (
+				F2F4C3361C5FE60100CB84C7 /* Tutorial.playground */,
 				F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */,
 				F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */,
 				F212DC861C58C3FA00B36A19 /* README.md */,

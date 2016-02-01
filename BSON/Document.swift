@@ -20,7 +20,12 @@ public struct Document {
         try self.init(data: byteArray, consumedBytes: &ditched)
     }
     
-    public init(data: [UInt8], inout consumedBytes: Int) throws {
+    public init(data: [UInt8]) throws {
+        var 🖕 = 0
+        try self.init(data: data, consumedBytes: &🖕)
+    }
+    
+    internal init(data: [UInt8], inout consumedBytes: Int) throws {
         // A BSON document cannot be smaller than 5 bytes (which would be an empty document)
         guard data.count >= 5 else {
             throw DeserializationError.InvalidDocumentLength
@@ -267,5 +272,11 @@ extension Document : SequenceType {
     
     public var isEmpty: Bool {
         return elements.isEmpty
+    }
+}
+
+extension Document : CustomStringConvertible {
+    public var description: String {
+        return elements.description
     }
 }
