@@ -52,7 +52,7 @@ public struct ObjectId {
         data = bsonData
         
         guard data.count == 12 else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.InvalidElementSize
         }
     }
     

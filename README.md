@@ -8,7 +8,7 @@ BSON is parsed and generated as specified for version 1.0 (http://bsonspec.org/s
 
 You can use this library trough Carthage, git submodules or the Swift Package Manager (currently Linux-only).
 
-All usage is covered by the unit tests.
+Check the [documentation](https://planteam.github.io/BSON/) for more information.
 
 ### Supported Types
 

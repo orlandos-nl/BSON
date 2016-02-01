@@ -77,6 +77,16 @@ class BSONInternalTests: XCTestCase {
         
         let generatedData = 5.05.bsonData
         XCTAssert(generatedData == rawData, "Converting a Double to BSON data results in the correct data")
+        
+        // Test errors
+        do {
+            let _ = try Double.instantiate(bsonData: [0x04])
+            XCTFail()
+        } catch DeserializationError.InvalidElementSize {
+            XCTAssert(true)
+        } catch {
+            XCTFail()
+        }
     }
     
     func testStringSerialization() {
@@ -104,23 +114,43 @@ class BSONInternalTests: XCTestCase {
     }
     
     func testInt32Serialization() {
-        // This is 5.05
         let rawData: [UInt8] = [0xc2, 0x07, 0x00, 0x00]
         let double = try! Int32.instantiate(bsonData: rawData)
         XCTAssertEqual(double, 1986, "Instantiating an int32 from BSON data works correctly")
         
         let generatedData = (1986 as Int32).bsonData
         XCTAssert(generatedData == rawData, "Converting an int32 to BSON data results in the correct data")
+        
+        // Test errors
+        do {
+            let _ = try Int32.instantiate(bsonData: [0xc2, 0x07, 0x00, 0x00, 0x00])
+            XCTFail()
+        } catch DeserializationError.InvalidElementSize {
+            // fine!
+            XCTAssert(true)
+        } catch {
+            XCTFail()
+        }
     }
     
     func testInt64Serialization() {
-        // This is 5.05
         let rawData: [UInt8] = [0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         let double = try! Int.instantiate(bsonData: rawData)
         XCTAssertEqual(double, 1, "Instantiating an integer from BSON data works correctly")
         
         let generatedData = (1 as Int).bsonData
         XCTAssert(generatedData == rawData, "Converting an integer to BSON data results in the correct data")
+        
+        // Test errors
+        do {
+            let _ = try Int.instantiate(bsonData: [0x01, 0x00, 0x00, 0x04, 0x00, 0x00, 0x06, 0x08, 0x04])
+            XCTFail()
+        } catch DeserializationError.InvalidElementSize {
+            // fine!
+            XCTAssert(true)
+        } catch {
+            XCTFail()
+        }
     }
     
     func testDateTimeSerialization() {
@@ -187,6 +217,16 @@ class BSONInternalTests: XCTestCase {
         // ObjectId generation
         let randomId = ObjectId()
         XCTAssertEqual(randomId.data.count, 12)
+        
+        // Test errors
+        do {
+            let _ = ObjectId(bsonData: [0x04, 0x04, 0x02])
+            XCTFail()
+        } catch DeserializationError.InvalidElementSize {
+            XCTAssert(true)
+        } catch {
+            XCTFail()
+        }
     }
     
     // Yes, really.

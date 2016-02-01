@@ -1,0 +1,31 @@
+author_name: "Robbert Brandsma & Joannis Orlandos"
+module_name: BSON
+readme: README.md
+github_url: https://github.com/PlanTeam/BSON
+
+custom_categories:
+  - name: BSON Types
+    children:
+    - Document
+    - ObjectId
+    - Binary
+    - "Null"
+    - Bool
+    - Double
+    - Int
+    - Int16
+    - Int32
+    - NSData
+    - NSDate
+    - String
+  
+  - name: Errors
+    children:
+    - DeserializationError
+  
+  - name: Details
+    children:
+    - BsonLength
+    - ElementType
+    - AbstractBSONBase
+    - BSONElementConvertible
