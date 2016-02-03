@@ -15,7 +15,6 @@
 		0A3ABBA81C57BA3800FAC1D3 /* Integer16.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */; };
 		0A4611721C54206900963114 /* Integer64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4611711C54206900963114 /* Integer64.swift */; };
 		0A4611741C54208C00963114 /* Integer32.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4611731C54208C00963114 /* Integer32.swift */; };
-		0A4A7C951C5B84F80002EF5E /* SwiftSequence.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A4A7C901C5B84EE0002EF5E /* SwiftSequence.framework */; };
 		0A549A6A1C5409610049A1A2 /* Binary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A549A691C5409610049A1A2 /* Binary.swift */; };
 		0AEAD4A51C5436DC00D1CBC3 /* Timestamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEAD4A41C5436DC00D1CBC3 /* Timestamp.swift */; };
 		F20437581C6283A600C586C4 /* JavaScriptCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20437571C6283A600C586C4 /* JavaScriptCode.swift */; };
@@ -36,27 +35,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		0A4A7C8F1C5B84EE0002EF5E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0A4A7C8A1C5B84EE0002EF5E /* SwiftSequence.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 707F996A1C13B9EA00CE1A23;
-			remoteInfo = SwiftSequence;
-		};
-		0A4A7C911C5B84EE0002EF5E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0A4A7C8A1C5B84EE0002EF5E /* SwiftSequence.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 707F99741C13B9EB00CE1A23;
-			remoteInfo = Tests;
-		};
-		0A4A7C931C5B84F30002EF5E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0A4A7C8A1C5B84EE0002EF5E /* SwiftSequence.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 707F99691C13B9EA00CE1A23;
-			remoteInfo = SwiftSequence;
-		};
 		F20A955F1C5383440054AB52 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F20A954A1C5383440054AB52 /* Project object */;
@@ -75,7 +53,6 @@
 		0A3ABBA71C57BA3800FAC1D3 /* Integer16.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer16.swift; sourceTree = "<group>"; };
 		0A4611711C54206900963114 /* Integer64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer64.swift; sourceTree = "<group>"; };
 		0A4611731C54208C00963114 /* Integer32.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Integer32.swift; sourceTree = "<group>"; };
-		0A4A7C8A1C5B84EE0002EF5E /* SwiftSequence.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SwiftSequence.xcodeproj; path = Carthage/Checkouts/SwiftSequence/SwiftSequence.xcodeproj; sourceTree = "<group>"; };
 		0A549A691C5409610049A1A2 /* Binary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Binary.swift; sourceTree = "<group>"; };
 		0AEAD4A41C5436DC00D1CBC3 /* Timestamp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Timestamp.swift; sourceTree = "<group>"; };
 		F20437571C6283A600C586C4 /* JavaScriptCode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JavaScriptCode.swift; sourceTree = "<group>"; };
@@ -88,9 +65,7 @@
 		F20A956D1C5383590054AB52 /* Document.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		F20A957B1C5392D40054AB52 /* Element.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Element.swift; sourceTree = "<group>"; };
 		F20A957D1C5394580054AB52 /* Error.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
-		F212DC851C58C3F000B36A19 /* Cartfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cartfile; sourceTree = "<group>"; };
 		F212DC861C58C3FA00B36A19 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		F212DC871C58C57600B36A19 /* SwiftSequence.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSequence.framework; path = Carthage/Checkouts/SwiftSequence/build/Debug/SwiftSequence.framework; sourceTree = "<group>"; };
 		F252725F1C53AAC600CBB42E /* Double.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Double.swift; sourceTree = "<group>"; };
 		F25272611C53AADD00CBB42E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
 		F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Feature Checklist.txt"; sourceTree = "<group>"; };
@@ -109,7 +84,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A4A7C951C5B84F80002EF5E /* SwiftSequence.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,15 +98,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0A4A7C8B1C5B84EE0002EF5E /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				0A4A7C901C5B84EE0002EF5E /* SwiftSequence.framework */,
-				0A4A7C921C5B84EE0002EF5E /* Tests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		F20A95491C5383440054AB52 = {
 			isa = PBXGroup;
 			children = (
@@ -140,7 +105,6 @@
 				F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */,
 				F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */,
 				F212DC861C58C3FA00B36A19 /* README.md */,
-				F212DC8A1C58C5D900B36A19 /* Dependencies */,
 				F20A95551C5383440054AB52 /* BSON */,
 				F20A95611C5383440054AB52 /* BSONTests */,
 				F20A95541C5383440054AB52 /* Products */,
@@ -177,16 +141,6 @@
 				F20A95641C5383440054AB52 /* Info.plist */,
 			);
 			path = BSONTests;
-			sourceTree = "<group>";
-		};
-		F212DC8A1C58C5D900B36A19 /* Dependencies */ = {
-			isa = PBXGroup;
-			children = (
-				0A4A7C8A1C5B84EE0002EF5E /* SwiftSequence.xcodeproj */,
-				F212DC851C58C3F000B36A19 /* Cartfile */,
-				F212DC871C58C57600B36A19 /* SwiftSequence.framework */,
-			);
-			name = Dependencies;
 			sourceTree = "<group>";
 		};
 		F252725E1C53AABC00CBB42E /* Elements */ = {
@@ -248,7 +202,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				0A4A7C941C5B84F30002EF5E /* PBXTargetDependency */,
 			);
 			name = BSON;
 			productName = BSON;
@@ -301,12 +254,6 @@
 			mainGroup = F20A95491C5383440054AB52;
 			productRefGroup = F20A95541C5383440054AB52 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 0A4A7C8B1C5B84EE0002EF5E /* Products */;
-					ProjectRef = 0A4A7C8A1C5B84EE0002EF5E /* SwiftSequence.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				F20A95521C5383440054AB52 /* BSON */,
@@ -314,23 +261,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		0A4A7C901C5B84EE0002EF5E /* SwiftSequence.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = SwiftSequence.framework;
-			remoteRef = 0A4A7C8F1C5B84EE0002EF5E /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		0A4A7C921C5B84EE0002EF5E /* Tests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = Tests.xctest;
-			remoteRef = 0A4A7C911C5B84EE0002EF5E /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		F20A95511C5383440054AB52 /* Resources */ = {
@@ -390,11 +320,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		0A4A7C941C5B84F30002EF5E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = SwiftSequence;
-			targetProxy = 0A4A7C931C5B84F30002EF5E /* PBXContainerItemProxy */;
-		};
 		F20A95601C5383440054AB52 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F20A95521C5383440054AB52 /* BSON */;

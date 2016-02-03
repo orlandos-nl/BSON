@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SwiftSequence
 
 #if os(Linux)
     import Glibc
@@ -29,15 +28,12 @@ public struct ObjectId {
         
         data = []
         
-        charLoop: for s in hexString.characters.chunk(2) {
-            guard let a = s.first, b = s.last else {
-                break charLoop
-            }
+        var gen = hexString.characters.generate()
+        while let c1 = gen.next(), c2 = gen.next() {
+            let s = String([c1, c2])
             
-            let c = String([a, b])
-            
-            guard let d = UInt8(c, radix: 16) else {
-                break charLoop
+            guard let d = UInt8(s, radix: 16) else {
+                break
             }
             
             data.append(d)
