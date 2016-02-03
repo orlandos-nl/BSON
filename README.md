@@ -51,6 +51,8 @@ Code not using this operator will compile, but the embedded documents won't be i
 
 ### Supported Types
 
+All non-deprecated BSON 1.0 types are supported.
+
 - Double (Swift.Double)
 - String (Swift.String)
 - Document (BSON.Document)
@@ -66,8 +68,5 @@ Code not using this operator will compile, but the embedded documents won't be i
 - Min Key (BSON.MinKey)
 - Max Key (BSON.MaxKey)
 - Timestamp (BSON.Timestamp)
-
-The following types are not implemented yet:
-
-- Javascript Code
-- Javascript Code with Scope
+- Javascript Code (BSON.JavaScriptCode)
+- Javascript Code with Scope (BSON.JavaScriptCode)
