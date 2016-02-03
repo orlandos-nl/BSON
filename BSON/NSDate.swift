@@ -16,11 +16,11 @@ extension NSDate : BSONElementConvertible {
     public static func instantiate(bsonData data: [UInt8]) throws -> Self {
         var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &🖕)
+        return try instantiate(bsonData: data, consumedBytes: &🖕, type: .DateTime)
     }
     
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Self {
-        let interval = try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes)
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Self {
+        let interval = try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .Int64)
         let date = self.init(timeIntervalSinceReferenceDate: Double(interval) - NSTimeIntervalSince1970)
         return date
     }

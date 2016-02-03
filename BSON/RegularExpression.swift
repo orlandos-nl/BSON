@@ -30,10 +30,10 @@ extension RegularExpression : BSONElementConvertible {
     
     public static func instantiate(bsonData data: [UInt8]) throws -> RegularExpression {
         var 🖕 = 0
-        return try instantiate(bsonData: data, consumedBytes: &🖕)
+        return try instantiate(bsonData: data, consumedBytes: &🖕, type: .RegularExpression)
     }
     
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> RegularExpression {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> RegularExpression {
         let k = data.split(0, maxSplit: 2, allowEmptySlices: true)
         guard k.count >= 2 else {
             throw DeserializationError.InvalidElementSize

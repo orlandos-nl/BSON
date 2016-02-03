@@ -16,11 +16,11 @@ extension Bool : BSONElementConvertible {
     public static func instantiate(bsonData data: [UInt8]) throws -> Bool {
         var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &🖕)
+        return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Boolean)
     }
     
     /// The initializer expects the data for this element, starting AFTER the element type
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Bool {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Bool {
         guard data.count >= 1 else {
             throw DeserializationError.InvalidDocumentLength
         }

@@ -26,8 +26,8 @@ public struct Timestamp : BSONElementConvertible {
         return self.init(try Int64.instantiate(bsonData: data))
     }
     
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Timestamp {
-        return self.init(try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes))
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Timestamp {
+        return self.init(try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .Int64))
     }
     
     private init(_ s: Int64) { storage = s }

@@ -25,7 +25,7 @@ public struct Null : BSONElementConvertible {
     }
     
     /// The initializer expects the data for this element, starting AFTER the element type
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Null {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Null {
         consumedBytes = 0
         return Null()
     }

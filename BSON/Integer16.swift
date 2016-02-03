@@ -8,24 +8,18 @@
 
 import Foundation
 
-extension Int16 {
-    public static func instantiate(bsonData data: [UInt8]) throws -> Int16 {
-        var 🖕 = 0
-        
-        return try instantiate(bsonData: data, consumedBytes: &🖕)
-    }
-    
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Int16 {
+// For BSONElementConvertible-like behavior. No full support because this isn't a BSON type.
+internal extension Int16 {
+    internal static func instantiate(bsonData data: [UInt8]) throws -> Int16 {
         guard data.count >= 2 else {
             throw DeserializationError.InvalidElementSize
         }
         
         let integer = UnsafePointer<Int16>(data).memory
-        consumedBytes = 2
         return integer
     }
     
-    public var bsonData: [UInt8] {
+    internal var bsonData: [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
             Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16)))

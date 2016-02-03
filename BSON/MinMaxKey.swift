@@ -14,7 +14,7 @@ public struct MinKey : BSONElementConvertible {
     public let elementType = ElementType.MinKey
     public let bsonData = [UInt8]()
     public static var bsonLength = BsonLength.Fixed(length: 0)
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> MinKey {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> MinKey {
         consumedBytes = 0
         return MinKey()
     }
@@ -29,7 +29,7 @@ public struct MaxKey : BSONElementConvertible {
     public let elementType = ElementType.MaxKey
     public let bsonData = [UInt8]()
     public static var bsonLength = BsonLength.Fixed(length: 0)
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> MaxKey {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> MaxKey {
         consumedBytes = 0
         return MaxKey()
     }

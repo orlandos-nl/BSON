@@ -86,7 +86,7 @@ public struct Document {
             }
             
             var consumedElementBytes = -1
-            let result = try elementType.type.instantiate(bsonData: elementData, consumedBytes: &consumedElementBytes)
+            let result = try elementType.type.instantiate(bsonData: elementData, consumedBytes: &consumedElementBytes, type: elementType)
             
             if consumedElementBytes == -1 {
                 throw DeserializationError.ParseError

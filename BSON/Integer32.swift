@@ -16,10 +16,10 @@ extension Int32 : BSONElementConvertible {
     public static func instantiate(bsonData data: [UInt8]) throws -> Int32 {
         var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &🖕)
+        return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Int32)
     }
     
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Int32 {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Int32 {
         guard data.count >= 4 else {
             throw DeserializationError.InvalidElementSize
         }

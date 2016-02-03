@@ -9,10 +9,10 @@ extension Double : BSONElementConvertible {
     public static func instantiate(bsonData data: [UInt8]) throws -> Double {
         var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &🖕)
+        return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Double)
     }
     
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Double {
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Double {
         guard data.count >= 8 else {
             print(data)
             throw DeserializationError.InvalidElementSize

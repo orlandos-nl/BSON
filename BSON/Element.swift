@@ -116,7 +116,8 @@ public protocol BSONElementConvertible : AbstractBSONBase {
     
     /// The initializer expects the data for this element, starting AFTER the element type
     /// The input consumedBytes is set the the amount of bytes we consumed instantiating this variable
-    static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Self
+    /// Objects that support initialization from only one ElementType may ignore this parameter.
+    static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Self
     
     /// The initializer expects the data for this element, starting AFTER the element type
     static func instantiate(bsonData data: [UInt8]) throws -> Self
