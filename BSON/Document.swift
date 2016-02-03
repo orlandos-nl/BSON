@@ -38,7 +38,7 @@ public struct Document {
         }
         
         defer {
-            consumedBytes = documentLength+4
+            consumedBytes = documentLength
         }
         
         // Parse! Loop over the element list.
@@ -49,8 +49,11 @@ public struct Document {
             position += 1
             
             guard let elementType = ElementType(rawValue: elementTypeValue) else {
-                if elementTypeValue == 0x00 {
+                if elementTypeValue == 0x00 && position == documentLength {
                     return
+                } else if elementTypeValue == 0x00 {
+                    // unexpected end of document
+                    throw DeserializationError.ParseError
                 }
                 
                 throw DeserializationError.UnknownElementType
@@ -73,7 +76,7 @@ public struct Document {
             case .Fixed(let bsonLength):
                 elementData = Array(data[position..<position+bsonLength])
             case .Undefined:
-                elementData = Array(data[position..<data.endIndex])
+                elementData = Array(data[position..<documentLength])
             case .NullTerminated:
                 guard let terminatorIndex = data[(position + 4)..<data.endIndex].indexOf(0) else {
                     throw DeserializationError.ParseError
@@ -87,6 +90,11 @@ public struct Document {
             
             if consumedElementBytes == -1 {
                 throw DeserializationError.ParseError
+            }
+            
+            if case .Fixed(let bsonLength) = length where consumedElementBytes != bsonLength {
+                // Invalid!
+                throw DeserializationError.InvalidElementSize
             }
             
             position += consumedElementBytes

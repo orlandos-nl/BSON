@@ -26,8 +26,7 @@ extension Document : BSONElementConvertible {
         body += [0x00]
         length += body.count
         
-        var finalData = Int32(length).bsonData
-        finalData.appendContentsOf(body)
+        let finalData = Int32(length).bsonData + body
         
         return finalData
     }
