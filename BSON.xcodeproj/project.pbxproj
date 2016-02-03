@@ -130,7 +130,8 @@
 				F20A957B1C5392D40054AB52 /* Element.swift */,
 				F20A957D1C5394580054AB52 /* Error.swift */,
 			);
-			path = BSON;
+			name = BSON;
+			path = Sources;
 			sourceTree = "<group>";
 		};
 		F20A95611C5383440054AB52 /* BSONTests */ = {
@@ -140,7 +141,8 @@
 				0A332A601C5FB62200FD8613 /* BSONPublicTests.swift */,
 				F20A95641C5383440054AB52 /* Info.plist */,
 			);
-			path = BSONTests;
+			name = BSONTests;
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		F252725E1C53AABC00CBB42E /* Elements */ = {
@@ -424,7 +426,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = BSON/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSON;
@@ -444,7 +446,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = BSON/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSON;
@@ -457,7 +459,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = BSONTests/Info.plist;
+				INFOPLIST_FILE = Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSONTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -468,7 +470,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = BSONTests/Info.plist;
+				INFOPLIST_FILE = Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSONTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
