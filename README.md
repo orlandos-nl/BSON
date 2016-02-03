@@ -62,12 +62,12 @@ Code not using this operator will compile, but the embedded documents won't be i
 - 64-bit integer (Swift.Int)
 - Null value (BSON.Null)
 - Binary (BSON.Binary)
+- Regular Expression (BSON.RegularExpression)
+- Min Key (BSON.MinKey)
+- Max Key (BSON.MaxKey)
+- Timestamp (BSON.Timestamp)
 
 The following types are not implemented yet:
 
-- Regular Expression
 - Javascript Code
 - Javascript Code with Scope
-- Timestamp
-- Min key
-- Max key
