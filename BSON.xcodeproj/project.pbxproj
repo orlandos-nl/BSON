@@ -103,8 +103,8 @@
 				F2F4C3361C5FE60100CB84C7 /* Tutorial.playground */,
 				F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */,
 				F212DC861C58C3FA00B36A19 /* README.md */,
-				F20A95551C5383440054AB52 /* BSON */,
-				F20A95611C5383440054AB52 /* BSONTests */,
+				F20A95551C5383440054AB52 /* Sources */,
+				F20A95611C5383440054AB52 /* Tests */,
 				F20A95541C5383440054AB52 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -118,7 +118,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		F20A95551C5383440054AB52 /* BSON */ = {
+		F20A95551C5383440054AB52 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
 				F2B8DB9C1C623D4700864FE3 /* Document */,
@@ -128,18 +128,16 @@
 				F20A957B1C5392D40054AB52 /* Element.swift */,
 				F20A957D1C5394580054AB52 /* Error.swift */,
 			);
-			name = BSON;
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		F20A95611C5383440054AB52 /* BSONTests */ = {
+		F20A95611C5383440054AB52 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
 				F20A95621C5383440054AB52 /* BSONInternalTests.swift */,
 				0A332A601C5FB62200FD8613 /* BSONPublicTests.swift */,
 				F20A95641C5383440054AB52 /* Info.plist */,
 			);
-			name = BSONTests;
 			path = Tests;
 			sourceTree = "<group>";
 		};
