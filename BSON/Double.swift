@@ -13,7 +13,7 @@ extension Double : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Double {
-        guard data.count == 8 else {
+        guard data.count >= 8 else {
             print(data)
             throw DeserializationError.InvalidElementSize
         }

@@ -78,4 +78,17 @@ class BSONPublicTests: XCTestCase {
         }
     }
     
+    func testMultipleDocumentInstantiation() {
+        let document1: Document = ["keyOne": "valueOne", "keyTwo": 42.3]
+        let document2: Document = ["keyThree": "henk", "keyFour": 382]
+        
+        let data = document1.bsonData + document2.bsonData
+        
+        let reincarnations = try! Document.instantiateAll(data)
+        XCTAssert(reincarnations.count == 2)
+        
+        XCTAssert(reincarnations[0].bsonData == document1.bsonData)
+        XCTAssert(reincarnations[1].bsonData == document2.bsonData)
+    }
+    
 }

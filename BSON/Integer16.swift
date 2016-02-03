@@ -16,7 +16,7 @@ extension Int16 {
     }
     
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Int16 {
-        guard data.count == 2 else {
+        guard data.count >= 2 else {
             throw DeserializationError.InvalidElementSize
         }
         

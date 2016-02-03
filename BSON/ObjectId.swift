@@ -103,7 +103,7 @@ extension ObjectId : BSONElementConvertible {
     /// The initializer expects the data for this element, starting AFTER the element type
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> ObjectId {
         let objectID = try self.init(bsonData: data)
-        consumedBytes = data.count
+        consumedBytes = 12
         
         return objectID
     }

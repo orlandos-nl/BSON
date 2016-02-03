@@ -45,7 +45,8 @@ extension RegularExpression : BSONElementConvertible {
         let optionsData = Array(k[1])
         let options = try String.instantiateFromCString(bsonData: optionsData)
         
-        consumedBytes = patternData.count + optionsData.count
+        // +1 for the null which is removed by the split
+        consumedBytes = patternData.count+1 + optionsData.count+1
         
         return self.init(pattern: pattern, options: options)
     }

@@ -48,13 +48,17 @@ extension String : BSONElementConvertible {
     internal static func instantiateFromCString(bsonData data: [UInt8]) throws -> String {
         var 🖕 = 0
         
-        return try instantiateFromCString(bsonData: data, bytesConsumed: &🖕)
+        return try instantiateFromCString(bsonData: data, consumedBytes: &🖕)
     }
     
-    internal static func instantiateFromCString(bsonData data: [UInt8], inout bytesConsumed: Int) throws -> String {
-        bytesConsumed = data.count
+    internal static func instantiateFromCString(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
+        guard let stringData = data.split(0x00, maxSplit: 1, allowEmptySlices: true).first else {
+            throw DeserializationError.ParseError
+        }
         
-        guard let string = String(bytes: data, encoding: NSUTF8StringEncoding) else {
+        consumedBytes = stringData.count+1
+        
+        guard let string = String(bytes: stringData, encoding: NSUTF8StringEncoding) else {
             throw DeserializationError.ParseError
         }
         

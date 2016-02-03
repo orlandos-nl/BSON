@@ -21,7 +21,7 @@ extension Bool : BSONElementConvertible {
     
     /// The initializer expects the data for this element, starting AFTER the element type
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Bool {
-        guard data.count == 1 else {
+        guard data.count >= 1 else {
             throw DeserializationError.InvalidDocumentLength
         }
         

@@ -59,7 +59,7 @@ class BSONInternalTests: XCTestCase {
         
         XCTAssert(expected == kittenDocument.bsonData)
         
-        let dogUment = try! Document.instantiate(bsonData: expected)
+        let dogUment = try! Document.instantiate(bsonData: kittenDocument.bsonData)
         
         XCTAssert(dogUment.bsonData == kittenDocument.bsonData)
         

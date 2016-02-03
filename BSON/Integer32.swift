@@ -20,7 +20,7 @@ extension Int32 : BSONElementConvertible {
     }
     
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Int32 {
-        guard data.count == 4 else {
+        guard data.count >= 4 else {
             throw DeserializationError.InvalidElementSize
         }
         

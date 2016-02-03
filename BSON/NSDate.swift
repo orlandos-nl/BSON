@@ -22,7 +22,6 @@ extension NSDate : BSONElementConvertible {
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> Self {
         let interval = try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes)
         let date = self.init(timeIntervalSinceReferenceDate: Double(interval) - NSTimeIntervalSince1970)
-        consumedBytes = 8
         return date
     }
     

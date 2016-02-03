@@ -59,6 +59,9 @@ public struct Binary : BSONElementConvertible {
         }
         
         let realData = length > 0 ? Array(data[5...Int(4+length)]) : []
+        // length + subType + data
+        consumedBytes = 4 + 1 + Int(length)
+        
         return self.init(data: realData, subType: subType)
     }
     
