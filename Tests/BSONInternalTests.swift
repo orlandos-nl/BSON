@@ -15,6 +15,12 @@ import XCTest
 #endif
 
 class BSONInternalTests: XCTestCase {
+    var allTests : [(String, () -> Void)] {
+        return [
+            ("testCStringSerialization", testCStringSerialization),
+            // Other tests go here
+        ]
+    }
     
     func testCStringSerialization() {
         // This is "ABCD"

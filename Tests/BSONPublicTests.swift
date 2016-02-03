@@ -11,6 +11,28 @@ import XCTest
 import BSON
 
 class BSONPublicTests: XCTestCase {
+    var allTests : [(String, () -> Void)] {
+        return [
+            ("testBasics", testBasics),
+            ("testBinarySerialization", testBinarySerialization ),
+            ("testMultipleDocumentInstantiation", testMultipleDocumentInstantiation ),
+            ("testDocumentOne", testDocumentOne),
+            ("testDoubleSerialization", testDoubleSerialization),
+            ("testStringSerialization", testStringSerialization),
+            ("testBooleanSerialization", testBooleanSerialization),
+            ("testInt32Serialization", testInt32Serialization),
+            ("testInt64Serialization", testInt64Serialization),
+            ("testDateTimeSerialization", testDateTimeSerialization),
+            ("testDocumentSerialization", testDocumentSerialization),
+            ("testArrayConvertableToDocument", testArrayConvertableToDocument),
+            ("testDictionaryConvertableToDocument", testDictionaryConvertableToDocument),
+            ("testObjectIdSerialization", testObjectIdSerialization),
+            ("testNullSerialization", testNullSerialization),
+            ("testRegexSerialization", testRegexSerialization),
+            ("testDocumentSubscript", testDocumentSubscript),
+            // Other tests go here
+        ]
+    }
     
     func testBasics() {
         let document: Document = [
