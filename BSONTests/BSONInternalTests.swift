@@ -16,58 +16,6 @@ import XCTest
 
 class BSONInternalTests: XCTestCase {
     
-    // for old snapshot, removed throws
-    var allTests : [(String, () -> Void)] {
-        return [
-                ("testDocumentOne", testDocumentOne),
-                ("testDoubleSerialization", testDoubleSerialization),
-                ("testStringSerialization", testStringSerialization),
-                ("testBooleanSerialization", testBooleanSerialization),
-                ("testInt32Serialization", testInt32Serialization),
-                ("testInt64Serialization", testInt64Serialization),
-                ("testTimestampSerialization", testDateTimeSerialization),
-                ("testDocumentSerialization", testDocumentSerialization),
-                ("testArrayConvertableToDocument", testArrayConvertableToDocument),
-                ("testDictionaryConvertableToDocument", testDictionaryConvertableToDocument),
-                ("testObjectIdSerialization", testObjectIdSerialization),
-                ("testNullSerialization", testNullSerialization),
-                ("testRegexSerialization", testRegexSerialization),
-                ("testDocumentSubscript", testDocumentSubscript),
-        ]
-    }
-    
-    func testDocumentOne() {
-        // {"cool32bitNumber":9001,"cool64bitNumber":{"$numberLong":"21312153544"},"currentTime":{"$date":"1970-01-17T19:46:29.266Z"},"documentTest":{"documentSubDoubleTest":13.37,"subArray":{"0":"henk","1":"fred","2":"kaas","3":"goudvis"}},"doubleTest":0.04,"nonRandomObjectId":{"$oid":"0123456789abcdef01234567"},"nothing":null,"stringTest":"foo"}
-        let expected: [UInt8] = [12, 1, 0, 0, 16, 99, 111, 111, 108, 51, 50, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 41, 35, 0, 0, 18, 99, 111, 111, 108, 54, 52, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 200, 167, 77, 246, 4, 0, 0, 0, 9, 99, 117, 114, 114, 101, 110, 116, 84, 105, 109, 101, 0, 18, 3, 164, 86, 0, 0, 0, 0, 3, 100, 111, 99, 117, 109, 101, 110, 116, 84, 101, 115, 116, 0, 102, 0, 0, 0, 1, 100, 111, 99, 117, 109, 101, 110, 116, 83, 117, 98, 68, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 61, 10, 215, 163, 112, 189, 42, 64, 3, 115, 117, 98, 65, 114, 114, 97, 121, 0, 56, 0, 0, 0, 2, 48, 0, 5, 0, 0, 0, 104, 101, 110, 107, 0, 2, 49, 0, 5, 0, 0, 0, 102, 114, 101, 100, 0, 2, 50, 0, 5, 0, 0, 0, 107, 97, 97, 115, 0, 2, 51, 0, 8, 0, 0, 0, 103, 111, 117, 100, 118, 105, 115, 0, 0, 0, 1, 100, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 123, 20, 174, 71, 225, 122, 164, 63, 7, 110, 111, 110, 82, 97, 110, 100, 111, 109, 79, 98, 106, 101, 99, 116, 73, 100, 0, 1, 35, 69, 103, 137, 171, 205, 239, 1, 35, 69, 103, 10, 110, 111, 116, 104, 105, 110, 103, 0, 2, 115, 116, 114, 105, 110, 103, 84, 101, 115, 116, 0, 4, 0, 0, 0, 102, 111, 111, 0, 0]
-        
-        let kittenDocument: Document = [
-            "doubleTest": 0.04,
-            "stringTest": "foo",
-            "documentTest": *[
-                "documentSubDoubleTest": 13.37,
-                "subArray": *["henk", "fred", "kaas", "goudvis"]
-            ],
-            "nonRandomObjectId": try! ObjectId(hexString: "0123456789ABCDEF01234567"),
-            "currentTime": NSDate(timeIntervalSince1970: Double(1453589266)),
-            "cool32bitNumber": Int32(9001),
-            "cool64bitNumber": 21312153544,
-            "nothing": Null()
-        ]
-        
-        print(expected)
-        print(kittenDocument.bsonData)
-        
-        XCTAssert(expected == kittenDocument.bsonData)
-        
-        let dogUment = try! Document.instantiate(bsonData: kittenDocument.bsonData)
-        
-        XCTAssert(dogUment.bsonData == kittenDocument.bsonData)
-        
-        // test
-//        var data = kittenDocument.bsonData
-//        NSData(bytes: &data, length: data.count).writeToFile("/Users/robbert/Downloads/BSON.bson", atomically: false)
-    }
-    
     func testDoubleSerialization() {
         // This is 5.05
         let rawData: [UInt8] = [0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40]

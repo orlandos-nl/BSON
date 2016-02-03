@@ -60,9 +60,7 @@ extension ElementType {
             return Swift.Double.self
         case .String:
             return Swift.String.self
-        case .Document:
-            return BSON.Document.self
-        case .Array:
+        case .Document, .Array:
             return BSON.Document.self
         case .Binary:
             return BSON.Binary.self
@@ -76,10 +74,8 @@ extension ElementType {
             return BSON.Null.self
         case .RegularExpression:
             return BSON.RegularExpression.self
-        case .JavaScriptCode:
-            abort()
-        case .JavascriptCodeWithScope:
-            abort()
+        case .JavaScriptCode, .JavascriptCodeWithScope:
+            return BSON.JavaScriptCode.self
         case .Int32:
             return Swift.Int32.self
         case .Timestamp:
