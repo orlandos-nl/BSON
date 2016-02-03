@@ -68,7 +68,6 @@
 		F212DC861C58C3FA00B36A19 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		F252725F1C53AAC600CBB42E /* Double.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Double.swift; sourceTree = "<group>"; };
 		F25272611C53AADD00CBB42E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
-		F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Feature Checklist.txt"; sourceTree = "<group>"; };
 		F27375391C5A61E400CDE296 /* Null.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Null.swift; sourceTree = "<group>"; };
 		F2B8DB9E1C623D5800864FE3 /* Document+SequenceType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Document+SequenceType.swift"; sourceTree = "<group>"; };
 		F2B8DBA01C623D7400864FE3 /* Document+LiteralConvertibles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Document+LiteralConvertibles.swift"; sourceTree = "<group>"; };
@@ -103,7 +102,6 @@
 			children = (
 				F2F4C3361C5FE60100CB84C7 /* Tutorial.playground */,
 				F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */,
-				F27375321C5A4A5D00CDE296 /* Feature Checklist.txt */,
 				F212DC861C58C3FA00B36A19 /* README.md */,
 				F20A95551C5383440054AB52 /* BSON */,
 				F20A95611C5383440054AB52 /* BSONTests */,
