@@ -103,20 +103,20 @@ public enum BSONLength {
     case NullTerminated
 }
 
-/// Anything complying to the protocol is conertible from- and to BSON Binary
+/// Anything complying to the protocol is convertible from- and to BSON Binary
 public protocol BSONElementConvertible : AbstractBSONBase {
-    /// Identifies the BSON element type, such as .String (0x02)
+    /// Identifies the BSON element type, such as `.String` (0x02)
     var elementType: ElementType { get }
     
     /// Here, return the same data as you would accept in the initializer
     var bsonData: [UInt8] { get }
     
-    /// The length of this variable when converted to an Array of UInt8
+    /// The length of this variable when converted to an array of `UInt8`
     static var bsonLength: BSONLength { get }
     
     /// The initializer expects the data for this element, starting AFTER the element type
     /// The input consumedBytes is set the the amount of bytes we consumed instantiating this variable
-    /// Objects that support initialization from only one ElementType may ignore this parameter.
+    /// Objects that support initialization from only one `ElementType` may ignore this parameter.
     static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Self
     
     /// The initializer expects the data for this element, starting AFTER the element type

@@ -12,7 +12,7 @@ import Foundation
 ///
 /// `document	::=	int32 e_list "\x00"`
 ///
-/// A document is comparable with a Swift Array or Dictionary. It can thus be initialized
+/// A document is comparable with a Swift `Array`or `Dictionary`. It can thus be initialized
 /// by using an array or dictionary literal:
 ///
 /// ```
@@ -22,7 +22,7 @@ import Foundation
 ///
 /// In the BSON specification, the following is said about BSON arrays: 
 ///
-/// `Array - The document for an array is a normal BSON document with integer values for the keys, starting with 0 and continuing sequentially. For example, the array ['red', 'blue'] would be encoded as the document {'0': 'red', '1': 'blue'}. The keys must be in ascending numerical order.`
+/// Array - The document for an array is a normal BSON document with integer values for the keys, starting with 0 and continuing sequentially. For example, the array `['red', 'blue']` would be encoded as the document `{'0': 'red', '1': 'blue'}`. The keys must be in ascending numerical order.
 /// 
 /// Because this BSON library exports all documents alphabetically, every document only numerical subsequential keys starting at '0' will be treated as an array.
 public struct Document {

@@ -37,7 +37,7 @@ extension Dictionary : BSONDictionaryConversionProtocol {
 }
 
 /// The prefix * operator will be deprecated as soon as it isn't needed anymore.
-/// The reason for adding the operator is that the Swift compiler sometimes likes to create NSArrays where it should be creating Swift Arrays.
+/// The reason for adding the operator is that the Swift compiler sometimes likes to create `NSArray`s where it should be creating Swift `Array`s.
 prefix operator * { }
 
 /// Prefix * operator for Dictionaries
