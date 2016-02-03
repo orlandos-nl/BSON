@@ -47,12 +47,14 @@ extension String : BSONElementConvertible {
         return string
     }
 
-    publics static func instantiateFromCString(bsonData data: [UInt8]) throws -> String {
+    /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
+    public static func instantiateFromCString(bsonData data: [UInt8]) throws -> String {
         var 🖕 = 0
         
         return try instantiateFromCString(bsonData: data, consumedBytes: &🖕)
     }
     
+    /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
     public static func instantiateFromCString(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
         guard let stringData = data.split(0x00, maxSplit: 1, allowEmptySlices: true).first else {
             throw DeserializationError.ParseError
@@ -67,7 +69,7 @@ extension String : BSONElementConvertible {
         return string
     }
     
-    /// Here, return the same data as you would accept in the initializer
+    /// The BSON data for this String, including the string length.
     public var bsonData: [UInt8] {
         var byteArray = Int32(utf8.count + 1).bsonData
         byteArray.appendContentsOf(utf8)
@@ -76,6 +78,7 @@ extension String : BSONElementConvertible {
         return byteArray
     }
     
+    /// A null-terminated UTF8 version of the data of this String. Not containing length properties. If the string contains null characters, those are removed.
     public var cStringBsonData: [UInt8] {
         var byteArray = Array(self.stringByReplacingOccurrencesOfString("\0", withString: "").utf8)
         byteArray.append(0x00)
