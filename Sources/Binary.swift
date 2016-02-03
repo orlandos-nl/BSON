@@ -8,15 +8,29 @@
 
 import Foundation
 
-/// Used for storing arbitrary data
+/// Used for storing arbitrary data in a BSON Document
 public struct Binary : BSONElementConvertible {
+    /// .Binary
     public var elementType: ElementType {
         return .Binary
     }
 
+    /// Arbitrary data stored in this `Binary` instance.
     public var data: [UInt8]
+    
+    /// The BSON specification allows you to set a subType for every Binary. It says:
+    /// ```
+    /// subtype	::=	"\x00"	Generic binary subtype
+    ///         |	"\x01"	Function
+    ///         |	"\x02"	Binary (Old)
+    ///         |	"\x03"	UUID (Old)
+    ///         |	"\x04"	UUID
+    ///         |	"\x05"	MD5
+    ///         |	"\x80"	User defined
+    /// ```
     public let subType: UInt8
 
+    /// Returns the data in a format ready to be stored in a BSON Document.
     public var bsonData: [UInt8] {
         guard data.count < Int(Int32.max) else {
             return Int32(0).bsonData + [0]
@@ -26,25 +40,31 @@ public struct Binary : BSONElementConvertible {
         return length.bsonData + [subType] + data
     }
 
-    public static var bsonLength: BsonLength {
+    /// The length of arbitrary data is .Undefined
+    public static var bsonLength: BSONLength {
         return .Undefined
     }
 
-    /// Create a new `Binary` instance with the given data
+    /// Create a new `Binary` instance with the given data, provided as an array of bytes ([UInt8])
     ///
     /// - param data: The data to store in this `Binary`
-    /// - param subType: The BSON spec
+    /// - param subType: Optionally, a subtype for your data.
     public init(data: [UInt8], subType: UInt8 = 0) {
         self.data = data
         self.subType = subType
     }
 
+    /// Creates a new `Binary` instance from a Foundation `NSData` object.
+    ///
+    /// - param data: The data to store in BSON as NSData
+    /// - param subType: Optionally, a subtype for your data.
     public init(data: NSData, subType: UInt8 = 0) {
         self.data = [UInt8](count: data.length, repeatedValue: 0)
         data.getBytes(&self.data, length: self.data.count)
         self.subType = subType
     }
 
+    /// Instantiate a new Binary instance from BSON
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Binary {
         guard data.count >= 5 else {
             throw DeserializationError.InvalidElementSize
@@ -65,6 +85,7 @@ public struct Binary : BSONElementConvertible {
         return self.init(data: realData, subType: subType)
     }
 
+    /// Instantiate a new Binary instance from BSON
     public static func instantiate(bsonData data: [UInt8]) throws -> Binary {
         var 🖕 = 0
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Binary)

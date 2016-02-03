@@ -8,9 +8,12 @@
 
 import Foundation
 
+/// The BSON `NullValue`, as documented in the BSON spec.
 public struct Null : BSONElementConvertible {
+    /// Create a new `Null` for storing in BSON.
     public init() {}
     
+    /// .NullValue
     public var elementType: ElementType {
         return .NullValue
     }
@@ -20,16 +23,18 @@ public struct Null : BSONElementConvertible {
         return []
     }
     
-    public static var bsonLength: BsonLength {
+    /// The length of Null is 0.
+    public static var bsonLength: BSONLength {
         return .Fixed(length: 0)
     }
     
-    /// The initializer expects the data for this element, starting AFTER the element type
+    /// Always just returns Null() and sets consumedBytes to 0.
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Null {
         consumedBytes = 0
         return Null()
     }
     
+    /// Always just returns Null().
     public static func instantiate(bsonData data: [UInt8]) throws -> Null {
         return Null()
     }

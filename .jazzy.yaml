@@ -14,18 +14,23 @@ custom_categories:
     - Double
     - Int
     - Int32
+    - Int64
     - NSData
     - NSDate
     - String
+    - JavaScriptCode
+    - MinKey
+    - MaxKey
+    - RegularExpression
+    - Timestamp
   
   - name: Errors
     children:
     - DeserializationError
   
-  - name: Details
+  - name: Used internally
     children:
-    - BsonLength
+    - BSONLength
     - ElementType
     - AbstractBSONBase
     - BSONElementConvertible
-    - Int16

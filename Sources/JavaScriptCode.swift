@@ -8,21 +8,30 @@
 
 import Foundation
 
+/// BSON spec type 0x0D: "JavaScript code" or 0x0F: "JavaScript code w/ scope"
 public struct JavaScriptCode {
+    /// The code stored in this instance.
     public var code: String
+    
+    /// Optional. Setting the scope will store this JavaScriptCode as type 0x0F: "JavaScript code w/ scope".
+    ///
+    /// The document is a mapping from identifiers to values, representing the scope in which the string should be evaluated.
     public var scope: Document?
     
+    /// Create a new JavaScriptCode instance with given code and (optionally) scope.
     public init(code: String, scope: Document? = nil) {
         self.code = code
         self.scope = scope
     }
 }
 
-extension BSON.JavaScriptCode : BSONElementConvertible {
+extension JavaScriptCode : BSONElementConvertible {
+    /// The ElementType of JavaScriptCode is .JavaScriptCode when it does not define scope or .JavascriptCodeWithScope when it does.
     public var elementType: ElementType {
         return scope == nil ? .JavaScriptCode : .JavascriptCodeWithScope
     }
     
+    /// Convert this JavaScriptCode to BSON data ready for storage.
     public var bsonData: [UInt8] {
         if let scope = scope {
             // Scope:
@@ -36,12 +45,17 @@ extension BSON.JavaScriptCode : BSONElementConvertible {
         }
     }
     
-    public static let bsonLength = BsonLength.Undefined
+    /// .Undefined
+    public static let bsonLength = BSONLength.Undefined
     
+    /// Not possible, because the JavaScriptCode initializer needs to know it's type. Always throws a `DeserializationError.InvalidOperation`.
     public static func instantiate(bsonData data: [UInt8]) throws -> JavaScriptCode {
         throw DeserializationError.InvalidOperation
     }
     
+    /// Instantiate JavaScriptCode from the given data. Behavior depends on the given `type`.
+    ///
+    /// - param type: If the given data contains scope, this should be .JavascriptCodeWithScope. Otherwise it should be .JavaScriptCode.
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> JavaScriptCode {
         switch type {
         case .JavaScriptCode:

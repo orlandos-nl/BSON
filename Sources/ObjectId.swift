@@ -12,8 +12,11 @@ import Foundation
     import Glibc
 #endif
 
+/// The BSON/MongoDB ObjectId type (see: https://docs.mongodb.org/manual/reference/object-id/)
 public struct ObjectId {
+    /// Raw data for this ObjectId
     public private(set) var data: [UInt8]
+    
 #if os(Linux)
     private static var random: UInt8 = Int32(rand()).bsonData[0]
 #else
@@ -21,7 +24,12 @@ public struct ObjectId {
 #endif
     private static var counter: Int16 = 0
     
-    public init(hexString: String) throws {
+    /// Initialize a new ObjectId from given Hexadecimal string, such as "0123456789abcdef01234567".
+    ///
+    /// **Note that this string should always be a valid hexadecimal string of 24 characters.**
+    ///
+    /// Throws errors in case of an invalid string (e.g. wrong length)
+    public init(_ hexString: String) throws {
         guard hexString.characters.count == 24 else {
             throw DeserializationError.ParseError
         }
@@ -44,18 +52,21 @@ public struct ObjectId {
         }
     }
     
+    /// Instantiate this ObjectId with the given data. Needs to be at least 12 bytes. Only the first 12 bytes are used.
     public init(bsonData: [UInt8]) throws {
-        data = bsonData
-        
-        guard data.count == 12 else {
+        guard bsonData.count >= 12 else {
             throw DeserializationError.InvalidElementSize
         }
+        
+        data = Array(bsonData[0..<12])
     }
     
+    /// Return the hexadecimal string of this ObjectId, eg "0123456789abcdef01234567"
     public var hexString: String {
         return data.map{String($0, radix: 16, uppercase: false)}.joinWithSeparator("")
     }
     
+    /// Generate a new random ObjectId.
     public init() {
         let currentTime = NSDate()
         
@@ -83,20 +94,22 @@ public struct ObjectId {
 }
 
 extension ObjectId : BSONElementConvertible {
+    /// .ObjectId
     public var elementType: ElementType {
         return .ObjectId
     }
     
-    /// Here, return the same data as you would accept in the initializer
+    /// Raw data for storage in a BSON Document
     public var bsonData: [UInt8] {
         return data
     }
     
-    public static var bsonLength: BsonLength {
+    /// .Fixed(length: 12)
+    public static var bsonLength: BSONLength {
         return .Fixed(length: 12)
     }
     
-    /// The initializer expects the data for this element, starting AFTER the element type
+    /// Used internally
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> ObjectId {
         let objectID = try self.init(bsonData: data)
         consumedBytes = 12
@@ -104,12 +117,14 @@ extension ObjectId : BSONElementConvertible {
         return objectID
     }
     
+    /// Used internally
     public static func instantiate(bsonData data: [UInt8]) throws -> ObjectId {
         return try self.init(bsonData: data)
     }
 }
 
 extension ObjectId : CustomDebugStringConvertible {
+    /// Returns something like: ObjectId("0123456789abcdef01234567")
     public var debugDescription: String {
         return "ObjectId(\"\(self.hexString)\")"
     }

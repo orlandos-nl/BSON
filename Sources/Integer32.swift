@@ -9,16 +9,19 @@
 import Foundation
 
 extension Int32 : BSONElementConvertible {
+    /// .Int32
     public var elementType: ElementType {
         return .Int32
     }
     
+    /// Instantiate from 4 bytes of BSON
     public static func instantiate(bsonData data: [UInt8]) throws -> Int32 {
         var 🖕 = 0
         
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Int32)
     }
-    
+
+    /// Instantiate from 4 bytes of BSON
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Int32 {
         guard data.count >= 4 else {
             throw DeserializationError.InvalidElementSize
@@ -29,6 +32,7 @@ extension Int32 : BSONElementConvertible {
         return integer
     }
     
+    /// Convert to 4 bytes
     public var bsonData: [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
@@ -36,5 +40,6 @@ extension Int32 : BSONElementConvertible {
         }
     }
     
-    public static let bsonLength = BsonLength.Fixed(length: 4)
+    /// 4 bytes
+    public static let bsonLength = BSONLength.Fixed(length: 4)
 }

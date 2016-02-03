@@ -4,10 +4,15 @@
 
 import Foundation
 
+/// A BSON representation for a regular expression
 public struct RegularExpression {
+    /// The regular expression pattern (a string)
     public var pattern: String
+    
+    /// The regular expression options string. No processing is done on this, however the BSON spec provides for storing this.
     public var options: String
     
+    /// Create a new BSON regular expression
     init(pattern: String, options: String) {
         self.pattern = pattern
         self.options = options
@@ -15,24 +20,29 @@ public struct RegularExpression {
 }
 
 extension RegularExpression : BSONElementConvertible {
+    /// .RegularExpression
     public var elementType: ElementType {
         return .RegularExpression
     }
     
+    /// Convert this RegularExpression to BSON data
     public var bsonData: [UInt8] {
         return pattern.cStringBsonData + options.cStringBsonData
     }
     
-    public static var bsonLength: BsonLength {
+    /// The length of a RegularExpression is not predetermined, thus .Undefined
+    public static var bsonLength: BSONLength {
         // TODO: DoubleNullTerminated??
         return .Undefined
     }
     
+    /// Instantiate a regular expression from raw data
     public static func instantiate(bsonData data: [UInt8]) throws -> RegularExpression {
         var 🖕 = 0
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .RegularExpression)
     }
     
+    /// Instantiate a regular expression from raw data
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> RegularExpression {
         let k = data.split(0, maxSplit: 2, allowEmptySlices: true)
         guard k.count >= 2 else {
@@ -51,50 +61,3 @@ extension RegularExpression : BSONElementConvertible {
         return self.init(pattern: pattern, options: options)
     }
 }
-
-//public struct RegularExpression : BSONElementConvertible {
-//    let pattern: String
-//    let options: String
-//    let regex: NSRegularExpression
-//
-//    init(pattern: String, options: String) throws {
-//        self.pattern = pattern
-//        self.options = options
-//
-//        let optionList: NSRegularExpressionOptions = []
-//
-//        // TODO: Use the options string
-//
-//        regex = try NSRegularExpression(pattern: pattern, options: optionList)
-//    }
-//
-//    public var elementType: ElementType {
-//        return .RegularExpression
-//    }
-//
-//    /// Here, return the same data as you would accept in the initializer
-//    public var bsonData: [UInt8] {
-//        return pattern.cStringBsonData + options.cStringBsonData
-//    }
-//
-//    public static var bsonLength: BsonLength {
-//        return .Undefined
-//    }
-//
-//    /// The initializer expects the data for this element, starting AFTER the element type
-//    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> RegularExpression {
-//        consumedBytes = data.count
-//        return try self.instantiate(bsonData: data)
-//    }
-//
-//    public static func instantiate(bsonData data: [UInt8]) throws -> RegularExpression {
-//        guard let stringTerminatorIndex = data.indexOf(0) else {
-//            throw DeserializationError.ParseError
-//        }
-//
-//        let regex = try String.instantiate(bsonData: Array(data[0...stringTerminatorIndex - 1]))
-//        let options = try String.instantiate(bsonData: Array(data[stringTerminatorIndex...data.count]))
-//
-//        return try RegularExpression(pattern: regex, options: options)
-//    }
-//}

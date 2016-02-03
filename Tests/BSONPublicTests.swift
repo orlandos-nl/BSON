@@ -124,7 +124,7 @@ class BSONPublicTests: XCTestCase {
                 "documentSubDoubleTest": 13.37,
                 "subArray": *["henk", "fred", "kaas", "goudvis"]
             ],
-            "nonRandomObjectId": try! ObjectId(hexString: "0123456789ABCDEF01234567"),
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
             "currentTime": NSDate(timeIntervalSince1970: Double(1453589266)),
             "cool32bitNumber": Int32(9001),
             "cool64bitNumber": 21312153544,
@@ -288,7 +288,7 @@ class BSONPublicTests: XCTestCase {
         // ObjectId initialization and reading
         let sampleHex1 = "56a78f3e308b914cac362bb8"
         
-        let id = try! ObjectId(hexString: sampleHex1)
+        let id = try! ObjectId(sampleHex1)
         XCTAssertEqual(id.hexString, sampleHex1)
         
         // ObjectId generation

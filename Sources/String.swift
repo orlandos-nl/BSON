@@ -2,17 +2,19 @@ import Foundation
 
 /// The UTF8 BSON String type (0x02)
 extension String : BSONElementConvertible {
+    /// .String
     public var elementType: ElementType {
         return .String
     }
     
+    /// Instantiate a string from BSON (UTF8) data, including the length of the string.
     public static func instantiate(bsonData data: [UInt8]) throws -> String {
         var 🖕 = 0
         
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .String)
     }
     
-    /// The initializer expects the data for this element, starting AFTER the element type
+    /// Instantiate a string from BSON (UTF8) data, including the length of the string.
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> String {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
@@ -81,5 +83,6 @@ extension String : BSONElementConvertible {
         return byteArray
     }
     
-    public static let bsonLength = BsonLength.Undefined
+    /// The length of a String is .Undefined
+    public static let bsonLength = BSONLength.Undefined
 }

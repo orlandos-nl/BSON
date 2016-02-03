@@ -12,6 +12,9 @@ import Foundation
     import Glibc
 #endif
 
+/// The base protocol that contains BSONElementConvertible.
+/// This is needed for BSONArrayConversionProtocol and BSONDictionaryConversionProtocol, because
+/// they shouldn't be BSONElementConvertible but should be usable in Document literals.
 public protocol AbstractBSONBase {}
 
 /// All BSON Element types
@@ -90,8 +93,8 @@ extension ElementType {
     }
 }
 
-/// Represents the length of a BSON type
-public enum BsonLength {
+/// Represents the estimated length of a BSON type. If the length varies, .NullTerminated or .Undefined is used.
+public enum BSONLength {
     /// Used when you're not sure what the length of the BSON byte array is
     case Undefined
     /// Used when you know the exact length of the byte array
@@ -102,13 +105,14 @@ public enum BsonLength {
 
 /// Anything complying to the protocol is conertible from- and to BSON Binary
 public protocol BSONElementConvertible : AbstractBSONBase {
+    /// Identifies the BSON element type, such as .String (0x02)
     var elementType: ElementType { get }
     
     /// Here, return the same data as you would accept in the initializer
     var bsonData: [UInt8] { get }
     
     /// The length of this variable when converted to an Array of UInt8
-    static var bsonLength: BsonLength { get }
+    static var bsonLength: BSONLength { get }
     
     /// The initializer expects the data for this element, starting AFTER the element type
     /// The input consumedBytes is set the the amount of bytes we consumed instantiating this variable

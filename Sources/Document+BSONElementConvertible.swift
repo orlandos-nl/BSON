@@ -9,10 +9,14 @@
 import Foundation
 
 extension Document : BSONElementConvertible {
+    /// .Array or .Document, depending on validatesAsArray()
     public var elementType: ElementType {
         return self.validatesAsArray() ? .Array : .Document
     }
     
+    /// Serialize the document, ready to store as a BSON file or sending over the network.
+    /// You may concatenate output of this method into one long array, and instantiate that using
+    /// `instantiateMultiple(...)`
     public var bsonData: [UInt8] {
         var body = [UInt8]()
         var length = 4
@@ -31,15 +35,18 @@ extension Document : BSONElementConvertible {
         return finalData
     }
     
+    /// Used internally
     public static func instantiate(bsonData data: [UInt8]) throws -> Document {
         var 🖕 = 0
         
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Document)
     }
     
+    /// Used internally
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Document {
         return try Document(data: data, consumedBytes: &consumedBytes)
     }
     
-    public static let bsonLength = BsonLength.Undefined
+    /// .Undefined
+    public static let bsonLength = BSONLength.Undefined
 }

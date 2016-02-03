@@ -9,6 +9,7 @@
 import Foundation
 
 extension Document : ArrayLiteralConvertible {
+    /// Initialize a Document using an array of `BSONElementConvertible`s.
     public init(array: [BSONElementConvertible]) {
         for e in array {
             self.elements[self.elements.count.description] = e

@@ -10,26 +10,34 @@ import Foundation
 
 /// Timestamp is a special internal MongoDB type
 public struct Timestamp : BSONElementConvertible {
+    /// .Timestamp
     public var elementType: ElementType {
         return .Timestamp
     }
     
+    /// Ready this timestamp for storing
     public var bsonData: [UInt8] {
         return storage.bsonData
     }
     
-    public static var bsonLength: BsonLength {
+    /// Timestamp.bsonLength = Int64.bsonLength
+    public static var bsonLength: BSONLength {
         return Int64.bsonLength
     }
     
+    /// Instantiate a timestamp from BSON data (8 bytes or more)
     public static func instantiate(bsonData data: [UInt8]) throws -> Timestamp {
         return self.init(try Int64.instantiate(bsonData: data))
     }
     
+    /// Instantiate a timestamp from BSON data (8 bytes or more)
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Timestamp {
         return self.init(try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .Int64))
     }
     
+    /// Initialize this timestamp instance.
     private init(_ s: Int64) { storage = s }
-    private var storage: Int64
+    
+    /// The storage of the timestamp. Note that this is in an undocumented format.
+    public var storage: Int64
 }

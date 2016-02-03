@@ -8,9 +8,30 @@
 
 import Foundation
 
+/// The base type for all BSON data, defined in the spec as:
+///
+/// `document	::=	int32 e_list "\x00"`
+///
+/// A document is comparable with a Swift Array or Dictionary. It can thus be initialized
+/// by using an array or dictionary literal:
+///
+/// ```
+/// let d: Document = ["key": "value"]
+/// let a: Document = ["value 1", "value 2"]
+/// ```
+///
+/// In the BSON specification, the following is said about BSON arrays: 
+///
+/// `Array - The document for an array is a normal BSON document with integer values for the keys, starting with 0 and continuing sequentially. For example, the array ['red', 'blue'] would be encoded as the document {'0': 'red', '1': 'blue'}. The keys must be in ascending numerical order.`
+/// 
+/// Because this BSON library exports all documents alphabetically, every document only numerical subsequential keys starting at '0' will be treated as an array.
 public struct Document {
+    /// Element storage
     internal var elements = [String : BSONElementConvertible]()
     
+    /// Initialize a BSON document with the data from the given Foundation `NSData` object.
+    /// 
+    /// Will throw a `DeserializationError` when the document is invalid.
     public init(data: NSData) throws {
         var byteArray = [UInt8](count: data.length, repeatedValue: 0)
         data.getBytes(&byteArray, length: byteArray.count)
@@ -20,11 +41,15 @@ public struct Document {
         try self.init(data: byteArray, consumedBytes: &🖕)
     }
     
+    /// Initialize a BSON document with the given byte array.
+    ///
+    /// Will throw a `DeserializationError` when the document is invalid.
     public init(data: [UInt8]) throws {
         var 🖕 = 0
         try self.init(data: data, consumedBytes: &🖕)
     }
     
+    /// Internal initializer used by all other initializers and for initializing embedded documents.
     internal init(data: [UInt8], inout consumedBytes: Int) throws {
         // A BSON document cannot be smaller than 5 bytes (which would be an empty document)
         guard data.count >= 5 else {
@@ -105,6 +130,8 @@ public struct Document {
 }
 
 extension Document {
+    /// Instantiates zero or more `Document`s from the given data. This data is formatted like this:
+    /// `let data = document1.bsonData + document2.bsonData`, so just multiple documents concatenated.
     public static func instantiateAll(data: [UInt8]) throws -> [Document] {
         var currentDataIndex = 0
         var documents = [Document]()
@@ -142,6 +169,7 @@ extension Document {
 }
 
 extension Document : CustomStringConvertible {
+    /// Returns the description of all elements in this document. Not ordered correctly.
     public var description: String {
         return elements.description
     }

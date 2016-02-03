@@ -9,22 +9,26 @@
 import Foundation
 
 extension NSDate : BSONElementConvertible {
+    /// .DateTime
     public var elementType: ElementType {
         return .DateTime
     }
     
+    /// Instantiate an NSDate from a BSON .DateTime
     public static func instantiate(bsonData data: [UInt8]) throws -> Self {
         var 🖕 = 0
         
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .DateTime)
     }
     
+    /// Instantiate an NSDate from a BSON .DateTime
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Self {
         let interval = try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .Int64)
         let date = self.init(timeIntervalSinceReferenceDate: Double(interval) - NSTimeIntervalSince1970)
         return date
     }
     
+    /// Convert to BSON .DateTime
     public var bsonData: [UInt8] {
         var integer = Int(self.timeIntervalSince1970)
         return withUnsafePointer(&integer) {
@@ -32,5 +36,6 @@ extension NSDate : BSONElementConvertible {
         }
     }
     
-    public static let bsonLength = BsonLength.Fixed(length: 8)
+    /// BSON DateTime is always 8 bytes
+    public static let bsonLength = BSONLength.Fixed(length: 8)
 }

@@ -9,17 +9,19 @@
 import Foundation
 
 extension Bool : BSONElementConvertible {
+    /// .Boolean
     public var elementType: ElementType {
         return .Boolean
     }
     
+    /// Instantiate a new Bool from BSON data
     public static func instantiate(bsonData data: [UInt8]) throws -> Bool {
         var 🖕 = 0
         
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Boolean)
     }
     
-    /// The initializer expects the data for this element, starting AFTER the element type
+    /// Instantiate a new Bool from BSON data
     public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Bool {
         guard data.count >= 1 else {
             throw DeserializationError.InvalidDocumentLength
@@ -39,5 +41,6 @@ extension Bool : BSONElementConvertible {
         return self ? [0x01] : [0x00]
     }
     
-    public static let bsonLength = BsonLength.Fixed(length: 1)
+    /// A bool is always 1 byte
+    public static let bsonLength = BSONLength.Fixed(length: 1)
 }
