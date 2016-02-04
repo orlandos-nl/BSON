@@ -262,7 +262,8 @@ class BSONPublicTests: XCTestCase {
         XCTAssertEqual(secondDocument.bsonData, secondBSON, "SecondBSON has an equal output to the instantiation array")
         
         guard let subscripted: Document = secondDocument["BSON"] as? Document else {
-            abort()
+            XCTFail()
+            return
         }
         
         XCTAssert(subscripted["0"] as! String == "awesome")
