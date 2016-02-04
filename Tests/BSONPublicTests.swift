@@ -10,6 +10,10 @@ import Foundation
 import XCTest
 import BSON
 
+#if os(Linux)
+    import Glibc
+#endif
+
 class BSONPublicTests: XCTestCase {
     var allTests : [(String, () -> Void)] {
         return [
