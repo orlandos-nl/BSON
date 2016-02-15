@@ -39,10 +39,10 @@ extension JavaScriptCode : BSONElementConvertible {
             // Code w/ scope - The int32 is the length in bytes of the entire code_w_s value. The string is JavaScript code. The document is a mapping from identifiers to values, representing the scope in which the string should be evaluated.
             let data = code.bsonData + scope.bsonData
             return Int32(data.count+4).bsonData + data
-        } else {
-            // No scope:
-            return code.bsonData
         }
+        
+        // No scope:
+        return code.bsonData
     }
     
     /// .Undefined
