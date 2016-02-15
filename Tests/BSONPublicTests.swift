@@ -102,6 +102,23 @@ class BSONPublicTests: XCTestCase {
         } catch {
             XCTFail()
         }
+        
+        let nsDataThingy = NSData(try! Binary.instantiate(bsonData: binary.bsonData))
+        
+        let binaryTest = Binary(data: nsDataThingy)
+        
+        XCTAssert(binaryTest.data == data)
+        
+        let doc: Document = ["a": binaryTest]
+        
+        guard let newData: [UInt8] = (doc["a"] as? Binary)?.data else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(newData == data)
+        
+        let _ = try! Document.instantiate(bsonData: doc.bsonData)
     }
     
     func testMultipleDocumentInstantiation() {
@@ -136,9 +153,6 @@ class BSONPublicTests: XCTestCase {
             "codeWithScope": JavaScriptCode(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
             "nothing": Null()
         ]
-        
-        print(expected)
-        print(kittenDocument.bsonData)
         
         XCTAssert(expected == kittenDocument.bsonData)
         
@@ -181,6 +195,47 @@ class BSONPublicTests: XCTestCase {
         
         let generatedData = result.bsonData
         XCTAssertEqual(generatedData, rawData, "Converting a String to BSON data results in the correct data")
+        
+        do {
+            let _ = try String.instantiate(bsonData: [0x00, 0x00, 0x00, 0x00, 0x00])
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try String.instantiate(bsonData: [0x00, 0x00, 0x00, 0x00, 0x01])
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try String.instantiate(bsonData: [0x00, 0x01, 0x00, 0x01, 0x01])
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try String.instantiate(bsonData: "hoi".bsonData + [0x05])
+            XCTFail()
+        } catch {}
+        
+        let niceString = try! String.instantiate(bsonData: [0x01, 0x00, 0x00, 0x00, 0x00])
+        XCTAssert(niceString == "")
+        
+        do {
+            let _ = try String.instantiate(bsonData: [0x01, 0x02, 0x00, 0x00, 0x00])
+            XCTFail()
+        } catch {}
+        
+        let at = try! String.instantiateFromCString(bsonData: [0x40, 0x00])
+        XCTAssert(at == "@")
+        
+        var consumed = 0
+        
+        let _ = try! String.instantiateFromCString(bsonData: [0x40, 0x00, 0x40, 0x00, 0x40, 0x00], consumedBytes: &consumed)
+        XCTAssert(consumed == 2)
+        
+        do {
+            let _ = try String.instantiateFromCString(bsonData: [0x40, 0x40])
+            XCTFail()
+        } catch {}
     }
     
     func testBooleanSerialization() {
@@ -193,6 +248,19 @@ class BSONPublicTests: XCTestCase {
         let trueBoolean = try! Bool.instantiate(bsonData: trueData)
         
         XCTAssert(trueBoolean, "Checking if 0x01 is true")
+        
+        do {
+            let _ = try Bool.instantiate(bsonData: [])
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try Bool.instantiate(bsonData: [0x03])
+            XCTFail()
+        } catch {}
+        
+        XCTAssert(true.bsonData == [0x01])
+        XCTAssert(false.bsonData == [0x00])
     }
     
     func testInt32Serialization() {
@@ -309,6 +377,35 @@ class BSONPublicTests: XCTestCase {
         } catch {
             XCTFail()
         }
+        
+        do {
+            let objectIDsample = try ObjectId("507f191e810c19729de860ea")
+            let objectIDsample2 = try ObjectId(bsonData: objectIDsample.bsonData)
+            
+            XCTAssert(objectIDsample.hexString == objectIDsample2.hexString)
+        } catch {
+            XCTFail()
+        }
+        
+        do {
+            let _ = try ObjectId("507f191e810c19729de860e")
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try ObjectId("507f191e810c19729de860eae")
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try ObjectId("507f191e810c19729de860ez")
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try ObjectId.instantiate(bsonData: [0x00])
+            XCTFail()
+        } catch {}
     }
     
     // Yes, really.
@@ -385,5 +482,29 @@ class BSONPublicTests: XCTestCase {
         }
     }
     
+    func testTypes() {
+        XCTAssert(Int64(123).elementType == .Int64)
+        XCTAssert(Int32(123).elementType == .Int32)
+        XCTAssert(true.elementType == .Boolean)
+        XCTAssert(3.15.elementType == .Double)
+        XCTAssert("henk".elementType == .String)
+        XCTAssert(Null().elementType == .NullValue)
+        XCTAssert(MinKey().elementType == .MinKey)
+        XCTAssert(MaxKey().elementType == .MaxKey)
+        XCTAssert(Binary(data: [0x01, 0x02, 0x03, 0x04, 0x03, 0x02, 0x01], subType: 53).elementType == .Binary)
+    }
     
+    func testDocumentInitialisation() {
+        let document = Document(array: [0, 1, 3])
+        
+        XCTAssert(document[0] as? Int == 0)
+        XCTAssert(document[1] as? Int == 1)
+        XCTAssert(document[2] as? Int == 3)
+        
+        let otherDocument = Document(dictionaryLiteral: ("a", 1), ("b", true), ("c", "d"))
+        
+        XCTAssert(otherDocument["a"] as? Int == 1)
+        XCTAssert(otherDocument["b"] as? Bool == true)
+        XCTAssert(otherDocument["c"] as? String == "d")
+    }
 }

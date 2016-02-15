@@ -89,7 +89,7 @@ public struct Document {
                 throw DeserializationError.ParseError
             }
             
-            let keyData = Array(data[position...stringTerminatorIndex - 1])
+            let keyData = Array(data[position...stringTerminatorIndex])
             let elementName = try String.instantiateFromCString(bsonData: keyData)
             
             position = stringTerminatorIndex + 1

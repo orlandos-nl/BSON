@@ -34,4 +34,14 @@ class BSONInternalTests: XCTestCase {
         XCTAssertEqual(generatedData, rawData, "Converting a String to CString BSON data results in the correct data")
     }
     
+    func testInt16() {
+        let int16 = try! Int16.instantiate(bsonData: [0x01, 0x02])
+        XCTAssert(int16 == 513)
+        
+        do {
+            let _ = try Int16.instantiate(bsonData: [0x01])
+            XCTFail()
+        } catch {}
+    }
+    
 }

@@ -36,6 +36,10 @@ extension String : BSONElementConvertible {
             return ""
         }
         
+        guard length > 0 else {
+            throw DeserializationError.ParseError
+        }
+        
         var stringData = Array(data[4..<Int(length + 3)])
         
         guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
@@ -56,6 +60,10 @@ extension String : BSONElementConvertible {
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
     public static func instantiateFromCString(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
+        guard data.contains(0x00) else {
+            throw DeserializationError.ParseError
+        }
+        
         guard let stringData = data.split(0x00, maxSplit: 1, allowEmptySlices: true).first else {
             throw DeserializationError.ParseError
         }
