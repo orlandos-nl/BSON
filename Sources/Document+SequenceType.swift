@@ -30,7 +30,12 @@ extension Document : SequenceType {
     
     /// As required by and documented in `SequenceType`
     public subscript (key: Key) -> FooValue? {
-        return elements[key]
+        get {
+            return elements[key]
+        }
+        set {
+            elements[key] = newValue
+        }
     }
     
     /// document[4] is the same as document["4"]
