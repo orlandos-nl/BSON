@@ -40,7 +40,12 @@ extension Document : SequenceType {
     
     /// document[4] is the same as document["4"]
     public subscript (key: Int) -> BSONElementConvertible? {
-        return self["\(key)"]
+        get {
+            return self["\(key)"]
+        }
+        set {
+            self["\(key)"] = newValue
+        }
     }
     
     /// As required by and documented in `SequenceType`

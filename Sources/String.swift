@@ -88,7 +88,7 @@ extension String : BSONElementConvertible {
     
     /// A null-terminated UTF8 version of the data of this String. Not containing length properties. If the string contains null characters, those are removed.
     public var cStringBsonData: [UInt8] {
-        var byteArray = Array(self.stringByReplacingOccurrencesOfString("\0", withString: "").utf8)
+        var byteArray = self.utf8.filter{$0 != 0x00}
         byteArray.append(0x00)
         
         return byteArray
