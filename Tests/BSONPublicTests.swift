@@ -607,6 +607,7 @@ class BSONPublicTests: XCTestCase {
     }
     
     func testAwesomeDocuments() {
+        // {"cool32bitNumber":9001,"cool64bitNumber":{"$numberLong":"21312153544"},"currentTime":{"$date":"1970-01-17T19:46:29.266Z"},"documentTest":{"documentSubDoubleTest":13.37,"subArray":{"0":"henk","1":"fred","2":"kaas","3":"goudvis"}},"doubleTest":0.04,"nonRandomObjectId":{"$oid":"0123456789abcdef01234567"},"nothing":null,"stringTest":"foo"}
         let expected: [UInt8] = [121, 1, 0, 0, 13, 99, 111, 100, 101, 0, 28, 0, 0, 0, 99, 111, 110, 115, 111, 108, 101, 46, 108, 111, 103, 40, 34, 72, 101, 108, 108, 111, 32, 116, 104, 101, 114, 101, 34, 41, 59, 0, 15, 99, 111, 100, 101, 87, 105, 116, 104, 83, 99, 111, 112, 101, 0, 56, 0, 0, 0, 28, 0, 0, 0, 99, 111, 110, 115, 111, 108, 101, 46, 108, 111, 103, 40, 34, 72, 101, 108, 108, 111, 32, 116, 104, 101, 114, 101, 34, 41, 59, 0, 20, 0, 0, 0, 2, 104, 101, 121, 0, 6, 0, 0, 0, 104, 101, 108, 108, 111, 0, 0, 16, 99, 111, 111, 108, 51, 50, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 41, 35, 0, 0, 18, 99, 111, 111, 108, 54, 52, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 200, 167, 77, 246, 4, 0, 0, 0, 9, 99, 117, 114, 114, 101, 110, 116, 84, 105, 109, 101, 0, 18, 3, 164, 86, 0, 0, 0, 0, 3, 100, 111, 99, 117, 109, 101, 110, 116, 84, 101, 115, 116, 0, 102, 0, 0, 0, 1, 100, 111, 99, 117, 109, 101, 110, 116, 83, 117, 98, 68, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 61, 10, 215, 163, 112, 189, 42, 64, 3, 115, 117, 98, 65, 114, 114, 97, 121, 0, 56, 0, 0, 0, 2, 48, 0, 5, 0, 0, 0, 104, 101, 110, 107, 0, 2, 49, 0, 5, 0, 0, 0, 102, 114, 101, 100, 0, 2, 50, 0, 5, 0, 0, 0, 107, 97, 97, 115, 0, 2, 51, 0, 8, 0, 0, 0, 103, 111, 117, 100, 118, 105, 115, 0, 0, 0, 1, 100, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 123, 20, 174, 71, 225, 122, 164, 63, 7, 110, 111, 110, 82, 97, 110, 100, 111, 109, 79, 98, 106, 101, 99, 116, 73, 100, 0, 1, 35, 69, 103, 137, 171, 205, 239, 1, 35, 69, 103, 10, 110, 111, 116, 104, 105, 110, 103, 0, 2, 115, 116, 114, 105, 110, 103, 84, 101, 115, 116, 0, 4, 0, 0, 0, 102, 111, 111, 0, 0]
         
         let kittenDocument: Document = [
@@ -635,6 +636,92 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(dogUment.bsonData == kittenDocument.bsonData)
         XCTAssert(dogUment.bsonData == dogUment3.bsonData)
         
+        print(kittenDocument)
         
+        do {
+            let _ = try Document.instantiateAll([0x00])
+            XCTFail()
+        } catch {}
+        // {"cool32bitNumber":9001,"cool64bitNumber":{"$numberLong":"21312153544"},"currentTime":{"$date":"1970-01-17T19:46:29.266Z"},"documentTest":{"documentSubDoubleTest":13.37,"subArray":{"0":"henk","1":"fred","2":"kaas","3":"goudvis"}},"doubleTest":0.04,"nonRandomObjectId":{"$oid":"0123456789abcdef01234567"},"nothing":null,"stringTest":"foo"}
+        
+        var expected2 : [UInt8] = [0x31, 0x00, 0x00, 0x00, 0x04]
+        expected2 += "BSON".cStringBsonData
+        expected2 += [0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00]
+        expected2 += "awesome".bsonData
+        expected2 += [0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00]
+        
+        var nullAsElementType = expected2
+        nullAsElementType[4] = 0x00
+        
+        var unexpectedElementType = expected2
+        unexpectedElementType[4] = 0x23
+        
+        let bsonCStringData = "BSON".cStringBsonData
+        let halloStringData = "Hallo".bsonData
+        
+        var missingNullTerminator : [UInt8] = Int32(13).bsonData
+        missingNullTerminator += [0x04]
+        missingNullTerminator += Array(bsonCStringData[0..<(bsonCStringData.count - 1)])
+        missingNullTerminator += [0x02]
+        missingNullTerminator += Array(halloStringData[0..<(halloStringData.count - 1)])
+        missingNullTerminator += [0x00]
+        
+        do {
+            let _ = try Document.instantiate(bsonData: nullAsElementType)
+            XCTFail()
+        } catch {}
+        
+        do {
+            let _ = try Document.instantiate(bsonData: unexpectedElementType)
+            XCTFail()
+        } catch {}
+        
+        // TODO: Missing tests for ParseError. No null terminators
+    }
+    
+    func testDocumentSequenceType() {
+        var kittenDocument: Document = [
+            "doubleTest": 0.04,
+            "stringTest": "foo",
+            "documentTest": *[
+                "documentSubDoubleTest": 13.37,
+                "subArray": *["henk", "fred", "kaas", "goudvis"]
+            ],
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
+            "currentTime": NSDate(timeIntervalSince1970: Double(1453589266)),
+            "cool32bitNumber": Int32(9001),
+            "cool64bitNumber": 21312153544,
+            "code": JavaScriptCode(code: "console.log(\"Hello there\");"),
+            "codeWithScope": JavaScriptCode(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
+            "nothing": Null()
+        ]
+        
+        for key in kittenDocument.keys {
+            XCTAssert(kittenDocument[key] != nil)
+        }
+        
+        XCTAssert(kittenDocument.keys.contains(kittenDocument[kittenDocument.startIndex].0))
+        XCTAssert(kittenDocument.values.count == kittenDocument.count)
+        
+        XCTAssert(kittenDocument["doubleTest"] as? Double == 0.04)
+        kittenDocument["doubleTest"] = "hoi"
+        XCTAssert(kittenDocument["doubleTest"] as? String == "hoi")
+        XCTAssert(kittenDocument[kittenDocument.indexForKey("doubleTest")!].1 as? String == "hoi")
+        
+        kittenDocument.updateValue("doubleTest", forKey: "doubleTest")
+        XCTAssert(kittenDocument[kittenDocument.indexForKey("doubleTest")!].1 as? String == "doubleTest")
+        
+        XCTAssert(kittenDocument.startIndex.distanceTo(kittenDocument.endIndex) == kittenDocument.count)
+        
+        let oldValue = kittenDocument.removeAtIndex(kittenDocument.startIndex)
+        XCTAssert(oldValue.1.bsonData != kittenDocument[kittenDocument.startIndex].1.bsonData)
+        
+        kittenDocument[123] = 213
+        
+        XCTAssert(kittenDocument[123] as? Int == 213)
+        
+        XCTAssert(!kittenDocument.isEmpty)
+        kittenDocument.removeAll()
+        XCTAssert(kittenDocument.isEmpty)
     }
 }
