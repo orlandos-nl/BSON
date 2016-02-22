@@ -9,7 +9,7 @@
 import Foundation
 
 /// Special type which compares lower than all other possible BSON element values.
-public struct MinKey : BSONElementConvertible {
+public struct MinKey : BSONElement {
     /// Create a new MinKey
     public init() {}
     
@@ -35,7 +35,7 @@ public struct MinKey : BSONElementConvertible {
 }
 
 /// Special type which compares higher than all other possible BSON element values.
-public struct MaxKey : BSONElementConvertible {
+public struct MaxKey : BSONElement {
     /// Create a new MaxKey
     public init() {}
     

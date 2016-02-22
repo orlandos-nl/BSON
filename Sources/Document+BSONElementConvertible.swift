@@ -1,5 +1,5 @@
 //
-//  Document+BSONElementConvertible.swift
+//  Document+BSONElement.swift
 //  BSON
 //
 //  Created by Robbert Brandsma on 03-02-16.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Document : BSONElementConvertible {
+extension Document : BSONElement {
     /// .Array or .Document, depending on validatesAsArray()
     public var elementType: ElementType {
         return self.validatesAsArray() ? .Array : .Document

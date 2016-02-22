@@ -25,7 +25,7 @@ public struct JavaScriptCode {
     }
 }
 
-extension JavaScriptCode : BSONElementConvertible {
+extension JavaScriptCode : BSONElement {
     /// The ElementType of JavaScriptCode is .JavaScriptCode when it does not define scope or .JavascriptCodeWithScope when it does.
     public var elementType: ElementType {
         return scope == nil ? .JavaScriptCode : .JavascriptCodeWithScope

@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Int64 : BSONElementConvertible {
+extension Int64 : BSONElement {
     /// .Int64
     public var elementType: ElementType {
         return .Int64
@@ -45,7 +45,7 @@ extension Int64 : BSONElementConvertible {
 }
 
 #if arch(x86_64) || arch(arm64)
-extension Int : BSONElementConvertible {
+extension Int : BSONElement {
     /// On 64-bit platforms, .Int64
     public var elementType: ElementType {
         return .Int64

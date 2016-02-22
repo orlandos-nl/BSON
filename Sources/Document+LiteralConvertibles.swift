@@ -9,23 +9,23 @@
 import Foundation
 
 extension Document : ArrayLiteralConvertible {
-    /// Initialize a Document using an array of `BSONElementConvertible`s.
-    public init(array: [BSONElementConvertible]) {
+    /// Initialize a Document using an array of `BSONElement`s.
+    public init(array: [BSONElement]) {
         for e in array {
             self.elements[self.elements.count.description] = e
         }
     }
     
-    /// For now.. only accept BSONElementConvertible
-    public init(arrayLiteral arrayElements: AbstractBSONBase...) {
+    /// For now.. only accept BSONElement
+    public init(arrayLiteral arrayElements: BSONElement...) {
         self.init(native: arrayElements)
     }
 }
 
 extension Document : DictionaryLiteralConvertible {
     /// Create an instance initialized with `elements`.
-    public init(dictionaryLiteral dictionaryElements: (String, AbstractBSONBase)...) {
-        var dict = [String:AbstractBSONBase]()
+    public init(dictionaryLiteral dictionaryElements: (String, BSONElement)...) {
+        var dict = [String:BSONElement]()
         
         for (k, v) in dictionaryElements {
             dict[k] = v
@@ -36,9 +36,9 @@ extension Document : DictionaryLiteralConvertible {
 }
 
 extension Document {
-    private init(native: [AbstractBSONBase]) {
+    internal init(native: [BSONElement]) {
         // TODO: Call other initializer with a dictionary from this array
-        var d = [String:AbstractBSONBase]()
+        var d = [String:BSONElement]()
         
         for e in native {
             d[String(d.count)] = e
@@ -47,18 +47,7 @@ extension Document {
         self.init(native: d)
     }
     
-    private init(native: [String: AbstractBSONBase]) {
-        for (key, element) in native {
-            switch element {
-            case let element as BSONElementConvertible:
-                elements[key] = element
-            case let element as BSONArrayConversionProtocol:
-                elements[key] = Document(native: element.getAbstractArray())
-            case let element as BSONDictionaryConversionProtocol:
-                elements[key] = Document(native: element.getAbstractDictionary())
-            default:
-                print("WARNING: Document cannot be initialized with an element of type \(element.dynamicType)")
-            }
-        }
+    internal init(native: [String: BSONElement]) {
+        self.elements = native
     }
 }

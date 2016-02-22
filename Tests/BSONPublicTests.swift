@@ -509,7 +509,7 @@ class BSONPublicTests: XCTestCase {
     
     func testDocumentSubscript() {
         let testDocument: Document = ["a": 0, "b": Null(), "c": *[
-            "aa": "bb", "cc": [1, 2, 3]
+            "aa": "bb", "cc": *[1, 2, 3]
             ],
             "d": 3.14]
         
@@ -523,7 +523,7 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(testDocument["b"]! is Null)
         
         if let c: Document = testDocument["c"] as? Document {
-            let subDoc: Document = ["aa": "bb", "cc": [1, 2, 3]]
+            let subDoc: Document = ["aa": "bb", "cc": *[1, 2, 3]]
             
             XCTAssert(c.bsonData == subDoc.bsonData)
             

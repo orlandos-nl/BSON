@@ -19,7 +19,7 @@ public struct RegularExpression {
     }
 }
 
-extension RegularExpression : BSONElementConvertible {
+extension RegularExpression : BSONElement {
     /// .RegularExpression
     public var elementType: ElementType {
         return .RegularExpression

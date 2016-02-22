@@ -8,7 +8,7 @@
 
 import Foundation
 
-// For BSONElementConvertible-like behavior. No full support because this isn't a BSON type.
+// For BSONElement-like behavior. No full support because this isn't a BSON type.
 internal extension Int16 {
     internal static func instantiate(bsonData data: [UInt8]) throws -> Int16 {
         guard data.count >= 2 else {

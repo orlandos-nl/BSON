@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Int32 : BSONElementConvertible {
+extension Int32 : BSONElement {
     /// .Int32
     public var elementType: ElementType {
         return .Int32

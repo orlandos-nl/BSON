@@ -12,11 +12,6 @@ import Foundation
     import Glibc
 #endif
 
-/// The base protocol that contains BSONElementConvertible.
-/// This is needed for BSONArrayConversionProtocol and BSONDictionaryConversionProtocol, because
-/// they shouldn't be BSONElementConvertible but should be usable in Document literals.
-public protocol AbstractBSONBase {}
-
 /// All BSON Element types
 public enum ElementType : UInt8 {
     /// This number repesents that the type is a Double
@@ -57,7 +52,7 @@ public enum ElementType : UInt8 {
 
 extension ElementType {
     /// The native swift type for the current type
-    var type: BSONElementConvertible.Type {
+    var type: BSONElement.Type {
         switch self {
         case .Double:
             return Swift.Double.self
@@ -104,7 +99,7 @@ public enum BSONLength {
 }
 
 /// Anything complying to the protocol is convertible from- and to BSON Binary
-public protocol BSONElementConvertible : AbstractBSONBase {
+public protocol BSONElement {
     /// Identifies the BSON element type, such as `.String` (0x02)
     var elementType: ElementType { get }
     

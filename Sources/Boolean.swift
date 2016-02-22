@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Bool : BSONElementConvertible {
+extension Bool : BSONElement {
     /// .Boolean
     public var elementType: ElementType {
         return .Boolean

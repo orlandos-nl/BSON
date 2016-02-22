@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension NSDate : BSONElementConvertible {
+extension NSDate : BSONElement {
     /// .DateTime
     public var elementType: ElementType {
         return .DateTime

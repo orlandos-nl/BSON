@@ -32,5 +32,4 @@ custom_categories:
     children:
     - BSONLength
     - ElementType
-    - AbstractBSONBase
-    - BSONElementConvertible
+    - BSONElement

@@ -1,7 +1,7 @@
 import Foundation
 
 /// The UTF8 BSON String type (0x02)
-extension String : BSONElementConvertible {
+extension String : BSONElement {
     /// .String
     public var elementType: ElementType {
         return .String

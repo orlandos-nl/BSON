@@ -10,7 +10,7 @@ import Foundation
 
 extension Document : SequenceType {
     public typealias Key = String
-    public typealias FooValue = BSONElementConvertible
+    public typealias FooValue = BSONElement
     public typealias Index = DictionaryIndex<Key, FooValue>
     
     /// As required by and documented in `SequenceType`
@@ -39,7 +39,7 @@ extension Document : SequenceType {
     }
     
     /// document[4] is the same as document["4"]
-    public subscript (key: Int) -> BSONElementConvertible? {
+    public subscript (key: Int) -> BSONElement? {
         get {
             return self["\(key)"]
         }

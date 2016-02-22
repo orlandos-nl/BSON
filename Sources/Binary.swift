@@ -9,7 +9,7 @@
 import Foundation
 
 /// Used for storing arbitrary data in a BSON Document
-public struct Binary : BSONElementConvertible {
+public struct Binary : BSONElement {
     /// .Binary
     public var elementType: ElementType {
         return .Binary

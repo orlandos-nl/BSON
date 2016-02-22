@@ -93,7 +93,7 @@ public struct ObjectId {
     }
 }
 
-extension ObjectId : BSONElementConvertible {
+extension ObjectId : BSONElement {
     /// .ObjectId
     public var elementType: ElementType {
         return .ObjectId

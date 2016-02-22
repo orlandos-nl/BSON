@@ -9,7 +9,7 @@
 import Foundation
 
 /// The BSON `NullValue`, as documented in the BSON spec.
-public struct Null : BSONElementConvertible {
+public struct Null : BSONElement {
     /// Create a new `Null` for storing in BSON.
     public init() {}
     

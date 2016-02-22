@@ -9,7 +9,7 @@
 import Foundation
 
 /// Timestamp is a special internal MongoDB type
-public struct Timestamp : BSONElementConvertible {
+public struct Timestamp : BSONElement {
     /// .Timestamp
     public var elementType: ElementType {
         return .Timestamp
