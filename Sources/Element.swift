@@ -117,3 +117,73 @@ public protocol BSONElement {
     /// The initializer expects the data for this element, starting AFTER the element type
     static func instantiate(bsonData data: [UInt8]) throws -> Self
 }
+
+public extension BSONElement {
+    /// Returns the value of `self` interpeted as an Int. Will return a value if `self` is of one of the following types:
+    /// Float, Double, Int16, Int32, Int64, Int
+    public var intValue: Int? {
+        switch self {
+        case let me as Float: return Int(me)
+        case let me as Double: return Int(me)
+        case let me as Int16: return Int(me)
+        case let me as Int32: return Int(me)
+        case let me as Int64: return Int(me)
+        case let me as Int: return Int(me)
+        default: return nil
+        }
+    }
+    
+    /// Returns the value of `self` interpeted as a Double. Will return a value if `self` is of one of the following types:
+    /// Float, Double, Int16, Int32, Int64, Int
+    public var doubleValue: Double? {
+        switch self {
+        case let me as Float: return Double(me)
+        case let me as Double: return Double(me)
+        case let me as Int16: return Double(me)
+        case let me as Int32: return Double(me)
+        case let me as Int64: return Double(me)
+        case let me as Int: return Double(me)
+        default: return nil
+        }
+    }
+    
+    /// Returns `self` if self is a String
+    public var stringValue: String? {
+        return self as? String
+    }
+    
+    /// Returns `self` if self is a date
+    public var dateValue: NSDate? {
+        return self as? NSDate
+    }
+    
+    /// Returns `self` if self is a regular expression
+    public var regularExpressionValue: RegularExpression? {
+        return self as? RegularExpression
+    }
+    
+    /// Returns `self` if self is JavaScriptCode
+    public var javaScriptCodeValue: JavaScriptCode? {
+        return self as? JavaScriptCode
+    }
+    
+    /// Returns `self` if self is Binary
+    public var binaryValue: Binary? {
+        return self as? Binary
+    }
+    
+    /// Returns `self` if self is ObjectId
+    public var objectIdValue: ObjectId? {
+        return self as? ObjectId
+    }
+    
+    /// Returns `self` if self is Timestamp
+    public var timestampValue: Timestamp? {
+        return self as? Timestamp
+    }
+    
+    /// Returns `self` if self is Null
+    public var nullValue: Null? {
+        return self as? Null
+    }
+}
