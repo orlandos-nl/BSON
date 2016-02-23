@@ -128,13 +128,44 @@ public extension BSONElement {
     /// Returns the value of `self` interpeted as an Int. Will return a value if `self` is of one of the following types:
     /// Float, Double, Int16, Int32, Int64, Int
     public var intValue: Int? {
+        typealias Beauty = Int
         switch self {
-        case let me as Float: return Int(me)
-        case let me as Double: return Int(me)
-        case let me as Int16: return Int(me)
-        case let me as Int32: return Int(me)
-        case let me as Int64: return Int(me)
-        case let me as Int: return Int(me)
+        case let me as Float: return Beauty(me)
+        case let me as Double: return Beauty(me)
+        case let me as Int16: return Beauty(me)
+        case let me as Int32: return Beauty(me)
+        case let me as Int64: return Beauty(me)
+        case let me as Int: return Beauty(me)
+        default: return nil
+        }
+    }
+    
+    /// Returns the value of `self` interpeted as an Int64. Will return a value if `self` is of one of the following types:
+    /// Float, Double, Int16, Int32, Int64, Int
+    public var int64Value: Int64? {
+        typealias Beauty = Int64
+        switch self {
+        case let me as Float: return Beauty(me)
+        case let me as Double: return Beauty(me)
+        case let me as Int16: return Beauty(me)
+        case let me as Int32: return Beauty(me)
+        case let me as Int64: return Beauty(me)
+        case let me as Int: return Beauty(me)
+        default: return nil
+        }
+    }
+    
+    /// Returns the value of `self` interpeted as an Int32. Will return a value if `self` is of one of the following types:
+    /// Float, Double, Int16, Int32, Int64, Int
+    public var int32Value: Int32? {
+        typealias Beauty = Int32
+        switch self {
+        case let me as Float: return Beauty(me)
+        case let me as Double: return Beauty(me)
+        case let me as Int16: return Beauty(me)
+        case let me as Int32: return Beauty(me)
+        case let me as Int64: return Beauty(me)
+        case let me as Int: return Beauty(me)
         default: return nil
         }
     }
@@ -142,13 +173,14 @@ public extension BSONElement {
     /// Returns the value of `self` interpeted as a Double. Will return a value if `self` is of one of the following types:
     /// Float, Double, Int16, Int32, Int64, Int
     public var doubleValue: Double? {
+        typealias Beauty = Double
         switch self {
-        case let me as Float: return Double(me)
-        case let me as Double: return Double(me)
-        case let me as Int16: return Double(me)
-        case let me as Int32: return Double(me)
-        case let me as Int64: return Double(me)
-        case let me as Int: return Double(me)
+        case let me as Float: return Beauty(me)
+        case let me as Double: return Beauty(me)
+        case let me as Int16: return Beauty(me)
+        case let me as Int32: return Beauty(me)
+        case let me as Int64: return Beauty(me)
+        case let me as Int: return Beauty(me)
         default: return nil
         }
     }
@@ -191,5 +223,28 @@ public extension BSONElement {
     /// Returns `self` if self is `Null`
     public var nullValue: Null? {
         return self as? Null
+    }
+    
+    /// Returns `self` if self is `Document`
+    public var documentValue: Document? {
+        return self as? Document
+    }
+}
+
+public extension BSONElement {
+    public subscript(key: String) -> BSONElement? {
+        if let me = self as? Document {
+            return me[key]
+        } else {
+            return nil
+        }
+    }
+    
+    public subscript(key: Int) -> BSONElement? {
+        if let me = self as? Document {
+            return me[key]
+        } else {
+            return nil
+        }
     }
 }
