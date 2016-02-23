@@ -97,4 +97,12 @@ extension JavaScriptCode : BSONElement {
             throw DeserializationError.InvalidOperation
         }
     }
+    
+    public var bsonDescription: String {
+        if let scope = scope {
+            return "JavaScriptCode(code: \(code.bsonDescription), scope: \(scope.bsonDescription))"
+        } else {
+            return "JavaScriptCode(code: \(code.bsonDescription))"
+        }
+    }
 }

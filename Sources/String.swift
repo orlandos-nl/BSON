@@ -96,4 +96,9 @@ extension String : BSONElement {
     
     /// The length of a String is .Undefined
     public static let bsonLength = BSONLength.Undefined
+    
+    public var bsonDescription: String {
+        let escaped = self.stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
+        return "\"\(escaped)\""
+    }
 }

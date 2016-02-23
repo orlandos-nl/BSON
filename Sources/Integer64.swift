@@ -42,6 +42,10 @@ extension Int64 : BSONElement {
     
     /// Always .Fixed(8)
     public static let bsonLength = BSONLength.Fixed(length: 8)
+    
+    public var bsonDescription: String {
+        return "Int64(\(self))"
+    }
 }
 
 #if arch(x86_64) || arch(arm64)
@@ -68,5 +72,9 @@ extension Int : BSONElement {
     
     /// The same as Int64.bsonLength
     public static let bsonLength = Int64.bsonLength
+    
+    public var bsonDescription: String {
+        return "\(self)"
+    }
 }
 #endif

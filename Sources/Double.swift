@@ -35,4 +35,8 @@ extension Double : BSONElement {
     
     /// .Fixed(length: 8)
     public static let bsonLength = BSONLength.Fixed(length: 8)
+    
+    public var bsonDescription: String {
+        return "\(self)"
+    }
 }

@@ -43,4 +43,8 @@ extension Bool : BSONElement {
     
     /// A bool is always 1 byte
     public static let bsonLength = BSONLength.Fixed(length: 1)
+    
+    public var bsonDescription: String {
+        return self ? "true" : "false"
+    }
 }

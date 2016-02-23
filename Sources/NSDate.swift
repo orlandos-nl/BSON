@@ -38,4 +38,8 @@ extension NSDate : BSONElement {
     
     /// BSON DateTime is always 8 bytes
     public static let bsonLength = BSONLength.Fixed(length: 8)
+    
+    public var bsonDescription: String {
+        return "NSDate(timeIntervalSince1970: \(self.timeIntervalSince1970))"
+    }
 }

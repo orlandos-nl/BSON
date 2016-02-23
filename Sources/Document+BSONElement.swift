@@ -49,4 +49,13 @@ extension Document : BSONElement {
     
     /// .Undefined
     public static let bsonLength = BSONLength.Undefined
+    
+    public var bsonDescription: String {
+        var desc = "*["
+        for (key, element) in self.elements {
+            desc += "\(key.bsonDescription): \(element.bsonDescription),"
+        }
+        desc += "]"
+        return desc
+    }
 }

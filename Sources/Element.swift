@@ -98,8 +98,14 @@ public enum BSONLength {
     case NullTerminated
 }
 
+/// This protocol is used for printing the debugger description of a Document
+public protocol BSONDebugStringConvertible {
+    /// Return a representation of `self` that is (if possible) valid Swift code.
+    var bsonDescription: String { get }
+}
+
 /// Anything complying to the protocol is convertible from- and to BSON Binary
-public protocol BSONElement {
+public protocol BSONElement : BSONDebugStringConvertible {
     /// Identifies the BSON element type, such as `.String` (0x02)
     var elementType: ElementType { get }
     
@@ -147,42 +153,42 @@ public extension BSONElement {
         }
     }
     
-    /// Returns `self` if self is a String
+    /// Returns `self` if self is a `String`
     public var stringValue: String? {
         return self as? String
     }
     
-    /// Returns `self` if self is a date
+    /// Returns `self` if self is a `NSDate`
     public var dateValue: NSDate? {
         return self as? NSDate
     }
     
-    /// Returns `self` if self is a regular expression
+    /// Returns `self` if self is a `RegularExpression`
     public var regularExpressionValue: RegularExpression? {
         return self as? RegularExpression
     }
     
-    /// Returns `self` if self is JavaScriptCode
+    /// Returns `self` if self is `JavaScriptCode`
     public var javaScriptCodeValue: JavaScriptCode? {
         return self as? JavaScriptCode
     }
     
-    /// Returns `self` if self is Binary
+    /// Returns `self` if self is `Binary`
     public var binaryValue: Binary? {
         return self as? Binary
     }
     
-    /// Returns `self` if self is ObjectId
+    /// Returns `self` if self is `ObjectId`
     public var objectIdValue: ObjectId? {
         return self as? ObjectId
     }
     
-    /// Returns `self` if self is Timestamp
+    /// Returns `self` if self is `Timestamp`
     public var timestampValue: Timestamp? {
         return self as? Timestamp
     }
     
-    /// Returns `self` if self is Null
+    /// Returns `self` if self is `Null`
     public var nullValue: Null? {
         return self as? Null
     }

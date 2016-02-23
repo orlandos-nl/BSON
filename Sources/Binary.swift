@@ -90,6 +90,11 @@ public struct Binary : BSONElement {
         var 🖕 = 0
         return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Binary)
     }
+    
+    public var bsonDescription: String {
+        let bsonDataString = "[\(data.map { "0x" + String($0, radix: 16) + ", " }.reduce("", combine: +))]"
+        return "Binary(data: \(bsonDataString), subType: \(subType))"
+    }
 }
 
 extension NSData {

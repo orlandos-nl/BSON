@@ -42,4 +42,8 @@ extension Int32 : BSONElement {
     
     /// 4 bytes
     public static let bsonLength = BSONLength.Fixed(length: 4)
+    
+    public var bsonDescription: String {
+        return "Int32(\(self))"
+    }
 }

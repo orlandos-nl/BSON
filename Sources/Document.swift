@@ -171,6 +171,12 @@ extension Document {
 extension Document : CustomStringConvertible {
     /// Returns the description of all elements in this document. Not ordered correctly.
     public var description: String {
-        return elements.description
+        return self.bsonDescription
+    }
+}
+
+extension Document : CustomDebugStringConvertible {
+    public var debugDescription: String {
+        return self.bsonDescription
     }
 }

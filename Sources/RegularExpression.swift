@@ -60,4 +60,8 @@ extension RegularExpression : BSONElement {
         
         return self.init(pattern: pattern, options: options)
     }
+    
+    public var bsonDescription: String {
+        return "RegularExpression(pattern: \(pattern.bsonDescription), options: \(options.bsonDescription))"
+    }
 }

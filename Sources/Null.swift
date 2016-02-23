@@ -38,4 +38,8 @@ public struct Null : BSONElement {
     public static func instantiate(bsonData data: [UInt8]) throws -> Null {
         return Null()
     }
+    
+    public var bsonDescription: String {
+        return "Null()"
+    }
 }

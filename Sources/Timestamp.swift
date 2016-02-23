@@ -40,4 +40,8 @@ public struct Timestamp : BSONElement {
     
     /// The storage of the timestamp. Note that this is in an undocumented format.
     public var storage: Int64
+    
+    public var bsonDescription: String {
+        return "Timestamp"
+    }
 }

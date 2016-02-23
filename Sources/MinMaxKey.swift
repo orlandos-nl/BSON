@@ -32,6 +32,10 @@ public struct MinKey : BSONElement {
     public static func instantiate(bsonData data: [UInt8]) throws -> MinKey {
         return MinKey()
     }
+    
+    public var bsonDescription: String {
+        return "MinKey()"
+    }
 }
 
 /// Special type which compares higher than all other possible BSON element values.
@@ -57,5 +61,9 @@ public struct MaxKey : BSONElement {
     /// Always returns MaxKey()
     public static func instantiate(bsonData data: [UInt8]) throws -> MaxKey {
         return MaxKey()
+    }
+    
+    public var bsonDescription: String {
+        return "MaxKey()"
     }
 }
