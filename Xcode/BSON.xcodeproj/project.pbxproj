@@ -35,6 +35,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		F208B3DE1C85EA6300693820 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F20A954A1C5383440054AB52 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F208B3DA1C85EA5B00693820;
+			remoteInfo = Dependencies;
+		};
 		F20A955F1C5383440054AB52 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F20A954A1C5383440054AB52 /* Project object */;
@@ -56,6 +63,9 @@
 		0A549A691C5409610049A1A2 /* Binary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Binary.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		0AEAD4A41C5436DC00D1CBC3 /* Timestamp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Timestamp.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F20437571C6283A600C586C4 /* JavaScriptCode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = JavaScriptCode.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		F208B3D71C85EA1900693820 /* Dependencies.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = Dependencies.sh; sourceTree = "<group>"; };
+		F208B3D81C85EA3200693820 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Package.swift; path = ../Package.swift; sourceTree = "<group>"; };
+		F208B3D91C85EA4200693820 /* SPM.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SPM.xcconfig; sourceTree = "<group>"; };
 		F20A95531C5383440054AB52 /* BSON.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BSON.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F20A95561C5383440054AB52 /* BSON.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BSON.h; sourceTree = "<group>"; };
 		F20A95581C5383440054AB52 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -65,14 +75,14 @@
 		F20A956D1C5383590054AB52 /* Document.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Document.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F20A957B1C5392D40054AB52 /* Element.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Element.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F20A957D1C5394580054AB52 /* Error.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
-		F212DC861C58C3FA00B36A19 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		F212DC861C58C3FA00B36A19 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		F252725F1C53AAC600CBB42E /* Double.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Double.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F25272611C53AADD00CBB42E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = String.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F27375391C5A61E400CDE296 /* Null.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Null.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F2B8DB9E1C623D5800864FE3 /* Document+SequenceType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Document+SequenceType.swift"; sourceTree = "<group>"; };
 		F2B8DBA01C623D7400864FE3 /* Document+LiteralConvertibles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Document+LiteralConvertibles.swift"; sourceTree = "<group>"; };
 		F2B8DBA21C623DDA00864FE3 /* Document+BSONElement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = "Document+BSONElement.swift"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
-		F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = .jazzy.yaml; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
+		F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; name = .jazzy.yaml; path = ../.jazzy.yaml; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		F2F4C3361C5FE60100CB84C7 /* Tutorial.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = Tutorial.playground; sourceTree = "<group>"; };
 		F2F4C3381C6000D700CB84C7 /* RegularExpression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = RegularExpression.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F2F4C33A1C60090800CB84C7 /* MinMaxKey.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = MinMaxKey.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
@@ -97,15 +107,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F208B3D61C85EA0600693820 /* Crap */ = {
+			isa = PBXGroup;
+			children = (
+				F208B3D91C85EA4200693820 /* SPM.xcconfig */,
+				F208B3D71C85EA1900693820 /* Dependencies.sh */,
+			);
+			name = Crap;
+			sourceTree = "<group>";
+		};
 		F20A95491C5383440054AB52 = {
 			isa = PBXGroup;
 			children = (
+				F208B3D81C85EA3200693820 /* Package.swift */,
 				F2F4C3361C5FE60100CB84C7 /* Tutorial.playground */,
 				F2F4C3331C5FC29A00CB84C7 /* .jazzy.yaml */,
 				F212DC861C58C3FA00B36A19 /* README.md */,
 				F20A95551C5383440054AB52 /* Sources */,
 				F20A95611C5383440054AB52 /* Tests */,
 				F20A95541C5383440054AB52 /* Products */,
+				F208B3D61C85EA0600693820 /* Crap */,
 			);
 			sourceTree = "<group>";
 		};
@@ -128,7 +149,8 @@
 				F20A957B1C5392D40054AB52 /* Element.swift */,
 				F20A957D1C5394580054AB52 /* Error.swift */,
 			);
-			path = Sources;
+			name = Sources;
+			path = ../Sources;
 			sourceTree = "<group>";
 		};
 		F20A95611C5383440054AB52 /* Tests */ = {
@@ -138,7 +160,8 @@
 				0A332A601C5FB62200FD8613 /* BSONPublicTests.swift */,
 				F20A95641C5383440054AB52 /* Info.plist */,
 			);
-			path = Tests;
+			name = Tests;
+			path = ../Tests;
 			sourceTree = "<group>";
 		};
 		F252725E1C53AABC00CBB42E /* Elements */ = {
@@ -187,6 +210,23 @@
 		};
 /* End PBXHeadersBuildPhase section */
 
+/* Begin PBXLegacyTarget section */
+		F208B3DA1C85EA5B00693820 /* Dependencies */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = F208B3DB1C85EA5B00693820 /* Build configuration list for PBXLegacyTarget "Dependencies" */;
+			buildPhases = (
+			);
+			buildToolPath = "$(SRCROOT)/Dependencies.sh";
+			buildWorkingDirectory = "";
+			dependencies = (
+			);
+			name = Dependencies;
+			passBuildSettingsInEnvironment = 1;
+			productName = Dependencies;
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		F20A95521C5383440054AB52 /* BSON */ = {
 			isa = PBXNativeTarget;
@@ -200,6 +240,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				F208B3DF1C85EA6300693820 /* PBXTargetDependency */,
 			);
 			name = BSON;
 			productName = BSON;
@@ -234,6 +275,9 @@
 				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = "Robbert Brandsma";
 				TargetAttributes = {
+					F208B3DA1C85EA5B00693820 = {
+						CreatedOnToolsVersion = 7.3;
+					};
 					F20A95521C5383440054AB52 = {
 						CreatedOnToolsVersion = 7.2;
 					};
@@ -256,6 +300,7 @@
 			targets = (
 				F20A95521C5383440054AB52 /* BSON */,
 				F20A955C1C5383440054AB52 /* BSONTests */,
+				F208B3DA1C85EA5B00693820 /* Dependencies */,
 			);
 		};
 /* End PBXProject section */
@@ -318,6 +363,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		F208B3DF1C85EA6300693820 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F208B3DA1C85EA5B00693820 /* Dependencies */;
+			targetProxy = F208B3DE1C85EA6300693820 /* PBXContainerItemProxy */;
+		};
 		F20A95601C5383440054AB52 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F20A95521C5383440054AB52 /* BSON */;
@@ -326,6 +376,31 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		F208B3DC1C85EA5B00693820 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		F208B3DD1C85EA5B00693820 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		F20A95651C5383440054AB52 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -414,6 +489,7 @@
 		};
 		F20A95681C5383440054AB52 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F208B3D91C85EA4200693820 /* SPM.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -422,7 +498,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/../Sources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSON;
@@ -442,7 +518,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/../Sources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSON;
@@ -455,7 +531,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = Tests/Info.plist;
+				INFOPLIST_FILE = ../Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSONTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -466,7 +542,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = Tests/Info.plist;
+				INFOPLIST_FILE = ../Tests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = nl.robbertbrandsma.BSONTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -476,6 +552,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		F208B3DB1C85EA5B00693820 /* Build configuration list for PBXLegacyTarget "Dependencies" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F208B3DC1C85EA5B00693820 /* Debug */,
+				F208B3DD1C85EA5B00693820 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		F20A954D1C5383440054AB52 /* Build configuration list for PBXProject "BSON" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
