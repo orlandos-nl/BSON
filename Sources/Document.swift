@@ -180,3 +180,8 @@ extension Document : CustomDebugStringConvertible {
         return self.bsonDescription
     }
 }
+
+extension Document : Equatable {}
+public func ==(left: Document, right: Document) -> Bool {
+    return left.bsonData == right.bsonData
+}

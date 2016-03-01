@@ -45,3 +45,8 @@ public struct Timestamp : BSONElement {
         return "Timestamp"
     }
 }
+
+extension Timestamp : Equatable {}
+public func ==(left: Timestamp, right: Timestamp) -> Bool {
+    return left.storage == right.storage
+}

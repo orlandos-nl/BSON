@@ -43,3 +43,6 @@ public struct Null : BSONElement {
         return "Null()"
     }
 }
+
+extension Null : Equatable {}
+public func ==(_: Null, _: Null) -> Bool { return true }

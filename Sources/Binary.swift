@@ -97,6 +97,11 @@ public struct Binary : BSONElement {
     }
 }
 
+extension Binary : Equatable {}
+public func ==(left: Binary, right: Binary) -> Bool {
+    return left.data == right.data
+}
+
 extension NSData {
     /// Initialize the NSData object with a BSON binary
     public convenience init(_ binary: Binary) {

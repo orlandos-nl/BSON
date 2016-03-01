@@ -65,3 +65,8 @@ extension RegularExpression : BSONElement {
         return "RegularExpression(pattern: \(pattern.bsonDescription), options: \(options.bsonDescription))"
     }
 }
+
+extension RegularExpression : Equatable {}
+public func ==(left: RegularExpression, right: RegularExpression) -> Bool {
+    return left.options == right.options && left.pattern == right.pattern
+}

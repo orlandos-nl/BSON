@@ -131,3 +131,8 @@ extension ObjectId : BSONElement {
         return "try! ObjectId(\"\(self.hexString)\")"
     }
 }
+
+extension ObjectId : Equatable {}
+public func ==(left: ObjectId, right: ObjectId) -> Bool {
+    return left.data == right.data
+}

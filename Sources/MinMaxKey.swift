@@ -38,6 +38,9 @@ public struct MinKey : BSONElement {
     }
 }
 
+extension MinKey : Equatable {}
+public func ==(_: MinKey, _: MinKey) -> Bool { return true }
+
 /// Special type which compares higher than all other possible BSON element values.
 public struct MaxKey : BSONElement {
     /// Create a new MaxKey
@@ -67,3 +70,6 @@ public struct MaxKey : BSONElement {
         return "MaxKey()"
     }
 }
+
+extension MaxKey : Equatable {}
+public func ==(_: MaxKey, _: MaxKey) -> Bool { return true }

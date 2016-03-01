@@ -106,3 +106,8 @@ extension JavaScriptCode : BSONElement {
         }
     }
 }
+
+extension JavaScriptCode : Equatable {}
+public func ==(left: JavaScriptCode, right: JavaScriptCode) -> Bool {
+    return left.code == right.code && left.scope == right.scope
+}
