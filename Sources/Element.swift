@@ -248,3 +248,18 @@ public extension BSONElement {
         }
     }
 }
+
+/// Currently only supports Double, String, and Integer
+// TODO: Add more data types to compare here
+public func ==(left: BSONElement, right: BSONElement) -> Bool {
+    switch (left.elementType, right.elementType) {
+    case (.Double, .Double):
+        return left.doubleValue == right.doubleValue
+    case (.String, .String):
+        return left.stringValue == right.stringValue
+    case (.Int32, .Int32), (.Int64, .Int64):
+        return left.int64Value == right.int64Value
+    default:
+        return false
+    }
+}

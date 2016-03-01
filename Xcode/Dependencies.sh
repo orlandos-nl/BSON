@@ -17,15 +17,14 @@ fi
 if [ -a ".build/debug/.dependencies-ready" ]; then
     # Nothing to do
     echo "Dependencies already present. Not rebuilding."
-else
-    # Run swift build
-    swift build 2>&1 | sed -l -e "s/: warning:/info: a dependency is complaining:/"
-    if [[ $? != 0 ]]; then
-        exit $?
-    fi
+    exit $0
 fi
 
-
+# Run swift build
+swift build 2>&1 | sed -l -e "s/: warning:/info: a dependency is complaining:/"
+if [[ $? != 0 ]]; then
+    exit $?
+fi
 
 # Generate the config file
 
