@@ -35,13 +35,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		F208B3DE1C85EA6300693820 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F20A954A1C5383440054AB52 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F208B3DA1C85EA5B00693820;
-			remoteInfo = Dependencies;
-		};
 		F20A955F1C5383440054AB52 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F20A954A1C5383440054AB52 /* Project object */;
@@ -240,7 +233,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				F208B3DF1C85EA6300693820 /* PBXTargetDependency */,
 			);
 			name = BSON;
 			productName = BSON;
@@ -363,11 +355,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		F208B3DF1C85EA6300693820 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F208B3DA1C85EA5B00693820 /* Dependencies */;
-			targetProxy = F208B3DE1C85EA6300693820 /* PBXContainerItemProxy */;
-		};
 		F20A95601C5383440054AB52 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F20A95521C5383440054AB52 /* BSON */;

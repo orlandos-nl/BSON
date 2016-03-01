@@ -263,3 +263,8 @@ public func ==(left: BSONElement, right: BSONElement) -> Bool {
         return false
     }
 }
+
+// needed because we cannot make BSONElement equateable
+public func !=(left: BSONElement, right: BSONElement) -> Bool {
+    return !(left == right)
+}
