@@ -49,6 +49,16 @@ let document: Document = [
 
 Code not using this operator will compile, but the embedded documents won't be inserted in your document. A warning will be logged to the console.
 
+### Comparing values
+
+You can currently compare integers, doubles, booleans, and strings by using the ?== operator:
+
+```swift
+if document["key"] ?== 42.3 {
+
+}
+```
+
 ### Supported Types
 
 All non-deprecated BSON 1.0 types are supported.

@@ -697,9 +697,9 @@ class BSONPublicTests: XCTestCase {
         ]
         
         // test == operator
-        XCTAssert(kittenDocument["doubleTest"]! == kittenDocument["doubleTest"]!)
-        XCTAssert(kittenDocument["doubleTest"]! == 0.04)
-        XCTAssert(kittenDocument["doubleTest"]! != 0.05)
+        XCTAssert(kittenDocument["doubleTest"] ?== kittenDocument["doubleTest"]!)
+        XCTAssert(kittenDocument["doubleTest"] ?== 0.04)
+        XCTAssertFalse(kittenDocument["doubleTest"] ?== 0.05)
         
         for key in kittenDocument.keys {
             XCTAssert(kittenDocument[key] != nil)
