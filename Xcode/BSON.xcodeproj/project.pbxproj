@@ -27,6 +27,7 @@
 		F25272601C53AAC600CBB42E /* Double.swift in Sources */ = {isa = PBXBuildFile; fileRef = F252725F1C53AAC600CBB42E /* Double.swift */; };
 		F25272621C53AADD00CBB42E /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = F25272611C53AADD00CBB42E /* String.swift */; };
 		F273753A1C5A61E400CDE296 /* Null.swift in Sources */ = {isa = PBXBuildFile; fileRef = F27375391C5A61E400CDE296 /* Null.swift */; };
+		F293F6F91C984F4800ED7E03 /* Document+Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = F293F6F81C984F4800ED7E03 /* Document+Operators.swift */; };
 		F2B8DB9F1C623D5800864FE3 /* Document+SequenceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B8DB9E1C623D5800864FE3 /* Document+SequenceType.swift */; };
 		F2B8DBA11C623D7400864FE3 /* Document+LiteralConvertibles.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B8DBA01C623D7400864FE3 /* Document+LiteralConvertibles.swift */; };
 		F2B8DBA31C623DDA00864FE3 /* Document+BSONElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B8DBA21C623DDA00864FE3 /* Document+BSONElement.swift */; };
@@ -71,6 +72,7 @@
 		F252725F1C53AAC600CBB42E /* Double.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Double.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F25272611C53AADD00CBB42E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = String.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F27375391C5A61E400CDE296 /* Null.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Null.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		F293F6F81C984F4800ED7E03 /* Document+Operators.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Document+Operators.swift"; sourceTree = "<group>"; };
 		F2B8DB9E1C623D5800864FE3 /* Document+SequenceType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Document+SequenceType.swift"; sourceTree = "<group>"; };
 		F2B8DBA01C623D7400864FE3 /* Document+LiteralConvertibles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Document+LiteralConvertibles.swift"; sourceTree = "<group>"; };
 		F2B8DBA21C623DDA00864FE3 /* Document+BSONElement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = "Document+BSONElement.swift"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
@@ -184,6 +186,7 @@
 				F2B8DB9E1C623D5800864FE3 /* Document+SequenceType.swift */,
 				F2B8DBA01C623D7400864FE3 /* Document+LiteralConvertibles.swift */,
 				F2B8DBA21C623DDA00864FE3 /* Document+BSONElement.swift */,
+				F293F6F81C984F4800ED7E03 /* Document+Operators.swift */,
 			);
 			name = Document;
 			sourceTree = "<group>";
@@ -335,6 +338,7 @@
 				0A216CE61C541DFC005C959A /* ObjectId.swift in Sources */,
 				F2B8DBA31C623DDA00864FE3 /* Document+BSONElement.swift in Sources */,
 				F25272601C53AAC600CBB42E /* Double.swift in Sources */,
+				F293F6F91C984F4800ED7E03 /* Document+Operators.swift in Sources */,
 				F2B8DB9F1C623D5800864FE3 /* Document+SequenceType.swift in Sources */,
 				F2F4C33B1C60090800CB84C7 /* MinMaxKey.swift in Sources */,
 				F20A956E1C5383590054AB52 /* Document.swift in Sources */,
