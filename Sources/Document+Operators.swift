@@ -9,7 +9,14 @@
 import Foundation
 
 public func +(lhs: Document, rhs: Document) -> Document {
+    let areArrays = lhs.validatesAsArray() && rhs.validatesAsArray()
+    
     var lhs = lhs
     lhs.elements += rhs.elements
+    
+    if areArrays {
+        lhs.enforceArray()
+    }
+    
     return lhs
 }
