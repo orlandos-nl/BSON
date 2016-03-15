@@ -21,7 +21,7 @@ extension Document : BSONElement {
         var body = [UInt8]()
         var length = 4
         
-        for (key, element) in elements.sort({ $0.0 < $1.0 }) {
+        for (key, element) in elements {
             body += [element.elementType.rawValue]
             body += key.cStringBsonData
             body += element.bsonData

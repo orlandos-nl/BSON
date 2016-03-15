@@ -11,43 +11,31 @@ import Foundation
 extension Document : ArrayLiteralConvertible {
     /// Initialize a Document using an array of `BSONElement`s.
     public init(array: [BSONElement]) {
-        for e in array {
-            self.elements[self.elements.count.description] = e
-        }
+        elements = array.map { ("", $0) }
+        self.enforceArray()
     }
     
     /// For now.. only accept BSONElement
     public init(arrayLiteral arrayElements: BSONElement...) {
-        self.init(native: arrayElements)
+        self.init(array: arrayElements)
+    }
+    
+    public mutating func enforceArray() {
+        for i in 0..<elements.count {
+            elements[i].0 = "\(i)"
+        }
     }
 }
 
 extension Document : DictionaryLiteralConvertible {
     /// Create an instance initialized with `elements`.
     public init(dictionaryLiteral dictionaryElements: (String, BSONElement)...) {
-        var dict = [String:BSONElement]()
-        
-        for (k, v) in dictionaryElements {
-            dict[k] = v
-        }
-        
-        self.init(native: dict)
+        self.elements = dictionaryElements
     }
 }
 
 extension Document {
-    internal init(native: [BSONElement]) {
-        // TODO: Call other initializer with a dictionary from this array
-        var d = [String:BSONElement]()
-        
-        for e in native {
-            d[String(d.count)] = e
-        }
-        
-        self.init(native: d)
-    }
-    
     internal init(native: [String: BSONElement]) {
-        self.elements = native
+        self.elements = native.map({ $0 })
     }
 }

@@ -27,7 +27,7 @@ import Foundation
 /// Because this BSON library exports all documents alphabetically, every document only numerical subsequential keys starting at '0' will be treated as an array.
 public struct Document {
     /// Element storage
-    internal var elements = [String : BSONElement]()
+    internal var elements = [(String, BSONElement)]()
     
     /// Initialize a BSON document with the data from the given Foundation `NSData` object.
     /// 
@@ -124,7 +124,7 @@ public struct Document {
             
             position += consumedElementBytes
             
-            self.elements[elementName] = result
+            self[elementName] = result
         }
     }
 }

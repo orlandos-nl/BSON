@@ -58,7 +58,6 @@
 		F20437571C6283A600C586C4 /* JavaScriptCode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = JavaScriptCode.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F208B3D71C85EA1900693820 /* Dependencies.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = Dependencies.sh; sourceTree = "<group>"; };
 		F208B3D81C85EA3200693820 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Package.swift; path = ../Package.swift; sourceTree = "<group>"; };
-		F208B3D91C85EA4200693820 /* SPM.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SPM.xcconfig; sourceTree = "<group>"; };
 		F20A95531C5383440054AB52 /* BSON.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BSON.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F20A95561C5383440054AB52 /* BSON.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BSON.h; sourceTree = "<group>"; };
 		F20A95581C5383440054AB52 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -103,7 +102,6 @@
 		F208B3D61C85EA0600693820 /* Crap */ = {
 			isa = PBXGroup;
 			children = (
-				F208B3D91C85EA4200693820 /* SPM.xcconfig */,
 				F208B3D71C85EA1900693820 /* Dependencies.sh */,
 			);
 			name = Crap;
@@ -476,7 +474,6 @@
 		};
 		F20A95681C5383440054AB52 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F208B3D91C85EA4200693820 /* SPM.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -546,6 +543,7 @@
 				F208B3DD1C85EA5B00693820 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F20A954D1C5383440054AB52 /* Build configuration list for PBXProject "BSON" */ = {
 			isa = XCConfigurationList;

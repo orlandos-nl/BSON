@@ -9,63 +9,80 @@
 import Foundation
 
 extension Document : SequenceType {
-    public typealias Key = String
-    public typealias FooValue = BSONElement
-    public typealias Index = DictionaryIndex<Key, FooValue>
-    
     /// As required by and documented in `SequenceType`
-    public var startIndex: DictionaryIndex<Key, FooValue> {
+    public var startIndex: Int {
         return elements.startIndex
     }
 
     /// As required by and documented in `SequenceType`
-    public var endIndex: DictionaryIndex<Key, FooValue> {
+    public var endIndex: Int {
         return elements.endIndex
     }
     
     /// As required by and documented in `SequenceType`
-    public func indexForKey(key: Key) -> DictionaryIndex<Key, FooValue>? {
-        return elements.indexForKey(key)
+    public func indexForKey(key: String) -> Int? {
+        return elements.indexOf({ $0.0 == key })
     }
     
     /// As required by and documented in `SequenceType`
-    public subscript (key: Key) -> FooValue? {
+    public subscript (key: String) -> BSONElement? {
         get {
-            return elements[key]
+            return elements.filter({ $0.0 == key }).first?.1
         }
         set {
-            elements[key] = newValue
+            if let newValue = newValue {
+                self.updateValue(newValue, forKey: key)
+            }
         }
     }
     
-    /// document[4] is the same as document["4"]
     public subscript (key: Int) -> BSONElement? {
         get {
-            return self["\(key)"]
+            return elements[key].1
         }
         set {
-            self["\(key)"] = newValue
+            guard let newValue = newValue else {
+                let shouldKeepArray = self.validatesAsArray()
+                
+                elements.removeAtIndex(key)
+                
+                if shouldKeepArray {
+                    self.enforceArray()
+                }
+                
+                return
+            }
+            
+            elements[key] = ("\(key)", newValue)
         }
     }
     
     /// As required by and documented in `SequenceType`
-    public subscript (position: DictionaryIndex<Key, FooValue>) -> (Key, FooValue) {
-        return elements[position]
+    public mutating func updateValue(value: BSONElement, forKey key: String) -> BSONElement? {
+        guard let indexKey = self.indexForKey(key) else {
+            elements.append((key, value))
+            return nil
+        }
+        
+        let oldElement = elements[indexKey].1
+        
+        elements[indexKey] = (key, value)
+        
+        return oldElement
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func updateValue(value: FooValue, forKey key: Key) -> FooValue? {
-        return elements.updateValue(value, forKey: key)
-    }
-    
-    /// As required by and documented in `SequenceType`
-    public mutating func removeAtIndex(index: DictionaryIndex<Key, FooValue>) -> (Key, FooValue) {
+    public mutating func removeAtIndex(index: Int) -> (String, BSONElement) {
         return elements.removeAtIndex(index)
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func removeValueForKey(key: Key) -> FooValue? {
-        return elements.removeValueForKey(key)
+    public mutating func removeValueForKey(key: String) -> BSONElement? {
+        guard let index = self.indexForKey(key) else {
+            return nil
+        }
+        
+        return elements.removeAtIndex(index).1
     }
     
     /// As required by and documented in `SequenceType`
@@ -79,18 +96,14 @@ extension Document : SequenceType {
     }
     
     /// As required by and documented in `SequenceType`
-    public func generate() -> DictionaryGenerator<Key, FooValue> {
-        return elements.generate()
-    }
-    
-    /// As required by and documented in `SequenceType`
-    public var keys: LazyMapCollection<[Key : FooValue], Key> {
-        return elements.keys
-    }
-    
-    /// As required by and documented in `SequenceType`
-    public var values: LazyMapCollection<[Key : FooValue], FooValue> {
-        return elements.values
+    public func generate() -> AnyGenerator<(String, BSONElement)> {
+        var i = -1
+        
+        return AnyGenerator {
+            i += 1
+            
+            return i < self.elements.count ? self.elements[i] : nil
+        }
     }
     
     /// As required by and documented in `SequenceType`
