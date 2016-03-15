@@ -8,6 +8,12 @@
 
 import Foundation
 
+extension Document {
+    public var arrayValue: [BSONElement] {
+        return self.elements.map{$0.1}
+    }
+}
+
 extension Document : ArrayLiteralConvertible {
     /// Initialize a Document using an array of `BSONElement`s.
     public init(array: [BSONElement]) {
