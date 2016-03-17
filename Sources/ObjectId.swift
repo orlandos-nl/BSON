@@ -114,7 +114,7 @@ extension ObjectId : BSONElement {
     }
     
     /// Used internally
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> ObjectId {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> ObjectId {
         let objectID = try self.init(bsonData: data)
         consumedBytes = 12
         

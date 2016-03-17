@@ -65,7 +65,7 @@ public struct Binary : BSONElement {
     }
 
     /// Instantiate a new Binary instance from BSON
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Binary {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Binary {
         guard data.count >= 5 else {
             throw DeserializationError.InvalidElementSize
         }

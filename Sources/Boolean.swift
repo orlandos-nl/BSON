@@ -22,7 +22,7 @@ extension Bool : BSONElement {
     }
     
     /// Instantiate a new Bool from BSON data
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Bool {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Bool {
         guard data.count >= 1 else {
             throw DeserializationError.InvalidDocumentLength
         }

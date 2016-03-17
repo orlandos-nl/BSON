@@ -43,7 +43,7 @@ extension Document : BSONElement {
     }
     
     /// Used internally
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Document {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Document {
         return try Document(data: data, consumedBytes: &consumedBytes)
     }
     

@@ -22,7 +22,7 @@ extension Int64 : BSONElement {
     }
     
     /// Restore given Int64 from storage
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Int64 {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Int64 {
         guard data.count >= 8 else {
             throw DeserializationError.InvalidElementSize
         }
@@ -61,7 +61,7 @@ extension Int : BSONElement {
     }
 
     /// The same as Int64.instantiate
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Int {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Int {
         return Int(try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: type))
     }
 

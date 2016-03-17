@@ -80,3 +80,8 @@ All non-deprecated BSON 1.0 types are supported.
 - Timestamp (BSON.Timestamp)
 - Javascript Code (BSON.JavaScriptCode)
 - Javascript Code with Scope (BSON.JavaScriptCode)
+
+
+### Reqirements
+
+We support the Swift Development Snapshot 2016-03-01-a currently. Other versions of swift may or may not work.

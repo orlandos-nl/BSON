@@ -22,7 +22,7 @@ extension NSDate : BSONElement {
     }
     
     /// Instantiate an NSDate from a BSON .DateTime
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Self {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Self {
         let interval = try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .Int64)
         let date = self.init(timeIntervalSinceReferenceDate: Double(interval) - NSTimeIntervalSince1970)
         return date

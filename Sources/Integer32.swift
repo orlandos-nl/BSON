@@ -22,7 +22,7 @@ extension Int32 : BSONElement {
     }
 
     /// Instantiate from 4 bytes of BSON
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Int32 {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Int32 {
         guard data.count >= 4 else {
             throw DeserializationError.InvalidElementSize
         }

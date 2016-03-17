@@ -29,7 +29,7 @@ public struct Null : BSONElement {
     }
     
     /// Always just returns Null() and sets consumedBytes to 0.
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Null {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Null {
         consumedBytes = 0
         return Null()
     }

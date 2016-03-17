@@ -50,7 +50,7 @@ public struct Document {
     }
     
     /// Internal initializer used by all other initializers and for initializing embedded documents.
-    internal init(data: [UInt8], inout consumedBytes: Int) throws {
+    internal init(data: [UInt8], consumedBytes: inout Int) throws {
         // A BSON document cannot be smaller than 5 bytes (which would be an empty document)
         guard data.count >= 5 else {
             throw DeserializationError.InvalidDocumentLength

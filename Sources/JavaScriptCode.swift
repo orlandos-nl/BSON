@@ -56,7 +56,7 @@ extension JavaScriptCode : BSONElement {
     /// Instantiate JavaScriptCode from the given data. Behavior depends on the given `type`.
     ///
     /// - param type: If the given data contains scope, this should be .JavascriptCodeWithScope. Otherwise it should be .JavaScriptCode.
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> JavaScriptCode {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> JavaScriptCode {
         switch type {
         case .JavaScriptCode:
             return self.init(code: try String.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .String))

@@ -23,7 +23,7 @@ public struct MinKey : BSONElement {
     public static var bsonLength = BSONLength.Fixed(length: 0)
     
     /// Always returns MinKey()
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> MinKey {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> MinKey {
         consumedBytes = 0
         return MinKey()
     }
@@ -56,7 +56,7 @@ public struct MaxKey : BSONElement {
     public static var bsonLength = BSONLength.Fixed(length: 0)
     
     /// Always returns MaxKey()
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> MaxKey {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> MaxKey {
         consumedBytes = 0
         return MaxKey()
     }

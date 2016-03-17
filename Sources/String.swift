@@ -15,7 +15,7 @@ extension String : BSONElement {
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> String {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> String {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.InvalidLastElement
@@ -59,7 +59,7 @@ extension String : BSONElement {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    public static func instantiateFromCString(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
+    public static func instantiateFromCString(bsonData data: [UInt8], consumedBytes: inout Int) throws -> String {
         guard data.contains(0x00) else {
             throw DeserializationError.ParseError
         }

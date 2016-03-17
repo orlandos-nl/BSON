@@ -31,7 +31,7 @@ public struct Timestamp : BSONElement {
     }
     
     /// Instantiate a timestamp from BSON data (8 bytes or more)
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int, type: ElementType) throws -> Timestamp {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Timestamp {
         return self.init(try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .Int64))
     }
     
