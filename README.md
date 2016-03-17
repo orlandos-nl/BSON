@@ -82,6 +82,6 @@ All non-deprecated BSON 1.0 types are supported.
 - Javascript Code with Scope (BSON.JavaScriptCode)
 
 
-### Reqirements
+### Requirements
 
 We support the Swift Development Snapshot 2016-03-01-a currently. Other versions of swift may or may not work.
