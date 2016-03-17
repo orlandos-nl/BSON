@@ -21,6 +21,6 @@ public func +(lhs: Document, rhs: Document) -> Document {
     return lhs
 }
 
-public func +=(inout lhs: Document, rhs: Document) {
+public func +=( lhs: inout Document, rhs: Document) {
     lhs.elements += rhs.elements
 }
