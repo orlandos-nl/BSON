@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Document : SequenceType {
+extension Document : Sequence {
     /// As required by and documented in `SequenceType`
     public var startIndex: Int {
         return elements.startIndex
@@ -21,7 +21,7 @@ extension Document : SequenceType {
     
     /// As required by and documented in `SequenceType`
     public func indexForKey(key: String) -> Int? {
-        return elements.indexOf({ $0.0 == key })
+        return elements.index(where:)(where: { $0.0 == key })
     }
     
     /// As required by and documented in `SequenceType`
@@ -44,7 +44,7 @@ extension Document : SequenceType {
             guard let newValue = newValue else {
                 let shouldKeepArray = self.validatesAsArray()
                 
-                elements.removeAtIndex(key)
+                elements.remove(at: key)
                 
                 if shouldKeepArray {
                     self.enforceArray()
@@ -73,7 +73,7 @@ extension Document : SequenceType {
     
     /// As required by and documented in `SequenceType`
     public mutating func removeAtIndex(index: Int) -> (String, BSONElement) {
-        return elements.removeAtIndex(index)
+        return elements.remove(at: index)
     }
     
     /// As required by and documented in `SequenceType`
@@ -82,7 +82,7 @@ extension Document : SequenceType {
             return nil
         }
         
-        return elements.removeAtIndex(index).1
+        return elements.remove(at: index).1
     }
     
     /// As required by and documented in `SequenceType`
@@ -96,10 +96,10 @@ extension Document : SequenceType {
     }
     
     /// As required by and documented in `SequenceType`
-    public func generate() -> AnyGenerator<(String, BSONElement)> {
+    public func makeIterator() -> AnyIterator<(String, BSONElement)> {
         var i = -1
         
-        return AnyGenerator {
+        return AnyIterator {
             i += 1
             
             return i < self.elements.count ? self.elements[i] : nil

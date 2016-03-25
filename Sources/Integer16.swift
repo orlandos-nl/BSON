@@ -15,7 +15,7 @@ internal extension Int16 {
             throw DeserializationError.InvalidElementSize
         }
         
-        let integer = UnsafePointer<Int16>(data).memory
+        let integer = UnsafePointer<Int16>(data).pointee
         return integer
     }
     

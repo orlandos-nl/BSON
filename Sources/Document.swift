@@ -33,7 +33,7 @@ public struct Document {
     /// 
     /// Will throw a `DeserializationError` when the document is invalid.
     public init(data: NSData) throws {
-        var byteArray = [UInt8](count: data.length, repeatedValue: 0)
+        var byteArray = [UInt8](repeating: 0, count: data.length)
         data.getBytes(&byteArray, length: byteArray.count)
         
         var 🖕 = 0
@@ -57,7 +57,7 @@ public struct Document {
         }
         
         // The first four bytes of a document represent the total size of the document
-        let documentLength = Int(Int32(littleEndian: UnsafePointer<Int32>(data).memory))
+        let documentLength = Int(Int32(littleEndian: UnsafePointer<Int32>(data).pointee))
         guard data.count >= documentLength else {
             throw DeserializationError.InvalidDocumentLength
         }
@@ -85,7 +85,7 @@ public struct Document {
             }
             
             // Now that we have the type, parse the name
-            guard let stringTerminatorIndex = data[position..<documentLength].indexOf(0) else {
+            guard let stringTerminatorIndex = data[position..<documentLength].index(of:)(of: 0) else {
                 throw DeserializationError.ParseError
             }
             
@@ -103,7 +103,7 @@ public struct Document {
             case .Undefined:
                 elementData = Array(data[position..<documentLength])
             case .NullTerminated:
-                guard let terminatorIndex = data[(position + 4)..<data.endIndex].indexOf(0) else {
+                guard let terminatorIndex = data[(position + 4)..<data.endIndex].index(of:)(of: 0) else {
                     throw DeserializationError.ParseError
                 }
                 

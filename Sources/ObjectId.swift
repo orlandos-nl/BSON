@@ -36,7 +36,7 @@ public struct ObjectId {
         
         data = []
         
-        var gen = hexString.characters.generate()
+        var gen = hexString.characters.makeIterator()
         while let c1 = gen.next(), c2 = gen.next() {
             let s = String([c1, c2])
             
@@ -63,7 +63,7 @@ public struct ObjectId {
     
     /// Return the hexadecimal string of this ObjectId, eg "0123456789abcdef01234567"
     public var hexString: String {
-        var hexString = data.map{String($0, radix: 16, uppercase: false)}.joinWithSeparator("")
+        var hexString = data.map{String($0, radix: 16, uppercase: false)}.joined(separator: "")
         while hexString.characters.count < 24 {
             hexString = "0" + hexString
         }

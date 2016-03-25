@@ -59,7 +59,7 @@ public struct Binary : BSONElement {
     /// - param data: The data to store in BSON as NSData
     /// - param subType: Optionally, a subtype for your data.
     public init(data: NSData, subType: UInt8 = 0) {
-        self.data = [UInt8](count: data.length, repeatedValue: 0)
+        self.data = [UInt8](repeating: 0, count: data.length)
         data.getBytes(&self.data, length: self.data.count)
         self.subType = subType
     }

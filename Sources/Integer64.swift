@@ -27,7 +27,7 @@ extension Int64 : BSONElement {
             throw DeserializationError.InvalidElementSize
         }
         
-        let integer = UnsafePointer<Int64>(data).memory
+        let integer = UnsafePointer<Int64>(data).pointee
         consumedBytes = 8
         return integer
     }

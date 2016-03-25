@@ -20,7 +20,7 @@ extension Double : BSONElement {
             throw DeserializationError.InvalidElementSize
         }
         
-        let double = UnsafePointer<Double>(data).memory
+        let double = UnsafePointer<Double>(data).pointee
         consumedBytes = 8
         return double
     }

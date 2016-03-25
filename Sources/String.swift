@@ -64,7 +64,7 @@ extension String : BSONElement {
             throw DeserializationError.ParseError
         }
         
-        guard let stringData = data.split(0x00, maxSplit: 1, allowEmptySlices: true).first else {
+        guard let stringData = data.split(separator: 0x00, maxSplits: 1, omittingEmptySubsequences: true).first else {
             throw DeserializationError.ParseError
         }
         
@@ -80,7 +80,7 @@ extension String : BSONElement {
     /// The BSON data for this String, including the string length.
     public var bsonData: [UInt8] {
         var byteArray = Int32(utf8.count + 1).bsonData
-        byteArray.appendContentsOf(utf8)
+        byteArray.append(contentsOf:)(contentsOf: utf8)
         byteArray.append(0x00)
         
         return byteArray
@@ -98,7 +98,7 @@ extension String : BSONElement {
     public static let bsonLength = BSONLength.Undefined
     
     public var bsonDescription: String {
-        let escaped = self.stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
+        let escaped = self.replacingOccurrences(of: "\"", with: "\\\"")
         return "\"\(escaped)\""
     }
 }

@@ -258,10 +258,7 @@ public extension BSONElement {
 infix operator ?== {}
 
 public func ?==(left: BSONElement?, right: BSONElement?) -> Bool {
-    switch (left, right) {
-    case (.None, .None):
-        return true
-    case (.Some(let left), .Some(let right)):
+    if let left = left, right = right {
         switch (left.elementType, right.elementType) {
         case (.Double, .Double):
             return left.doubleValue == right.doubleValue
@@ -274,7 +271,9 @@ public func ?==(left: BSONElement?, right: BSONElement?) -> Bool {
         default:
             return false
         }
-    default:
+    } else if left == nil && right == nil {
+        return true
+    } else {
         return false
     }
 }
