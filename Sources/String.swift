@@ -98,7 +98,11 @@ extension String : BSONElement {
     public static let bsonLength = BSONLength.Undefined
     
     public var bsonDescription: String {
+        #if os(Linux)
+        let escaped = self
+        #else
         let escaped = self.replacingOccurrences(of: "\"", with: "\\\"")
+        #endif
         return "\"\(escaped)\""
     }
 }
