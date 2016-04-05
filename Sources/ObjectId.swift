@@ -63,11 +63,13 @@ public struct ObjectId {
     
     /// Return the hexadecimal string of this ObjectId, eg "0123456789abcdef01234567"
     public var hexString: String {
-        var hexString = data.map{String($0, radix: 16, uppercase: false)}.joined(separator: "")
-        while hexString.characters.count < 24 {
-            hexString = "0" + hexString
-        }
-        return hexString
+        return data.map {
+            var s = String($0, radix: 16, uppercase: false)
+            while s.characters.count < 2 {
+                s = "0" + s
+            }
+            return s
+            }.joined(separator: "")
     }
     
     /// Generate a new random ObjectId.
@@ -126,7 +128,7 @@ extension ObjectId : BSONElement {
         return try self.init(bsonData: data)
     }
 
-    /// Returns something like: ObjectId("0123456789abcdef01234567")
+    /// Returns something like: try! ObjectId("0123456789abcdef01234567")
     public var bsonDescription: String {
         return "try! ObjectId(\"\(self.hexString)\")"
     }
