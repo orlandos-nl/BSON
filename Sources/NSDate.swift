@@ -24,13 +24,13 @@ extension NSDate : BSONElement {
     /// Instantiate an NSDate from a BSON .DateTime
     public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Self {
         let interval = try Int64.instantiate(bsonData: data, consumedBytes: &consumedBytes, type: .Int64)
-        let date = self.init(timeIntervalSinceReferenceDate: Double(interval) - NSTimeIntervalSince1970)
+        let date = self.init(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
         return date
     }
     
     /// Convert to BSON .DateTime
     public var bsonData: [UInt8] {
-        var integer = Int(self.timeIntervalSince1970)
+        var integer = Int(self.timeIntervalSince1970) * 1000
         return withUnsafePointer(&integer) {
             Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int)))
         }
