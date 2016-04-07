@@ -44,7 +44,7 @@ extension RegularExpression : BSONElement {
     
     /// Instantiate a regular expression from raw data
     public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> RegularExpression {
-        let k = data.split(separator: 0, maxSplits: 2, omittingEmptySubsequences: true)
+        let k = data.split(separator: 0, maxSplits: 2, omittingEmptySubsequences: false)
         guard k.count >= 2 else {
             throw DeserializationError.InvalidElementSize
         }

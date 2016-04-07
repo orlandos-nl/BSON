@@ -64,7 +64,7 @@ extension String : BSONElement {
             throw DeserializationError.ParseError
         }
         
-        guard let stringData = data.split(separator: 0x00, maxSplits: 1, omittingEmptySubsequences: true).first else {
+        guard let stringData = data.split(separator: 0x00, maxSplits: 1, omittingEmptySubsequences: false).first else {
             throw DeserializationError.ParseError
         }
         
