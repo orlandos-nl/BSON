@@ -12,6 +12,28 @@ extension Document {
     public var arrayValue: [BSONElement] {
         return self.elements.map{$0.1}
     }
+    
+    /// Returns the dictionary equivalent of `self`. Subdocuments are nog converted and will still be of type `Document`. If you need these converted to dictionaries, too, you should use `recursiveDictionaryValue` instead.
+    public var dictionaryValue: [String : BSONElement] {
+        var value = [String : BSONElement]()
+        for element in self.elements {
+            value[element.0] = element.1
+        }
+        return value
+    }
+    
+    /// Returns the dictionary equivalent of `self`, converting any contained documents to dictionaries.
+    public var recursiveDictionaryValue: [String : Any] {
+        var value = [String : Any]()
+        for element in self.elements {
+            if let subdocument = element.1 as? Document {
+                value[element.0] = subdocument.recursiveDictionaryValue
+            } else {
+                value[element.0] = element.1
+            }
+        }
+        return value
+    }
 }
 
 extension Document : ArrayLiteralConvertible {
