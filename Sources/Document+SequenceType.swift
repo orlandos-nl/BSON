@@ -32,6 +32,8 @@ extension Document : Sequence {
         set {
             if let newValue = newValue {
                 self.updateValue(newValue, forKey: key)
+            } else {
+                self.removeValueForKey(key)
             }
         }
     }
