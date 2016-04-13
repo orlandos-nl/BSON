@@ -15,9 +15,11 @@ import XCTest
 #endif
 
 class BSONInternalTests: XCTestCase {
-    var allTests : [(String, () -> Void)] {
+    static var allTests : [(String, BSONInternalTests -> () throws -> Void)] {
         return [
             ("testCStringSerialization", testCStringSerialization),
+            ("testInt16", testInt16),
+            ("testRegexInit", testRegexInit),
             // Other tests go here
         ]
     }

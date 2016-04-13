@@ -15,7 +15,7 @@ import BSON
 #endif
 
 class BSONPublicTests: XCTestCase {
-    var allTests : [(String, () -> Void)] {
+    static var allTests : [(String, BSONPublicTests -> () throws -> Void)] {
         return [
             ("testBasics", testBasics),
             ("testBinarySerialization", testBinarySerialization ),
@@ -23,7 +23,10 @@ class BSONPublicTests: XCTestCase {
             ("testDocumentOne", testDocumentOne),
             ("testDoubleSerialization", testDoubleSerialization),
             ("testStringSerialization", testStringSerialization),
+            ("testJavaScript", testJavaScript),
             ("testBooleanSerialization", testBooleanSerialization),
+            ("testTimestamp", testTimestamp),
+            ("testRegex", testRegex),
             ("testInt32Serialization", testInt32Serialization),
             ("testInt64Serialization", testInt64Serialization),
             ("testDateTimeSerialization", testDateTimeSerialization),
@@ -34,6 +37,11 @@ class BSONPublicTests: XCTestCase {
             ("testNullSerialization", testNullSerialization),
             ("testRegexSerialization", testRegexSerialization),
             ("testDocumentSubscript", testDocumentSubscript),
+            ("testMinMaxKey", testMinMaxKey),
+            ("testTypes", testTypes),
+            ("testDocumentInitialisation", testDocumentInitialisation),
+            ("testAwesomeDocuments", testAwesomeDocuments),
+            ("testDocumentSequenceType", testDocumentSequenceType)
             // Other tests go here
         ]
     }
