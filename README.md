@@ -2,13 +2,30 @@
 
 A native BSON library for Swift, written in Swift.
 
-BSON is parsed and generated as specified for version 1.0 (http://bsonspec.org/spec.html).
+BSON is parsed and generated as specified for version 1.0 of the [BSON specification](http://bsonspec.org/spec.html).
+
+### Compatibility
+
+##### Operating systems
+All versions starting with BSON 1.3 are compatible with OS X and Ubuntu 15.10. Other operating systems may work but are untested.
+
+##### Swift Version
+We support the Swift version specified in .swift_version, which most of the time is the latest version of Swift when a version is released.
+
+For every new Swift snapshot we release a new minor version.
 
 ### Usage
 
-You can use this library trough Carthage, git submodules or the Swift Package Manager (currently Linux-only).
+The supported method of using this library is trough the Swift Package manager, like this:
 
-The project contains a tutorial playground. That's probably the best way to learn!
+```swift
+import PackageDescription
+
+let package = Package(
+    name: "MyApp",
+    dependencies: [.Package(url: "https://github.com/PlanTeam/BSON.git", majorVersion: 1, minor: 3)]
+)
+```
 
 Check the [documentation](https://planteam.github.io/BSON/) for more information.
 
@@ -80,8 +97,3 @@ All non-deprecated BSON 1.0 types are supported.
 - Timestamp (BSON.Timestamp)
 - Javascript Code (BSON.JavaScriptCode)
 - Javascript Code with Scope (BSON.JavaScriptCode)
-
-
-### Requirements
-
-We support the Swift Development Snapshot 2016-03-01-a currently. Other versions of swift may or may not work.
