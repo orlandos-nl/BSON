@@ -20,7 +20,7 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public func indexForKey(key: String) -> Int? {
+    public func index(forKey key: String) -> Int? {
         return elements.index(where:)(where: { $0.0 == key })
     }
     
@@ -33,7 +33,7 @@ extension Document : Sequence {
             if let newValue = newValue {
                 self.updateValue(newValue, forKey: key)
             } else {
-                self.removeValueForKey(key)
+                self.removeValue(forKey: key)
             }
         }
     }
@@ -60,8 +60,8 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func updateValue(value: BSONElement, forKey key: String) -> BSONElement? {
-        guard let indexKey = self.indexForKey(key) else {
+    public mutating func updateValue(_ value: BSONElement, forKey key: String) -> BSONElement? {
+        guard let indexKey = self.index(forKey: key) else {
             elements.append((key, value))
             return nil
         }
@@ -74,13 +74,13 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func removeAtIndex(index: Int) -> (String, BSONElement) {
+    public mutating func remove(at index: Int) -> (String, BSONElement) {
         return elements.remove(at: index)
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func removeValueForKey(key: String) -> BSONElement? {
-        guard let index = self.indexForKey(key) else {
+    public mutating func removeValue(forKey key: String) -> BSONElement? {
+        guard let index = self.index(forKey: key) else {
             return nil
         }
         
@@ -88,7 +88,7 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func removeAll(keepCapacity keepCapacity: Bool = false) {
+    public mutating func removeAll(keepingCapacity: Bool = false) {
         elements.removeAll()
     }
     

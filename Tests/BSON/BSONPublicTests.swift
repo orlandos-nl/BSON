@@ -135,7 +135,7 @@ class BSONPublicTests: XCTestCase {
         
         let data = document1.bsonData + document2.bsonData
         
-        let reincarnations = try! Document.instantiateAll(data)
+        let reincarnations = try! Document.instantiateAll(fromData: data)
         XCTAssert(reincarnations.count == 2)
         
         XCTAssert(reincarnations[0].bsonData == document1.bsonData)
@@ -546,7 +546,7 @@ class BSONPublicTests: XCTestCase {
                 var ccCopy = cc
                 
                 for (key, value) in ccCopy {
-                    guard let newValue = ccCopy.removeValueForKey(key) else {
+                    guard let newValue = ccCopy.removeValue(forKey: key) else {
                         XCTFail()
                         break
                     }
@@ -646,7 +646,7 @@ class BSONPublicTests: XCTestCase {
         print(kittenDocument)
         
         do {
-            let _ = try Document.instantiateAll([0x00])
+            let _ = try Document.instantiateAll(fromData: [0x00])
             XCTFail()
         } catch {}
         // {"cool32bitNumber":9001,"cool64bitNumber":{"$numberLong":"21312153544"},"currentTime":{"$date":"1970-01-17T19:46:29.266Z"},"documentTest":{"documentSubDoubleTest":13.37,"subArray":{"0":"henk","1":"fred","2":"kaas","3":"goudvis"}},"doubleTest":0.04,"nonRandomObjectId":{"$oid":"0123456789abcdef01234567"},"nothing":null,"stringTest":"foo"}
@@ -718,12 +718,12 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(kittenDocument["doubleTest"] as? Double == 0.04)
         kittenDocument["doubleTest"] = "hoi"
         XCTAssert(kittenDocument["doubleTest"] as? String == "hoi")
-        XCTAssert(kittenDocument[kittenDocument.indexForKey("doubleTest")!] as? String == "hoi")
+        XCTAssert(kittenDocument[kittenDocument.index(forKey: "doubleTest")!] as? String == "hoi")
         
         kittenDocument.updateValue("doubleTest", forKey: "doubleTest")
-        XCTAssert(kittenDocument[kittenDocument.indexForKey("doubleTest")!] as? String == "doubleTest")
+        XCTAssert(kittenDocument[kittenDocument.index(forKey: "doubleTest")!] as? String == "doubleTest")
         
-        let oldValue = kittenDocument.removeAtIndex(kittenDocument.startIndex)
+        let oldValue = kittenDocument.remove(at: kittenDocument.startIndex)
         XCTAssert(oldValue.1.bsonData != kittenDocument[kittenDocument.startIndex]!.bsonData)
         
         XCTAssert(!kittenDocument.isEmpty)

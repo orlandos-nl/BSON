@@ -132,7 +132,7 @@ public struct Document {
 extension Document {
     /// Instantiates zero or more `Document`s from the given data. This data is formatted like this:
     /// `let data = document1.bsonData + document2.bsonData`, so just multiple documents concatenated.
-    public static func instantiateAll(data: [UInt8]) throws -> [Document] {
+    public static func instantiateAll(fromData data: [UInt8]) throws -> [Document] {
         var currentDataIndex = 0
         var documents = [Document]()
         while currentDataIndex < data.count {
