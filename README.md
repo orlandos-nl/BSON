@@ -1,5 +1,9 @@
 # BSON
 
+[![Build Status](https://travis-ci.org/PlanTeam/BSON.svg?branch=master)](https://travis-ci.org/PlanTeam/BSON)
+[![Swift Version](https://img.shields.io/badge/swift-3.0-orange.svg)](https://swift.org)
+![License](https://img.shields.io/github/license/planteam/bson.svg)
+
 A native BSON library for Swift, written in Swift.
 
 BSON is parsed and generated as specified for version 1.0 of the [BSON specification](http://bsonspec.org/spec.html).
