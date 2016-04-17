@@ -147,6 +147,38 @@ extension Document {
         }
         return documents
     }
+    
+    public static func findDocuments(data: [UInt8]) -> (consumed: Int, found: Int) {
+        var position = data.startIndex
+        var found = 0
+        
+        while position < data.endIndex {
+            guard data.endIndex - position >= 5 else {
+                return (consumed: position, found: found)
+            }
+            
+            // The first four bytes of a document represent the total size of the document
+            let lengthBytes = Array(data[position..<position+4])
+            let documentLength = Int(Int32(littleEndian: UnsafePointer<Int32>(lengthBytes).pointee))
+            
+            guard data.count >= position + documentLength else {
+                return (consumed: position, found: found)
+            }
+            
+            guard documentLength >= 5 else {
+                return (consumed: position, found: found)
+            }
+            
+            guard data[position + documentLength - 1] == 0x00 else {
+                return (consumed: position, found: found)
+            }
+            
+            position += documentLength
+            found += 1
+        }
+        
+        return (consumed: position, found: found)
+    }
 }
 
 extension Document {
