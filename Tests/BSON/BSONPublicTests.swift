@@ -19,6 +19,7 @@ import BSON
 class BSONPublicTests: XCTestCase {
     static var allTests : [(String, BSONPublicTests -> () throws -> Void)] {
         return [
+            ("testCompare", testCompare),
             ("testBasics", testBasics),
             ("testBinarySerialization", testBinarySerialization ),
             ("testMultipleDocumentInstantiation", testMultipleDocumentInstantiation ),
@@ -34,6 +35,12 @@ class BSONPublicTests: XCTestCase {
             ("testDocumentSequenceType", testDocumentSequenceType)
             // Other tests go here
         ]
+    }
+    
+    func testCompare() {
+        let document: Document = ["double": .double(4), "int64": .int64(4)]
+        XCTAssert(document["double"] == document["int64"])
+        XCTAssertFalse(document["double"] === document["int64"])
     }
     
     func testBasics() {

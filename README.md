@@ -20,7 +20,7 @@ For every new Swift snapshot we release a new minor version.
 
 ### Usage
 
-The supported method of using this library is trough the Swift Package manager, like this:
+The supported method for using this library is trough the Swift Package manager, like this:
 
 ```swift
 import PackageDescription
@@ -63,24 +63,31 @@ let document: Document = [
         ]
 ```
 
+#### Comparing
+
+```swift
+document["double"] == document["int64"] // true for .double(0) == .int64(0)
+document["double"] === document["int64"] // false for .double(0) === .int64(0)
+```
+
 ### Supported Types
 
 All non-deprecated BSON 1.0 types are supported.
 
-- Double (Swift.Double)
-- String (Swift.String)
-- Document (BSON.Document)
-- Array (BSON.Document)
-- ObjectId (BSON.ObjectId)
-- Bool (Swift.Bool)
-- DateTime (Foundation.NSDate)
-- 32-bit integer (Swift.Int32)
-- 64-bit integer (Swift.Int)
-- Null value (BSON.Null)
-- Binary (BSON.Binary)
-- Regular Expression (BSON.RegularExpression)
-- Min Key (BSON.MinKey)
-- Max Key (BSON.MaxKey)
-- Timestamp (BSON.Timestamp)
-- Javascript Code (BSON.JavaScriptCode)
-- Javascript Code with Scope (BSON.JavaScriptCode)
+- Double
+- String
+- Document
+- Array
+- ObjectId
+- Bool
+- DateTime
+- 32-bit integer
+- 64-bit integer
+- Null value
+- Binary
+- Regular Expression
+- Min Key
+- Max Key
+- Timestamp
+- Javascript Code
+- Javascript Code with Scope
