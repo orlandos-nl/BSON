@@ -27,7 +27,7 @@ import PackageDescription
 
 let package = Package(
     name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 1, minor: 3)]
+    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 2, minor: 0)]
 )
 ```
 
@@ -49,35 +49,18 @@ let data = document.bsonData // Array of [UInt8]
 let sameDocument = try! Document(data: data)
 
 // Do something with the data
-guard let temperature = document["temperature"] as? Double else {
-	// do something with the error here
-	abort()
-}
+let temperature = document["temperature"].double
 
 // Use the temperature
 ```
 
 #### Embedded documents
 
-Due to the Swift compiler sometimes creating NSArray instances, use the `prefix operator *` with embedded documents.
-
 ```swift
 let document: Document = [
-            "subdocument": *["hello", "mother of god"],
-            "anothersubdocument": *["key": 81.2] // an array is also an embedded document
+            "subdocument": ["hello": "sample"],
+            "anothersubdocument": [81.2, "cheese"] // an array is also an embedded document
         ]
-```
-
-Code not using this operator will compile, but the embedded documents won't be inserted in your document. A warning will be logged to the console.
-
-### Comparing values
-
-You can currently compare integers, doubles, booleans, and strings by using the ?== operator:
-
-```swift
-if document["key"] ?== 42.3 {
-
-}
 ```
 
 ### Supported Types
