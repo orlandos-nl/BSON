@@ -38,6 +38,12 @@ extension Document {
     public func write(toFile path: String) throws {
         var myData = self.bsonData
         let nsData = NSData(bytes: &myData, length: myData.count)
-        try nsData.write(toFile: path)
+        
+        #if os(Linux)
+            try nsData.writeToFile(path, options: [])
+        #else
+            try nsData.write(toFile: path)
+        #endif
+        
     }
 }

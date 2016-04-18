@@ -91,11 +91,11 @@ extension Value {
     /// If the value cannot be interpeted as a `Double`, Double(0) will be returned.
     public var bool : Bool {
         switch self {
-        case double(let val): return Bool(val)
+        case double(let val): return val == 0 ? false : true
         case string(let val): return val == "true" ? true : false
         case boolean(let val): return val
-        case int32(let val): return Bool(Int(val))
-        case int64(let val): return Bool(Int(val))
+        case int32(let val): return val == 0 ? false : true
+        case int64(let val): return val == 0 ? false : true
         default: return false
         }
     }
