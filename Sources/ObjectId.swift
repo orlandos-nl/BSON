@@ -14,6 +14,8 @@ import Foundation
 
 /// The BSON/MongoDB ObjectId type (see: https://docs.mongodb.org/manual/reference/object-id/)
 public struct ObjectId {
+//    public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
+    
     /// Raw data for this ObjectId
     public private(set) var data: [UInt8]
     
@@ -83,10 +85,10 @@ public struct ObjectId {
         
         // Take the machine identifier
         // TODO: Change this to a MAC address
-        data += Array(NSProcessInfo.processInfo().hostName.hash.bsonData[0...2])
+        data += Array((NSProcessInfo.processInfo().hostName.hash).bsonData[0...2])
         
         // Take the process identifier as 2 bytes
-        data += Array(NSProcessInfo.processInfo().processIdentifier.bsonData[0...1])
+        data += Array((NSProcessInfo.processInfo().processIdentifier).bsonData[0...1])
         
         // Take a random number
         data += [ObjectId.random]
@@ -97,37 +99,12 @@ public struct ObjectId {
         
         self.data = data
     }
-}
-
-extension ObjectId : BSONElement {
-    /// .ObjectId
-    public var elementType: ElementType {
-        return .ObjectId
-    }
     
     /// Raw data for storage in a BSON Document
     public var bsonData: [UInt8] {
         return data
     }
     
-    /// .Fixed(length: 12)
-    public static var bsonLength: BSONLength {
-        return .Fixed(length: 12)
-    }
-    
-    /// Used internally
-    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> ObjectId {
-        let objectID = try self.init(bsonData: data)
-        consumedBytes = 12
-        
-        return objectID
-    }
-    
-    /// Used internally
-    public static func instantiate(bsonData data: [UInt8]) throws -> ObjectId {
-        return try self.init(bsonData: data)
-    }
-
     /// Returns something like: try! ObjectId("0123456789abcdef01234567")
     public var bsonDescription: String {
         return "try! ObjectId(\"\(self.hexString)\")"

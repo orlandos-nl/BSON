@@ -1,21 +1,34 @@
+//
+//  String.swift
+//  BSON
+//
+//  Created by Robbert Brandsma on 18-04-16.
+//
+//
+
 import Foundation
 
-/// The UTF8 BSON String type (0x02)
-extension String : BSONElement {
-    /// .String
-    public var elementType: ElementType {
-        return .String
+public extension String {
+    public var bsonData : [UInt8] {
+        return Value.string(self).bsonData
+    }
+    
+    public var cStringBsonData : [UInt8] {
+        var byteArray = self.utf8.filter{$0 != 0x00}
+        byteArray.append(0x00)
+        
+        return byteArray
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
     public static func instantiate(bsonData data: [UInt8]) throws -> String {
         var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &🖕, type: .String)
+        return try instantiate(bsonData: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> String {
+    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int) throws -> String {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.InvalidLastElement
@@ -50,7 +63,7 @@ extension String : BSONElement {
         
         return string
     }
-
+    
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
     public static func instantiateFromCString(bsonData data: [UInt8]) throws -> String {
         var 🖕 = 0
@@ -76,33 +89,60 @@ extension String : BSONElement {
         
         return string
     }
-    
-    /// The BSON data for this String, including the string length.
-    public var bsonData: [UInt8] {
-        var byteArray = Int32(utf8.count + 1).bsonData
-        byteArray.append(contentsOf:)(contentsOf: utf8)
-        byteArray.append(0x00)
-        
-        return byteArray
+}
+
+public extension Int16 {
+    public var bsonData : [UInt8] {
+        var integer = self
+        return withUnsafePointer(&integer) {
+            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16)))
+        }
     }
     
-    /// A null-terminated UTF8 version of the data of this String. Not containing length properties. If the string contains null characters, those are removed.
-    public var cStringBsonData: [UInt8] {
-        var byteArray = self.utf8.filter{$0 != 0x00}
-        byteArray.append(0x00)
+    internal static func instantiate(bsonData data: [UInt8]) throws -> Int16 {
+        guard data.count >= 2 else {
+            throw DeserializationError.InvalidElementSize
+        }
         
-        return byteArray
+        let integer = UnsafePointer<Int16>(data).pointee
+        return integer
+    }
+}
+
+public extension Int32 {
+    public var bsonData : [UInt8] {
+        return Value.int32(self).bsonData
     }
     
-    /// The length of a String is .Undefined
-    public static let bsonLength = BSONLength.Undefined
+    /// Instantiate from 4 bytes of BSON
+    public static func instantiate(bsonData data: [UInt8]) throws -> Int32 {
+        guard data.count >= 4 else {
+            throw DeserializationError.InvalidElementSize
+        }
+        
+        let integer = UnsafePointer<Int32>(data).pointee
+        return integer
+    }
+}
+
+public extension Int64 {
+    public var bsonData : [UInt8] {
+        return Value.int64(self).bsonData
+    }
     
-    public var bsonDescription: String {
-        #if os(Linux)
-        let escaped = self
-        #else
-        let escaped = self.replacingOccurrences(of: "\"", with: "\\\"")
-        #endif
-        return "\"\(escaped)\""
+    /// Restore given Int64 from storage
+    public static func instantiate(bsonData data: [UInt8]) throws -> Int64 {
+        guard data.count >= 8 else {
+            throw DeserializationError.InvalidElementSize
+        }
+        
+        let integer = UnsafePointer<Int64>(data).pointee
+        return integer
+    }
+}
+
+public extension Int {
+    public var bsonData : [UInt8] {
+        return Value.int64(Int64(self)).bsonData
     }
 }

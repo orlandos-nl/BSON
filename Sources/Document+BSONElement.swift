@@ -8,12 +8,7 @@
 
 import Foundation
 
-extension Document : BSONElement {
-    /// .Array or .Document, depending on validatesAsArray()
-    public var elementType: ElementType {
-        return self.validatesAsArray() ? .Array : .Document
-    }
-    
+extension Document {
     /// Serialize the document, ready to store as a BSON file or sending over the network.
     /// You may concatenate output of this method into one long array, and instantiate that using
     /// `instantiateMultiple(...)`
@@ -21,8 +16,13 @@ extension Document : BSONElement {
         var body = [UInt8]()
         var length = 4
         
-        for (key, element) in elements {
-            body += [element.elementType.rawValue]
+        elementLoop: for (key, element) in elements {
+            if case .nothing = element {
+                print("WARNING: Nothing in BSON Document")
+                continue elementLoop
+            }
+            
+            body += [element.typeIdentifier]
             body += key.cStringBsonData
             body += element.bsonData
         }
@@ -35,27 +35,9 @@ extension Document : BSONElement {
         return finalData
     }
     
-    /// Used internally
-    public static func instantiate(bsonData data: [UInt8]) throws -> Document {
-        var 🖕 = 0
-        
-        return try instantiate(bsonData: data, consumedBytes: &🖕, type: .Document)
-    }
-    
-    /// Used internally
-    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int, type: ElementType) throws -> Document {
-        return try Document(data: data, consumedBytes: &consumedBytes)
-    }
-    
-    /// .Undefined
-    public static let bsonLength = BSONLength.Undefined
-    
-    public var bsonDescription: String {
-        var desc = "*["
-        for (key, element) in self.elements {
-            desc += "\(key.bsonDescription): \(element.bsonDescription),"
-        }
-        desc += "]"
-        return desc
+    public func write(toFile path: String) throws {
+        var myData = self.bsonData
+        let nsData = NSData(bytes: &myData, length: myData.count)
+        try nsData.write(toFile: path)
     }
 }

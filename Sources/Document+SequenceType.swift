@@ -25,25 +25,25 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public subscript (key: String) -> BSONElement? {
+    public subscript (key: String) -> Value {
         get {
-            return elements.filter({ $0.0 == key }).first?.1
+            return elements.filter({ $0.0 == key }).first?.1 ?? .nothing
         }
         set {
-            if let newValue = newValue {
-                self.updateValue(newValue, forKey: key)
-            } else {
+            if case .nothing = newValue {
                 self.removeValue(forKey: key)
+            } else {
+                self.updateValue(newValue, forKey: key)
             }
         }
     }
     
-    public subscript (key: Int) -> BSONElement? {
+    public subscript (key: Int) -> Value {
         get {
             return elements[key].1
         }
         set {
-            guard let newValue = newValue else {
+            if case .nothing = newValue {
                 let shouldKeepArray = self.validatesAsArray()
                 
                 elements.remove(at: key)
@@ -60,7 +60,7 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func updateValue(_ value: BSONElement, forKey key: String) -> BSONElement? {
+    public mutating func updateValue(_ value: Value, forKey key: String) -> Value? {
         guard let indexKey = self.index(forKey: key) else {
             elements.append((key, value))
             return nil
@@ -74,12 +74,12 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func remove(at index: Int) -> (String, BSONElement) {
+    public mutating func remove(at index: Int) -> (String, Value) {
         return elements.remove(at: index)
     }
     
     /// As required by and documented in `SequenceType`
-    public mutating func removeValue(forKey key: String) -> BSONElement? {
+    public mutating func removeValue(forKey key: String) -> Value? {
         guard let index = self.index(forKey: key) else {
             return nil
         }
@@ -98,7 +98,7 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
-    public func makeIterator() -> AnyIterator<(String, BSONElement)> {
+    public func makeIterator() -> AnyIterator<(String, Value)> {
         var i = -1
         
         return AnyIterator {

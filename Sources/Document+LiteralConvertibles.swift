@@ -9,13 +9,13 @@
 import Foundation
 
 extension Document {
-    public var arrayValue: [BSONElement] {
+    public var arrayValue: [Value] {
         return self.elements.map{$0.1}
     }
     
     /// Returns the dictionary equivalent of `self`. Subdocuments are nog converted and will still be of type `Document`. If you need these converted to dictionaries, too, you should use `recursiveDictionaryValue` instead.
-    public var dictionaryValue: [String : BSONElement] {
-        var value = [String : BSONElement]()
+    public var dictionaryValue: [String : Value] {
+        var value = [String : Value]()
         for element in self.elements {
             value[element.0] = element.1
         }
@@ -26,7 +26,7 @@ extension Document {
     public var recursiveDictionaryValue: [String : Any] {
         var value = [String : Any]()
         for element in self.elements {
-            if let subdocument = element.1 as? Document {
+            if let subdocument = element.1.documentValue {
                 value[element.0] = subdocument.recursiveDictionaryValue
             } else {
                 value[element.0] = element.1
@@ -38,13 +38,13 @@ extension Document {
 
 extension Document : ArrayLiteralConvertible {
     /// Initialize a Document using an array of `BSONElement`s.
-    public init(array: [BSONElement]) {
+    public init(array: [Value]) {
         elements = array.map { ("", $0) }
         self.enforceArray()
     }
     
     /// For now.. only accept BSONElement
-    public init(arrayLiteral arrayElements: BSONElement...) {
+    public init(arrayLiteral arrayElements: Value...) {
         self.init(array: arrayElements)
     }
     
@@ -56,14 +56,18 @@ extension Document : ArrayLiteralConvertible {
 }
 
 extension Document : DictionaryLiteralConvertible {
+    public init(dictionaryElements: [(String, Value)]) {
+        self.elements = dictionaryElements
+    }
+    
     /// Create an instance initialized with `elements`.
-    public init(dictionaryLiteral dictionaryElements: (String, BSONElement)...) {
+    public init(dictionaryLiteral dictionaryElements: (String, Value)...) {
         self.elements = dictionaryElements
     }
 }
 
 extension Document {
-    internal init(native: [String: BSONElement]) {
+    internal init(native: [String: Value]) {
         self.elements = native.map({ $0 })
     }
 }
