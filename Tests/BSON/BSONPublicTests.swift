@@ -82,7 +82,7 @@ class BSONPublicTests: XCTestCase {
                 "documentSubDoubleTest": 13.37,
                 "subArray": ["henk", "fred", "kaas", "goudvis"]
             ],
-            "nonRandomObjectId": .objectId(try! ObjectId("0123456789ABCDEF01234567")),
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
             "currentTime": .dateTime(NSDate(timeIntervalSince1970: Double(1453589266))),
             "cool32bitNumber": .int32(9001),
             "cool64bitNumber": 21312153544,
@@ -200,11 +200,7 @@ class BSONPublicTests: XCTestCase {
         let sampleHex1 = "56a78f3e308b914cac362bb8"
         
         let id = try! ObjectId(sampleHex1)
-        XCTAssertEqual(id.hexString, sampleHex1)
-        
-        // ObjectId generation
-        let randomId = ObjectId()
-        XCTAssertEqual(randomId.data.count, 12)
+        XCTAssertEqual(id.string, sampleHex1)
         
         // Test errors
         do {
@@ -220,7 +216,7 @@ class BSONPublicTests: XCTestCase {
             let objectIDsample = try ObjectId("507f191e810c19729de860ea")
             let objectIDsample2 = try ObjectId(bsonData: objectIDsample.bsonData)
             
-            XCTAssert(objectIDsample.hexString == objectIDsample2.hexString)
+            XCTAssert(objectIDsample.string == objectIDsample2.string)
         } catch {
             XCTFail()
         }
@@ -320,7 +316,7 @@ class BSONPublicTests: XCTestCase {
                 "documentSubDoubleTest": 13.37,
                 "subArray": ["henk", "fred", "kaas", "goudvis"]
             ],
-            "nonRandomObjectId": .objectId(try! ObjectId("0123456789ABCDEF01234567")),
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
             "currentTime": .dateTime(NSDate(timeIntervalSince1970: Double(1453589266))),
             "cool32bitNumber": .int32(9001),
             "cool64bitNumber": 21312153544,
@@ -390,7 +386,7 @@ class BSONPublicTests: XCTestCase {
                 "documentSubDoubleTest": 13.37,
                 "subArray": ["henk", "fred", "kaas", "goudvis"]
             ],
-            "nonRandomObjectId": .objectId(try! ObjectId("0123456789ABCDEF01234567")),
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
             "currentTime": .dateTime(NSDate(timeIntervalSince1970: Double(1453589266))),
             "cool32bitNumber": .int32(9001),
             "cool64bitNumber": 21312153544,

@@ -32,7 +32,7 @@ extension Value {
             let length = Int32(data.count)
             return length.bsonData + [subtype.rawValue] + data
         case objectId(let value):
-            return value.bsonData
+            return [value.0, value.1, value.2, value.3, value.4, value.5, value.6, value.7, value.8, value.9, value.10, value.11]
         case boolean(let value):
             return value ? [0x01] : [0x00]
         case dateTime(let value):

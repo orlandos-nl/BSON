@@ -42,7 +42,7 @@ public enum Value {
     case document(Document)
     case array(Document)
     case binary(subtype: BinarySubtype, data: [UInt8])
-    case objectId(ObjectId)
+    case objectId(RawObjectId)
     case boolean(Bool)
     case dateTime(NSDate)
     case null

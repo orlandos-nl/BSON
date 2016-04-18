@@ -51,7 +51,16 @@ extension Value {
         switch self {
         case double(let val): return "\(val)"
         case string(let val): return val
-        case objectId(let val): return val.hexString
+        case objectId(_):
+            let data = self.bsonData
+            
+            return data.map {
+            var s = String($0, radix: 16, uppercase: false)
+            while s.characters.count < 2 {
+                s = "0" + s
+            }
+            return s
+            }.joined(separator: "")
         case boolean(let val): return val ? "true" : "false"
         case dateTime(let val): return "\(val.timeIntervalSince1970)"
         case int32(let val): return "\(val)"
@@ -191,11 +200,6 @@ extension Value {
     /// Returns the raw value only if the underlying value is stored as `Document`. Otherwise, returns `nil`.
     public var documentValue : Document? {
         return self.value as? Document
-    }
-    
-    /// Returns the raw value only if the underlying value is stored as `ObjectId`. Otherwise, returns `nil`.
-    public var objectIdValue : ObjectId? {
-        return self.value as? ObjectId
     }
     
     /// Returns the raw value only if the underlying value is stored as `Bool`. Otherwise, returns `nil`.
