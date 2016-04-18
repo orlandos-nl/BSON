@@ -167,7 +167,7 @@ extension Value {
     }
     
     // MARK: ... value
-    public var value : Any? {
+    public var storedValue : Any? {
         switch self {
         case double(let val): return val
         case string(let val): return val
@@ -189,36 +189,45 @@ extension Value {
     
     /// Returns the raw value only if the underlying value is stored as `Double`. Otherwise, returns `nil`.
     public var doubleValue : Double? {
-        return self.value as? Double
+        return self.storedValue as? Double
     }
     
     /// Returns the raw value only if the underlying value is stored as `String`. Otherwise, returns `nil`.
     public var stringValue : String? {
-        return self.value as? String
+        return self.storedValue as? String
     }
     
     /// Returns the raw value only if the underlying value is stored as `Document`. Otherwise, returns `nil`.
     public var documentValue : Document? {
-        return self.value as? Document
+        return self.storedValue as? Document
     }
     
     /// Returns the raw value only if the underlying value is stored as `Bool`. Otherwise, returns `nil`.
     public var boolValue : Bool? {
-        return self.value as? Bool
+        return self.storedValue as? Bool
     }
     
     /// Returns the raw value only if the underlying value is stored as `NSDate`. Otherwise, returns `nil`.
     public var dateValue : NSDate? {
-        return self.value as? NSDate
+        return self.storedValue as? NSDate
     }
     
     /// Returns the raw value only if the underlying value is stored as `Int32`. Otherwise, returns `nil`.
     public var int32Value : Int32? {
-        return self.value as? Int32
+        return self.storedValue as? Int32
     }
     
     /// Returns the raw value only if the underlying value is stored as `Int64`. Otherwise, returns `nil`.
     public var int64Value : Int64? {
-        return self.value as? Int64
+        return self.storedValue as? Int64
+    }
+    
+    public var value : ValueConvertible {
+        get {
+            return self
+        }
+        set {
+            self = newValue.makeBsonValue()
+        }
     }
 }

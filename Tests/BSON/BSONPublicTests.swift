@@ -44,12 +44,18 @@ class BSONPublicTests: XCTestCase {
     }
     
     func testBasics() {
-        let document: Document = [
+        var document: Document = [
             "hello": "I am a document created trough the public API",
             "subdocument": ["hello", "mother of god"]
         ]
         
         XCTAssert(document.count == 2)
+        
+        document["henk"] = "fred"
+        document["harrie"].value = document["henk"].string
+        
+        XCTAssertEqual(document["harrie"], document["henk"])
+        XCTAssertEqual(document["harrie"].string, "fred")
     }
     
     func testBinarySerialization() {
