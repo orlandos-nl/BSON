@@ -20,17 +20,17 @@ import Foundation
 /// let a: Document = ["value 1", "value 2"]
 /// ```
 ///
-/// In the BSON specification, the following is said about BSON arrays: 
+/// In the BSON specification, the following is said about BSON arrays:
 ///
 /// Array - The document for an array is a normal BSON document with integer values for the keys, starting with 0 and continuing sequentially. For example, the array `['red', 'blue']` would be encoded as the document `{'0': 'red', '1': 'blue'}`. The keys must be in ascending numerical order.
-/// 
+///
 /// Because this BSON library exports all documents alphabetically, every document only numerical subsequential keys starting at '0' will be treated as an array.
 public struct Document {
     /// Element storage
     internal var elements = [(String, Value)]()
     
     /// Initialize a BSON document with the data from the given Foundation `NSData` object.
-    /// 
+    ///
     /// Will throw a `DeserializationError` when the document is invalid.
     public init(data: NSData) throws {
         var byteArray = [UInt8](repeating: 0, count: data.length)
@@ -134,7 +134,7 @@ public struct Document {
                 guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
                     throw DeserializationError.ParseError
                 }
-
+                
                 value = .string(string)
                 position += Int(length) + 4
             case 0x03, 0x04: // document / array
@@ -165,7 +165,7 @@ public struct Document {
                     throw DeserializationError.InvalidElementSize
                 }
                 
-                value = try ObjectId(bsonData: Array(data[position..<position+12]))
+                value = try ~ObjectId(bsonData: Array(data[position..<position+12]))
                 position += 12
             case 0x08: // boolean
                 guard remaining() >= 1 else {

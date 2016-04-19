@@ -60,6 +60,12 @@ extension Document : ValueConvertible {
     }
 }
 
+extension ObjectId : ValueConvertible {
+    public func makeBsonValue() -> Value {
+        return .objectId(self)
+    }
+}
+
 extension Value : ValueConvertible {
     public func makeBsonValue() -> Value {
         return self
