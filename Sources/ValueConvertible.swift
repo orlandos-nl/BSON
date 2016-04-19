@@ -36,6 +36,12 @@ extension Int64 : ValueConvertible {
     }
 }
 
+extension Int : ValueConvertible {
+    public func makeBsonValue() -> Value {
+        return .int64(Int64(self))
+    }
+}
+
 extension NSDate : ValueConvertible {
     public func makeBsonValue() -> Value {
         return .dateTime(self)
@@ -58,4 +64,9 @@ extension Value : ValueConvertible {
     public func makeBsonValue() -> Value {
         return self
     }
+}
+
+prefix operator ~ {}
+public prefix func ~(convertible: ValueConvertible) -> Value {
+    return convertible.makeBsonValue()
 }

@@ -38,7 +38,7 @@ class BSONPublicTests: XCTestCase {
     }
     
     func testCompare() {
-        let document: Document = ["double": .double(4), "int64": .int64(4)]
+        let document: Document = ["double": 4.0, "int64": 4]
         XCTAssert(document["double"] == document["int64"])
         XCTAssertFalse(document["double"] === document["int64"])
     }
@@ -52,7 +52,7 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(document.count == 2)
         
         document["henk"] = "fred"
-        document["harrie"].value = document["henk"].string
+        document["harrie"] = ~document["henk"].string
         
         XCTAssertEqual(document["harrie"], document["henk"])
         XCTAssertEqual(document["harrie"].string, "fred")
@@ -400,7 +400,7 @@ class BSONPublicTests: XCTestCase {
                 "subArray": ["henk", "fred", "kaas", "goudvis"]
             ],
             "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
-            "currentTime": .dateTime(NSDate(timeIntervalSince1970: Double(1453589266))),
+            "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
             "cool32bitNumber": .int32(9001),
             "cool64bitNumber": 21312153544,
             "code": .javascriptCode("console.log(\"Hello there\");"),
