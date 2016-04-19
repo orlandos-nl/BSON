@@ -434,52 +434,56 @@ class BSONPublicTests: XCTestCase {
     }
     
     func testDeserializationPerformance() {
-        let kittenDocument: Document = [
-                                           "doubleTest": 0.04,
-                                           "stringTest": "foo",
-                                           "documentTest": [
-                                                               "documentSubDoubleTest": 13.37,
-                                                               "subArray": ["henk", "fred", "kaas", "goudvis"]
-            ],
-                                           "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-                                           "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
-                                           "cool32bitNumber": .int32(9001),
-                                           "cool64bitNumber": 21312153544,
-                                           "code": .javascriptCode("console.log(\"Hello there\");"),
-                                           "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
-                                           "nothing": .null
-        ]
-        
-        let bsonData = kittenDocument.bsonData
-        
-        measure {
-            for _ in 0..<1000 {
-                let _ = try! Document(data: bsonData)
+        #if !os(Linux)
+            let kittenDocument: Document = [
+                                               "doubleTest": 0.04,
+                                               "stringTest": "foo",
+                                               "documentTest": [
+                                                                   "documentSubDoubleTest": 13.37,
+                                                                   "subArray": ["henk", "fred", "kaas", "goudvis"]
+                ],
+                                               "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
+                                               "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
+                                               "cool32bitNumber": .int32(9001),
+                                               "cool64bitNumber": 21312153544,
+                                               "code": .javascriptCode("console.log(\"Hello there\");"),
+                                               "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
+                                               "nothing": .null
+            ]
+            
+            let bsonData = kittenDocument.bsonData
+            
+            measure {
+                for _ in 0..<1000 {
+                    let _ = try! Document(data: bsonData)
+                }
             }
-        }
+        #endif
     }
     
     func testSerializationPerformance() {
-        let kittenDocument: Document = [
-                                           "doubleTest": 0.04,
-                                           "stringTest": "foo",
-                                           "documentTest": [
-                                                               "documentSubDoubleTest": 13.37,
-                                                               "subArray": ["henk", "fred", "kaas", "goudvis"]
-                                                            ],
-                                           "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-                                           "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
-                                           "cool32bitNumber": .int32(9001),
-                                           "cool64bitNumber": 21312153544,
-                                           "code": .javascriptCode("console.log(\"Hello there\");"),
-                                           "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
-                                           "nothing": .null
-        ]
-        
-        measure {
-            for _ in 0..<1000 {
-                let _ = kittenDocument.bsonData
+        #if !os(Linux)
+            let kittenDocument: Document = [
+                                               "doubleTest": 0.04,
+                                               "stringTest": "foo",
+                                               "documentTest": [
+                                                                   "documentSubDoubleTest": 13.37,
+                                                                   "subArray": ["henk", "fred", "kaas", "goudvis"]
+                ],
+                                               "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
+                                               "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
+                                               "cool32bitNumber": .int32(9001),
+                                               "cool64bitNumber": 21312153544,
+                                               "code": .javascriptCode("console.log(\"Hello there\");"),
+                                               "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
+                                               "nothing": .null
+            ]
+            
+            measure {
+                for _ in 0..<1000 {
+                    let _ = kittenDocument.bsonData
+                }
             }
-        }
+        #endif
     }
 }
