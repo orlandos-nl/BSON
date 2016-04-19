@@ -213,6 +213,11 @@ extension Value {
         return self.storedValue as? Int64
     }
     
+    /// Returns the raw value only if the underlying value is stored as `ObjectId`. Otherwise, returns `nil`.
+    public var objectIdValue : ObjectId? {
+        return self.storedValue as? ObjectId
+    }
+    
     public var value : ValueConvertible {
         get {
             return self
