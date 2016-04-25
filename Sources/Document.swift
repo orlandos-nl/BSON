@@ -165,7 +165,7 @@ public struct Document {
                     throw DeserializationError.InvalidElementSize
                 }
                 
-                value = try ~ObjectId(bsonData: Array(data[position..<position+12]))
+                value = try .objectId(ObjectId(bsonData: Array(data[position..<position+12])))
                 position += 12
             case 0x08: // boolean
                 guard remaining() >= 1 else {
