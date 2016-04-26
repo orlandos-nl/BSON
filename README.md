@@ -28,7 +28,17 @@ import PackageDescription
 
 let package = Package(
     name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 2, minor: 0)]
+    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 2, minor: 2)]
+)
+```
+
+Or for Swift 04-12 users:
+```swift
+import PackageDescription
+
+let package = Package(
+    name: "MyApp",
+    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 2, minor: 1)]
 )
 ```
 
