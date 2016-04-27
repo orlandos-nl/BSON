@@ -25,11 +25,7 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
     case (.boolean(let val1), .boolean(let val2)):
         return val1 == val2
     case (.dateTime(let val1), .dateTime(let val2)):
-        #if os(Linux)
-            return val1.isEqual(val2)
-        #else
-            return val1.isEqual(to: val2)
-        #endif
+        return val1.isEqual(to: val2)
     case (.regularExpression(let exp1, let opt1), .regularExpression(let exp2, let opt2)):
         return exp1 == exp2 && opt1 == opt2
     case (.javascriptCode(let code1), .javascriptCode(let code2)):

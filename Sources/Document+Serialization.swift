@@ -39,11 +39,6 @@ extension Document {
         var myData = self.bsonData
         let nsData = NSData(bytes: &myData, length: myData.count)
         
-        #if os(Linux)
-            try nsData.writeToFile(path, options: [])
-        #else
-            try nsData.write(toFile: path)
-        #endif
-        
+        try nsData.write(toFile: path)
     }
 }
