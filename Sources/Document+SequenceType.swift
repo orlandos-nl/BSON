@@ -24,10 +24,26 @@ extension Document : Sequence {
         return elements.index(where:)(where: { $0.0 == key })
     }
     
-    /// As required by and documented in `SequenceType`
+    /// Supports dot syntax for subdocument access
     public subscript (key: String) -> Value {
         get {
-            return elements.filter({ $0.0 == key }).first?.1 ?? .nothing
+            // first, try the literal value
+            if let maybeValue = elements.filter({ $0.0 == key }).first?.1 {
+                return maybeValue
+            }
+            
+            // try the dot syntax
+            let components = key.components(separatedBy: ".")
+            var rest = components
+            rest.removeFirst()
+            var subKey = rest.joined(separator: ".")
+            
+            if let firstComponent = components.first, let value = elements.filter({ $0.0 == firstComponent }).first?.1, let document = value.documentValue where subKey.characters.count > 0 {
+                // there is a document here!
+                return document[subKey]
+            }
+            
+            return .nothing
         }
         set {
             if case .nothing = newValue {
