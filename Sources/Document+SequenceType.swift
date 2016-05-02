@@ -33,7 +33,12 @@ extension Document : Sequence {
             }
             
             // try the dot syntax
-            let components = key.components(separatedBy: ".")
+            #if os(Linux)
+                let components = key.componentsSeparatedByString(".")
+            #else
+                let components = key.components(separatedBy: ".")
+            #endif
+
             var rest = components
             rest.removeFirst()
             var subKey = rest.joined(separator: ".")
