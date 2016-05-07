@@ -32,12 +32,7 @@ extension Document : Sequence {
                 return maybeValue
             }
             
-            // try the dot syntax
-            #if os(Linux)
-                let components = key.componentsSeparatedByString(".")
-            #else
-                let components = key.components(separatedBy: ".")
-            #endif
+            let components = key.components(separatedBy: ".")
 
             var rest = components
             rest.removeFirst()
