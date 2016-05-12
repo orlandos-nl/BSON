@@ -310,7 +310,7 @@ extension Document {
 
 extension Document {
     /// Returns true if this Document is an array and false otherwise.
-    func validatesAsArray() -> Bool {
+    public func validatesAsArray() -> Bool {
         var current = -1
         for (key, _) in self.elements {
             guard let index = Int(key) else {
