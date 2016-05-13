@@ -20,7 +20,7 @@ extension Value {
                 return .nothing
             }
         }
-
+        
         set {
             switch self {
             case .document(var subdoc):
@@ -34,7 +34,7 @@ extension Value {
             }
         }
     }
-
+    
     public subscript(key: Int) -> Value {
         get {
             switch self {
@@ -46,7 +46,7 @@ extension Value {
                 return .nothing
             }
         }
-
+        
         set {
             switch self {
             case .document(var subdoc):
