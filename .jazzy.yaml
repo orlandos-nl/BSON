@@ -1,8 +1,11 @@
-author_name: "Robbert Brandsma & Joannis Orlandos"
-module_name: BSON
+author: "Robbert Brandsma & Joannis Orlandos"
+module: BSON
 readme: README.md
 github_url: https://github.com/PlanTeam/BSON
-
+swift_version: 2.2
+xcodebuild_arguments:
+  - "-scheme"
+  - "BSON"
 custom_categories:
   - name: BSON Types
     children:
@@ -23,11 +26,11 @@ custom_categories:
     - MaxKey
     - RegularExpression
     - Timestamp
-  
+
   - name: Errors
     children:
     - DeserializationError
-  
+
   - name: Used internally
     children:
     - BSONLength

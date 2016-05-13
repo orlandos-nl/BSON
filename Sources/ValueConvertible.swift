@@ -28,6 +28,9 @@ extension Int32 : ValueConvertible {
     public func makeBsonValue() -> Value {
         return .int32(self)
     }
+
+    public func get() -> Value {
+    }
 }
 
 extension Int64 : ValueConvertible {
