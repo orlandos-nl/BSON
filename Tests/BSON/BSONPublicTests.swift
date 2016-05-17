@@ -17,7 +17,7 @@ import BSON
 // TODO: Fix ObjectId, DateTime syntax
 
 class BSONPublicTests: XCTestCase {
-    static var allTests : [(String, BSONPublicTests -> () throws -> Void)] {
+    static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
         return [
             ("testCompare", testCompare),
             ("testBasics", testBasics),

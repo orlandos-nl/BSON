@@ -15,7 +15,7 @@ import XCTest
 #endif
 
 class BSONInternalTests: XCTestCase {
-    static var allTests : [(String, BSONInternalTests -> () throws -> Void)] {
+    static var allTests : [(String, (BSONInternalTests) -> () throws -> Void)] {
         return [
             ("testCStringSerialization", testCStringSerialization),
             ("testInt16", testInt16),
