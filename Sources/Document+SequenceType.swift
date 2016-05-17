@@ -114,6 +114,17 @@ extension Document : Sequence {
     }
     
     /// As required by and documented in `SequenceType`
+    #if !swift(>=3.0)
+    public func generate() -> AnyGenerator<(String, Value)> {
+        var i = -1
+        
+        return AnyGenerator {
+            i += 1
+            
+            return i < self.elements.count ? self.elements[i] : nil
+        }
+    }
+    #else
     public func makeIterator() -> AnyIterator<(String, Value)> {
         var i = -1
         
@@ -123,6 +134,7 @@ extension Document : Sequence {
             return i < self.elements.count ? self.elements[i] : nil
         }
     }
+    #endif
     
     /// As required by and documented in `SequenceType`
     public var isEmpty: Bool {

@@ -28,7 +28,22 @@ public extension String {
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
+    #if !swift(>=3.0)
+    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
+        let res = try _instant(bsonData: data)
+        consumedBytes = res.0
+        return res.1
+    }
+    #else
     public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int) throws -> String {
+        let res = try _instant(bsonData: data)
+        consumedBytes = res.0
+        return res.1
+    }
+    #endif
+    
+    
+    private static func _instant(bsonData data: [UInt8]) throws -> (Int, String) {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.InvalidLastElement
@@ -44,9 +59,7 @@ public extension String {
         
         // Empty string
         if length == 1 {
-            consumedBytes = 5
-            
-            return ""
+            return (5, "")
         }
         
         guard length > 0 else {
@@ -59,9 +72,7 @@ public extension String {
             throw DeserializationError.ParseError
         }
         
-        consumedBytes = Int(length + 4)
-        
-        return string
+        return (Int(length + 4), string)
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
@@ -72,7 +83,21 @@ public extension String {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
+    #if !swift(>=3.0)
+    public static func instantiateFromCString(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
+        let res = try _cInstant(bsonData: data)
+        consumedBytes = res.0
+        return res.1
+    }
+    #else
     public static func instantiateFromCString(bsonData data: [UInt8], consumedBytes: inout Int) throws -> String {
+        let res = try _cInstant(bsonData: data)
+        consumedBytes = res.0
+        return res.1
+    }
+    #endif
+    
+    private static func _cInstant(bsonData data: [UInt8]) throws -> (Int, String) {
         guard data.contains(0x00) else {
             throw DeserializationError.ParseError
         }
@@ -81,13 +106,11 @@ public extension String {
             throw DeserializationError.ParseError
         }
         
-        consumedBytes = stringData.count+1
-        
         guard let string = String(bytes: stringData, encoding: NSUTF8StringEncoding) else {
             throw DeserializationError.ParseError
         }
         
-        return string
+        return (stringData.count+1, string)
     }
 }
 

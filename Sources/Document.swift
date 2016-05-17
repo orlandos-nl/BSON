@@ -28,6 +28,7 @@ import Foundation
 public struct Document {
     /// Element storage
     internal var elements = [(String, Value)]()
+    internal var consumedBytes: Int? = nil
     
     /// Initialize a BSON document with the data from the given Foundation `NSData` object.
     ///
@@ -41,16 +42,23 @@ public struct Document {
         try self.init(data: byteArray, consumedBytes: &🖕)
     }
     
+    /// Internal initializer used by all other initializers and for initializing embedded documents.
+    #if !swift(>=3.0)
+    internal init(data: [UInt8], inout consumedBytes: Int) throws {
+        try self.init(data: data)
+        consumedBytes = self.consumedBytes ?? 0
+    }
+    #else
+    internal init(data: [UInt8], consumedBytes: inout Int) throws {
+        try self.init(data: data)
+        consumedBytes = self.consumedBytes ?? 0
+    }
+    #endif
+    
     /// Initialize a BSON document with the given byte array.
     ///
     /// Will throw a `DeserializationError` when the document is invalid.
     public init(data: [UInt8]) throws {
-        var 🖕 = 0
-        try self.init(data: data, consumedBytes: &🖕)
-    }
-    
-    /// Internal initializer used by all other initializers and for initializing embedded documents.
-    internal init(data: [UInt8], consumedBytes: inout Int) throws {
         // A BSON document cannot be smaller than 5 bytes (which would be an empty document)
         guard data.count >= 5 else {
             throw DeserializationError.InvalidDocumentLength
@@ -62,9 +70,8 @@ public struct Document {
             throw DeserializationError.InvalidDocumentLength
         }
         
-        defer {
-            consumedBytes = documentLength
-        }
+        consumedBytes = documentLength
+        
         
         // Parse! Loop over the element list.
         var position = 4
@@ -79,7 +86,7 @@ public struct Document {
             }
             
             // Now that we have the type, parse the name
-            guard let stringTerminatorIndex = data[position..<documentLength].index(of:)(of: 0) else {
+            guard let stringTerminatorIndex = data[position..<documentLength].index(of: 0) else {
                 throw DeserializationError.ParseError
             }
             
@@ -326,6 +333,72 @@ extension Document {
         return true
     }
 }
+
+
+extension Document : ArrayLiteralConvertible {
+    /// Initialize a Document using an array of `BSONElement`s.
+    public init(array: [Value]) {
+        elements = array.map { ("", $0) }
+        self.enforceArray()
+    }
+    
+    /// For now.. only accept BSONElement
+    public init(arrayLiteral arrayElements: Value...) {
+        self.init(array: arrayElements)
+    }
+    
+    public mutating func enforceArray() {
+        for i in 0..<elements.count {
+            elements[i].0 = "\(i)"
+        }
+    }
+}
+
+extension Document : DictionaryLiteralConvertible {
+    public init(dictionaryElements: [(String, Value)]) {
+        self.elements = dictionaryElements
+    }
+    
+    /// Create an instance initialized with `elements`.
+    public init(dictionaryLiteral dictionaryElements: (String, Value)...) {
+        self.elements = dictionaryElements
+    }
+}
+
+extension Document {
+    internal init(native: [String: Value]) {
+        self.elements = native.map({ $0 })
+    }
+}
+
+extension Document {
+    public var arrayValue: [Value] {
+        return self.elements.map{$0.1}
+    }
+    
+    /// Returns the dictionary equivalent of `self`. Subdocuments are nog converted and will still be of type `Document`. If you need these converted to dictionaries, too, you should use `recursiveDictionaryValue` instead.
+    public var dictionaryValue: [String : Value] {
+        var value = [String : Value]()
+        for element in self.elements {
+            value[element.0] = element.1
+        }
+        return value
+    }
+    
+    /// Returns the dictionary equivalent of `self`, converting any contained documents to dictionaries.
+    public var recursiveDictionaryValue: [String : Any] {
+        var value = [String : Any]()
+        for element in self.elements {
+            if let subdocument = element.1.documentValue {
+                value[element.0] = subdocument.recursiveDictionaryValue
+            } else {
+                value[element.0] = element.1
+            }
+        }
+        return value
+    }
+}
+
 
 //extension Document : CustomStringConvertible {
 //    /// Returns the description of all elements in this document. Not ordered correctly.

@@ -33,6 +33,12 @@ public func +(lhs: Document, rhs: Document) -> Document {
     }
 }
 
-public func +=(lhs: inout Document, rhs: Document) {
+#if !swift(>=3.0)
+    public func +=(inout lhs: Document, rhs: Document) {
+        lhs = lhs + rhs
+    }
+#else
+    public func +=(lhs: inout Document, rhs: Document) {
     lhs = lhs + rhs
-}
+    }
+#endif
