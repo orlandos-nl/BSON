@@ -1,4 +1,0 @@
-[submodule "docs"]
-	path = docs
-	url = https://github.com/PlanTeam/BSON.git
-	branch = gh-pages
