@@ -321,7 +321,6 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
                 return .nothing
             }
             
-            position += 1
             return storage[position] == 0x00 ? .boolean(false) : .boolean(true)
         case .utcDateTime:
             let interval = UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee
