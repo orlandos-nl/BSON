@@ -20,8 +20,18 @@ extension Array : ArrayProtocol {
 
 extension ArrayProtocol where Iterator.Element == Document {
     public init(bsonBytes bytes: [UInt8]) {
-        // TODO: Implement this
-        abort()
+        var array = [Document]()
+        var position = 0
+        
+        while bytes.count >= position + 5 {
+            let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
+            
+            array.append(Document(data: Array(bytes[position..<position+length])))
+            
+            position += length
+        }
+        
+        self.init(array)
     }
 }
 
@@ -224,7 +234,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     private mutating func updateDocumentHeader() {
-        storage.replaceSubrange(0..<4, with: storage.count.bytes)
+        storage.replaceSubrange(0..<4, with: Int32(storage.count).bytes)
     }
     
     private func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> Value {
