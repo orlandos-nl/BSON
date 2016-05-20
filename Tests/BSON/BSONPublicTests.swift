@@ -51,7 +51,7 @@ class BSONPublicTests: XCTestCase {
             "subdocument": ["hello", "mother of god"]
         ]
         
-        XCTAssert(document.count == 2)
+        XCTAssertEqual(document.count, 2)
         
         document["henk"] = "fred"
         document["harrie"] = ~document["henk"].string
@@ -203,11 +203,11 @@ class BSONPublicTests: XCTestCase {
     func testDictionaryConvertableToDocument() {
         let docOne: Document = ["hai": .int32(3), "henk": "Hont", "kat": true]
         
-        XCTAssert(docOne.count == 3)
+        XCTAssertEqual(docOne.count, 3)
         
-        XCTAssert(docOne["hai"].int32 == 3)
-        XCTAssert(docOne["henk"].string == "Hont")
-        XCTAssert(docOne["kat"].bool == true)
+        XCTAssertEqual(docOne["hai"].int32, 3)
+        XCTAssertEqual(docOne["henk"].string, "Hont")
+        XCTAssertEqual(docOne["kat"].bool, true)
     }
     
     func testObjectIdSerialization() {
