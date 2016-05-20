@@ -21,7 +21,7 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
     case (.binary(let subtype1, let data1), .binary(let subtype2, let data2)):
         return subtype1.rawValue == subtype2.rawValue && data1 == data2
     case (.objectId(_), .objectId(_)):
-        return lhs.bsonData == rhs.bsonData
+        return lhs.bytes == rhs.bytes
     case (.boolean(let val1), .boolean(let val2)):
         return val1 == val2
     case (.dateTime(let val1), .dateTime(let val2)):
@@ -48,7 +48,7 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
 public func ===(lhs: Value, rhs: Value) -> Bool {
     switch (lhs, rhs) {
     case (.double(_), .double(_)), (.string(_), .string(_)), (.document(_), .document(_)), (.array(_), .array(_)), (.binary(_), .binary(_)), (.objectId(_), .objectId(_)), (.boolean(_), .boolean(_)), (.dateTime(_), .dateTime(_)), (.regularExpression(_, _), .regularExpression(_, _)), (.javascriptCode(_), .javascriptCode(_)), (.javascriptCodeWithScope(_, _), .javascriptCodeWithScope(_, _)), (.int32(_), .int32(_)), (.timestamp(_), .timestamp(_)), (.int64(_), .int64(_)), (.minKey, .minKey), (.maxKey, .maxKey), (.null, .null), (.nothing, .nothing):
-        return lhs.bsonData == rhs.bsonData
+        return lhs.bytes == rhs.bytes
     default:
         return false
     }

@@ -2,418 +2,331 @@
 //  Document.swift
 //  BSON
 //
-//  Created by Robbert Brandsma on 23-01-16.
-//  Copyright © 2016 Robbert Brandsma. All rights reserved.
+//  Created by Robbert Brandsma on 19-05-16.
+//
 //
 
 import Foundation
 
-/// The base type for all BSON data, defined in the spec as:
-///
-/// `document	::=	int32 e_list "\x00"`
-///
-/// A document is comparable with a Swift `Array`or `Dictionary`. It can thus be initialized
-/// by using an array or dictionary literal:
-///
-/// ```
-/// let d: Document = ["key": "value"]
-/// let a: Document = ["value 1", "value 2"]
-/// ```
-///
-/// In the BSON specification, the following is said about BSON arrays:
-///
-/// Array - The document for an array is a normal BSON document with integer values for the keys, starting with 0 and continuing sequentially. For example, the array `['red', 'blue']` would be encoded as the document `{'0': 'red', '1': 'blue'}`. The keys must be in ascending numerical order.
-///
-/// Because this BSON library exports all documents alphabetically, every document only numerical subsequential keys starting at '0' will be treated as an array.
-public struct Document {
-    /// Element storage
-    internal var elements = [(String, Value)]()
-    internal var consumedBytes: Int? = nil
+public protocol ArrayProtocol : _ArrayProtocol {
+    func arrayValue() -> [Iterator.Element]
+}
+
+extension Array : ArrayProtocol {
+    public func arrayValue() -> [Iterator.Element] {
+        return self
+    }
+}
+
+extension ArrayProtocol where Iterator.Element == Document {
+    public init(bsonBytes bytes: [UInt8]) {
+        // TODO: Implement this
+        abort()
+    }
+}
+
+private enum ElementType : UInt8 {
+    case double = 0x01
+    case string = 0x02
+    case document = 0x03
+    case arrayDocument = 0x04
+    case binary = 0x05
+    case objectId = 0x07
+    case boolean = 0x08
+    case utcDateTime = 0x09
+    case nullValue = 0x0A
+    case regex = 0x0B
+    case javascriptCode = 0x0D
+    case javascriptCodeWithScope = 0x0F
+    case int32 = 0x10
+    case timestamp = 0x11
+    case int64 = 0x12
+    case minKey = 0xFF
+    case maxKey = 0x7F
+}
+
+/// `Document` is a collection type that uses a BSON document as storage.
+/// As such, it can be stored in a file or instantiated from BSON data.
+/// 
+/// Documents behave partially like an array, and partially like a dictionary.
+/// For general information about BSON documents, see http://bsonspec.org/spec.html
+public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralConvertible {
+    private var storage: [UInt8]
     
-    /// Initialize a BSON document with the data from the given Foundation `NSData` object.
-    ///
-    /// Will throw a `DeserializationError` when the document is invalid.
-    public init(data: NSData) throws {
+    // MARK: - Initialization from data
+    public init(data: NSData) {
         var byteArray = [UInt8](repeating: 0, count: data.length)
         data.getBytes(&byteArray, length: byteArray.count)
         
-        var 🖕 = 0
-        
-        try self.init(data: byteArray, consumedBytes: &🖕)
+        self.init(data: byteArray)
     }
     
-    /// Internal initializer used by all other initializers and for initializing embedded documents.
-    #if !swift(>=3.0)
-    internal init(data: [UInt8], inout consumedBytes: Int) throws {
-        try self.init(data: data)
-        consumedBytes = self.consumedBytes ?? 0
+    public init(data: [UInt8]) {
+        storage = data
     }
-    #else
-    internal init(data: [UInt8], consumedBytes: inout Int) throws {
-        try self.init(data: data)
-        consumedBytes = self.consumedBytes ?? 0
-    }
-    #endif
     
-    /// Initialize a BSON document with the given byte array.
-    ///
-    /// Will throw a `DeserializationError` when the document is invalid.
-    public init(data: [UInt8]) throws {
-        // A BSON document cannot be smaller than 5 bytes (which would be an empty document)
-        guard data.count >= 5 else {
-            throw DeserializationError.InvalidDocumentLength
+    public init() {
+        // the empty document is 5 bytes long.
+        storage = [0,0,0,5,0]
+    }
+    
+    // MARK: - Initialization from Swift Types & Literals
+    public init(dictionaryElements elements: [(String, Value)]) {
+        self.init()
+        for element in elements {
+            self.append(element.1, forKey: element.0)
         }
-        
-        // The first four bytes of a document represent the total size of the document
-        let documentLength = Int(Int32(littleEndian: UnsafePointer<Int32>(data).pointee))
-        guard data.count >= documentLength else {
-            throw DeserializationError.InvalidDocumentLength
-        }
-        
-        consumedBytes = documentLength
-        
-        
-        // Parse! Loop over the element list.
+    }
+    
+    public init(dictionaryLiteral elements: (String, Value)...) {
+        self.init(dictionaryElements: elements)
+    }
+    
+    public init(arrayLiteral elements: Value...) {
+        self.init(array: elements)
+    }
+    
+    public init(array elements: [Value]) {
+        self.init(dictionaryElements: elements.enumerated().map { (index, value) in ("\(index)", value) })
+    }
+    
+    // MARK: - BSON Parsing Logic
+    
+    /// This function traverses the document and
+    private func getMeta(forKeyBytes keyBytes: [UInt8]) -> (dataPosition: Int, type: ElementType)? {
+        // start at the begin of the element list, the fifth byte
         var position = 4
-        while position < documentLength {
-            // The first byte in an element is the element type
-            let elementType = data[position]
+        
+        while storage.count > position {
+            /**** ELEMENT TYPE ****/
+            if storage[position] == 0 {
+                // this is the end of the document
+                return nil
+            }
+            
+            guard let thisElementType = ElementType(rawValue: storage[position]) else {
+                #if BSON_print_errors
+                    print("Error while parsing BSON document: element type unknown at position \(position).")
+                #endif
+                return nil
+            }
+            
+            /**** ELEMENT NAME ****/
             position += 1
             
-            // Is this the end of the document?
-            if elementType == 0x00 && position == documentLength {
-                return
+            // compare the key data
+            let keyPositionOffset = position
+            var isKey = true // after the loop this will have the correct value
+            var didEnd = false // we should end with 0, else document is invalid
+            keyComparison: while storage.count > position {
+                defer {
+                    position += 1
+                }
+                
+                let character = storage[position]
+                
+                let keyPos = position - keyPositionOffset
+                
+                // there is still a chance that this is the key, so check for that.
+                if isKey && keyBytes.count > keyPos {
+                    isKey = keyBytes[keyPos] == character
+                }
+                
+                if character == 0 {
+                    didEnd = true
+                    break keyComparison // end of key data
+                }
             }
             
-            // Now that we have the type, parse the name
-            guard let stringTerminatorIndex = data[position..<documentLength].index(of: 0) else {
-                throw DeserializationError.ParseError
+            // the key MUST end with a 0, else the BSON data is invalid.
+            guard didEnd else {
+                return nil
             }
             
-            let keyData = Array(data[position...stringTerminatorIndex])
-            let elementName = try String.instantiateFromCString(bsonData: keyData)
+            /**** ELEMENT DATA ****/
+            // The `position` is now at the first byte of the element data, or, when the element has no data, the start of the next element.
             
-            position = stringTerminatorIndex + 1
-            
-            func remaining() -> Int {
-                return data.count - position
+            // this must be the key, then.
+            if isKey {
+                return (dataPosition: position, type: thisElementType)
             }
             
-            let value: Value
-            elementDeserialization: switch elementType {
-            case 0x01: // double
-                guard remaining() >= 8 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                let double = UnsafePointer<Double>(Array(data[position..<position+8])).pointee
-                value = .double(double)
-                
-                position += 8
-            case 0x02: // string
-                // Check for null-termination and at least 5 bytes (length spec + terminator)
-                guard remaining() >= 5 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                // Get the length
-                let length = try Int32.instantiate(bsonData: Array(data[position...position+3]))
-                
-                // Check if the data is at least the right size
-                guard data.count-position >= Int(length) + 4 else {
-                    throw DeserializationError.ParseError
-                }
-                
-                // Empty string
-                if length == 1 {
-                    position += 5
-                    
-                    value = .string("")
-                    break elementDeserialization
-                }
-                
-                guard length > 0 else {
-                    throw DeserializationError.ParseError
-                }
-                
-                var stringData = Array(data[position+4..<position+Int(length + 3)])
-                
-                guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
-                    throw DeserializationError.ParseError
-                }
-                
-                value = .string(string)
-                position += Int(length) + 4
-            case 0x03, 0x04: // document / array
-                let length = Int(try Int32.instantiate(bsonData: Array(data[position..<position+4])))
-                let subData = Array(data[position..<position+length])
-                let document = try Document(data: subData)
-                value = elementType == 0x03 ? .document(document) : .array(document)
-                position += length
-            case 0x05: // binary
-                guard remaining() >= 5 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                let length = try Int32.instantiate(bsonData: Array(data[position..<position+4]))
-                let subType = data[position+4]
-                
-                guard remaining() >= Int(length) + 5 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                let realData = length > 0 ? Array(data[position+5...position+Int(4+length)]) : []
-                // length + subType + data
-                position += 4 + 1 + Int(length)
-                
-                value = .binary(subtype: BinarySubtype(rawValue: subType), data: realData)
-            case 0x07: // objectid
-                guard remaining() >= 12 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                value = try .objectId(ObjectId(bsonData: Array(data[position..<position+12])))
-                position += 12
-            case 0x08: // boolean
-                guard remaining() >= 1 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                position += 1
-                value = data[position] == 0x00 ? .boolean(false) : .boolean(true)
-            case 0x09: // utc datetime
-                let interval = try Int64.instantiate(bsonData: Array(data[position..<position+8]))
-                let date = NSDate(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
-                
-                value = .dateTime(date)
-                position += 8
-            case 0x0A: // null
-                value = .null
-            case 0x0B: // regular expression
-                let k = data.split(separator: 0, maxSplits: 2, omittingEmptySubsequences: false)
-                guard k.count >= 2 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                let patternData = Array(k[0])
-                let pattern = try String.instantiateFromCString(bsonData: patternData + [0x00])
-                
-                let optionsData = Array(k[1])
-                let options = try String.instantiateFromCString(bsonData: optionsData + [0x00])
-                
-                // +1 for the null which is removed by the split
-                position += patternData.count+1 + optionsData.count+1
-                
-                value = .regularExpression(pattern: pattern, options: options)
-            case 0x0D: // javascript code
-                var codeSize = 0
-                let code = try String.instantiate(bsonData: Array(data[position..<data.endIndex]), consumedBytes: &codeSize)
-                position += codeSize
-                value = .javascriptCode(code)
-            case 0x0F:
-                // min length is 14 bytes: 4 for the int32, 5 for the string and 5 for the document
-                guard remaining() >= 14 else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                // why did they include this? it's not needed. whatever. we'll validate it.
-                let totalLength = Int(try Int32.instantiate(bsonData: Array(data[position..<position+4])))
-                guard remaining() >= totalLength else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                let stringDataAndMore = Array(data[position+4..<position+totalLength])
-                var trueCodeSize = 0
-                let code = try String.instantiate(bsonData: stringDataAndMore, consumedBytes: &trueCodeSize)
-                
-                // - 4 (length) - 5 (document)
-                guard stringDataAndMore.count - 4 - 5 >= trueCodeSize else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                let scopeDataAndMaybeMore = Array(stringDataAndMore[trueCodeSize..<stringDataAndMore.endIndex])
-                var trueScopeSize = 0
-                let scope = try Document(data: scopeDataAndMaybeMore, consumedBytes: &trueScopeSize)
-                
-                // Validation, yay!
-                guard totalLength == 4 + trueCodeSize + trueScopeSize else {
-                    throw DeserializationError.InvalidElementSize
-                }
-                
-                position += 4 + trueCodeSize + trueScopeSize
-                
-                value = .javascriptCodeWithScope(code: code, scope: scope)
-            case 0x10: // int32
-                value = .int32(try Int32.instantiate(bsonData: Array(data[position..<position+4])))
-                position += 4
-            case 0x11, 0x12: // timestamp, int64
-                let integer = try Int64.instantiate(bsonData: Array(data[position..<position+8]))
-                value = elementType == 0x11 ? .timestamp(integer) : .int64(integer)
-                position += 8
-            case 0xFF: // MinKey
-                value = .minKey
-            case 0x7F: // MaxKey
-                value = .maxKey
-            default:
-                throw DeserializationError.UnknownElementType
-            }
-            
-            elements.append((elementName, value))
+            // we didn't find the key, so we should skip past this element, and go on to the next one
+            let length = getLengthOfElement(withDataPosition: position, type: thisElementType)
+            position += length
         }
-    }
-}
-
-extension Document {
-    /// Instantiates zero or more `Document`s from the given data. This data is formatted like this:
-    /// `let data = document1.bsonData + document2.bsonData`, so just multiple documents concatenated.
-    public static func instantiateAll(fromData data: [UInt8]) throws -> [Document] {
-        var currentDataIndex = 0
-        var documents = [Document]()
-        while currentDataIndex < data.count {
-            var consumedBytes = 0
-            documents.append(try Document(data: Array(data[currentDataIndex..<data.count]), consumedBytes: &consumedBytes))
-            
-            guard consumedBytes > 0 else {
-                throw DeserializationError.ParseError
-            }
-            
-            currentDataIndex += consumedBytes
-        }
-        return documents
+        
+        return nil
     }
     
-    public static func findDocuments(data: [UInt8]) -> (consumed: Int, found: Int) {
-        var position = data.startIndex
-        var found = 0
+    /// Returns the length in bytes.
+    private func getLengthOfElement(withDataPosition position: Int, type: ElementType) -> Int {
+        switch type {
+        // Static:
+        case .objectId:
+            return 12
+        case .double, .int64, .utcDateTime, .timestamp:
+            return 8
+        case .int32:
+            return 4
+        case .boolean:
+            return 1
+        case .nullValue, .minKey, .maxKey:
+            return 0
+        // Calculated:
+        case .regex: // defined as "cstring cstring"
+            var currentPosition = position
+            var found = 0
+            
+            // iterate over 2 cstrings
+            while storage.count > currentPosition && found < 2 {
+                defer {
+                    currentPosition += 1
+                }
+                
+                if storage[currentPosition] == 0 {
+                    found += 1
+                }
+            }
+            return currentPosition - position // invalid
+        case .string, .javascriptCode: // Types with their entire length EXCLUDING the int32 in the first 4 bytes
+            return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee) + 4
+        case .binary:
+            return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee) + 5
+        case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
+            return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee)
+        }
+    }
+    
+    // MARK: - Manipulation & Extracting values
+    public typealias Index = DocumentIndex
+    public typealias IndexIterationElement = (key: String, value: Value)
+    
+    
+    public mutating func append(_ value: Value, forKey key: String) {
+        var buffer = [UInt8]()
         
-        while position < data.endIndex {
-            guard data.endIndex - position >= 5 else {
-                return (consumed: position, found: found)
-            }
-            
-            // The first four bytes of a document represent the total size of the document
-            let lengthBytes = Array(data[position..<position+4])
-            let documentLength = Int(Int32(littleEndian: UnsafePointer<Int32>(lengthBytes).pointee))
-            
-            guard data.count >= position + documentLength else {
-                return (consumed: position, found: found)
-            }
-            
-            guard documentLength >= 5 else {
-                return (consumed: position, found: found)
-            }
-            
-            guard data[position + documentLength - 1] == 0x00 else {
-                return (consumed: position, found: found)
-            }
-            
-            position += documentLength
-            found += 1
+        // First, the type
+        buffer.append(value.typeIdentifier)
+        
+        // Then, the key name
+        buffer += key.utf8
+        
+        // Lastly, the data
+        buffer += value.bytes
+        
+        // Then, insert it into ourselves, before the ending 0-byte.
+        storage.insert(contentsOf: buffer, at: storage.endIndex-2)
+    }
+    
+    public subscript(key: String) -> Value {
+        get {
+            // TODO: Implement this
+            return .nothing
         }
         
-        return (consumed: position, found: found)
+        set {
+            // TODO: Implement this
+        }
     }
-}
+    
+    public subscript(key: Int) -> Value {
+        get {
+            return self["\(key)"]
+        }
+        set {
+            self["\(key)"] = newValue
+        }
+    }
+    
+    public subscript(position: DocumentIndex) -> IndexIterationElement {
+        get {
+            // TODO
+            abort()
+        }
+        set {
+            // TODO
+            abort()
+        }
+    }
+    
+    // MARK: - Collection
+    public var startIndex: DocumentIndex {
+        // TODO
+        abort()
+    }
+    
+    public var endIndex: DocumentIndex {
+        // TODO
+        abort()
+    }
+    
+    public func makeIterator() -> AnyIterator<IndexIterationElement> {
+        // TODO
+        abort()
+    }
+    
+    public func index(after i: DocumentIndex) -> DocumentIndex {
+        // TODO
+        abort()
+    }
+    
+    // MARK: - The old API had this...
+    public mutating func removeValue(forKey key: String) -> Value? {
+        // TODO
+        abort()
+    }
+    
+    // MARK: - Other metadata
+    public var count: Int {
+        // TODO
+        abort()
+    }
 
-extension Document {
-    /// Returns true if this Document is an array and false otherwise.
+    public var byteCount: Int {
+        return Int(UnsafePointer<Int32>(storage).pointee)
+    }
+    
+    public var bytes: [UInt8] {
+        return storage
+    }
+    
     public func validatesAsArray() -> Bool {
-        var current = -1
-        for (key, _) in self.elements {
-            guard let index = Int(key) else {
-                return false
-            }
-            
-            if current == index-1 {
-                current += 1
-            } else {
-                return false
-            }
-        }
-        return true
+        // TODO
+        abort()
+    }
+    
+    // MARK: - Files
+    public func write(toFile path: String) throws {
+        var myData = storage
+        let nsData = NSData(bytes: &myData, length: myData.count)
+        
+        try nsData.write(toFile: path)
     }
 }
 
-
-extension Document : ArrayLiteralConvertible {
-    /// Initialize a Document using an array of `BSONElement`s.
-    public init(array: [Value]) {
-        elements = array.map { ("", $0) }
-        self.enforceArray()
-    }
-    
-    /// For now.. only accept BSONElement
-    public init(arrayLiteral arrayElements: Value...) {
-        self.init(array: arrayElements)
-    }
-    
-    public mutating func enforceArray() {
-        for i in 0..<elements.count {
-            elements[i].0 = "\(i)"
-        }
-    }
+public struct DocumentIndex : Comparable {
+    private var key: [UInt8]
+    private var index: Int
 }
 
-extension Document : DictionaryLiteralConvertible {
-    public init(dictionaryElements: [(String, Value)]) {
-        self.elements = dictionaryElements
-    }
-    
-    /// Create an instance initialized with `elements`.
-    public init(dictionaryLiteral dictionaryElements: (String, Value)...) {
-        self.elements = dictionaryElements
-    }
+public func ==(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
+    return lhs.key == rhs.key && lhs.index == rhs.index
 }
 
-extension Document {
-    internal init(native: [String: Value]) {
-        self.elements = native.map({ $0 })
-    }
+public func <(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
+    return lhs.index < rhs.index
 }
 
-extension Document {
-    public var arrayValue: [Value] {
-        return self.elements.map{$0.1}
-    }
-    
-    /// Returns the dictionary equivalent of `self`. Subdocuments are nog converted and will still be of type `Document`. If you need these converted to dictionaries, too, you should use `recursiveDictionaryValue` instead.
-    public var dictionaryValue: [String : Value] {
-        var value = [String : Value]()
-        for element in self.elements {
-            value[element.0] = element.1
-        }
-        return value
-    }
-    
-    /// Returns the dictionary equivalent of `self`, converting any contained documents to dictionaries.
-    public var recursiveDictionaryValue: [String : Any] {
-        var value = [String : Any]()
-        for element in self.elements {
-            if let subdocument = element.1.documentValue {
-                value[element.0] = subdocument.recursiveDictionaryValue
-            } else {
-                value[element.0] = element.1
-            }
-        }
-        return value
-    }
-}
-
-
-//extension Document : CustomStringConvertible {
-//    /// Returns the description of all elements in this document. Not ordered correctly.
-//    public var description: String {
-//        return self.bsonDescription
-//    }
-//}
-//
-//extension Document : CustomDebugStringConvertible {
-//    public var debugDescription: String {
-//        return self.bsonDescription
-//    }
-//}
-
+// MARK: Operators
 extension Document : Equatable {}
-public func ==(left: Document, right: Document) -> Bool {
-    return left.bsonData == right.bsonData
+public func ==(lhs: Document, rhs: Document) -> Bool {
+    return lhs === rhs // for now
+    // TODO: Implement proper comparison here.
+}
+
+/// Returns true if `lhs` and `rhs` store the same serialized data.
+/// Implies that `lhs` == `rhs`.
+public func ===(lhs: Document, rhs: Document) -> Bool {
+    return lhs.storage == rhs.storage
 }

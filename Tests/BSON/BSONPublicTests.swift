@@ -65,24 +65,24 @@ class BSONPublicTests: XCTestCase {
         
         // Instantiating with 8 bytes of data and converting to BSON data
         let binary = Value.binary(subtype: .generic, data: data)
-        XCTAssert(binary.bsonData == ([8, 0, 0, 0, 0] as [UInt8] + data))
+        XCTAssert(binary.bytes == ([8, 0, 0, 0, 0] as [UInt8] + data))
         
         // Try instantiating with a subtype
         let otherBinary = Value.binary(subtype: .userDefined(0x90), data: data)
-        XCTAssert(otherBinary.bsonData == ([8, 0, 0, 0, 144] as [UInt8] + data))
+        XCTAssert(otherBinary.bytes == ([8, 0, 0, 0, 144] as [UInt8] + data))
     }
     
     func testMultipleDocumentInstantiation() {
         let document1: Document = ["keyOne": "valueOne", "keyTwo": 42.3]
         let document2: Document = ["keyThree": "henk", "keyFour": 382]
         
-        let data = document1.bsonData + document2.bsonData
+        let data = document1.bytes + document2.bytes
         
-        let reincarnations = try! Document.instantiateAll(fromData: data)
+        let reincarnations = [Document](bsonBytes: data)
         XCTAssert(reincarnations.count == 2)
         
-        XCTAssert(reincarnations[0].bsonData == document1.bsonData)
-        XCTAssert(reincarnations[1].bsonData == document2.bsonData)
+        XCTAssert(reincarnations[0].bytes == document1.bytes)
+        XCTAssert(reincarnations[1].bytes == document2.bytes)
     }
     
     func testDocumentOne() {
@@ -107,13 +107,13 @@ class BSONPublicTests: XCTestCase {
         ]
         
         // So do these 2 equal documents match?
-        XCTAssert(expected == kittenDocument.bsonData)
+        XCTAssert(expected == kittenDocument.bytes)
         
         // Instantiate the BSONData
-        let instantiatedExpected = try! Document(data: kittenDocument.bsonData)
+        let instantiatedExpected = Document(data: kittenDocument.bytes)
         
         // Does this new Object's BSONData work?
-        XCTAssert(instantiatedExpected.bsonData == kittenDocument.bsonData)
+        XCTAssert(instantiatedExpected.bytes == kittenDocument.bytes)
     }
     
     func testStringSerialization() {
@@ -121,50 +121,50 @@ class BSONPublicTests: XCTestCase {
         let rawData: [UInt8] = [0x05, 0x00, 0x00, 0x00, 0x41, 0x42, 0x43, 0x44, 0x00]
         let result = "ABCD"
         
-        let string = try! String.instantiate(bsonData: rawData)
+        let string = try! String.instantiate(bytes: rawData)
         XCTAssertEqual(string, result, "Instantiating a String from BSON data works correctly")
         
-        let generatedData = result.bsonData
+        let generatedData = result.bytes
         XCTAssertEqual(generatedData, rawData, "Converting a String to BSON data results in the correct data")
         
         do {
-            let _ = try String.instantiate(bsonData: [0x00, 0x00, 0x00, 0x00, 0x00])
+            let _ = try String.instantiate(bytes: [0x00, 0x00, 0x00, 0x00, 0x00])
             XCTFail()
         } catch {}
         
         do {
-            let _ = try String.instantiate(bsonData: [0x00, 0x00, 0x00, 0x00, 0x01])
+            let _ = try String.instantiate(bytes: [0x00, 0x00, 0x00, 0x00, 0x01])
             XCTFail()
         } catch {}
         
         do {
-            let _ = try String.instantiate(bsonData: [0x00, 0x01, 0x00, 0x01, 0x01])
+            let _ = try String.instantiate(bytes: [0x00, 0x01, 0x00, 0x01, 0x01])
             XCTFail()
         } catch {}
         
         do {
-            let _ = try String.instantiate(bsonData: "hoi".bsonData + [0x05])
+            let _ = try String.instantiate(bytes: "hoi".bytes + [0x05])
             XCTFail()
         } catch {}
         
-        let niceString = try! String.instantiate(bsonData: [0x01, 0x00, 0x00, 0x00, 0x00])
+        let niceString = try! String.instantiate(bytes: [0x01, 0x00, 0x00, 0x00, 0x00])
         XCTAssert(niceString == "")
         
         do {
-            let _ = try String.instantiate(bsonData: [0x01, 0x02, 0x00, 0x00, 0x00])
+            let _ = try String.instantiate(bytes: [0x01, 0x02, 0x00, 0x00, 0x00])
             XCTFail()
         } catch {}
         
-        let at = try! String.instantiateFromCString(bsonData: [0x40, 0x00])
+        let at = try! String.instantiateFromCString(bytes: [0x40, 0x00])
         XCTAssert(at == "@")
         
         var consumed = 0
         
-        let _ = try! String.instantiateFromCString(bsonData: [0x40, 0x00, 0x40, 0x00, 0x40, 0x00], consumedBytes: &consumed)
+        let _ = try! String.instantiateFromCString(bytes: [0x40, 0x00, 0x40, 0x00, 0x40, 0x00], consumedBytes: &consumed)
         XCTAssert(consumed == 2)
         
         do {
-            let _ = try String.instantiateFromCString(bsonData: [0x40, 0x40])
+            let _ = try String.instantiateFromCString(bytes: [0x40, 0x40])
             XCTFail()
         } catch {}
     }
@@ -173,16 +173,16 @@ class BSONPublicTests: XCTestCase {
         let firstBSON: [UInt8] = [0x16, 0x00, 0x00, 0x00, 0x02, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x00, 0x06, 0x00, 0x00, 0x00, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x00, 0x00]
         let secondBSON: [UInt8] = [0x31, 0x00, 0x00, 0x00, 0x04, 0x42, 0x53, 0x4f, 0x4e, 0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00, 0x61, 0x77, 0x65, 0x73, 0x6f, 0x6d, 0x65, 0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00]
         
-        let firstDocument = try! Document(data: firstBSON)
+        let firstDocument = Document(data: firstBSON)
         
         XCTAssert(firstDocument["hello"].string == "world", "Our document contains the proper information")
         
-        XCTAssertEqual(firstDocument.bsonData, firstBSON, "FirstBSON has an equal output to the instantiation array")
+        XCTAssertEqual(firstDocument.bytes, firstBSON, "FirstBSON has an equal output to the instantiation array")
         
         // {"BSON": ["awesome", 5.05, 1986]}
-        let secondDocument = try! Document(data: secondBSON)
+        let secondDocument = Document(data: secondBSON)
         
-        XCTAssertEqual(secondDocument.bsonData, secondBSON, "SecondBSON has an equal output to the instantiation array")
+        XCTAssertEqual(secondDocument.bytes, secondBSON, "SecondBSON has an equal output to the instantiation array")
         
         guard let subscripted: Document = secondDocument["BSON"].document else {
             XCTFail()
@@ -219,7 +219,7 @@ class BSONPublicTests: XCTestCase {
         
         // Test errors
         do {
-            let _ = try ObjectId(bsonData: [0x04, 0x04, 0x02])
+            let _ = try ObjectId(bytes: [0x04, 0x04, 0x02])
             XCTFail()
         } catch DeserializationError.InvalidElementSize {
             XCTAssert(true)
@@ -229,7 +229,7 @@ class BSONPublicTests: XCTestCase {
         
         do {
             let objectIDsample = try ObjectId("507f191e810c19729de860ea")
-            let objectIDsample2 = try ObjectId(bsonData: (~objectIDsample).bsonData)
+            let objectIDsample2 = try ObjectId(bytes: (~objectIDsample).bytes)
             
             XCTAssertEqual(objectIDsample.hexString, objectIDsample2.hexString)
         } catch {
@@ -252,7 +252,7 @@ class BSONPublicTests: XCTestCase {
         } catch {}
         
         do {
-            let _ = try ObjectId(bsonData: [0x00])
+            let _ = try ObjectId(bytes: [0x00])
             XCTFail()
         } catch {}
     }
@@ -273,12 +273,12 @@ class BSONPublicTests: XCTestCase {
         if let c = testDocument["c"].documentValue {
             let subDoc: Document = ["aa": "bb", "cc": [1, 2, 3]]
             
-            XCTAssert(c.bsonData == subDoc.bsonData)
+            XCTAssert(c.bytes == subDoc.bytes)
             
             XCTAssertEqual(c["aa"].string, "bb")
             
             if let cc = c["cc"].documentValue {
-                XCTAssertEqual(cc.bsonData, ([1, 2, 3] as Document).bsonData)
+                XCTAssertEqual(cc.bytes, ([1, 2, 3] as Document).bytes)
                 XCTAssertEqual(cc[0].int, 1)
                 XCTAssertEqual(cc[2].int, 3)
                 XCTAssertEqual(cc.count, 3)
@@ -291,7 +291,7 @@ class BSONPublicTests: XCTestCase {
                         break
                     }
                     
-                    if newValue.bsonData != value.bsonData {
+                    if newValue.bytes != value.bytes {
                         XCTFail()
                     }
                 }
@@ -340,28 +340,27 @@ class BSONPublicTests: XCTestCase {
             "nothing": .null
         ]
         
-        XCTAssert(expected == kittenDocument.bsonData)
+        XCTAssert(expected == kittenDocument.bytes)
         
-        let dogUment = try! Document(data: kittenDocument.bsonData)
+        let dogUment = Document(data: kittenDocument.bytes)
         let dogUment2 = NSData(bytes: UnsafePointer<[UInt8]>(expected), length: expected.count)
         
-        let dogUment3 = try! Document(data: dogUment2)
+        let dogUment3 = Document(data: dogUment2)
         
-        XCTAssert(dogUment.bsonData == kittenDocument.bsonData)
-        XCTAssert(dogUment.bsonData == dogUment3.bsonData)
+        XCTAssert(dogUment.bytes == kittenDocument.bytes)
+        XCTAssert(dogUment.bytes == dogUment3.bytes)
         
         print(kittenDocument)
         
-        do {
-            let _ = try Document.instantiateAll(fromData: [0x00])
-            XCTFail()
-        } catch {}
+        let documents = [Document](bsonBytes: [0x00])
+        XCTAssertEqual(documents.count, 0)
+        
         // {"cool32bitNumber":9001,"cool64bitNumber":{"$numberLong":"21312153544"},"currentTime":{"$date":"1970-01-17T19:46:29.266Z"},"documentTest":{"documentSubDoubleTest":13.37,"subArray":{"0":"henk","1":"fred","2":"kaas","3":"goudvis"}},"doubleTest":0.04,"nonRandomObjectId":{"$oid":"0123456789abcdef01234567"},"nothing":null,"stringTest":"foo"}
         
         var expected2 : [UInt8] = [0x31, 0x00, 0x00, 0x00, 0x04]
-        expected2 += "BSON".cStringBsonData
+        expected2 += "BSON".cStringBytes
         expected2 += [0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00]
-        expected2 += "awesome".bsonData
+        expected2 += "awesome".bytes
         expected2 += [0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00]
         
         var nullAsElementType = expected2
@@ -370,25 +369,15 @@ class BSONPublicTests: XCTestCase {
         var unexpectedElementType = expected2
         unexpectedElementType[4] = 0x23
         
-        let bsonCStringData = "BSON".cStringBsonData
-        let halloStringData = "Hallo".bsonData
+        let bsonCStringData = "BSON".cStringBytes
+        let halloStringData = "Hallo".bytes
         
-        var missingNullTerminator : [UInt8] = Int32(13).bsonData
+        var missingNullTerminator : [UInt8] = Int32(13).bytes
         missingNullTerminator += [0x04]
         missingNullTerminator += Array(bsonCStringData[0..<(bsonCStringData.count - 1)])
         missingNullTerminator += [0x02]
         missingNullTerminator += Array(halloStringData[0..<(halloStringData.count - 1)])
         missingNullTerminator += [0x00]
-        
-        do {
-            let _ = try Document(data: nullAsElementType)
-            XCTFail()
-        } catch {}
-        
-        do {
-            let _ = try Document(data: unexpectedElementType)
-            XCTFail()
-        } catch {}
         
         // TODO: Missing tests for ParseError. No null terminators
     }
@@ -420,16 +409,16 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(kittenDocument["doubleTest"].doubleValue == 0.04)
         kittenDocument["doubleTest"] = "hoi"
         XCTAssert(kittenDocument["doubleTest"].stringValue == "hoi")
-        XCTAssert(kittenDocument[kittenDocument.index(forKey: "doubleTest")!].stringValue == "hoi")
+//        XCTAssert(kittenDocument[kittenDocument.index(forKey: "doubleTest")!].stringValue == "hoi")
         
-        kittenDocument.updateValue("doubleTest", forKey: "doubleTest")
-        XCTAssert(kittenDocument[kittenDocument.index(forKey: "doubleTest")!].stringValue == "doubleTest")
+//        kittenDocument.updateValue("doubleTest", forKey: "doubleTest")
+//        XCTAssert(kittenDocument[kittenDocument.index(forKey: "doubleTest")!].stringValue == "doubleTest")
         
-        let oldValue = kittenDocument.remove(at: kittenDocument.startIndex)
-        XCTAssert(oldValue.1.bsonData != kittenDocument[kittenDocument.startIndex].bsonData)
+//        let oldValue = kittenDocument.remove(at: kittenDocument.startIndex)
+//        XCTAssert(oldValue.1.bytes != kittenDocument[kittenDocument.startIndex].bytes)
         
         XCTAssert(!kittenDocument.isEmpty)
-        kittenDocument.removeAll()
+//        kittenDocument.removeAll()
         XCTAssert(kittenDocument.isEmpty)
     }
     
@@ -451,11 +440,12 @@ class BSONPublicTests: XCTestCase {
                                                "nothing": .null
             ]
             
-            let bsonData = kittenDocument.bsonData
+            let bytes = kittenDocument.bytes
             
             measure {
                 for _ in 0..<1000 {
-                    let _ = try! Document(data: bsonData)
+                    // TODO: make this not optimized out
+                    let _ = Document(data: bytes)
                 }
             }
         #endif
@@ -481,7 +471,7 @@ class BSONPublicTests: XCTestCase {
             
             measure {
                 for _ in 0..<1000 {
-                    let _ = kittenDocument.bsonData
+                    let _ = kittenDocument.bytes
                 }
             }
         #endif

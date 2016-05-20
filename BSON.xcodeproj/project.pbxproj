@@ -9,11 +9,8 @@
 /* Begin PBXBuildFile section */
 		F22DAB041CEB440C004019C9 /* Compatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = F22DAB031CEB440C004019C9 /* Compatibility.swift */; };
 		F22DAB061CEB4CF2004019C9 /* Compatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = F22DAB051CEB4CF2004019C9 /* Compatibility.swift */; };
+		F24DE1621CEE0AA6009EDF5B /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24DE1611CEE0AA6009EDF5B /* Document.swift */; };
 		_LinkFileRef_BSON_via_BSONTestSuite /* libBSON.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = "_____Product_BSON" /* libBSON.dylib */; };
-		"__src_cc_ref_Sources/Document+Operators.swift" /* Document+Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/Document+Operators.swift" /* Document+Operators.swift */; };
-		"__src_cc_ref_Sources/Document+SequenceType.swift" /* Document+SequenceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/Document+SequenceType.swift" /* Document+SequenceType.swift */; };
-		"__src_cc_ref_Sources/Document+Serialization.swift" /* Document+Serialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Sources/Document+Serialization.swift" /* Document+Serialization.swift */; };
-		__src_cc_ref_Sources/Document.swift /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Document.swift /* Document.swift */; };
 		__src_cc_ref_Sources/Element.swift /* Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Element.swift /* Element.swift */; };
 		__src_cc_ref_Sources/Error.swift /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Error.swift /* Error.swift */; };
 		__src_cc_ref_Sources/Helpers.swift /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Helpers.swift /* Helpers.swift */; };
@@ -42,25 +39,22 @@
 /* Begin PBXFileReference section */
 		F22DAB031CEB440C004019C9 /* Compatibility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Compatibility.swift; sourceTree = "<group>"; };
 		F22DAB051CEB4CF2004019C9 /* Compatibility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Compatibility.swift; sourceTree = "<group>"; };
+		F24DE1611CEE0AA6009EDF5B /* Document.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Document.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		__PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.xcconfig; path = BSON.xcodeproj/Configs/Project.xcconfig; sourceTree = "<group>"; };
 		__PBXFileRef_Package.swift /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/Document+Operators.swift" /* Document+Operators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Document+Operators.swift"; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/Document+SequenceType.swift" /* Document+SequenceType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Document+SequenceType.swift"; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/Document+Serialization.swift" /* Document+Serialization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Document+Serialization.swift"; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/Document.swift /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Element.swift /* Element.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Element.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Error.swift /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/Helpers.swift /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/ObjectId.swift /* ObjectId.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectId.swift; sourceTree = "<group>"; };
-		"__PBXFileRef_Sources/Value+Comparing.swift" /* Value+Comparing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Value+Comparing.swift"; sourceTree = "<group>"; };
+		__PBXFileRef_Sources/Helpers.swift /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = Helpers.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		__PBXFileRef_Sources/ObjectId.swift /* ObjectId.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = ObjectId.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		"__PBXFileRef_Sources/Value+Comparing.swift" /* Value+Comparing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = "Value+Comparing.swift"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		"__PBXFileRef_Sources/Value+Extraction.swift" /* Value+Extraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Value+Extraction.swift"; sourceTree = "<group>"; };
 		"__PBXFileRef_Sources/Value+LiteralConvertibles.swift" /* Value+LiteralConvertibles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Value+LiteralConvertibles.swift"; sourceTree = "<group>"; };
 		"__PBXFileRef_Sources/Value+Serialization.swift" /* Value+Serialization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Value+Serialization.swift"; sourceTree = "<group>"; };
 		"__PBXFileRef_Sources/Value+Subscript.swift" /* Value+Subscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Value+Subscript.swift"; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Value.swift /* Value.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Value.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/ValueConvertible.swift /* ValueConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValueConvertible.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Tests/BSON/BSONInternalTests.swift /* BSONInternalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BSONInternalTests.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Tests/BSON/BSONPublicTests.swift /* BSONPublicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BSONPublicTests.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Tests/BSON/BSONInternalTests.swift /* BSONInternalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = BSONInternalTests.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		__PBXFileRef_Tests/BSON/BSONPublicTests.swift /* BSONPublicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = BSONPublicTests.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		"_____Product_BSON" /* libBSON.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libBSON.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		"_____Product_BSONTestSuite" /* BSONTestSuite.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BSONTestSuite.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -131,10 +125,6 @@
 		"_______Group_BSON" /* BSON */ = {
 			isa = PBXGroup;
 			children = (
-				"__PBXFileRef_Sources/Document+Operators.swift" /* Document+Operators.swift */,
-				"__PBXFileRef_Sources/Document+SequenceType.swift" /* Document+SequenceType.swift */,
-				"__PBXFileRef_Sources/Document+Serialization.swift" /* Document+Serialization.swift */,
-				__PBXFileRef_Sources/Document.swift /* Document.swift */,
 				__PBXFileRef_Sources/Element.swift /* Element.swift */,
 				__PBXFileRef_Sources/Error.swift /* Error.swift */,
 				__PBXFileRef_Sources/Helpers.swift /* Helpers.swift */,
@@ -147,6 +137,7 @@
 				__PBXFileRef_Sources/Value.swift /* Value.swift */,
 				__PBXFileRef_Sources/ValueConvertible.swift /* ValueConvertible.swift */,
 				F22DAB031CEB440C004019C9 /* Compatibility.swift */,
+				F24DE1611CEE0AA6009EDF5B /* Document.swift */,
 			);
 			name = BSON;
 			path = Sources;
@@ -238,10 +229,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				"__src_cc_ref_Sources/Document+Operators.swift" /* Document+Operators.swift in Sources */,
-				"__src_cc_ref_Sources/Document+SequenceType.swift" /* Document+SequenceType.swift in Sources */,
-				"__src_cc_ref_Sources/Document+Serialization.swift" /* Document+Serialization.swift in Sources */,
-				__src_cc_ref_Sources/Document.swift /* Document.swift in Sources */,
 				__src_cc_ref_Sources/Element.swift /* Element.swift in Sources */,
 				__src_cc_ref_Sources/Error.swift /* Error.swift in Sources */,
 				__src_cc_ref_Sources/Helpers.swift /* Helpers.swift in Sources */,
@@ -251,6 +238,7 @@
 				"__src_cc_ref_Sources/Value+LiteralConvertibles.swift" /* Value+LiteralConvertibles.swift in Sources */,
 				"__src_cc_ref_Sources/Value+Serialization.swift" /* Value+Serialization.swift in Sources */,
 				"__src_cc_ref_Sources/Value+Subscript.swift" /* Value+Subscript.swift in Sources */,
+				F24DE1621CEE0AA6009EDF5B /* Document.swift in Sources */,
 				__src_cc_ref_Sources/Value.swift /* Value.swift in Sources */,
 				F22DAB041CEB440C004019C9 /* Compatibility.swift in Sources */,
 				__src_cc_ref_Sources/ValueConvertible.swift /* ValueConvertible.swift in Sources */,

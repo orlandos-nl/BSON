@@ -9,11 +9,11 @@
 import Foundation
 
 public extension String {
-    public var bsonData : [UInt8] {
-        return Value.string(self).bsonData
+    public var bytes : [UInt8] {
+        return Value.string(self).bytes
     }
     
-    public var cStringBsonData : [UInt8] {
+    public var cStringBytes : [UInt8] {
         var byteArray = self.utf8.filter{$0 != 0x00}
         byteArray.append(0x00)
         
@@ -21,36 +21,36 @@ public extension String {
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    public static func instantiate(bsonData data: [UInt8]) throws -> String {
+    public static func instantiate(bytes data: [UInt8]) throws -> String {
         var 🖕 = 0
         
-        return try instantiate(bsonData: data, consumedBytes: &🖕)
+        return try instantiate(bytes: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
     #if !swift(>=3.0)
-    public static func instantiate(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
-        let res = try _instant(bsonData: data)
+    public static func instantiate(bytes data: [UInt8], inout consumedBytes: Int) throws -> String {
+        let res = try _instant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     #else
-    public static func instantiate(bsonData data: [UInt8], consumedBytes: inout Int) throws -> String {
-        let res = try _instant(bsonData: data)
+    public static func instantiate(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
+        let res = try _instant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     #endif
     
     
-    private static func _instant(bsonData data: [UInt8]) throws -> (Int, String) {
+    private static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.InvalidLastElement
         }
         
         // Get the length
-        let length = try Int32.instantiate(bsonData: Array(data[0...3]))
+        let length = try Int32.instantiate(bytes: Array(data[0...3]))
         
         // Check if the data is at least the right size
         guard data.count >= Int(length) + 4 else {
@@ -76,28 +76,28 @@ public extension String {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    public static func instantiateFromCString(bsonData data: [UInt8]) throws -> String {
+    public static func instantiateFromCString(bytes data: [UInt8]) throws -> String {
         var 🖕 = 0
         
-        return try instantiateFromCString(bsonData: data, consumedBytes: &🖕)
+        return try instantiateFromCString(bytes: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
     #if !swift(>=3.0)
-    public static func instantiateFromCString(bsonData data: [UInt8], inout consumedBytes: Int) throws -> String {
-        let res = try _cInstant(bsonData: data)
+    public static func instantiateFromCString(bytes data: [UInt8], inout consumedBytes: Int) throws -> String {
+        let res = try _cInstant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     #else
-    public static func instantiateFromCString(bsonData data: [UInt8], consumedBytes: inout Int) throws -> String {
-        let res = try _cInstant(bsonData: data)
+    public static func instantiateFromCString(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
+        let res = try _cInstant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     #endif
     
-    private static func _cInstant(bsonData data: [UInt8]) throws -> (Int, String) {
+    private static func _cInstant(bytes data: [UInt8]) throws -> (Int, String) {
         guard data.contains(0x00) else {
             throw DeserializationError.ParseError
         }
@@ -115,14 +115,14 @@ public extension String {
 }
 
 public extension Int16 {
-    public var bsonData : [UInt8] {
+    public var bytes : [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
             Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16)))
         }
     }
     
-    internal static func instantiate(bsonData data: [UInt8]) throws -> Int16 {
+    internal static func instantiate(bytes data: [UInt8]) throws -> Int16 {
         guard data.count >= 2 else {
             throw DeserializationError.InvalidElementSize
         }
@@ -133,12 +133,12 @@ public extension Int16 {
 }
 
 public extension Int32 {
-    public var bsonData : [UInt8] {
-        return Value.int32(self).bsonData
+    public var bytes : [UInt8] {
+        return Value.int32(self).bytes
     }
     
     /// Instantiate from 4 bytes of BSON
-    public static func instantiate(bsonData data: [UInt8]) throws -> Int32 {
+    public static func instantiate(bytes data: [UInt8]) throws -> Int32 {
         guard data.count >= 4 else {
             throw DeserializationError.InvalidElementSize
         }
@@ -149,12 +149,12 @@ public extension Int32 {
 }
 
 public extension Int64 {
-    public var bsonData : [UInt8] {
-        return Value.int64(self).bsonData
+    public var bytes : [UInt8] {
+        return Value.int64(self).bytes
     }
     
     /// Restore given Int64 from storage
-    public static func instantiate(bsonData data: [UInt8]) throws -> Int64 {
+    public static func instantiate(bytes data: [UInt8]) throws -> Int64 {
         guard data.count >= 8 else {
             throw DeserializationError.InvalidElementSize
         }
@@ -165,7 +165,7 @@ public extension Int64 {
 }
 
 public extension Int {
-    public var bsonData : [UInt8] {
-        return Value.int64(Int64(self)).bsonData
+    public var bytes : [UInt8] {
+        return Value.int64(Int64(self)).bytes
     }
 }

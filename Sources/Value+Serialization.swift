@@ -9,28 +9,28 @@
 import Foundation
 
 extension Value {
-    public var bsonData : [UInt8] {
+    public var bytes : [UInt8] {
         switch self {
         case double(var value):
             return withUnsafePointer(&value) {
                 Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Double)))
             }
         case string(let value):
-            var byteArray = Value.int32(value.utf8.count + 1).bsonData
+            var byteArray = Value.int32(value.utf8.count + 1).bytes
             byteArray.append(contentsOf: value.utf8)
             byteArray.append(0x00)
             return byteArray
         case document(let value):
-            return value.bsonData
+            return value.bytes
         case array(let value):
-            return value.bsonData
+            return value.bytes
         case binary(let subtype, let data):
             guard data.count < Int(Int32.max) else {
-                return Int32(0).bsonData + [0]
+                return Int32(0).bytes + [0]
             }
             
             let length = Int32(data.count)
-            return length.bsonData + [subtype.rawValue] + data
+            return length.bytes + [subtype.rawValue] + data
         case objectId(let id):
             let value = id.storage
             return [value.0, value.1, value.2, value.3, value.4, value.5, value.6, value.7, value.8, value.9, value.10, value.11]
@@ -42,15 +42,15 @@ extension Value {
                 Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int64)))
             }
         case regularExpression(let pattern, let options):
-            return pattern.cStringBsonData + options.cStringBsonData
+            return pattern.cStringBytes + options.cStringBytes
         case javascriptCode(let code):
-            return code.bsonData
+            return code.bytes
         case .javascriptCodeWithScope(let code, let scope):
             // Scope:
             // code_w_s ::=	int32 string document
             // Code w/ scope - The int32 is the length in bytes of the entire code_w_s value. The string is JavaScript code. The document is a mapping from identifiers to values, representing the scope in which the string should be evaluated.
-            let data = code.bsonData + scope.bsonData
-            return Int32(data.count+4).bsonData + data
+            let data = code.bytes + scope.bytes
+            return Int32(data.count+4).bytes + data
         case int32(var value):
             return withUnsafePointer(&value) {
                 Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int32)))

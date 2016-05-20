@@ -17,7 +17,7 @@ public struct ObjectId {
     public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
     
     #if os(Linux)
-    private static var random: UInt8 = Int32(rand()).bsonData[0]
+    private static var random: UInt8 = Int32(rand()).bytes[0]
     #else
     private static var random: UInt8 = UInt8(arc4random_uniform(255))
     #endif
@@ -32,20 +32,20 @@ public struct ObjectId {
         var data = [UInt8]()
         
         // Take the current UNIX epoch as Int32 and take it's bytes
-        data += Int32(currentTime.timeIntervalSince1970).bsonData
+        data += Int32(currentTime.timeIntervalSince1970).bytes
         
         // Take the machine identifier
         // TODO: Change this to a MAC address
-        data += Array(NSProcessInfo.processInfo().hostName.hash.bsonData[0...2])
+        data += Array(NSProcessInfo.processInfo().hostName.hash.bytes[0...2])
         
         // Take the process identifier as 2 bytes
-        data += Array(NSProcessInfo.processInfo().processIdentifier.bsonData[0...1])
+        data += Array(NSProcessInfo.processInfo().processIdentifier.bytes[0...1])
         
         // Take a random number
         data += [ObjectId.random]
         
         // And add a counter as 2 bytes and increment it
-        data += ObjectId.counter.bsonData
+        data += ObjectId.counter.bytes
         ObjectId.counter += 1
         
         self.storage = (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11])
@@ -85,7 +85,7 @@ public struct ObjectId {
         storage = raw
     }
     
-    public init(bsonData data: [UInt8]) throws {
+    public init(bytes data: [UInt8]) throws {
         guard data.count == 12 else {
             throw DeserializationError.InvalidElementSize
         }

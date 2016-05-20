@@ -29,25 +29,25 @@ class BSONInternalTests: XCTestCase {
         let rawData: [UInt8] = [0x41, 0x42, 0x43, 0x44, 0x00]
         let result = "ABCD"
         
-        let string = try! String.instantiateFromCString(bsonData: rawData)
+        let string = try! String.instantiateFromCString(bytes: rawData)
         XCTAssertEqual(string, result, "Instantiating a CString from BSON data works correctly")
         
-        let generatedData = result.cStringBsonData
+        let generatedData = result.cStringBytes
         XCTAssertEqual(generatedData, rawData, "Converting a String to CString BSON data results in the correct data")
     }
     
     func testInt16() {
-        let int16 = try! Int16.instantiate(bsonData: [0x01, 0x02])
+        let int16 = try! Int16.instantiate(bytes: [0x01, 0x02])
         XCTAssert(int16 == 513)
         
         do {
-            let _ = try Int16.instantiate(bsonData: [0x01])
+            let _ = try Int16.instantiate(bytes: [0x01])
             XCTFail()
         } catch {}
     }
     
     func testRegexInit() {
         let a = Value.regularExpression(pattern: "/([A-Z])\\w+/g", options: "")
-        XCTAssert("/([A-Z])\\w+/g".cStringBsonData + "".cStringBsonData == a.bsonData)
+        XCTAssert("/([A-Z])\\w+/g".cStringBytes + "".cStringBytes == a.bytes)
     }
 }
