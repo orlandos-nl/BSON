@@ -76,6 +76,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         for element in elements {
             self.append(element.1, forKey: element.0)
         }
+        updateDocumentHeader()
     }
     
     public init(dictionaryLiteral elements: (String, Value)...) {
@@ -97,6 +98,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         // start at the begin of the element list, the fifth byte
         var position = 4
         
+        // TODO: Check performance v.s. storing `storage.count` in a variable
         while storage.count > position {
             /**** ELEMENT TYPE ****/
             if storage[position] == 0 {
@@ -210,13 +212,20 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         buffer.append(value.typeIdentifier)
         
         // Then, the key name
-        buffer += key.utf8
+        buffer += key.utf8 + [0x00]
         
         // Lastly, the data
         buffer += value.bytes
         
         // Then, insert it into ourselves, before the ending 0-byte.
-        storage.insert(contentsOf: buffer, at: storage.endIndex-2)
+        storage.insert(contentsOf: buffer, at: storage.endIndex-1)
+        
+        // Increase the bytecount
+        updateDocumentHeader()
+    }
+    
+    private func updateDocumentHeader() {
+        // TODO: Update the count
     }
     
     public subscript(key: String) -> Value {
@@ -279,8 +288,38 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     
     // MARK: - Other metadata
     public var count: Int {
-        // TODO
-        abort()
+        // TODO: Cache and calculate on first `count` request
+        var position = 4
+        var currentCount = 0
+        
+        // TODO: Check performance v.s. storing `storage.count` in a variable
+        while storage.count > position {
+            guard let elementType = ElementType(rawValue: storage[position]) else {
+                return currentCount
+            }
+            
+            position += 1
+            
+            skipKey: while storage.count > position {
+                defer {
+                    position += 1
+                }
+                
+                if storage[position] == 0 {
+                    break skipKey
+                }
+            }
+            
+            position += getLengthOfElement(withDataPosition: position, type: elementType)
+            
+            guard storage.count > position else {
+                return currentCount
+            }
+            
+            currentCount += 1
+        }
+        
+        return currentCount
     }
 
     public var byteCount: Int {
