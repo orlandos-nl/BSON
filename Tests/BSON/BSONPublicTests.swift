@@ -195,9 +195,9 @@ class BSONPublicTests: XCTestCase {
     func testArrayConvertableToDocument() {
         let docOne: Document = ["a", "b", "c"]
         
-        XCTAssert(docOne.count == 3)
+        XCTAssertEqual(docOne.count, 3)
         
-        XCTAssert(docOne["1"].string == "b")
+        XCTAssertEqual(docOne["1"].string, "b")
     }
     
     func testDictionaryConvertableToDocument() {
