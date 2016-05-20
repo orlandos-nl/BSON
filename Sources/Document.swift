@@ -209,6 +209,35 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    // the return value of the closure indicates wether the loop must continue (true) or stop (false)
+    private func makeKeyIterator() -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8])> {
+        var position = 4
+        return AnyIterator {
+            guard let type = ElementType(rawValue: self.storage[position]) else {
+                return nil
+            }
+            position += 1
+            
+            // get the key data
+            let keyStart = position
+            while self.storage.count >= position {
+                defer {
+                    position += 1
+                }
+                
+                if self.storage[position] == 0 {
+                    break
+                }
+            }
+            
+            defer {
+                position += self.getLengthOfElement(withDataPosition: position, type: type)
+            }
+            
+            return (dataPosition: position, type: type, keyData: Array(self.storage[keyStart..<position]))
+        }
+    }
+    
     // MARK: - Manipulation & Extracting values
     public typealias Index = DocumentIndex
     public typealias IndexIterationElement = (key: String, value: Value)
@@ -493,6 +522,21 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     
     public var bytes: [UInt8] {
         return storage
+    }
+    
+    /// Returns a list of all keys. 
+    public var keys: [String] {
+        var keys = [String]()
+        for element in self.makeKeyIterator() {
+            guard let key = try? String.instantiateFromCString(bytes: element.keyData) else {
+                // huh?
+                // TODO: Make that init nonfailing.
+                continue
+            }
+            
+            keys.append(key)
+        }
+        return keys
     }
     
     public func validatesAsArray() -> Bool {
