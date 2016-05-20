@@ -76,7 +76,6 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         for element in elements {
             self.append(element.1, forKey: element.0)
         }
-        updateDocumentHeader()
     }
     
     public init(dictionaryLiteral elements: (String, Value)...) {
@@ -224,8 +223,8 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         updateDocumentHeader()
     }
     
-    private func updateDocumentHeader() {
-        // TODO: Update the count
+    private mutating func updateDocumentHeader() {
+        storage.replaceSubrange(0..<4, with: storage.count.bytes)
     }
     
     private func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> Value {
