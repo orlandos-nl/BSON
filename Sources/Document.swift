@@ -209,6 +209,37 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    // the return value of the closure indicates wether the loop must continue (true) or stop (false)
+    private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
+        var position = startPos
+        return AnyIterator {
+            let startPosition = position
+            
+            guard let type = ElementType(rawValue: self.storage[position]) else {
+                return nil
+            }
+            position += 1
+            
+            // get the key data
+            let keyStart = position
+            while self.storage.count >= position {
+                defer {
+                    position += 1
+                }
+                
+                if self.storage[position] == 0 {
+                    break
+                }
+            }
+            
+            defer {
+                position += self.getLengthOfElement(withDataPosition: position, type: type)
+            }
+            
+            return (dataPosition: position, type: type, keyData: Array(self.storage[keyStart..<position]), startPosition: startPosition)
+        }
+    }
+    
     // MARK: - Manipulation & Extracting values
     public typealias Index = DocumentIndex
     public typealias IndexIterationElement = (key: String, value: Value)
@@ -426,13 +457,15 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     
     // MARK: - Collection
     public var startIndex: DocumentIndex {
-        // TODO
-        abort()
+        return DocumentIndex(byteIndex: 4)
     }
     
     public var endIndex: DocumentIndex {
-        // TODO
-        abort()
+        var thisIndex = 4
+        for element in self.makeKeyIterator() {
+            thisIndex = element.startPosition
+        }
+        return DocumentIndex(byteIndex: thisIndex)
     }
     
     public func makeIterator() -> AnyIterator<IndexIterationElement> {
@@ -495,6 +528,21 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return storage
     }
     
+    /// Returns a list of all keys. 
+    public var keys: [String] {
+        var keys = [String]()
+        for element in self.makeKeyIterator() {
+            guard let key = try? String.instantiateFromCString(bytes: element.keyData) else {
+                // huh?
+                // TODO: Make that init nonfailing.
+                continue
+            }
+            
+            keys.append(key)
+        }
+        return keys
+    }
+    
     public func validatesAsArray() -> Bool {
         // TODO
         abort()
@@ -510,16 +558,20 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
 }
 
 public struct DocumentIndex : Comparable {
-    private var key: [UInt8]
-    private var index: Int
+    // The byte index is the very start of the element, the element type
+    private var byteIndex: Int
+    
+    private init(byteIndex: Int) {
+        self.byteIndex = byteIndex
+    }
 }
 
 public func ==(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
-    return lhs.key == rhs.key && lhs.index == rhs.index
+    return lhs.byteIndex == rhs.byteIndex
 }
 
 public func <(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
-    return lhs.index < rhs.index
+    return lhs.byteIndex < rhs.byteIndex
 }
 
 // MARK: Operators
