@@ -14,7 +14,9 @@ import BSON
     import Glibc
 #endif
 
-// TODO: Fix ObjectId, DateTime syntax
+// TODO: Test boolean `false`
+// TODO: Test validation of invalid documents
+// TODO: Test DocumentIndex
 
 class BSONPublicTests: XCTestCase {
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
@@ -35,6 +37,9 @@ class BSONPublicTests: XCTestCase {
             ("testDocumentSequenceType", testDocumentSequenceType),
             ("testDeserializationPerformance", testDeserializationPerformance),
             ("testSerializationPerformance", testSerializationPerformance),
+            ("testSubscriptPerformance", testSubscriptPerformance),
+            ("testFullDocumentPerformance", testFullDocumentPerformance),
+            ("testValidation", testValidation),
             // Other tests go here
         ]
     }
@@ -79,10 +84,10 @@ class BSONPublicTests: XCTestCase {
         let data = document1.bytes + document2.bytes
         
         let reincarnations = [Document](bsonBytes: data)
-        XCTAssert(reincarnations.count == 2)
+        XCTAssertEqual(reincarnations.count, 2)
         
-        XCTAssert(reincarnations[0].bytes == document1.bytes)
-        XCTAssert(reincarnations[1].bytes == document2.bytes)
+        XCTAssertEqual(reincarnations[0].bytes, document1.bytes)
+        XCTAssertEqual(reincarnations[1].bytes, document2.bytes)
     }
     
     func testDocumentOne() {
@@ -350,8 +355,6 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(dogUment.bytes == kittenDocument.bytes)
         XCTAssert(dogUment.bytes == dogUment3.bytes)
         
-        print(kittenDocument)
-        
         let documents = [Document](bsonBytes: [0x00])
         XCTAssertEqual(documents.count, 0)
         
@@ -417,9 +420,8 @@ class BSONPublicTests: XCTestCase {
 //        let oldValue = kittenDocument.remove(at: kittenDocument.startIndex)
 //        XCTAssert(oldValue.1.bytes != kittenDocument[kittenDocument.startIndex].bytes)
         
-        XCTAssert(!kittenDocument.isEmpty)
 //        kittenDocument.removeAll()
-        XCTAssert(kittenDocument.isEmpty)
+//        XCTAssert(kittenDocument.isEmpty)
     }
     
     func testDeserializationPerformance() {
@@ -475,5 +477,68 @@ class BSONPublicTests: XCTestCase {
                 }
             }
         #endif
+    }
+    
+    func testValidation() {
+        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
+        
+        let count = data.length / sizeof(UInt8)
+        var bytesArray = [UInt8](repeating: 0, count: count)
+        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
+        
+        let documents = [Document](bsonBytes: bytesArray, validating: true)
+        guard documents.count == 9283 else {
+            XCTFail()
+            return
+        }
+    }
+    
+    func testFullDocumentPerformance() {
+        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
+        
+        let count = data.length / sizeof(UInt8)
+        
+        
+        var bytesArray = [UInt8](repeating: 0, count: count)
+        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
+        
+        let documents = [Document](bsonBytes: bytesArray)
+        
+        measure {
+            var data = 0
+            var doc = 0
+            
+            for document in documents {
+                for (k, v) in document {
+                    data += v.bytes.count - k.bytes.count
+                }
+                doc += 1
+            }
+            
+            print(doc)
+            print(data)
+        }
+    }
+    
+    func testSubscriptPerformance() {
+        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
+        
+        let count = data.length / sizeof(UInt8)
+        var bytesArray = [UInt8](repeating: 0, count: count)
+        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
+        
+        let documents = [Document](bsonBytes: bytesArray)
+        
+        let k = "_id"
+        
+        measure {
+            var data = [UInt8]()
+            
+            for document in documents {
+                data.append(document[k].bytes[0])
+            }
+            
+            print(data.count)
+        }
     }
 }

@@ -29,6 +29,24 @@ import Foundation
         mutating func append<C: CollectionType where C.Generator.Element == Element>(contentsOf newElements: C) {
             self.appendContentsOf(newElements)
         }
+        
+        mutating func insert(contentsOf collection: [Generator.Element], at position: Index) {
+            self.insertContentsOf(collection, at: position)
+        }
+        
+        mutating func replaceSubrange(range: Range<Index>, with collection: [Generator.Element]) {
+            self.replaceRange(range, with: collection)
+        }
+        
+        mutating func removeSubrange(range: Range<Index>) {
+            self.removeRange(range)
+        }
+    }
+    
+    extension SequenceType {
+        public func enumerated() -> EnumerateSequence<Self> {
+            return enumerate()
+        }
     }
     
     extension String {
