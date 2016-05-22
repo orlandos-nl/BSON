@@ -23,7 +23,16 @@ public struct ObjectId {
     #endif
     private static var counter: Int16 = 0
     
-    public var storage: Raw
+    public var storage: Raw {
+        get {
+            return (_storage[0], _storage[1], _storage[2], _storage[3], _storage[4], _storage[5], _storage[6], _storage[7], _storage[8], _storage[9], _storage[10], _storage[11])
+        }
+        set {
+            self._storage = [newValue.0, newValue.1, newValue.2, newValue.3, newValue.4, newValue.5, newValue.6, newValue.7, newValue.8, newValue.9, newValue.10, newValue.11]
+        }
+    }
+    
+    internal var _storage: [UInt8]
     
     /// Generate a new random ObjectId.
     public init() {
@@ -48,7 +57,7 @@ public struct ObjectId {
         data += ObjectId.counter.bytes
         ObjectId.counter += 1
         
-        self.storage = (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11])
+        self._storage = data
     }
     
     /// Initialize a new ObjectId from given Hexadecimal string, such as "0123456789abcdef01234567".
@@ -78,24 +87,23 @@ public struct ObjectId {
             throw DeserializationError.ParseError
         }
         
-        storage = (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11])
+        self._storage = data
     }
     
-    public init(raw: Raw) {
-        storage = raw
+    public init(raw storage: Raw) {
+        self._storage = [storage.0, storage.1, storage.2, storage.3, storage.4, storage.5, storage.6, storage.7, storage.8, storage.9, storage.10, storage.11]
     }
     
     public init(bytes data: [UInt8]) throws {
         guard data.count == 12 else {
             throw DeserializationError.InvalidElementSize
         }
-        
-        storage = (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11])
+
+        self._storage = data
     }
     
     public var hexString: String {
-        let data = [storage.0, storage.1, storage.2, storage.3, storage.4, storage.5, storage.6, storage.7, storage.8, storage.9, storage.10, storage.11]
-        return data.map {
+        return _storage.map {
             var s = String($0, radix: 16, uppercase: false)
             while s.characters.count < 2 {
                 s = "0" + s
