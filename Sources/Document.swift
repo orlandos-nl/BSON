@@ -172,8 +172,8 @@ public struct Document {
                     throw DeserializationError.InvalidElementSize
                 }
                 
-                position += 1
                 value = data[position] == 0x00 ? .boolean(false) : .boolean(true)
+                position += 1
             case 0x09: // utc datetime
                 let interval = try Int64.instantiate(bsonData: Array(data[position..<position+8]))
                 let date = NSDate(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
