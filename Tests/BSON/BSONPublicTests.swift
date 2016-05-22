@@ -37,9 +37,9 @@ class BSONPublicTests: XCTestCase {
             ("testDocumentSequenceType", testDocumentSequenceType),
             ("testDeserializationPerformance", testDeserializationPerformance),
             ("testSerializationPerformance", testSerializationPerformance),
-            ("testSubscriptPerformance", testSubscriptPerformance),
-            ("testFullDocumentPerformance", testFullDocumentPerformance),
-            ("testValidation", testValidation),
+//            ("testSubscriptPerformance", testSubscriptPerformance),
+//            ("testFullDocumentPerformance", testFullDocumentPerformance),
+//            ("testValidation", testValidation),
             // Other tests go here
         ]
     }
