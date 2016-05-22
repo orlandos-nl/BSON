@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/github/license/planteam/bson.svg)
 [![Slack Status](http://orlandos.nl:3000/badge.svg)](http://orlandos.nl:3000/)
 
-A native BSON library for Swift, written in Swift.
+A native, fast BSON library for Swift, written in Swift.
 
 BSON is parsed and generated as specified for version 1.0 of the [BSON specification](http://bsonspec.org/spec.html).
 
