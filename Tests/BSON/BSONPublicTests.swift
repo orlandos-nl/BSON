@@ -479,66 +479,52 @@ class BSONPublicTests: XCTestCase {
         #endif
     }
     
-    func testValidation() {
-        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
-        
-        let count = data.length / sizeof(UInt8)
-        var bytesArray = [UInt8](repeating: 0, count: count)
-        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
-        
-        let documents = [Document](bsonBytes: bytesArray, validating: true)
-        guard documents.count == 9283 else {
-            XCTFail()
-            return
-        }
-    }
-    
-    func testFullDocumentPerformance() {
-        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
-        
-        let count = data.length / sizeof(UInt8)
-        
-        
-        var bytesArray = [UInt8](repeating: 0, count: count)
-        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
-        
-        let documents = [Document](bsonBytes: bytesArray)
-        
-        measure {
-            var data = 0
-            var doc = 0
-            
-            for document in documents {
-                for (k, v) in document {
-                    data += v.bytes.count - k.bytes.count
-                }
-                doc += 1
-            }
-            
-            print(doc)
-            print(data)
-        }
-    }
-    
-    func testSubscriptPerformance() {
-        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
-        
-        let count = data.length / sizeof(UInt8)
-        var bytesArray = [UInt8](repeating: 0, count: count)
-        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
-        
-        let documents = [Document](bsonBytes: bytesArray)
-        
-        let k = "_id"
-        
-        measure {
-            var data = [UInt8]()
-            
-            for document in documents {
-                data.append(document[k].bytes[0])
-            }
-            
-            print(data.count)
-        }
-    }
+//    func testFullDocumentPerformance() {
+//        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
+//        
+//        let count = data.length / sizeof(UInt8)
+//        
+//        
+//        var bytesArray = [UInt8](repeating: 0, count: count)
+//        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
+//        
+//        let documents = [Document](bsonBytes: bytesArray)
+//        
+//        measure {
+//            var data = 0
+//            var doc = 0
+//            
+//            for document in documents {
+//                for (k, v) in document {
+//                    data += v.bytes.count - k.bytes.count
+//                }
+//                doc += 1
+//            }
+//            
+//            print(doc)
+//            print(data)
+//        }
+//    }
+//    
+//    func testSubscriptPerformance() {
+//        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
+//        
+//        let count = data.length / sizeof(UInt8)
+//        var bytesArray = [UInt8](repeating: 0, count: count)
+//        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
+//        
+//        let documents = [Document](bsonBytes: bytesArray)
+//        
+//        let k = "_id"
+//        
+//        measure {
+//            var data = [UInt8]()
+//            
+//            for document in documents {
+//                data.append(document[k].bytes[0])
+//            }
+//            
+//            print(data.count)
+//        }
+//    }
 }
