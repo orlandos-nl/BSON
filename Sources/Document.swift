@@ -132,7 +132,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
     
     public init() {
         // the empty document is 5 bytes long.
-        storage = [0,0,0,5,0]
+        storage = [5,0,0,0,0]
     }
     
     // MARK: - Initialization from Swift Types & Literals
@@ -602,6 +602,8 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             
             storage.removeSubrange(position..<position+length)
             storage.insert(contentsOf: newValue.value.bytes, at: position)
+            
+            updateDocumentHeader()
         }
     }
     
@@ -775,6 +777,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         let length = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
         
         storage.removeSubrange(meta.elementTypePosition..<meta.dataPosition + length)
+        updateDocumentHeader()
         
         return val
     }
@@ -836,6 +839,33 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             keys.append(key)
         }
         return keys
+    }
+    
+    public var dictionaryValue: [String: Value] {
+        var dictionary = [String: Value]()
+        
+        for pos in makeKeyIterator() {
+            if let key = String(bytes: pos.keyData, encoding: NSUTF8StringEncoding) {
+                
+                let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
+                
+                dictionary[key] = value
+            }
+        }
+        
+        return dictionary
+    }
+    
+    public var arrayValue: [Value] {
+        var array = [Value]()
+        
+        for pos in makeKeyIterator() {
+            let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
+            
+            array.append(value)
+        }
+        
+        return array
     }
     
     public func validatesAsArray() -> Bool {
