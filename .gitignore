@@ -27,3 +27,5 @@ xcuserdata/
 *.moved-aside
 *.xccheckout
 *.xcscmblueprint
+
+BSON.xcodeproj

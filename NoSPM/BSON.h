@@ -2,8 +2,8 @@
 //  BSON.h
 //  BSON
 //
-//  Created by Robbert Brandsma on 23-01-16.
-//  Copyright © 2016 Robbert Brandsma. All rights reserved.
+//  Created by Robbert Brandsma on 01-06-16.
+//
 //
 
 #import <Cocoa/Cocoa.h>
