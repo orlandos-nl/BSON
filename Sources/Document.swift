@@ -717,7 +717,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
                 return nil
             }
             
-            guard let string = String(bytes: key.keyData, encoding: NSUTF8StringEncoding) else {
+            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: NSUTF8StringEncoding) else {
                 return nil
             }
             
@@ -735,7 +735,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
                 return nil
             }
 
-            guard let string = String(bytes: key.keyData, encoding: NSUTF8StringEncoding) else {
+            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: NSUTF8StringEncoding) else {
                 return nil
             }
             
