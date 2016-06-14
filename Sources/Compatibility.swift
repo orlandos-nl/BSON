@@ -6,13 +6,23 @@
 //
 //
 
-#if !swift(>=3.0)
+import Foundation
+
+#if !swift(>=3.0) || os(Linux)
+    typealias ProcessInfo = NSProcessInfo
     
-    import Foundation
+    extension String {
+        struct Encoding {
+            static let utf8 = NSUTF8StringEncoding
+        }
+    }
+#endif
+
+
+#if !swift(>=3.0)
 
     typealias ErrorProtocol = ErrorType
     typealias Sequence = SequenceType
-    typealias ProcessInfo = NSProcessInfo
     
     extension Array {
         func index(`where` predicate: (Element) throws -> Bool) rethrows -> Int? {
@@ -53,10 +63,6 @@
     extension String {
         func components(separatedBy separator: String) -> [String] {
             return self.componentsSeparatedByString(separator)
-        }
-    
-        struct Encoding {
-            static let utf8 = NSUTF8StringEncoding
         }
     }
     
