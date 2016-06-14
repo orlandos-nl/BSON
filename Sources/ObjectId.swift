@@ -21,6 +21,7 @@ public struct ObjectId {
     #else
     private static var random: UInt8 = UInt8(arc4random_uniform(255))
     #endif
+    
     private static var counter: Int16 = 0
     
     public var storage: Raw {

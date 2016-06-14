@@ -28,19 +28,11 @@ public extension String {
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    #if !swift(>=3.0)
-    public static func instantiate(bytes data: [UInt8], inout consumedBytes: Int) throws -> String {
-        let res = try _instant(bytes: data)
-        consumedBytes = res.0
-        return res.1
-    }
-    #else
     public static func instantiate(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
         let res = try _instant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
-    #endif
     
     
     private static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
@@ -83,19 +75,11 @@ public extension String {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    #if !swift(>=3.0)
-    public static func instantiateFromCString(bytes data: [UInt8], inout consumedBytes: Int) throws -> String {
-        let res = try _cInstant(bytes: data)
-        consumedBytes = res.0
-        return res.1
-    }
-    #else
     public static func instantiateFromCString(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
         let res = try _cInstant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
-    #endif
     
     private static func _cInstant(bytes data: [UInt8]) throws -> (Int, String) {
         guard data.contains(0x00) else {

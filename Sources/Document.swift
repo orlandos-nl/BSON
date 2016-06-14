@@ -8,86 +8,44 @@
 
 import Foundation
 
-#if !swift(>=3.0)
-    public protocol ArrayProtocol : _ArrayType {
-        func arrayValue() -> [Generator.Element]
+public protocol BSONArrayProtocol : _ArrayProtocol {
+    func arrayValue() -> [Iterator.Element]
+}
+
+extension Array : BSONArrayProtocol {
+    public func arrayValue() -> [Iterator.Element] {
+        return self
     }
-    
-    extension Array : ArrayProtocol {
-        public func arrayValue() -> [Generator.Element] {
-            return self
-        }
-    }
-    
-    extension ArrayProtocol where Generator.Element == UInt8 {
-        mutating func insert(contentsOf other: [Generator.Element], at index: Index) {
-            self.insertContentsOf(other, at: index)
-        }
-    }
-    
-    extension ArrayProtocol where Generator.Element == Document {
-        public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
-            var array = [Document]()
-            var position = 0
+}
+
+extension BSONArrayProtocol where Iterator.Element == Document {
+    public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
+        var array = [Document]()
+        var position = 0
         
-            while bytes.count >= position + 5 {
-                let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
-                let document = Document(data: Array(bytes[position..<position+length]))
-                
-                if validating {
-                    if document.validate() {
-                        array.append(document)
-                    }
-                } else {
-                    array.append(document)
-                }
-
-                position += length
+        documentLoop: while bytes.count >= position + 5 {
+            let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
+            
+            guard bytes.count >= position + length else {
+                break documentLoop
             }
             
-            self.init(array)
-        }
-    }
-#else
-    public protocol ArrayProtocol : _ArrayProtocol {
-        func arrayValue() -> [Iterator.Element]
-    }
-
-    extension Array : ArrayProtocol {
-        public func arrayValue() -> [Iterator.Element] {
-            return self
-        }
-    }
-
-    extension ArrayProtocol where Iterator.Element == Document {
-        public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
-            var array = [Document]()
-            var position = 0
+            let document = Document(data: Array(bytes[position..<position+length]))
             
-            documentLoop: while bytes.count >= position + 5 {
-                let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
-                
-                guard bytes.count >= position + length else {
-                    break documentLoop
-                }
-                
-                let document = Document(data: Array(bytes[position..<position+length]))
-                
-                if validating {
-                    if document.validate() {
-                        array.append(document)
-                    }
-                } else {
+            if validating {
+                if document.validate() {
                     array.append(document)
                 }
-                
-                position += length
+            } else {
+                array.append(document)
             }
             
-            self.init(array)
+            position += length
         }
+        
+        self.init(array)
     }
-#endif
+}
 
 private enum ElementType : UInt8 {
     case double = 0x01
@@ -114,14 +72,14 @@ private enum ElementType : UInt8 {
 /// 
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
-public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
+public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralConvertible {
     private var storage: [UInt8]
     private var _count: Int? = nil
     
     // MARK: - Initialization from data
-    public init(data: NSData) {
-        var byteArray = [UInt8](repeating: 0, count: data.length)
-        data.getBytes(&byteArray, length: byteArray.count)
+    public init(data: Data) {
+        var byteArray = [UInt8](repeating: 0, count: data.count)
+        data.copyBytes(to: &byteArray, count: byteArray.count)
         
         self.init(data: byteArray)
     }
@@ -171,9 +129,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             }
             
             guard let thisElementType = ElementType(rawValue: storage[position]) else {
-                #if BSON_print_errors
-                    print("Error while parsing BSON document: element type unknown at position \(position).")
-                #endif
+                print("Error while parsing BSON document: element type unknown at position \(position).")
                 return nil
             }
             
@@ -266,38 +222,6 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         }
     }
     
-    #if !swift(>=3.0)
-    // the return value of the closure indicates wether the loop must continue (true) or stop (false)
-    private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyGenerator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
-        var position = startPos
-        return AnyGenerator {
-            let startPosition = position
-            
-            guard let type = ElementType(rawValue: self.storage[position]) else {
-                return nil
-            }
-            position += 1
-            
-            // get the key data
-            let keyStart = position
-            while self.storage.count >= position {
-                defer {
-                    position += 1
-                }
-                
-                if self.storage[position] == 0 {
-                    break
-                }
-            }
-            
-            defer {
-                position += self.getLengthOfElement(withDataPosition: position, type: type)
-            }
-            
-            return (dataPosition: position, type: type, keyData: Array(self.storage[keyStart..<position]), startPosition: startPosition)
-        }
-    }
-    #else
     // the return value of the closure indicates wether the loop must continue (true) or stop (false)
     private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
         var position = startPos
@@ -328,7 +252,6 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             return (dataPosition: position, type: type, keyData: Array(self.storage[keyStart..<position]), startPosition: startPosition)
         }
     }
-    #endif
     
     // MARK: - Manipulation & Extracting values
     
@@ -708,25 +631,6 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         return DocumentIndex(byteIndex: thisIndex)
     }
     
-    #if !swift(>=3.0)
-    public func generate() -> AnyGenerator<IndexIterationElement> {
-        let keys = self.makeKeyIterator()
-        
-        return AnyGenerator {
-            guard let key = keys.next() else {
-                return nil
-            }
-            
-            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: NSUTF8StringEncoding) else {
-                return nil
-            }
-            
-            let value = self.getValue(atDataPosition: key.dataPosition, withType: key.type)
-            
-            return IndexIterationElement(key: string, value: value)
-        }
-    }
-    #else
     public func makeIterator() -> AnyIterator<IndexIterationElement> {
         let keys = self.makeKeyIterator()
         
@@ -744,7 +648,6 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             return IndexIterationElement(key: string, value: value)
         }
     }
-    #endif
     
     public func index(after i: DocumentIndex) -> DocumentIndex {
         var position = i.byteIndex
@@ -886,12 +789,6 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         try nsData.write(toFile: path)
     }
 }
-
-#if !swift(>=3.0)
-    extension Document: SequenceType {}
-#else
-    extension Document : Collection {}
-#endif
 
 public struct DocumentIndex : Comparable {
     // The byte index is the very start of the element, the element type
