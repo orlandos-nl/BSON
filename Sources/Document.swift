@@ -773,7 +773,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     
     public func validatesAsArray() -> Bool {
         for key in makeKeyIterator() {
-            for keyByte in key.keyData where keyByte < 30 || keyByte >= 40 {
+            for keyByte in key.keyData[0..<key.keyData.endIndex-1] where keyByte < 48 || keyByte >= 57 {
                 return false
             }
         }
