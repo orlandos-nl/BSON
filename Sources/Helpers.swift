@@ -68,7 +68,7 @@ public extension String {
         
         var stringData = Array(data[4..<Int(length + 3)])
         
-        guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
+        guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
             throw DeserializationError.ParseError
         }
         
@@ -106,7 +106,7 @@ public extension String {
             throw DeserializationError.ParseError
         }
         
-        guard let string = String(bytes: stringData, encoding: NSUTF8StringEncoding) else {
+        guard let string = String(bytes: stringData, encoding: String.Encoding.utf8) else {
             throw DeserializationError.ParseError
         }
         

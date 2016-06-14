@@ -401,7 +401,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             
             var stringData = Array(storage[position+4..<position+Int(length + 3)])
             
-            guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
+            guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
                 return .nothing
             }
             
@@ -568,7 +568,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             // Skip beyond the null-terminator
             position += 1
             
-            guard let key = String(bytesNoCopy: &keyData, length: keyData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
+            guard let key = String(bytesNoCopy: &keyData, length: keyData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
                 abort()
             }
             
@@ -735,7 +735,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
                 return nil
             }
 
-            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: NSUTF8StringEncoding) else {
+            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: String.Encoding.utf8) else {
                 return nil
             }
             
@@ -845,7 +845,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         var dictionary = [String: Value]()
         
         for pos in makeKeyIterator() {
-            if let key = String(bytes: pos.keyData, encoding: NSUTF8StringEncoding) {
+            if let key = String(bytes: pos.keyData, encoding: String.Encoding.utf8) {
                 
                 let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
                 

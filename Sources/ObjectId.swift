@@ -45,10 +45,10 @@ public struct ObjectId {
         
         // Take the machine identifier
         // TODO: Change this to a MAC address
-        data += Array(NSProcessInfo.processInfo().hostName.hash.bytes[0...2])
+        data += Array(ProcessInfo.processInfo().hostName.hash.bytes[0...2])
         
         // Take the process identifier as 2 bytes
-        data += Array(NSProcessInfo.processInfo().processIdentifier.bytes[0...1])
+        data += Array(ProcessInfo.processInfo().processIdentifier.bytes[0...1])
         
         // Take a random number
         data += [ObjectId.random]
