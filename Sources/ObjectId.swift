@@ -36,7 +36,7 @@ public struct ObjectId {
     
     /// Generate a new random ObjectId.
     public init() {
-        let currentTime = NSDate()
+        let currentTime = Date()
         
         var data = [UInt8]()
         

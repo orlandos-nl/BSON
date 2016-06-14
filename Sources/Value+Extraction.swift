@@ -198,9 +198,9 @@ extension Value {
         return self.storedValue as? Bool
     }
     
-    /// Returns the raw value only if the underlying value is stored as `NSDate`. Otherwise, returns `nil`.
-    public var dateValue : NSDate? {
-        return self.storedValue as? NSDate
+    /// Returns the raw value only if the underlying value is stored as `Date`. Otherwise, returns `nil`.
+    public var dateValue : Date? {
+        return self.storedValue as? Date
     }
     
     /// Returns the raw value only if the underlying value is stored as `Int32`. Otherwise, returns `nil`.

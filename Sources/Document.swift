@@ -446,7 +446,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             return storage[position] == 0x00 ? .boolean(false) : .boolean(true)
         case .utcDateTime:
             let interval = UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee
-            let date = NSDate(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
+            let date = Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             
             return .dateTime(date)
         case .nullValue:

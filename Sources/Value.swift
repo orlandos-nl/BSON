@@ -44,7 +44,7 @@ public enum Value {
     case binary(subtype: BinarySubtype, data: [UInt8])
     case objectId(ObjectId)
     case boolean(Bool)
-    case dateTime(NSDate)
+    case dateTime(Date)
     case null
     case regularExpression(pattern: String, options: String)
     case javascriptCode(String)

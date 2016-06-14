@@ -103,7 +103,7 @@ class BSONPublicTests: XCTestCase {
                 "subArray": ["henk", "fred", "kaas", "goudvis"]
             ],
             "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-            "currentTime": .dateTime(NSDate(timeIntervalSince1970: Double(1453589266))),
+            "currentTime": .dateTime(Date(timeIntervalSince1970: Double(1453589266))),
             "cool32bitNumber": .int32(9001),
             "cool64bitNumber": 21312153544,
             "code": .javascriptCode("console.log(\"Hello there\");"),
@@ -337,7 +337,7 @@ class BSONPublicTests: XCTestCase {
                 "subArray": ["henk", "fred", "kaas", "goudvis"]
             ],
             "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-            "currentTime": .dateTime(NSDate(timeIntervalSince1970: Double(1453589266))),
+            "currentTime": .dateTime(Date(timeIntervalSince1970: Double(1453589266))),
             "cool32bitNumber": .int32(9001),
             "cool64bitNumber": 21312153544,
             "code": .javascriptCode("console.log(\"Hello there\");"),
@@ -394,7 +394,7 @@ class BSONPublicTests: XCTestCase {
                 "subArray": ["henk", "fred", "kaas", "goudvis"]
             ],
             "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-            "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
+            "currentTime": ~Date(timeIntervalSince1970: Double(1453589266)),
             "cool32bitNumber": .int32(9001),
             "cool64bitNumber": 21312153544,
             "code": .javascriptCode("console.log(\"Hello there\");"),
@@ -434,7 +434,7 @@ class BSONPublicTests: XCTestCase {
                                                                    "subArray": ["henk", "fred", "kaas", "goudvis"]
                 ],
                                                "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-                                               "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
+                                               "currentTime": ~Date(timeIntervalSince1970: Double(1453589266)),
                                                "cool32bitNumber": .int32(9001),
                                                "cool64bitNumber": 21312153544,
                                                "code": .javascriptCode("console.log(\"Hello there\");"),
@@ -463,7 +463,7 @@ class BSONPublicTests: XCTestCase {
                                                                    "subArray": ["henk", "fred", "kaas", "goudvis"]
                 ],
                                                "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-                                               "currentTime": ~NSDate(timeIntervalSince1970: Double(1453589266)),
+                                               "currentTime": ~Date(timeIntervalSince1970: Double(1453589266)),
                                                "cool32bitNumber": .int32(9001),
                                                "cool64bitNumber": 21312153544,
                                                "code": .javascriptCode("console.log(\"Hello there\");"),
