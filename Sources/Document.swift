@@ -639,7 +639,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
                 return nil
             }
 
-            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: String.Encoding.utf8) else {
+            guard let string = String(bytes: key.keyData[0..<key.keyData.endIndex-1], encoding: String.Encoding.utf8) else {
                 return nil
             }
             
@@ -748,7 +748,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         var dictionary = [String: Value]()
         
         for pos in makeKeyIterator() {
-            if let key = String(bytes: pos.keyData, encoding: String.Encoding.utf8) {
+            if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex-1], encoding: String.Encoding.utf8) {
                 
                 let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
                 
