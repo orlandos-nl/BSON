@@ -790,6 +790,12 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
 }
 
+extension Document : CustomStringConvertible {
+    public var description: String {
+        return self.makeExtendedJSON()
+    }
+}
+
 public struct DocumentIndex : Comparable {
     // The byte index is the very start of the element, the element type
     private var byteIndex: Int
