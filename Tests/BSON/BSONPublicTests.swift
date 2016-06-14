@@ -348,7 +348,7 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(expected == kittenDocument.bytes)
         
         let dogUment = Document(data: kittenDocument.bytes)
-        let dogUment2 = NSData(bytes: UnsafePointer<[UInt8]>(expected), length: expected.count)
+        let dogUment2 = Data(bytes: expected)
         
         let dogUment3 = Document(data: dogUment2)
         
