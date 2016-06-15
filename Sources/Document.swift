@@ -839,6 +839,14 @@ extension Document : CustomStringConvertible {
     }
 }
 
+#if os(OSX) || os(iOS)
+    extension Document : CustomPlaygroundQuickLookable {
+        public var customPlaygroundQuickLook: PlaygroundQuickLook {
+            return .text(self.makeExtendedJSON())
+        }
+    }
+#endif
+
 public struct DocumentIndex : Comparable {
     // The byte index is the very start of the element, the element type
     private var byteIndex: Int
