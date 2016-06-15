@@ -463,14 +463,21 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             }
             
             return .int32(UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee)
-        case .timestamp, .int64: // timestamp, int64
+        case .timestamp:
             guard remaining() >= 8 else {
                 return .nothing
             }
             
-            let integer = UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee
+            let stamp = UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee
+            let increment = UnsafePointer<Int32>(Array(storage[position+4..<position+8])).pointee
             
-            return type == .timestamp ? .timestamp(integer) : .int64(integer)
+            return .timestamp(stamp: stamp, increment: increment)
+        case .int64: // timestamp, int64
+            guard remaining() >= 8 else {
+                return .nothing
+            }
+            
+            return .int64(UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee)
         case .minKey: // MinKey
             return .minKey
         case .maxKey: // MaxKey

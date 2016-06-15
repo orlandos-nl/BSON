@@ -50,7 +50,7 @@ public enum Value {
     case javascriptCode(String)
     case javascriptCodeWithScope(code: String, scope: Document)
     case int32(Int32)
-    case timestamp(Int64)
+    case timestamp(stamp: Int32, increment: Int32)
     case int64(Int64)
     case minKey
     case maxKey

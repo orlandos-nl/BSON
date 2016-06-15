@@ -28,7 +28,6 @@ extension Value {
         case boolean(let val): return val ? 1 : 0
         case dateTime(let val): return val.timeIntervalSince1970
         case int32(let val): return Double(val)
-        case timestamp(let val): return Double(val)
         case int64(let val): return Double(val)
         default: return 0
         }
@@ -110,7 +109,6 @@ extension Value {
         case boolean(let val): return val ? 1 : 0
         case dateTime(let val): return Int64(val.timeIntervalSince1970*1000)
         case int32(let val): return Int64(val)
-        case timestamp(let val): return val
         case int64(let val): return val
         default: return 0
         }
@@ -151,7 +149,6 @@ extension Value {
         case boolean(let val): return val ? 1 : 0
         case dateTime(let val): return Int32(val.timeIntervalSince1970*1000)
         case int32(let val): return val
-        case timestamp(let val): return Int32(val)
         case int64(let val): return Int32(val)
         default: return 0
         }
