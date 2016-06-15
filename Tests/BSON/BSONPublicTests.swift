@@ -424,6 +424,57 @@ class BSONPublicTests: XCTestCase {
 //        XCTAssert(kittenDocument.isEmpty)
     }
     
+    func testInvalidDocumentOperations() {
+        var invalid = Document(data: [0,4,2,1,5,3,5,78,9,0,222])
+        XCTAssertFalse(invalid.validate())
+        
+        let _ = invalid.makeExtendedJSON() // shouldn't crash
+        invalid.append("kaas", forKey: "test")
+        let _ = invalid.makeExtendedJSON()
+        
+        let valid: Document = ["test": "initiallyValid"]
+        var bytes = valid.bytes
+        bytes[4] = 99 // invalid
+        invalid = Document(data: bytes)
+        
+        let _ = Array<Document>(bsonBytes: [])
+        let _ = Array<Document>(bsonBytes: [243,12,21,4,65,31,21,43,5])
+        let _ = Array<Document>(bsonBytes: [0,0,0,0,0,0,0,0,0,0])
+        
+        func test(_ data: [UInt8]) {
+            var doc = Document(data: data)
+            let _ = doc.makeExtendedJSON()
+            doc.append("kaas", forKey: "koek")
+            let _ = doc.count
+            let _ = doc.arrayValue
+            let _ = doc.dictionaryValue
+        }
+        
+        test([1,0,0,0,0x01,4,2]) // double
+        test([1,0,0,0,0x02,4,2]) // string
+        test([1,0,0,0,0x03,4,2]) // document
+        test([1,0,0,0,0x04,4,2]) // array
+        test([1,0,0,0,0x05,4,2]) // binary
+        test([1,0,0,0,0x06,4,2]) // undefined (unimplemented, deprecated)
+        test([1,0,0,0,0x07,4,2]) // objectid
+        test([1,0,0,0,0x08]) // boolean
+        test([1,0,0,0,0x09,4,2]) // datetime
+        test([1,0,0,0,0x0a]) // null
+        test([1,0,0,0,0x0b,4,2]) // regex
+        test([1,0,0,0,0x0b,4,2,0,4,0]) // regex
+        test([1,0,0,0,0x0c,4,2]) // dbpointer (unimplemented, deprecated)
+        test([1,0,0,0,0x0d,4,2]) // javascript code
+        test([1,0,0,0,0x0e,4,2]) // deprecated
+        test([1,0,0,0,0x0f,4,2]) // javascript code with scope
+        test([1,0,0,0,0x10,4,2]) // int32
+        test([1,0,0,0,0x11,4,2]) // timestamp
+        test([1,0,0,0,0x12,4,2]) // int64
+        test([1,0,0,0,0x8F,4,2]) // nonsense
+        test([1,0,0,0,0xFF]) // minKey
+        test([1,0,0,0,0xFF]) // maxKey
+        
+    }
+    
     func testDeserializationPerformance() {
         #if !os(Linux)
             let kittenDocument: Document = [
@@ -452,6 +503,7 @@ class BSONPublicTests: XCTestCase {
             }
         #endif
     }
+    
     
     func testSerializationPerformance() {
         #if !os(Linux)

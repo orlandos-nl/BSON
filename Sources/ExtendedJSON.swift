@@ -9,7 +9,7 @@
 import Foundation
 
 extension Value {
-    func makeExtendedJSON() -> String {
+    public func makeExtendedJSON() -> String {
         switch self {
         case .double(let val):
             return String(val)
@@ -61,7 +61,7 @@ extension Value {
 }
 
 extension Document {
-    func makeExtendedJSON() -> String {
+    public func makeExtendedJSON() -> String {
         var str: String
         if self.validatesAsArray() {
             str = self.makeIterator().map { $1.makeExtendedJSON() }.reduce("[") { "\($0),\($1)" } + "]"

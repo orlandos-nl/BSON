@@ -26,6 +26,11 @@ extension BSONArrayProtocol where Iterator.Element == Document {
         documentLoop: while bytes.count >= position + 5 {
             let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
             
+            guard length > 0 else {
+                // invalid
+                break
+            }
+            
             guard bytes.count >= position + length else {
                 break documentLoop
             }
@@ -185,6 +190,11 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     
     /// Returns the length in bytes.
     private func getLengthOfElement(withDataPosition position: Int, type: ElementType) -> Int {
+        // check
+        func need(_ amountOfBytes: Int) -> Bool {
+            return self.storage.count >= position + amountOfBytes + 1 // the document also has a trailing null
+        }
+        
         switch type {
         // Static:
         case .objectId:
@@ -214,10 +224,22 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             }
             return currentPosition - position // invalid
         case .string, .javascriptCode: // Types with their entire length EXCLUDING the int32 in the first 4 bytes
+            guard need(5) else { // length definition + null terminator
+                return 0
+            }
+            
             return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee) + 4
         case .binary:
+            guard need(5) else {
+                return 0
+            }
+            
             return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee) + 5
         case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
+            guard need(4) else {
+                return 0
+            }
+            
             return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee)
         }
     }
@@ -228,6 +250,11 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return AnyIterator {
             let startPosition = position
             
+            guard self.storage.count - position > 2 else {
+                // Invalid document condition
+                return nil
+            }
+            
             guard let type = ElementType(rawValue: self.storage[position]) else {
                 return nil
             }
@@ -235,7 +262,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             
             // get the key data
             let keyStart = position
-            while self.storage.count >= position {
+            while self.storage.count > position {
                 defer {
                     position += 1
                 }
@@ -286,7 +313,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         var position = startPosition
         
         func remaining() -> Int {
-            return storage.endIndex
+            return storage.endIndex - startPosition
         }
         
         switch type {
@@ -330,6 +357,10 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             
             return .string(string)
         case .document, .arrayDocument: // document / array
+            guard remaining() >= 5 else {
+                return .nothing
+            }
+            
             let length = Int(UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee)
             let subData = Array(storage[position..<position+length])
             let document = Document(data: subData)
@@ -368,6 +399,10 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             
             return storage[position] == 0x00 ? .boolean(false) : .boolean(true)
         case .utcDateTime:
+            guard remaining() >= 8 else {
+                return .nothing
+            }
+            
             let interval = UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee
             let date = Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             
@@ -423,8 +458,16 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             
             return .javascriptCodeWithScope(code: code, scope: scope)
         case .int32: // int32
+            guard remaining() >= 4 else {
+                return .nothing
+            }
+            
             return .int32(UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee)
         case .timestamp, .int64: // timestamp, int64
+            guard remaining() >= 8 else {
+                return .nothing
+            }
+            
             let integer = UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee
             
             return type == .timestamp ? .timestamp(integer) : .int64(integer)
