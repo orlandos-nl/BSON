@@ -64,14 +64,18 @@ extension Document {
     public func makeExtendedJSON() -> String {
         var str: String
         if self.validatesAsArray() {
-            str = self.makeIterator().map { $1.makeExtendedJSON() }.reduce("[") { "\($0),\($1)" } + "]"
+            str = self.makeIterator().map { pair in
+                return pair.value.makeExtendedJSON()
+                }.reduce("[") { "\($0),\($1)" } + "]"
         } else {
             str = self.makeIterator().map { pair in
                 return "\"\(pair.key)\": \(pair.value.makeExtendedJSON())"
                 }.reduce("{") { "\($0),\($1)" } + "}"
         }
         
-        str.remove(at: str.index(after: str.startIndex)) // remove the comma
+        if (str.characters.count > 2) {
+            str.remove(at: str.index(after: str.startIndex)) // remove the comma
+        }
         return str
     }
 }
