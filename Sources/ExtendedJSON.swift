@@ -68,7 +68,7 @@ extension Value {
 
 extension Document {
     
-    enum ExtendedJSONError : ErrorProtocol {
+    public enum ExtendedJSONError : ErrorProtocol {
         case invalidCharacter(position: String.CharacterView.Index)
         case unexpectedEndOfInput
         case stringExpected(position: String.CharacterView.Index)
