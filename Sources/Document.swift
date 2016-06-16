@@ -285,7 +285,6 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     public typealias Index = DocumentIndex
     public typealias IndexIterationElement = (key: String, value: Value)
     
-    
     public mutating func append(_ value: Value, forKey key: String) {
         var buffer = [UInt8]()
         
@@ -303,6 +302,11 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         
         // Increase the bytecount
         updateDocumentHeader()
+    }
+    
+    public mutating func append(_ value: Value) {
+        let key = "\(self.count)"
+        self.append(value, forKey: key)
     }
     
     private mutating func updateDocumentHeader() {
