@@ -10,11 +10,17 @@ import Foundation
 
 extension Value {
     public func makeExtendedJSON() -> String {
+        func escape(_ string: String) -> String {
+            var string = string.replacingOccurrences(of: "\\", with: "\\\\")
+            string = string.replacingOccurrences(of: "\"", with: "\\\"")
+            return string
+        }
+        
         switch self {
         case .double(let val):
             return String(val)
         case .string(let val):
-            return "\"\(val)\""
+            return "\"\(escape(val))\""
         case .document(let doc):
             return doc.makeExtendedJSON()
         case .array(let doc):
@@ -39,11 +45,11 @@ extension Value {
         case .null:
             return "null"
         case .regularExpression(let pattern, let options):
-            return "{\"$regex\": \"\(pattern)\", \"$options\": \"\(options)\"}"
+            return "{\"$regex\": \"\(escape(pattern))\", \"$options\": \"\(escape(options))\"}"
         case .javascriptCode(let code):
-            return "{\"$code\": \"\(code)\"}"
+            return "{\"$code\": \"\(escape(code))\"}"
         case .javascriptCodeWithScope(let code, let scope):
-            return "{\"$code\": \"\(code)\", \"$scope\": \(scope.makeExtendedJSON())}"
+            return "{\"$code\": \"\(escape(code))\", \"$scope\": \(scope.makeExtendedJSON())}"
         case .int32(let val):
             return String(val)
         case .timestamp(_):
@@ -100,9 +106,6 @@ extension Document {
     ///
     /// - throws: May throw any error that `Foundation.JSONSerialization` throws.
     public init(extendedJSON json: String) throws {
-        // We will parse the JSON directly into the BSON binary format. This will be our buffer:
-        let bsonBytes: [UInt8] = []
-        
         let characters = json.characters
         var position = characters.startIndex
         
@@ -146,13 +149,11 @@ extension Document {
         ///
         /// - returns: The string
         func getStringValue() throws -> String {
-            // Of course, a string should start with "
-            guard try c() == "\"" else {
-                throw ExtendedJSONError.stringExpected(position: position)
+            // If at the ", skip it
+            if try c() == "\"" {
+                // Advance, so we are at the start of the string:
+                advance()
             }
-            
-            // Advance, so we are at the start of the string:
-            advance()
             
             // We will store the final string here:
             var string = ""
@@ -163,8 +164,16 @@ extension Document {
                 case "\"": // This is the end of the string.
                     break characterLoop
                 case "\\": // Handle the escape sequence
-                    // TODO: Implement JSON escape sequences
-                    fatalError("JSON escape sequences are not yet implemented.")
+                    if try checkLiteral("\\\"") { // \"
+                        string.append("\"")
+                        continue characterLoop
+                    } else if try checkLiteral("\\\\") { // \\
+                        string.append("\\")
+                        continue characterLoop
+                    } else {
+                        // TODO: Implement other escape sequences
+                        fallthrough
+                    }
                 default:
                     string.append(char)
                 }
@@ -194,7 +203,12 @@ extension Document {
             }
             
             let remaining = json[position..<json.endIndex]
-            return remaining.hasPrefix(value)
+            if remaining.hasPrefix(value) {
+                position = json.index(position, offsetBy: value.characters.count)
+                return true
+            }
+            
+            return false
         }
         
         /// Parse the object at array at the current position. After calling this, the position will be after the end of the object or array.
@@ -310,9 +324,72 @@ extension Document {
                     advance()
                     break valueFindLoop
                 case ",":
+                    advance()
                     continue valueFindLoop
                 default:
                     throw ExtendedJSONError.invalidCharacter(position: position)
+                }
+            }
+            
+            subParser: if !isArray {
+                // If this document is one of the extended JSON types, we should return the parsed value instead of an array or document.
+                
+                let count = document.count
+                
+                // For performance reasons, only do this if the count is 1 or 2, and only if the first key starts with a $.
+                guard (count == 1 || count == 2) && document.keys[0].hasPrefix("$") else {
+                    break subParser
+                }
+                
+                if count == 1 {
+                    if let hex = document["$oid"].stringValue {
+                        // ObjectID
+                        return try ~ObjectId(hex)
+                    } else if let dateString = document["$date"].stringValue {
+                        // DateTime
+                        if #available(OSX 10.12, *) {
+                            let fmt = ISO8601DateFormatter()
+                            let date = fmt.date(from: dateString)
+                            
+                            return .dateTime(date)
+                        } else {
+                            // Fallback on earlier versions
+                            break subParser
+                        }
+                        
+                    } else if let code = document["$code"].stringValue {
+                        return .javascriptCode(code)
+                    } else if let numberString = document["$numberLong"].stringValue {
+                        guard let number = Int64(numberString) else {
+                            break subParser
+                        }
+                        
+                        return .int64(number)
+                    } else if document["$minKey"] == 1 {
+                        return .minKey
+                    } else if document["$maxKey"] == 1 {
+                        return .maxKey
+                    }
+                } else if count == 2 {
+                    if let base64 = document["$data"].stringValue, hexSubtype = document["$type"].stringValue {
+                        // Binary
+                        guard hexSubtype.characters.count > 2 else {
+                            break subParser
+                        }
+                        
+                        guard let data = Data(base64Encoded: base64), let subtypeInt = UInt8(hexSubtype[hexSubtype.index(hexSubtype.startIndex, offsetBy: 2)..<hexSubtype.endIndex], radix: 16) else {
+                            break subParser
+                        }
+                        
+                        let subtype = BinarySubtype(rawValue: subtypeInt)
+                        
+                        return .binary(subtype: subtype, data: Array<UInt8>(data))
+                    } else if let pattern = document["$pattern"].stringValue, options = document["$options"].stringValue {
+                        // RegularExpression
+                        return .regularExpression(pattern: pattern, options: options)
+                    } else if let code = document["$code"].stringValue, scope = document["$scope"].documentValue {
+                        return .javascriptCodeWithScope(code: code, scope: scope)
+                    }
                 }
             }
             
@@ -320,6 +397,6 @@ extension Document {
         }
 
         let jsonVal = try parseObjectOrArray()
-        self.init(data: jsonVal.documentValue!.bytes)
+        self.init(data: jsonVal.document.bytes)
     }
 }

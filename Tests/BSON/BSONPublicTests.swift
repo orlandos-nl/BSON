@@ -531,22 +531,44 @@ class BSONPublicTests: XCTestCase {
         #endif
     }
     
-    func testExtendedJSONDeserialization() {
+    func testExtendedJSON() {
         let simpleJson = "{\"kaas\": 4.2}"
         let simpleDocument = try! Document(extendedJSON: simpleJson)
         
         XCTAssertEqual(simpleDocument["kaas"], ~4.2)
+        
+        let kittenDocument: Document = [
+            "doubleTest": 0.04,
+            "stringTest": "foo",
+            "documentTest": [
+                "documentSubDoubleTest": 13.37,
+                "subArray": ["henk", "fred", "kaas", "goudvis"]
+            ],
+            "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
+            "currentTime": ~Date(timeIntervalSince1970: Double(1453589266)),
+            "cool32bitNumber": .int32(9001),
+            "cool64bitNumber": 21312153544,
+            "code": .javascriptCode("console.log(\"Hello there\");"),
+            "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
+            "nothing": .null
+        ]
+        
+        let kittenJSON = kittenDocument.makeExtendedJSON()
+        
+        let otherDocument = try! Document(extendedJSON: kittenJSON)
+
+        XCTAssertEqual(kittenDocument, otherDocument)
     }
     
 //    func testFullDocumentPerformance() {
 //        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
-//        
+//
 //        let count = data.length / sizeof(UInt8)
-//        
-//        
+//
+//
 //        var bytesArray = [UInt8](repeating: 0, count: count)
 //        data.getBytes(&bytesArray, length:count * sizeof(UInt8))
-//        
+//
 //        let documents = [Document](bsonBytes: bytesArray)
 //        
 //        measure {
