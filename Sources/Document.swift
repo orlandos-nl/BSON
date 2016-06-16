@@ -78,7 +78,7 @@ private enum ElementType : UInt8 {
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
 public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralConvertible {
-    private var storage: [UInt8]
+    internal var storage: [UInt8]
     private var _count: Int? = nil
     
     // MARK: - Initialization from data

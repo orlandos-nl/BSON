@@ -531,6 +531,13 @@ class BSONPublicTests: XCTestCase {
         #endif
     }
     
+    func testExtendedJSONDeserialization() {
+        let simpleJson = "{\"kaas\": 4.2}"
+        let simpleDocument = try! Document(extendedJSON: simpleJson)
+        
+        XCTAssertEqual(simpleDocument["kaas"], ~4.2)
+    }
+    
 //    func testFullDocumentPerformance() {
 //        let data = NSData.init(contentsOfFile: "/Users/joannis/Documents/Performance/dump/tikcit/registrations.bson")!
 //        
