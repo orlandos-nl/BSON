@@ -43,6 +43,11 @@ extension BSONArrayProtocol where Iterator.Element == Document {
         
         self.init(array)
     }
+    
+    /// The combined data for all documents in the array
+    public var bytes: [UInt8] {
+        return self.map { $0.bytes }.reduce([], combine: +)
+    }
 }
 
 private enum ElementType : UInt8 {
