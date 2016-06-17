@@ -33,8 +33,21 @@ class BSONPublicTests: XCTestCase {
         "cool64bitNumber": 21312153544,
         "code": .javascriptCode("console.log(\"Hello there\");"),
         "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
-        "nothing": .null
+        "nothing": .null,
+        "data": .binary(subtype: BinarySubtype.generic, data: [34,34,34,34,34]),
+        "boolFalse": false,
+        "boolTrue": true,
+        "timestamp": .timestamp(stamp: 2000, increment: 8)
     ]
+    
+    func validateAgainstKitten(_ document: Document) {
+        XCTAssertEqual(document.count, kittenDocument.count)
+        XCTAssertEqual(document.bytes, kittenDocument.bytes)
+        
+        for key in kittenDocument.keys {
+            XCTAssertEqual(kittenDocument[key], document[key])
+        }
+    }
     
     func testDictionaryLiteral() {
         XCTAssertEqual(kittenDocument["doubleTest"], Value.double(0.04))
@@ -103,6 +116,8 @@ class BSONPublicTests: XCTestCase {
         XCTAssertEqual(multipleDocs[0].bytes, doc1.bytes)
         XCTAssertEqual(multipleDocs[1].bytes, doc2.bytes)
         XCTAssertEqual(multipleDocs[2].bytes, doc3.bytes)
+        
+        validateAgainstKitten(multipleDocs[1])
     }
     
     func testInitFromFoundationData() {
@@ -179,6 +194,26 @@ class BSONPublicTests: XCTestCase {
             let _ = try ObjectId("kaaskaaskaaskaaskaaskaas")
             XCTFail()
         } catch {}
+    }
+    
+    func testExtendedJSON() throws {
+        do {
+            let simpleJson = "{\"kaas\": 4.2}"
+            let simpleDocument = try Document(extendedJSON: simpleJson)
+            XCTAssertEqual(simpleDocument["kaas"], ~4.2)
+        } catch {
+            XCTFail("\(error)")
+        }
+        
+        do {
+            let kittenJSON = kittenDocument.makeExtendedJSON()
+            
+            let otherDocument = try Document(extendedJSON: kittenJSON)
+            
+            XCTAssertEqual(kittenDocument, otherDocument)
+        } catch {
+            XCTFail("\(error)")
+        }
     }
     
 }

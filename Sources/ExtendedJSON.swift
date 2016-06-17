@@ -53,7 +53,8 @@ extension Value {
         case .int32(let val):
             return String(val)
         case .timestamp(_):
-            fatalError("Timestamp JSON conversion not implemented")
+            // TODO: Implement this
+            return "\"Timestamp JSON conversion not implemented\""
         case .int64(let val):
             return "{\"$numberLong\": \"\(val)\"}"
         case .minKey:
