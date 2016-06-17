@@ -29,6 +29,7 @@ document = [
     "anothersubdocument": [81.2, "cheese"] // an array is also an embedded document
 ]
 
+
 //: ## Comparing Documents
 //: Use the `==` operator to check if the underlying value of two BSON values are equivalent. Use the `===` operator to also check if they have the same type.
 //: The following example shows the difference between the two operators.

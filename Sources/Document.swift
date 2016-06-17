@@ -8,15 +8,8 @@
 
 import Foundation
 
-public protocol BSONArrayProtocol : _ArrayProtocol {
-    func arrayValue() -> [Iterator.Element]
-}
-
-extension Array : BSONArrayProtocol {
-    public func arrayValue() -> [Iterator.Element] {
-        return self
-    }
-}
+public protocol BSONArrayProtocol : _ArrayProtocol {}
+extension Array : BSONArrayProtocol {}
 
 extension BSONArrayProtocol where Iterator.Element == Document {
     public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
