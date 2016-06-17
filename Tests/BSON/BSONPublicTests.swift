@@ -201,8 +201,22 @@ class BSONPublicTests: XCTestCase {
         let docOne: Document = ["a", "b", "c"]
         
         XCTAssertEqual(docOne.count, 3)
-        
         XCTAssertEqual(docOne["1"].string, "b")
+        
+    }
+    
+    func testArrayVarious() {
+        var document: Document = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+        XCTAssertTrue(document.validatesAsArray())
+        XCTAssertEqual(document.count, 26)
+        
+        let json = document.makeExtendedJSON()
+        XCTAssertEqual(json[json.startIndex], "[")
+        XCTAssertEqual(json[json.index(before: json.endIndex)], "]")
+        
+        document = try! Document(extendedJSON: json)
+        XCTAssertEqual(document.count, 26)
+        XCTAssertTrue(document.validatesAsArray())
     }
     
     func testDictionaryConvertableToDocument() {

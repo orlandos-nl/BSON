@@ -126,7 +126,7 @@ extension Document {
                 throw ExtendedJSONError.unexpectedEndOfInput
             }
         }
-
+        
         /// Increase the position to the first character found that is not whitespace.
         ///
         /// - throws: Throws when a character is out of bounds.
@@ -235,6 +235,30 @@ extension Document {
             
             // Loop over the characters until we get to the end
             valueFindLoop: while true {
+                // We are now after the value. Skip whitespace, and then determine the next action.
+                try skipWhitespace()
+                
+                switch try c() {
+                case "}":
+                    guard !isArray else {
+                        throw ExtendedJSONError.invalidCharacter(position: position)
+                    }
+                    
+                    advance()
+                    break valueFindLoop
+                case "]":
+                    guard isArray else {
+                        throw ExtendedJSONError.invalidCharacter(position: position)
+                    }
+                    
+                    advance()
+                    break valueFindLoop
+                case ",":
+                    advance()
+                default:
+                    break
+                }
+                
                 // Whitespace, whitespace everywhere!
                 try skipWhitespace()
                 
@@ -271,7 +295,7 @@ extension Document {
                     while numberCharacters.contains(String(try c())) {
                         advance()
                     }
-                
+                    
                     let numberString = json[numberStart..<position]
                     
                     // Determine the type: default to int32, but if it contains a ., double
@@ -303,31 +327,6 @@ extension Document {
                     document.append(value, forKey: key)
                 } else {
                     document.append(value)
-                }
-                
-                // We are now after the value. Skip whitespace, and then determine the next action.
-                try skipWhitespace()
-                
-                switch try c() {
-                case "}":
-                    guard !isArray else {
-                        throw ExtendedJSONError.invalidCharacter(position: position)
-                    }
-                    
-                    advance()
-                    break valueFindLoop
-                case "]":
-                    guard isArray else {
-                        throw ExtendedJSONError.invalidCharacter(position: position)
-                    }
-                    
-                    advance()
-                    break valueFindLoop
-                case ",":
-                    advance()
-                    continue valueFindLoop
-                default:
-                    throw ExtendedJSONError.invalidCharacter(position: position)
                 }
             }
             
@@ -395,7 +394,7 @@ extension Document {
             
             return isArray ? .array(document) : .document(document)
         }
-
+        
         let jsonVal = try parseObjectOrArray()
         self.init(data: jsonVal.document.bytes)
     }
