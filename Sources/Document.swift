@@ -824,10 +824,14 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     public func validatesAsArray() -> Bool {
+        var index = 0
+        
         for key in self.keys {
-            for char in key.utf8 where char < 48 || char > 57 {
+            guard key == String(index) else {
                 return false
             }
+            
+            index += 1
         }
 
         return true
