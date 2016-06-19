@@ -88,7 +88,12 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     public init(data: [UInt8]) {
-        storage = data
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
+            self.storage = [5,0,0,0,0]
+            return
+        }
+        
+        storage = Array(data[0..<Int(length)])
     }
     
     public init() {

@@ -99,6 +99,8 @@ class BSONPublicTests: XCTestCase {
         // BSON specifies that arrays should be stored in the correct sequence
         let notAnArray: Document = ["0": "kaas", "3": "fred", "2": "hoi", "1": 4]
         XCTAssertFalse(notAnArray.validatesAsArray())
+        
+        // TODO: Test inserting values, inserting values halfway
     }
     
     func testMultipleDocumentsInitialization() {
