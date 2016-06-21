@@ -142,80 +142,67 @@ class BSONPublicTests: XCTestCase {
         XCTAssertEqual(document["documentTest"][0], ~13.37)
     }
     
-    func testObjectId() {
-        do {
-            let random = ObjectId()
-            
-            let hs = "AFAAABACADAEA0A1A2A3A4A2"
-            let fromHex = try ObjectId(hs)
-            
-            XCTAssertEqual(fromHex.storage.0, 0xAF)
-            XCTAssertEqual(fromHex.storage.1, 0xAA)
-            XCTAssertEqual(fromHex.storage.2, 0xAB)
-            XCTAssertEqual(fromHex.storage.3, 0xAC)
-            XCTAssertEqual(fromHex.storage.4, 0xAD)
-            XCTAssertEqual(fromHex.storage.5, 0xAE)
-            XCTAssertEqual(fromHex.storage.6, 0xA0)
-            XCTAssertEqual(fromHex.storage.7, 0xA1)
-            XCTAssertEqual(fromHex.storage.8, 0xA2)
-            XCTAssertEqual(fromHex.storage.9, 0xA3)
-            XCTAssertEqual(fromHex.storage.10, 0xA4)
-            XCTAssertEqual(fromHex.storage.11, 0xA2)
-            
-            XCTAssertNotEqual(random.hexString, fromHex.hexString)
-            XCTAssertEqual(fromHex.hexString, hs.lowercased())
-            
-            var toMutate = ObjectId()
-            toMutate.storage = random.storage
-            XCTAssertEqual(toMutate.hexString, random.hexString)
-            
-            // random should not be the same
-            XCTAssertNotEqual(ObjectId()._storage, ObjectId()._storage)
-            
-            let other = ObjectId(raw: random.storage)
-            XCTAssertEqual(random.hexString, other.hexString)
-            
-        } catch {
-            XCTFail("\(error)")
-        }
+    func testObjectId() throws {
+        let random = ObjectId()
+        
+        let hs = "AFAAABACADAEA0A1A2A3A4A2"
+        let fromHex = try ObjectId(hs)
+        
+        XCTAssertEqual(fromHex.storage.0, 0xAF)
+        XCTAssertEqual(fromHex.storage.1, 0xAA)
+        XCTAssertEqual(fromHex.storage.2, 0xAB)
+        XCTAssertEqual(fromHex.storage.3, 0xAC)
+        XCTAssertEqual(fromHex.storage.4, 0xAD)
+        XCTAssertEqual(fromHex.storage.5, 0xAE)
+        XCTAssertEqual(fromHex.storage.6, 0xA0)
+        XCTAssertEqual(fromHex.storage.7, 0xA1)
+        XCTAssertEqual(fromHex.storage.8, 0xA2)
+        XCTAssertEqual(fromHex.storage.9, 0xA3)
+        XCTAssertEqual(fromHex.storage.10, 0xA4)
+        XCTAssertEqual(fromHex.storage.11, 0xA2)
+        
+        XCTAssertNotEqual(random.hexString, fromHex.hexString)
+        XCTAssertEqual(fromHex.hexString, hs.lowercased())
+        
+        var toMutate = ObjectId()
+        toMutate.storage = random.storage
+        XCTAssertEqual(toMutate.hexString, random.hexString)
+        
+        // random should not be the same
+        XCTAssertNotEqual(ObjectId()._storage, ObjectId()._storage)
+        
+        let other = ObjectId(raw: random.storage)
+        XCTAssertEqual(random.hexString, other.hexString)
         
         // Wrong initialization string length:
-        do {
-            let _ = try ObjectId("1234567890")
-            XCTFail()
-        } catch {}
+        XCTAssertThrowsError(try ObjectId("1234567890"))
         
         // Wrong initialization data length:
-        do {
-            let _ = try ObjectId(bytes: [0,1,2,3])
-            XCTFail()
-        } catch {}
+        XCTAssertThrowsError(try ObjectId(bytes: [0,1,2,3]))
         
         // Wrong initialization string:
-        do {
-            let _ = try ObjectId("kaaskaaskaaskaaskaaskaas")
-            XCTFail()
-        } catch {}
+        XCTAssertThrowsError(try ObjectId("kaaskaaskaaskaaskaaskaas"))
     }
     
     func testExtendedJSON() throws {
-        do {
-            let simpleJson = "{\"kaas\": 4.2}"
-            let simpleDocument = try Document(extendedJSON: simpleJson)
-            XCTAssertEqual(simpleDocument["kaas"], ~4.2)
-        } catch {
-            XCTFail("\(error)")
-        }
         
-        do {
-            let kittenJSON = kittenDocument.makeExtendedJSON()
-            
-            let otherDocument = try Document(extendedJSON: kittenJSON)
-            
-            XCTAssertEqual(kittenDocument, otherDocument)
-        } catch {
-            XCTFail("\(error)")
-        }
+        let simpleJson = "{\"kaas\": 4.2}"
+        let simpleDocument = try Document(extendedJSON: simpleJson)
+        XCTAssertEqual(simpleDocument["kaas"], ~4.2)
+        
+        
+        let kittenJSON = kittenDocument.makeExtendedJSON()
+        
+        let otherDocument = try Document(extendedJSON: kittenJSON)
+        
+        XCTAssertEqual(kittenDocument, otherDocument)
+    }
+    
+    func testJSONEscapeSequences() {
+        let bson: Document = ["hello": "\"fred\n\n\n\t😂", "kaas": "\r\u{c}\u{8}"]
+        let json = bson.makeExtendedJSON()
+        
+        XCTAssertEqual(try Document(extendedJSON: json).bytes, bson.bytes)
     }
     
 }
