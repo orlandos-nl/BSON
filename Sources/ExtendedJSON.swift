@@ -11,8 +11,16 @@ import Foundation
 extension Value {
     public func makeExtendedJSON() -> String {
         func escape(_ string: String) -> String {
-            var string = string.replacingOccurrences(of: "\\", with: "\\\\")
+            var string = string
+            
+            string = string.replacingOccurrences(of: "\\", with: "\\\\")
             string = string.replacingOccurrences(of: "\"", with: "\\\"")
+            string = string.replacingOccurrences(of: "\u{8}", with: "\\b")
+            string = string.replacingOccurrences(of: "\u{c}", with: "\\f")
+            string = string.replacingOccurrences(of: "\n", with: "\\n")
+            string = string.replacingOccurrences(of: "\r", with: "\\r")
+            string = string.replacingOccurrences(of: "\t", with: "\\t")
+            
             return string
         }
         
@@ -165,14 +173,49 @@ extension Document {
                 case "\"": // This is the end of the string.
                     break characterLoop
                 case "\\": // Handle the escape sequence
-                    if try checkLiteral("\\\"") { // \"
+                    if try checkLiteral("\\\"") { // Quotation mark, \"
                         string.append("\"")
                         continue characterLoop
-                    } else if try checkLiteral("\\\\") { // \\
+                    } else if try checkLiteral("\\\\") { // Reverse solidus, \\
                         string.append("\\")
                         continue characterLoop
+                    } else if try checkLiteral("\\r") { // Carriage return, \r
+                        string.append("\r")
+                        continue characterLoop
+                    } else if try checkLiteral("\\n") { // Newline, \n
+                        string.append("\n")
+                        continue characterLoop
+                    } else if try checkLiteral("\\/") { // Solidus, \/
+                        string.append("/")
+                        continue characterLoop
+                    } else if try checkLiteral("\\b") { // Backspace, \b
+                        string.append("\u{8}")
+                        continue characterLoop
+                    } else if try checkLiteral("\\f") { // Formfeed, \f
+                        string.append("\u{c}")
+                        continue characterLoop
+                    } else if try checkLiteral("\\t") { // Horizontal tab, \t
+                        string.append("\t")
+                        continue characterLoop
+                    } else if try checkLiteral("\\u") { // Unicode code, for example: \u000c or \u000C
+                        // Get the four digits
+                        guard json.distance(from: position, to: json.endIndex) >= 3 else {
+                            string.append("\\u")
+                            continue characterLoop
+                        }
+                        
+                        let unicodeEnd = json.index(position, offsetBy: 3)
+                        let substr = json[position...unicodeEnd]
+                        
+                        guard let code = Int(substr, radix: 16) else {
+                            string.append("\\u")
+                            continue characterLoop
+                        }
+                        
+                        let character = Character(UnicodeScalar(code))
+                        string.append(character)
+                        continue characterLoop
                     } else {
-                        // TODO: Implement other escape sequences
                         fallthrough
                     }
                 default:
