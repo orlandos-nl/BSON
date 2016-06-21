@@ -509,6 +509,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
                 storage.removeSubrange(meta.dataPosition..<dataEndPosition)
                 storage.insert(contentsOf: newValue.bytes, at: meta.dataPosition)
                 storage[meta.elementTypePosition] = newValue.typeIdentifier
+                updateDocumentHeader()
 
                 return
             }
@@ -519,10 +520,38 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     
     public subscript(key: Int) -> Value {
         get {
-            return self["\(key)"]
+            var keyPos = 0
+            
+            for currentKey in makeKeyIterator() {
+                if keyPos == key {
+                    return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
+                }
+                
+                keyPos += 1
+            }
+            
+            return .nothing
         }
         set {
-            self["\(key)"] = newValue
+            var keyPos = 0
+            
+            for currentKey in makeKeyIterator() {
+                if keyPos == key {
+                    let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
+                    let dataEndPosition = currentKey.dataPosition+len
+                    
+                    storage.removeSubrange(currentKey.dataPosition..<dataEndPosition)
+                    storage.insert(contentsOf: newValue.bytes, at: currentKey.dataPosition)
+                    storage[currentKey.startPosition] = newValue.typeIdentifier
+                    updateDocumentHeader()
+                    
+                    return
+                }
+                
+                keyPos += 1
+            }
+            
+            fatalError("Index out of range")
         }
     }
     
