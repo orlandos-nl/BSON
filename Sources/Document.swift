@@ -419,7 +419,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         case .nullValue:
             return .null
         case .regex:
-            let k = storage.split(separator: 0, maxSplits: 2, omittingEmptySubsequences: false)
+            let k = storage[position..<storage.endIndex].split(separator: 0x00, maxSplits: 2, omittingEmptySubsequences: false)
             guard k.count >= 2 else {
                 return .nothing
             }
@@ -679,8 +679,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
                 length = 0
             // Calculated:
             case .regex: // defined as "cstring cstring"
-                //TODO: Fix broken regexes not returning their length properly
-                abort()
+                length = getLengthOfElement(withDataPosition: position, type: type)
             case .binary:
                 guard storage.count > position + 5 else {
                     return false

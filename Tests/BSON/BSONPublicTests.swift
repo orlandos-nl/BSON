@@ -37,7 +37,10 @@ class BSONPublicTests: XCTestCase {
         "data": .binary(subtype: BinarySubtype.generic, data: [34,34,34,34,34]),
         "boolFalse": false,
         "boolTrue": true,
-        "timestamp": .timestamp(stamp: 2000, increment: 8)
+        "timestamp": .timestamp(stamp: 2000, increment: 8),
+        "regex": .regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
+        "minKey": .minKey,
+        "maxKey": .maxKey
     ]
     
     func validateAgainstKitten(_ document: Document) {

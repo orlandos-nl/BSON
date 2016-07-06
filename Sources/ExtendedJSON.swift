@@ -428,7 +428,7 @@ extension Document {
                         let subtype = BinarySubtype(rawValue: subtypeInt)
                         
                         return .binary(subtype: subtype, data: Array<UInt8>(data))
-                    } else if let pattern = document["$pattern"].stringValue, options = document["$options"].stringValue {
+                    } else if let pattern = document["$regex"].stringValue, options = document["$options"].stringValue {
                         // RegularExpression
                         return .regularExpression(pattern: pattern, options: options)
                     } else if let code = document["$code"].stringValue, scope = document["$scope"].documentValue {

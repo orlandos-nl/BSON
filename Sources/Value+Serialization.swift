@@ -44,7 +44,7 @@ extension Value {
             return pattern.cStringBytes + options.cStringBytes
         case javascriptCode(let code):
             return code.bytes
-        case .javascriptCodeWithScope(let code, let scope):
+        case javascriptCodeWithScope(let code, let scope):
             // Scope:
             // code_w_s ::=	int32 string document
             // Code w/ scope - The int32 is the length in bytes of the entire code_w_s value. The string is JavaScript code. The document is a mapping from identifiers to values, representing the scope in which the string should be evaluated.
