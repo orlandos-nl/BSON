@@ -415,7 +415,7 @@ extension Document {
                         return .timestamp(stamp: t, increment: i)
                     }
                 } else if count == 2 {
-                    if let base64 = document["$data"].stringValue, hexSubtype = document["$type"].stringValue {
+                    if let base64 = document["$binary"].stringValue, hexSubtype = document["$type"].stringValue {
                         // Binary
                         guard hexSubtype.characters.count > 2 else {
                             break subParser
