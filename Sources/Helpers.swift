@@ -102,7 +102,7 @@ public extension Int16 {
     public var bytes : [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
-            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16)))
+            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16.self)))
         }
     }
     

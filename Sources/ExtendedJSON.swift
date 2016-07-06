@@ -60,9 +60,8 @@ extension Value {
             return "{\"$code\": \"\(escape(code))\", \"$scope\": \(scope.makeExtendedJSON())}"
         case .int32(let val):
             return String(val)
-        case .timestamp(_):
-            // TODO: Implement this
-            return "\"Timestamp JSON conversion not implemented\""
+        case .timestamp(let t, let i):
+            return "{\"$timestamp\": {\"t\": \(t), \"i\": \(i)}}"
         case .int64(let val):
             return "{\"$numberLong\": \"\(val)\"}"
         case .minKey:
@@ -412,6 +411,8 @@ extension Document {
                         return .minKey
                     } else if document["$maxKey"] == 1 {
                         return .maxKey
+                    } else if let timestamp = document["$timestamp"].documentValue, let t = timestamp["t"].int32Value, let i = timestamp["i"].int32Value {
+                        return .timestamp(stamp: t, increment: i)
                     }
                 } else if count == 2 {
                     if let base64 = document["$data"].stringValue, hexSubtype = document["$type"].stringValue {
@@ -431,6 +432,7 @@ extension Document {
                         // RegularExpression
                         return .regularExpression(pattern: pattern, options: options)
                     } else if let code = document["$code"].stringValue, scope = document["$scope"].documentValue {
+                        // JS with scope
                         return .javascriptCodeWithScope(code: code, scope: scope)
                     }
                 }

@@ -13,7 +13,7 @@ extension Value {
         switch self {
         case double(var value):
             return withUnsafePointer(&value) {
-                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Double)))
+                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Double.self)))
             }
         case string(let value):
             var byteArray = Value.int32(value.utf8.count + 1).bytes
@@ -38,7 +38,7 @@ extension Value {
         case dateTime(let value):
             var integer = Int64(value.timeIntervalSince1970 * 1000)
             return withUnsafePointer(&integer) {
-                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int64)))
+                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int64.self)))
             }
         case regularExpression(let pattern, let options):
             return pattern.cStringBytes + options.cStringBytes
@@ -52,15 +52,15 @@ extension Value {
             return Int32(data.count+4).bytes + data
         case int32(var value):
             return withUnsafePointer(&value) {
-                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int32)))
+                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int32.self)))
             }
         case timestamp(var value):
             return withUnsafePointer(&value) {
-                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int64)))
+                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int64.self)))
             }
         case int64(var value):
             return withUnsafePointer(&value) {
-                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int64)))
+                Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int64.self)))
             }
         case null, minKey, maxKey, nothing:
             return []

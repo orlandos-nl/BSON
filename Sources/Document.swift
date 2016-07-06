@@ -78,6 +78,7 @@ private enum ElementType : UInt8 {
 public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralConvertible {
     internal var storage: [UInt8]
     private var _count: Int? = nil
+    private var invalid = false
     
     // MARK: - Initialization from data
     public init(data: Data) {
@@ -90,6 +91,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     public init(data: [UInt8]) {
         guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
+            self.invalid = true
             return
         }
         
@@ -617,6 +619,10 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     public func validate() -> Bool {
+        if self.invalid {
+            return false
+        }
+        
         guard storage.count > 4 else {
             return false
         }
