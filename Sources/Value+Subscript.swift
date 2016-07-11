@@ -30,7 +30,9 @@ extension Value {
                 subdoc[key] = newValue
                 self = .array(subdoc)
             default:
-                self = .document([key: newValue])
+                var document: Document = [:]
+                document[key] = newValue
+                self = .document(document)
             }
         }
     }

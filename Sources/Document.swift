@@ -497,13 +497,39 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     public subscript(key: String) -> Value {
         get {
             guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
-                return .nothing
+                // use dot syntax
+                var parts = key.components(separatedBy: ".")
+                
+                guard parts.count >= 2 else {
+                    return .nothing
+                }
+                
+                let firstPart = parts.removeFirst()
+                
+                var value: Value = self[firstPart]
+                while !parts.isEmpty {
+                    let part = parts.removeFirst()
+                    
+                    value = value[part]
+                }
+                
+                return value
             }
             
             return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
         }
         
         set {
+            let parts = key.characters.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+            
+            if parts.count == 2 {
+                let firstPart = String(parts[0])
+                let secondPart = String(parts[1])
+                
+                self[firstPart][secondPart] = newValue
+                return
+            }
+            
             if let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) {
                 let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                 let dataEndPosition = meta.dataPosition+len
@@ -512,7 +538,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
                 storage.insert(contentsOf: newValue.bytes, at: meta.dataPosition)
                 storage[meta.elementTypePosition] = newValue.typeIdentifier
                 updateDocumentHeader()
-
+                
                 return
             }
             

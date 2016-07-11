@@ -201,6 +201,31 @@ class BSONPublicTests: XCTestCase {
         XCTAssertEqual(kittenDocument, otherDocument)
     }
     
+    func testDotSyntax() {
+        
+        var d = kittenDocument
+        let v = "harriebob"
+        
+        d["kaassapsaus.freddelien"] = ~v
+        d["hont.kad.varkun.konein"] = ~v
+        
+        XCTAssert(d["kaassapsaus"]["freddelien"] == v)
+        XCTAssert(d["kaassapsaus.freddelien"] == v)
+        XCTAssert(d["documentTest.documentSubDoubleTest"] == 13.37)
+        
+        XCTAssert(d["hont.kad.varkun.konein"] == v)
+        XCTAssert(d["hont"]["kad"]["varkun"]["konein"] == v)
+        
+    }
+    
+    func testKaas() {
+        
+        var d = ["hoi": ["fred": "saus"]] as Document
+        d["hoi"]["henk"] = "hoibob"
+        print(d)
+        
+    }
+    
     func testJSONEscapeSequences() {
         let bson: Document = ["hello": "\"fred\n\n\n\t😂", "kaas": "\r\u{c}\u{8}"]
         let json = bson.makeExtendedJSON()
