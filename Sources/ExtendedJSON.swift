@@ -42,14 +42,20 @@ extension Value {
         case .boolean(let val):
             return val ? "true" : "false"
         case .dateTime(let date):
-            if #available(OSX 10.12, *) {
-                let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.default(), formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
-                return "{\"$date\": \"\(date)\"}"
-            } else {
+            #if os(Linux)
                 let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
                 print(error)
                 return error
-            }
+            #else
+                if #available(OSX 10.12, *) {
+                    let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.default(), formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
+                    return "{\"$date\": \"\(date)\"}"
+                } else {
+                    let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
+                    print(error)
+                    return error
+                }
+            #endif
         case .null:
             return "null"
         case .regularExpression(let pattern, let options):
@@ -389,16 +395,19 @@ extension Document {
                         return try ~ObjectId(hex)
                     } else if let dateString = document["$date"].stringValue {
                         // DateTime
-                        if #available(OSX 10.12, *) {
-                            let fmt = ISO8601DateFormatter()
-                            let date = fmt.date(from: dateString)
-                            
-                            return .dateTime(date)
-                        } else {
-                            // Fallback on earlier versions
+                        #if os(Linux)
                             break subParser
-                        }
-                        
+                        #else
+                            if #available(OSX 10.12, *) {
+                                let fmt = ISO8601DateFormatter()
+                                let date = fmt.date(from: dateString)
+                                
+                                return .dateTime(date)
+                            } else {
+                                // Fallback on earlier versions
+                                break subParser
+                            }
+                        #endif
                     } else if let code = document["$code"].stringValue {
                         return .javascriptCode(code)
                     } else if let numberString = document["$numberLong"].stringValue {
@@ -427,7 +436,13 @@ extension Document {
                         
                         let subtype = BinarySubtype(rawValue: subtypeInt)
                         
-                        return .binary(subtype: subtype, data: Array<UInt8>(data))
+                        #if os(Linux)
+                            var byteBuffer = [UInt8](repeating: 0, count: data.count)
+                            data.copyBytes(to: &byteBuffer, count: byteBuffer.count)
+                            return .binary(subtype: subtype, data: byteBuffer)
+                        #else
+                            return .binary(subtype: subtype, data: Array<UInt8>(data))
+                        #endif
                     } else if let pattern = document["$regex"].stringValue, options = document["$options"].stringValue {
                         // RegularExpression
                         return .regularExpression(pattern: pattern, options: options)

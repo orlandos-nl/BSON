@@ -20,6 +20,22 @@ import XCTest
 
 class BSONPublicTests: XCTestCase {
     
+    static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
+        return [
+            ("testDictionaryLiteral", testDictionaryLiteral),
+            ("testInitializedFromData", testInitializedFromData),
+            ("testArrayRelatedFunctions", testArrayRelatedFunctions),
+            ("testMultipleDocumentsInitialization", testMultipleDocumentsInitialization),
+            ("testInitFromFoundationData", testInitFromFoundationData),
+            ("testValidation", testValidation),
+            ("testSubscripting", testSubscripting),
+            ("testObjectId", testObjectId),
+            ("testExtendedJSON", testExtendedJSON),
+            ("testDotSyntax", testDotSyntax),
+            ("testJSONEscapeSequences", testJSONEscapeSequences)
+        ]
+    }
+    
     let kittenDocument: Document = [
         "doubleTest": 0.04,
         "stringTest": "foo",
@@ -215,14 +231,6 @@ class BSONPublicTests: XCTestCase {
         
         XCTAssert(d["hont.kad.varkun.konein"] == v)
         XCTAssert(d["hont"]["kad"]["varkun"]["konein"] == v)
-        
-    }
-    
-    func testKaas() {
-        
-        var d = ["hoi": ["fred": "saus"]] as Document
-        d["hoi"]["henk"] = "hoibob"
-        print(d)
         
     }
     
