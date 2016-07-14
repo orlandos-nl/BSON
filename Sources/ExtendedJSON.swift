@@ -48,7 +48,7 @@ extension Value {
                 return error
             #else
                 if #available(OSX 10.12, *) {
-                    let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.default(), formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
+                    let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.default, formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
                     return "{\"$date\": \"\(date)\"}"
                 } else {
                     let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
