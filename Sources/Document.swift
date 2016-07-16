@@ -8,86 +8,47 @@
 
 import Foundation
 
-#if !swift(>=3.0)
-    public protocol ArrayProtocol : _ArrayType {
-        func arrayValue() -> [Generator.Element]
-    }
-    
-    extension Array : ArrayProtocol {
-        public func arrayValue() -> [Generator.Element] {
-            return self
-        }
-    }
-    
-    extension ArrayProtocol where Generator.Element == UInt8 {
-        mutating func insert(contentsOf other: [Generator.Element], at index: Index) {
-            self.insertContentsOf(other, at: index)
-        }
-    }
-    
-    extension ArrayProtocol where Generator.Element == Document {
-        public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
-            var array = [Document]()
-            var position = 0
+public protocol BSONArrayProtocol : _ArrayProtocol {}
+extension Array : BSONArrayProtocol {}
+
+extension BSONArrayProtocol where Iterator.Element == Document {
+    public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
+        var array = [Document]()
+        var position = 0
         
-            while bytes.count >= position + 5 {
-                let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
-                let document = Document(data: Array(bytes[position..<position+length]))
-                
-                if validating {
-                    if document.validate() {
-                        array.append(document)
-                    }
-                } else {
-                    array.append(document)
-                }
-
-                position += length
+        documentLoop: while bytes.count >= position + 5 {
+            let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
+            
+            guard length > 0 else {
+                // invalid
+                break
             }
             
-            self.init(array)
-        }
-    }
-#else
-    public protocol ArrayProtocol : _ArrayProtocol {
-        func arrayValue() -> [Iterator.Element]
-    }
-
-    extension Array : ArrayProtocol {
-        public func arrayValue() -> [Iterator.Element] {
-            return self
-        }
-    }
-
-    extension ArrayProtocol where Iterator.Element == Document {
-        public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
-            var array = [Document]()
-            var position = 0
-            
-            documentLoop: while bytes.count >= position + 5 {
-                let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
-                
-                guard bytes.count >= position + length else {
-                    break documentLoop
-                }
-                
-                let document = Document(data: Array(bytes[position..<position+length]))
-                
-                if validating {
-                    if document.validate() {
-                        array.append(document)
-                    }
-                } else {
-                    array.append(document)
-                }
-                
-                position += length
+            guard bytes.count >= position + length else {
+                break documentLoop
             }
             
-            self.init(array)
+            let document = Document(data: Array(bytes[position..<position+length]))
+            
+            if validating {
+                if document.validate() {
+                    array.append(document)
+                }
+            } else {
+                array.append(document)
+            }
+            
+            position += length
         }
+        
+        self.init(array)
     }
-#endif
+    
+    /// The combined data for all documents in the array
+    public var bytes: [UInt8] {
+        return self.map { $0.bytes }.reduce([], combine: +)
+    }
+}
 
 private enum ElementType : UInt8 {
     case double = 0x01
@@ -114,20 +75,27 @@ private enum ElementType : UInt8 {
 /// 
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
-public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
-    private var storage: [UInt8]
+public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralConvertible {
+    internal var storage: [UInt8]
     private var _count: Int? = nil
+    private var invalid = false
     
     // MARK: - Initialization from data
-    public init(data: NSData) {
-        var byteArray = [UInt8](repeating: 0, count: data.length)
-        data.getBytes(&byteArray, length: byteArray.count)
+    public init(data: Data) {
+        var byteArray = [UInt8](repeating: 0, count: data.count)
+        data.copyBytes(to: &byteArray, count: byteArray.count)
         
         self.init(data: byteArray)
     }
     
     public init(data: [UInt8]) {
-        storage = data
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
+            self.storage = [5,0,0,0,0]
+            self.invalid = true
+            return
+        }
+        
+        storage = Array(data[0..<Int(length)])
     }
     
     public init() {
@@ -171,9 +139,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             }
             
             guard let thisElementType = ElementType(rawValue: storage[position]) else {
-                #if BSON_print_errors
-                    print("Error while parsing BSON document: element type unknown at position \(position).")
-                #endif
+                print("Error while parsing BSON document: element type unknown at position \(position).")
                 return nil
             }
             
@@ -229,6 +195,11 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
     
     /// Returns the length in bytes.
     private func getLengthOfElement(withDataPosition position: Int, type: ElementType) -> Int {
+        // check
+        func need(_ amountOfBytes: Int) -> Bool {
+            return self.storage.count >= position + amountOfBytes + 1 // the document also has a trailing null
+        }
+        
         switch type {
         // Static:
         case .objectId:
@@ -258,52 +229,37 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             }
             return currentPosition - position // invalid
         case .string, .javascriptCode: // Types with their entire length EXCLUDING the int32 in the first 4 bytes
+            guard need(5) else { // length definition + null terminator
+                return 0
+            }
+            
             return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee) + 4
         case .binary:
+            guard need(5) else {
+                return 0
+            }
+            
             return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee) + 5
         case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
+            guard need(4) else {
+                return 0
+            }
+            
             return Int(UnsafePointer<Int32>(Array(storage[position...position+3])).pointee)
         }
     }
     
-    #if !swift(>=3.0)
-    // the return value of the closure indicates wether the loop must continue (true) or stop (false)
-    private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyGenerator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
-        var position = startPos
-        return AnyGenerator {
-            let startPosition = position
-            
-            guard let type = ElementType(rawValue: self.storage[position]) else {
-                return nil
-            }
-            position += 1
-            
-            // get the key data
-            let keyStart = position
-            while self.storage.count >= position {
-                defer {
-                    position += 1
-                }
-                
-                if self.storage[position] == 0 {
-                    break
-                }
-            }
-            
-            defer {
-                position += self.getLengthOfElement(withDataPosition: position, type: type)
-            }
-            
-            return (dataPosition: position, type: type, keyData: Array(self.storage[keyStart..<position]), startPosition: startPosition)
-        }
-    }
-    #else
     // the return value of the closure indicates wether the loop must continue (true) or stop (false)
     private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
         var position = startPos
         return AnyIterator {
             let startPosition = position
             
+            guard self.storage.count - position > 2 else {
+                // Invalid document condition
+                return nil
+            }
+            
             guard let type = ElementType(rawValue: self.storage[position]) else {
                 return nil
             }
@@ -311,7 +267,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             
             // get the key data
             let keyStart = position
-            while self.storage.count >= position {
+            while self.storage.count > position {
                 defer {
                     position += 1
                 }
@@ -328,13 +284,11 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             return (dataPosition: position, type: type, keyData: Array(self.storage[keyStart..<position]), startPosition: startPosition)
         }
     }
-    #endif
     
     // MARK: - Manipulation & Extracting values
     
     public typealias Index = DocumentIndex
     public typealias IndexIterationElement = (key: String, value: Value)
-    
     
     public mutating func append(_ value: Value, forKey key: String) {
         var buffer = [UInt8]()
@@ -355,6 +309,11 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         updateDocumentHeader()
     }
     
+    public mutating func append(_ value: Value) {
+        let key = "\(self.count)"
+        self.append(value, forKey: key)
+    }
+    
     private mutating func updateDocumentHeader() {
         storage.replaceSubrange(0..<4, with: Int32(storage.count).bytes)
     }
@@ -363,7 +322,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         var position = startPosition
         
         func remaining() -> Int {
-            return storage.endIndex
+            return storage.endIndex - startPosition
         }
         
         switch type {
@@ -401,12 +360,16 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             
             var stringData = Array(storage[position+4..<position+Int(length + 3)])
             
-            guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
+            guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
                 return .nothing
             }
             
             return .string(string)
         case .document, .arrayDocument: // document / array
+            guard remaining() >= 5 else {
+                return .nothing
+            }
+            
             let length = Int(UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee)
             let subData = Array(storage[position..<position+length])
             let document = Document(data: subData)
@@ -445,14 +408,18 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             
             return storage[position] == 0x00 ? .boolean(false) : .boolean(true)
         case .utcDateTime:
+            guard remaining() >= 8 else {
+                return .nothing
+            }
+            
             let interval = UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee
-            let date = NSDate(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
+            let date = Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             
             return .dateTime(date)
         case .nullValue:
             return .null
         case .regex:
-            let k = storage.split(separator: 0, maxSplits: 2, omittingEmptySubsequences: false)
+            let k = storage[position..<storage.endIndex].split(separator: 0x00, maxSplits: 2, omittingEmptySubsequences: false)
             guard k.count >= 2 else {
                 return .nothing
             }
@@ -500,11 +467,26 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             
             return .javascriptCodeWithScope(code: code, scope: scope)
         case .int32: // int32
-            return .int32(UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee)
-        case .timestamp, .int64: // timestamp, int64
-            let integer = UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee
+            guard remaining() >= 4 else {
+                return .nothing
+            }
             
-            return type == .timestamp ? .timestamp(integer) : .int64(integer)
+            return .int32(UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee)
+        case .timestamp:
+            guard remaining() >= 8 else {
+                return .nothing
+            }
+            
+            let stamp = UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee
+            let increment = UnsafePointer<Int32>(Array(storage[position+4..<position+8])).pointee
+            
+            return .timestamp(stamp: stamp, increment: increment)
+        case .int64: // timestamp, int64
+            guard remaining() >= 8 else {
+                return .nothing
+            }
+            
+            return .int64(UnsafePointer<Int64>(Array(storage[position..<position+8])).pointee)
         case .minKey: // MinKey
             return .minKey
         case .maxKey: // MaxKey
@@ -515,13 +497,39 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
     public subscript(key: String) -> Value {
         get {
             guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
-                return .nothing
+                // use dot syntax
+                var parts = key.components(separatedBy: ".")
+                
+                guard parts.count >= 2 else {
+                    return .nothing
+                }
+                
+                let firstPart = parts.removeFirst()
+                
+                var value: Value = self[firstPart]
+                while !parts.isEmpty {
+                    let part = parts.removeFirst()
+                    
+                    value = value[part]
+                }
+                
+                return value
             }
             
             return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
         }
         
         set {
+            let parts = key.characters.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+            
+            if parts.count == 2 {
+                let firstPart = String(parts[0])
+                let secondPart = String(parts[1])
+                
+                self[firstPart][secondPart] = newValue
+                return
+            }
+            
             if let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) {
                 let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                 let dataEndPosition = meta.dataPosition+len
@@ -529,7 +537,8 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
                 storage.removeSubrange(meta.dataPosition..<dataEndPosition)
                 storage.insert(contentsOf: newValue.bytes, at: meta.dataPosition)
                 storage[meta.elementTypePosition] = newValue.typeIdentifier
-
+                updateDocumentHeader()
+                
                 return
             }
             
@@ -539,10 +548,38 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
     
     public subscript(key: Int) -> Value {
         get {
-            return self["\(key)"]
+            var keyPos = 0
+            
+            for currentKey in makeKeyIterator() {
+                if keyPos == key {
+                    return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
+                }
+                
+                keyPos += 1
+            }
+            
+            return .nothing
         }
         set {
-            self["\(key)"] = newValue
+            var keyPos = 0
+            
+            for currentKey in makeKeyIterator() {
+                if keyPos == key {
+                    let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
+                    let dataEndPosition = currentKey.dataPosition+len
+                    
+                    storage.removeSubrange(currentKey.dataPosition..<dataEndPosition)
+                    storage.insert(contentsOf: newValue.bytes, at: currentKey.dataPosition)
+                    storage[currentKey.startPosition] = newValue.typeIdentifier
+                    updateDocumentHeader()
+                    
+                    return
+                }
+                
+                keyPos += 1
+            }
+            
+            fatalError("Index out of range")
         }
     }
     
@@ -568,7 +605,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             // Skip beyond the null-terminator
             position += 1
             
-            guard let key = String(bytesNoCopy: &keyData, length: keyData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
+            guard let key = String(bytesNoCopy: &keyData, length: keyData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
                 abort()
             }
             
@@ -608,6 +645,10 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
     }
     
     public func validate() -> Bool {
+        if self.invalid {
+            return false
+        }
+        
         guard storage.count > 4 else {
             return false
         }
@@ -664,8 +705,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
                 length = 0
             // Calculated:
             case .regex: // defined as "cstring cstring"
-                //TODO: Fix broken regexes not returning their length properly
-                abort()
+                length = getLengthOfElement(withDataPosition: position, type: type)
             case .binary:
                 guard storage.count > position + 5 else {
                     return false
@@ -708,25 +748,6 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         return DocumentIndex(byteIndex: thisIndex)
     }
     
-    #if !swift(>=3.0)
-    public func generate() -> AnyGenerator<IndexIterationElement> {
-        let keys = self.makeKeyIterator()
-        
-        return AnyGenerator {
-            guard let key = keys.next() else {
-                return nil
-            }
-            
-            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: NSUTF8StringEncoding) else {
-                return nil
-            }
-            
-            let value = self.getValue(atDataPosition: key.dataPosition, withType: key.type)
-            
-            return IndexIterationElement(key: string, value: value)
-        }
-    }
-    #else
     public func makeIterator() -> AnyIterator<IndexIterationElement> {
         let keys = self.makeKeyIterator()
         
@@ -735,7 +756,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
                 return nil
             }
 
-            guard let string = String(bytes: key.keyData[0..<key.keyData.count-1], encoding: NSUTF8StringEncoding) else {
+            guard let string = String(bytes: key.keyData[0..<key.keyData.endIndex-1], encoding: String.Encoding.utf8) else {
                 return nil
             }
             
@@ -744,7 +765,6 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
             return IndexIterationElement(key: string, value: value)
         }
     }
-    #endif
     
     public func index(after i: DocumentIndex) -> DocumentIndex {
         var position = i.byteIndex
@@ -845,7 +865,7 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
         var dictionary = [String: Value]()
         
         for pos in makeKeyIterator() {
-            if let key = String(bytes: pos.keyData, encoding: NSUTF8StringEncoding) {
+            if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex-1], encoding: String.Encoding.utf8) {
                 
                 let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
                 
@@ -869,10 +889,14 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
     }
     
     public func validatesAsArray() -> Bool {
-        for key in makeKeyIterator() {
-            for keyByte in key.keyData where keyByte < 30 || keyByte >= 40 {
+        var index = 0
+        
+        for key in self.keys {
+            guard key == String(index) else {
                 return false
             }
+            
+            index += 1
         }
 
         return true
@@ -887,10 +911,18 @@ public struct Document : DictionaryLiteralConvertible, ArrayLiteralConvertible {
     }
 }
 
-#if !swift(>=3.0)
-    extension Document: SequenceType {}
-#else
-    extension Document : Collection {}
+extension Document : CustomStringConvertible {
+    public var description: String {
+        return self.makeExtendedJSON()
+    }
+}
+
+#if os(OSX) || os(iOS)
+    extension Document : CustomPlaygroundQuickLookable {
+        public var customPlaygroundQuickLook: PlaygroundQuickLook {
+            return .text(self.makeExtendedJSON())
+        }
+    }
 #endif
 
 public struct DocumentIndex : Comparable {

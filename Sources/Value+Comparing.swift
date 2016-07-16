@@ -25,7 +25,7 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
     case (.boolean(let val1), .boolean(let val2)):
         return val1 == val2
     case (.dateTime(let val1), .dateTime(let val2)):
-        return val1.isEqual(to: val2)
+        return val1 == val2
     case (.regularExpression(let exp1, let opt1), .regularExpression(let exp2, let opt2)):
         return exp1 == exp2 && opt1 == opt2
     case (.javascriptCode(let code1), .javascriptCode(let code2)):
@@ -45,10 +45,27 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
     }
 }
 
+// TODO: Implement this for more types
+public func ==(lhs: Value, rhs: String) -> Bool {
+    return lhs.string == rhs
+}
+
+public func ==(lhs: Value, rhs: Int) -> Bool {
+    return lhs.int == rhs
+}
+
+public func ==(lhs: Value, rhs: Bool) -> Bool {
+    return lhs.boolValue == rhs
+}
+
+public func ==(lhs: Value, rhs: Double) -> Bool {
+    return lhs.double == rhs
+}
+
 public func ===(lhs: Value, rhs: Value) -> Bool {
     switch (lhs, rhs) {
     case (.double(_), .double(_)), (.string(_), .string(_)), (.document(_), .document(_)), (.array(_), .array(_)), (.binary(_), .binary(_)), (.objectId(_), .objectId(_)), (.boolean(_), .boolean(_)), (.dateTime(_), .dateTime(_)), (.regularExpression(_, _), .regularExpression(_, _)), (.javascriptCode(_), .javascriptCode(_)), (.javascriptCodeWithScope(_, _), .javascriptCodeWithScope(_, _)), (.int32(_), .int32(_)), (.timestamp(_), .timestamp(_)), (.int64(_), .int64(_)), (.minKey, .minKey), (.maxKey, .maxKey), (.null, .null), (.nothing, .nothing):
-        return lhs.bytes == rhs.bytes
+        return lhs.typeIdentifier == rhs.typeIdentifier && lhs.bytes == rhs.bytes
     default:
         return false
     }

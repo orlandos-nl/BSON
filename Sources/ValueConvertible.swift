@@ -42,7 +42,7 @@ extension Int : ValueConvertible {
     }
 }
 
-extension NSDate : ValueConvertible {
+extension Date : ValueConvertible {
     public func makeBsonValue() -> Value {
         return .dateTime(self)
     }

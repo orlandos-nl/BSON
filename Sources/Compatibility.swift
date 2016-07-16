@@ -1,99 +1,45 @@
-//
-//  Compatibility.swift
-//  BSON
-//
-//  Created by Robbert Brandsma on 17-05-16.
-//
-//
-
 import Foundation
 
-#if !swift(>=3.0)
-
-    typealias ErrorProtocol = ErrorType
-    typealias Sequence = SequenceType
-    
-    extension Array {
-        func index(`where` predicate: (Element) throws -> Bool) rethrows -> Int? {
-            return try self.indexOf(predicate)
-        }
-        
-        mutating func remove(at index: Int) -> Element {
-            return self.removeAtIndex(index)
-        }
-        
-        init(repeating repeatedValue: Element, count: Int) {
-            self.init(count: count, repeatedValue: repeatedValue)
-        }
-        
-        mutating func append<C: CollectionType where C.Generator.Element == Element>(contentsOf newElements: C) {
-            self.appendContentsOf(newElements)
-        }
-        
-        mutating func insert(contentsOf collection: [Generator.Element], at position: Index) {
-            self.insertContentsOf(collection, at: position)
-        }
-        
-        mutating func replaceSubrange(range: Range<Index>, with collection: [Generator.Element]) {
-            self.replaceRange(range, with: collection)
-        }
-        
-        mutating func removeSubrange(range: Range<Index>) {
-            self.removeRange(range)
-        }
-    }
-    
-    extension SequenceType {
-        public func enumerated() -> EnumerateSequence<Self> {
-            return enumerate()
-        }
-    }
+#if os(Linux)
+    internal typealias ProcessInfo = NSProcessInfo
+    public typealias Date = NSDate
+    public typealias Data = NSData
     
     extension String {
-        func components(separatedBy separator: String) -> [String] {
-            return self.componentsSeparatedByString(separator)
-        }
-    }
-    
-    extension SequenceType {
-        func makeIterator() -> Generator {
-            return self.generate()
-        }
-    }
-    
-    extension SequenceType where Generator.Element == String {
-        func joined(separator separator: String) -> String {
-            return self.joinWithSeparator(separator)
-        }
-    }
-    
-    extension NSData {
-        @objc(kaas:koekjes:salade:) func write(toFile path: String, options writeOptionsMask: NSDataWritingOptions = []) throws {
-            try self.writeToFile(path, options: writeOptionsMask)
-        }
-    }
-    
-    extension UnsafePointer {
-        typealias Pointee = Memory
-        var pointee: Pointee {
-            return self.memory
-        }
-    }
-    
-    extension CollectionType where Generator.Element : Equatable {
-        func index(of element: Self.Generator.Element) -> Self.Index? {
-            return self.indexOf(element)
-        }
-        
-        func split(separator separator: Self.Generator.Element, maxSplits: Int = Int.max, omittingEmptySubsequences: Bool = true) -> [Self.SubSequence] {
-            return self.split(separator, maxSplit: maxSplits, allowEmptySlices: !omittingEmptySubsequences)
-        }
-    }
-    
-    extension NSDate {
-        @objc(kaas:) func isEqual(to otherDate: NSDate) -> Bool {
-            return self.isEqualToDate(otherDate)
+        struct Encoding {
+            internal static let utf8 = NSUTF8StringEncoding
         }
     }
 
+    extension NSData {
+        internal var count: Int {
+            return self.length
+        }
+        
+        internal func copyBytes(to pointer: UnsafeMutablePointer<UInt8>, count: Int) {
+            self.getBytes(pointer, length: count)
+        }
+        
+        /// Initialize a `Data` with copied memory content.
+        ///
+        /// - parameter bytes: A pointer to the memory. It will be copied.
+        /// - parameter count: The number of bytes to copy.
+        internal convenience init(bytes: UnsafePointer<Void>, count: Int) {
+            self.init(bytes: bytes, length: count)
+        }
+        
+        internal convenience init(bytes: [UInt8]) {
+            var bytes = bytes
+            self.init(bytes: &bytes, count: bytes.count)
+        }
+        
+        /// Initialize a `Data` from a Base-64 encoded String using the given options.
+        ///
+        /// Returns nil when the input is not recognized as valid Base-64.
+        /// - parameter base64String: The string to parse.
+        /// - parameter options: Decoding options. Default value is `[]`.
+        internal convenience init?(base64Encoded base64String: String, options: [UInt8] = []) {
+            self.init(base64Encoded: base64String, options: [])
+        }
+    }
 #endif

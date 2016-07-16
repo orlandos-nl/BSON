@@ -28,19 +28,11 @@ public extension String {
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    #if !swift(>=3.0)
-    public static func instantiate(bytes data: [UInt8], inout consumedBytes: Int) throws -> String {
-        let res = try _instant(bytes: data)
-        consumedBytes = res.0
-        return res.1
-    }
-    #else
     public static func instantiate(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
         let res = try _instant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
-    #endif
     
     
     private static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
@@ -68,7 +60,7 @@ public extension String {
         
         var stringData = Array(data[4..<Int(length + 3)])
         
-        guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: NSUTF8StringEncoding, freeWhenDone: false) else {
+        guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
             throw DeserializationError.ParseError
         }
         
@@ -83,19 +75,11 @@ public extension String {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    #if !swift(>=3.0)
-    public static func instantiateFromCString(bytes data: [UInt8], inout consumedBytes: Int) throws -> String {
-        let res = try _cInstant(bytes: data)
-        consumedBytes = res.0
-        return res.1
-    }
-    #else
     public static func instantiateFromCString(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
         let res = try _cInstant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
-    #endif
     
     private static func _cInstant(bytes data: [UInt8]) throws -> (Int, String) {
         guard data.contains(0x00) else {
@@ -106,7 +90,7 @@ public extension String {
             throw DeserializationError.ParseError
         }
         
-        guard let string = String(bytes: stringData, encoding: NSUTF8StringEncoding) else {
+        guard let string = String(bytes: stringData, encoding: String.Encoding.utf8) else {
             throw DeserializationError.ParseError
         }
         
@@ -118,7 +102,7 @@ public extension Int16 {
     public var bytes : [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
-            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16)))
+            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16.self)))
         }
     }
     
