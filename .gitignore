@@ -1,3 +1,4 @@
 .build
 Packages/
-*.xcodeproj
+
+Xcode/BSON.xcodeproj/project.xcworkspace/xcuserdata
