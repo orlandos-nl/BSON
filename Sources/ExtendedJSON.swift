@@ -47,7 +47,7 @@ extension Value {
                 print(error)
                 return error
             #else
-                if #available(OSX 10.12, *) {
+                if #available(OSX 10.12, iOS 10, *) {
                     let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.default, formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
                     return "{\"$date\": \"\(date)\"}"
                 } else {
@@ -398,7 +398,7 @@ extension Document {
                         #if os(Linux)
                             break subParser
                         #else
-                            if #available(OSX 10.12, *) {
+                            if #available(OSX 10.12, iOS 10, *) {
                                 let fmt = ISO8601DateFormatter()
                                 let date = fmt.date(from: dateString)
                                 
