@@ -9,6 +9,9 @@
 import Foundation
 
 extension Value {
+    /// Creates a JSON `String` from this `Value` formed as ExtendedJSON
+    ///
+    /// - returns: The JSON `String` representing the `Value`
     public func makeExtendedJSON() -> String {
         func escape(_ string: String) -> String {
             var string = string
@@ -81,7 +84,7 @@ extension Value {
 }
 
 extension Document {
-    
+    /// All errors that can occur when parsing Extended JSON
     public enum ExtendedJSONError : ErrorProtocol {
         case invalidCharacter(position: String.CharacterView.Index)
         case unexpectedEndOfInput
@@ -424,7 +427,7 @@ extension Document {
                         return .timestamp(stamp: t, increment: i)
                     }
                 } else if count == 2 {
-                    if let base64 = document["$binary"].stringValue, hexSubtype = document["$type"].stringValue {
+                    if let base64 = document["$binary"].stringValue, let hexSubtype = document["$type"].stringValue {
                         // Binary
                         guard hexSubtype.characters.count > 2 else {
                             break subParser
@@ -443,10 +446,10 @@ extension Document {
                         #else
                             return .binary(subtype: subtype, data: Array<UInt8>(data))
                         #endif
-                    } else if let pattern = document["$regex"].stringValue, options = document["$options"].stringValue {
+                    } else if let pattern = document["$regex"].stringValue, let options = document["$options"].stringValue {
                         // RegularExpression
                         return .regularExpression(pattern: pattern, options: options)
-                    } else if let code = document["$code"].stringValue, scope = document["$scope"].documentValue {
+                    } else if let code = document["$code"].stringValue, let scope = document["$scope"].documentValue {
                         // JS with scope
                         return .javascriptCodeWithScope(code: code, scope: scope)
                     }

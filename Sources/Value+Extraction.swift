@@ -15,7 +15,7 @@ extension Value {
     /// - Double
     /// - String
     /// - Boolean
-    /// - DateTime - will be converted to seconds sinds the Unix Epoch
+    /// - DateTime - will be converted to seconds since the Unix Epoch
     /// - Int32
     /// - Int64
     /// - Timestamp

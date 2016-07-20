@@ -89,7 +89,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     public init(data: [UInt8]) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
             return
@@ -130,7 +130,6 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         // start at the begin of the element list, the fifth byte
         var position = 4
         
-        // TODO: Check performance v.s. storing `storage.count` in a variable
         while storage.count > position {
             /**** ELEMENT TYPE ****/
             if storage[position] == 0 {
@@ -588,7 +587,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             var position = position.byteIndex
 
             guard let type = ElementType(rawValue: storage[position]) else {
-                abort()
+                fatalError("Invalid type found in Document when searching the Document at the position \(position)")
             }
             
             position += 1
@@ -606,7 +605,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             position += 1
             
             guard let key = String(bytesNoCopy: &keyData, length: keyData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
-                abort()
+                fatalError("Unable to construct the key bytes into a String")
             }
             
             let value = getValue(atDataPosition: position, withType: type)
@@ -618,7 +617,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             var position = position.byteIndex
 
             guard let type = ElementType(rawValue: storage[position]) else {
-                abort()
+                fatalError("Invalid type found in Document when modifying the Document at the position \(position)")
             }
             
             storage[position] = newValue.value.typeIdentifier
@@ -770,7 +769,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         var position = i.byteIndex
         
         guard let type = ElementType(rawValue: storage[position]) else {
-            abort()
+            fatalError("Invalid type found in Document when modifying the Document at the position \(position)")
         }
         
         position += 1
@@ -784,11 +783,11 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         let length = getLengthOfElement(withDataPosition: position, type: type)
         
         // Return the position of the byte after the value
-        return DocumentIndex(byteIndex: position + length + 1)
+        return DocumentIndex(byteIndex: position + length)
     }
     
     // MARK: - The old API had this...
-    public mutating func removeValue(forKey key: String) -> Value? {
+    @discardableResult public mutating func removeValue(forKey key: String) -> Value? {
         guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
             return nil
         }
@@ -804,11 +803,13 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     
     // MARK: - Other metadata
     public var count: Int {
-        // TODO: Cache and calculate on first `count` request
+        return calculatedCount
+    }
+    
+    private var calculatedCount: Int {
         var position = 4
         var currentCount = 0
         
-        // TODO: Check performance v.s. storing `storage.count` in a variable
         while storage.count > position {
             guard let elementType = ElementType(rawValue: storage[position]) else {
                 return currentCount

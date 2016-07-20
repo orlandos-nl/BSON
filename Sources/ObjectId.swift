@@ -45,7 +45,6 @@ public struct ObjectId {
         data += Int32(currentTime.timeIntervalSince1970).bytes
         
         // Take the machine identifier
-        // TODO: Change this to a MAC address
         data += Array(ProcessInfo.processInfo.hostName.hash.bytes[0...2])
         
         // Take the process identifier as 2 bytes
@@ -74,7 +73,7 @@ public struct ObjectId {
         var data = [UInt8]()
         
         var gen = hexString.characters.makeIterator()
-        while let c1 = gen.next(), c2 = gen.next() {
+        while let c1 = gen.next(), let c2 = gen.next() {
             let s = String([c1, c2])
             
             guard let d = UInt8(s, radix: 16) else {
