@@ -82,6 +82,10 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     private var invalid = false
     
     // MARK: - Initialization from data
+    
+    /// Initializes this Doucment with binary `Foundation.Data`
+    ///
+    /// - parameters data: the `Foundation.Data` that's being used to initialize this`Document`
     public init(data: Foundation.Data) {
         var byteArray = [UInt8](repeating: 0, count: data.count)
         data.copyBytes(to: &byteArray, count: byteArray.count)
@@ -89,8 +93,11 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         self.init(data: byteArray)
     }
     
+    /// Initializes this Doucment with binary `C7.Data`
+    ///
+    /// - parameters data: the `C7.Data` that's being used to initialize this `Document`
     public init(data: C7.Data) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
             return
@@ -99,8 +106,11 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         storage = Data(data[0..<Int(length)])
     }
     
-    public init(data: [UInt8]) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
+    /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
+    ///
+    /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
+    public init(data: [Byte]) {
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
             return
@@ -109,12 +119,17 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         storage = Data(data[0..<Int(length)])
     }
     
+    /// Initializes an empty `Document`
     public init() {
         // the empty document is 5 bytes long.
         storage = [5,0,0,0,0]
     }
     
     // MARK: - Initialization from Swift Types & Literals
+    
+    /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
+    ///
+    /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
     public init(dictionaryElements elements: [(String, Value)]) {
         self.init()
         for element in elements {
@@ -122,22 +137,35 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
+    ///
+    /// - parameter elements: The `Dictionary` used to initialize this must use `String` for key and `Value` for values
     public init(dictionaryLiteral elements: (String, Value)...) {
         self.init(dictionaryElements: elements)
     }
     
+    /// Initializes this `Document` as an `Array` using an `Array` literal
+    ///
+    /// - parameter elements: The `Array` literal used to initialize the `Document` must be a `[Value]`
     public init(arrayLiteral elements: Value...) {
         self.init(array: elements)
     }
     
+    /// Initializes this `Document` as an `Array` using an `Array` literal
+    ///
+    /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [Value]) {
         self.init(dictionaryElements: elements.enumerated().map { (index, value) in ("\(index)", value) })
     }
     
     // MARK: - BSON Parsing Logic
     
-    /// This function traverses the document and
-    private func getMeta(forKeyBytes keyBytes: [UInt8]) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
+    /// This function traverses the document and searches for the type and data belonging to the key
+    ///
+    /// - parameter keyBytes: The binary (`[Byte]`) representation of the key's `String` as C-String
+    ///
+    /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
+    private func getMeta(forKeyBytes keyBytes: [Byte]) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
         // start at the begin of the element list, the fifth byte
         var position = 4
         
@@ -203,7 +231,12 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return nil
     }
     
-    /// Returns the length in bytes.
+    /// Returns the length of an element in bytes
+    ///
+    /// - parameter position: The position of the first byte of data for this value
+    /// - parameter type: The type of data that we're dealing with
+    ///
+    /// - returns: The length of the data for this value in bytes
     private func getLengthOfElement(withDataPosition position: Int, type: ElementType) -> Int {
         // check
         func need(_ amountOfBytes: Int) -> Bool {
@@ -259,7 +292,13 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
-    // the return value of the closure indicates wether the loop must continue (true) or stop (false)
+    /// the return value of the closure indicates wether the loop must continue (true) or stop (false)
+    
+    /// Creates an iterator that loops over all key-value pairs in this `Document`
+    ///
+    /// - parameter startPos: The byte to start searching from
+    ///
+    /// - returns: An iterator that iterates over all key-value pairs
     private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
         var position = startPos
         return AnyIterator {
@@ -300,6 +339,13 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     public typealias Index = DocumentIndex
     public typealias IndexIterationElement = (key: String, value: Value)
     
+    /// Appends a Key-Value pair to this `Document` where this `Document` acts like a `Dictionary`
+    ///
+    /// TODO: Analyze what should happen with `Array`-like documents and this function
+    /// TODO: Analyze what happens when you append with a duplicate key
+    ///
+    /// - parameter value: The `Value` to append
+    /// - parameter key: The key in the key-value pair
     public mutating func append(_ value: Value, forKey key: String) {
         var buffer = [UInt8]()
         
@@ -319,15 +365,27 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         updateDocumentHeader()
     }
     
+    /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
+    ///
+    /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
+    ///
+    /// - parameter value: The `Value` to append
     public mutating func append(_ value: Value) {
         let key = "\(self.count)"
         self.append(value, forKey: key)
     }
     
+    /// Updates this `Document`'s storage to contain the proper `Document` length header
     private mutating func updateDocumentHeader() {
         storage.replaceSubrange(0..<4, with: Int32(storage.count).bytes)
     }
     
+    /// Get's a `Value` from this `Document` given a position and type
+    ///
+    /// Returns `Value.nothing` when unable to
+    ///
+    /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
+    /// - parameter type: The BSON `ElementType` that we're looking for here
     private func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> Value {
         var position = startPosition
         
@@ -504,6 +562,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    /// Mutates the key-value pair like you would with a `Dictionary`
     public subscript(key: String) -> Value {
         get {
             guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
@@ -556,6 +615,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    /// Mutates the value store like you would with an `Array`
     public subscript(key: Int) -> Value {
         get {
             var keyPos = 0
@@ -593,6 +653,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    /// Mutates the key-value pair like you would with a `Dictionary`'s `Index`
     public subscript(position: DocumentIndex) -> IndexIterationElement {
         get {
             var position = position.byteIndex
@@ -654,6 +715,9 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    /// Validates the current `Document` and checks for any and all errors
+    ///
+    /// - returns: The status of validation. `true` for valid and vice-versa
     public func validate() -> Bool {
         if self.invalid {
             return false
@@ -746,10 +810,13 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     // MARK: - Collection
+    
+    /// The first `Index` in this `Document`. Can point to nothing when the `Document` is empty
     public var startIndex: DocumentIndex {
         return DocumentIndex(byteIndex: 4)
     }
     
+    /// The last `Index` in this `Document`. Can point to nothing whent he `Document` is empty
     public var endIndex: DocumentIndex {
         var thisIndex = 4
         for element in self.makeKeyIterator() {
@@ -758,6 +825,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return DocumentIndex(byteIndex: thisIndex)
     }
     
+    /// Creates an iterator that iterates over all key-value pairs
     public func makeIterator() -> AnyIterator<IndexIterationElement> {
         let keys = self.makeKeyIterator()
         
@@ -776,11 +844,14 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         }
     }
     
+    /// Fetches the next index
+    ///
+    /// - parameter i: The `Index` to advance
     public func index(after i: DocumentIndex) -> DocumentIndex {
         var position = i.byteIndex
         
         guard let type = ElementType(rawValue: storage[position]) else {
-            fatalError("Invalid type found in Document when modifying the Document at the position \(position)")
+            fatalError("Invalid type found in Document when finding the next key at position \(position)")
         }
         
         position += 1
@@ -798,6 +869,12 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     // MARK: - The old API had this...
+    
+    /// Finds the key-value pair for the given key and removes it
+    ///
+    /// - parameter key: The `key` in the key-value pair to remove
+    ///
+    /// - returns: The `Value` in the pair if there was any
     @discardableResult public mutating func removeValue(forKey key: String) -> Value? {
         guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
             return nil
@@ -813,11 +890,9 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     // MARK: - Other metadata
-    public var count: Int {
-        return calculatedCount
-    }
     
-    private var calculatedCount: Int {
+    /// The amount of key-value pairs in the `Document`
+    public var count: Int {
         var position = 4
         var currentCount = 0
         
@@ -850,20 +925,23 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return currentCount
     }
 
+    /// The amount of `Byte`s in the `Document`
     public var byteCount: Int {
         // TODO: Does this kill the process on empty documents?
         return Int(UnsafePointer<Int32>(storage.bytes).pointee)
     }
     
+    /// The `Byte` `Array` (`[Byte]`) representation of this `Document`
     public var bytes: [UInt8] {
         return storage.bytes
     }
     
+    /// The `C7.Data` representation of this `Document`
     public var data: C7.Data {
         return storage
     }
     
-    /// Returns a list of all keys. 
+    /// A list of all keys
     public var keys: [String] {
         var keys = [String]()
         for element in self.makeKeyIterator() {
@@ -878,6 +956,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return keys
     }
     
+    /// The `Dictionary` representation of this `Document`
     public var dictionaryValue: [String: Value] {
         var dictionary = [String: Value]()
         
@@ -893,6 +972,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return dictionary
     }
     
+    /// The `Array` representation of this `Document`
     public var arrayValue: [Value] {
         var array = [Value]()
         
@@ -905,6 +985,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         return array
     }
     
+    /// - returns: `true` when this `Document` is a valid BSON `Array`. `false` otherwise
     public func validatesAsArray() -> Bool {
         var index = 0
         
@@ -920,6 +1001,10 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
     
     // MARK: - Files
+    
+    /// Writes this `Document` to a file. Usually for debugging purposes
+    ///
+    /// - parameter path: The path to write this to
     public func write(toFile path: String) throws {
         var myData = storage
         let nsData = NSData(bytes: &myData, length: myData.count)

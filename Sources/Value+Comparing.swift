@@ -70,7 +70,7 @@ public func ==(lhs: Value, rhs: [UInt8]) -> Bool {
 }
 
 public func ==(lhs: Value, rhs: [Value]) -> Bool {
-    guard case .array(let document) = lhs, document.validatesAsArray() else {
+    guard case .array(let document) = lhs where document.validatesAsArray() else {
         return false
     }
     
