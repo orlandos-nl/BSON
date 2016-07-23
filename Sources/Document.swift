@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import C7
 
 public protocol BSONArrayProtocol : _ArrayProtocol {}
 extension Array : BSONArrayProtocol {}
@@ -76,16 +77,26 @@ private enum ElementType : UInt8 {
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
 public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralConvertible {
-    internal var storage: [UInt8]
+    internal var storage: C7.Data
     private var _count: Int? = nil
     private var invalid = false
     
     // MARK: - Initialization from data
-    public init(data: Data) {
+    public init(data: Foundation.Data) {
         var byteArray = [UInt8](repeating: 0, count: data.count)
         data.copyBytes(to: &byteArray, count: byteArray.count)
         
         self.init(data: byteArray)
+    }
+    
+    public init(data: C7.Data) {
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
+            self.storage = [5,0,0,0,0]
+            self.invalid = true
+            return
+        }
+        
+        storage = Data(data[0..<Int(length)])
     }
     
     public init(data: [UInt8]) {
@@ -95,7 +106,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
             return
         }
         
-        storage = Array(data[0..<Int(length)])
+        storage = Data(data[0..<Int(length)])
     }
     
     public init() {
@@ -655,7 +666,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
         let length = Int(UnsafePointer<Int32>(Array(bytes[0..<4])).pointee)
 
         // Check the length
-        guard storage.count == length && storage.last == 0 else {
+        guard storage.count == length && storage.bytes.last == 0 else {
             return false
         }
         
@@ -840,10 +851,15 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     }
 
     public var byteCount: Int {
-        return Int(UnsafePointer<Int32>(storage).pointee)
+        // TODO: Does this kill the process on empty documents?
+        return Int(UnsafePointer<Int32>(storage.bytes).pointee)
     }
     
     public var bytes: [UInt8] {
+        return storage.bytes
+    }
+    
+    public var data: C7.Data {
         return storage
     }
     
