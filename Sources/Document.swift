@@ -47,7 +47,7 @@ extension BSONArrayProtocol where Iterator.Element == Document {
     
     /// The combined data for all documents in the array
     public var bytes: [UInt8] {
-        return self.map { $0.bytes }.reduce([], combine: +)
+        return self.map { $0.bytes }.reduce([], +)
     }
 }
 
@@ -76,7 +76,7 @@ private enum ElementType : UInt8 {
 /// 
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
-public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralConvertible {
+public struct Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
     internal var storage: C7.Data
     private var _count: Int? = nil
     private var invalid = false
@@ -97,7 +97,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     ///
     /// - parameters data: the `C7.Data` that's being used to initialize this `Document`
     public init(data: C7.Data) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
             return
@@ -110,7 +110,7 @@ public struct Document : Collection, DictionaryLiteralConvertible, ArrayLiteralC
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: [Byte]) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])) where Int(length) <= data.count else {
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
             return

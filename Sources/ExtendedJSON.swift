@@ -51,7 +51,7 @@ extension Value {
                 return error
             #else
                 if #available(OSX 10.12, iOS 10, *) {
-                    let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.default, formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
+                    let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.current, formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
                     return "{\"$date\": \"\(date)\"}"
                 } else {
                     let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
@@ -85,7 +85,7 @@ extension Value {
 
 extension Document {
     /// All errors that can occur when parsing Extended JSON
-    public enum ExtendedJSONError : ErrorProtocol {
+    public enum ExtendedJSONError : Error {
         case invalidCharacter(position: String.CharacterView.Index)
         case unexpectedEndOfInput
         case stringExpected(position: String.CharacterView.Index)

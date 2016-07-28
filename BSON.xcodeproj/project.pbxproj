@@ -8,6 +8,31 @@
 
 /* Begin PBXBuildFile section */
 		_LinkFileRef_BSON_via_BSONTestSuite /* BSON.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "_____Product_BSON" /* BSON.framework */; };
+		_LinkFileRef_C7_via_BSON /* C7.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "_____Product_C7" /* C7.framework */; };
+		_LinkFileRef_C7_via_BSONTestSuite /* C7.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "_____Product_C7" /* C7.framework */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncConnection.swift" /* AsyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncConnection.swift" /* AsyncConnection.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncDrain.swift" /* AsyncDrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncDrain.swift" /* AsyncDrain.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncHost.swift" /* AsyncHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncHost.swift" /* AsyncHost.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncStream.swift" /* AsyncStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncStream.swift" /* AsyncStream.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncURIConnection.swift" /* AsyncURIConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncURIConnection.swift" /* AsyncURIConnection.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Byte.swift" /* Byte.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Byte.swift" /* Byte.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/C7.swift" /* C7.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/C7.swift" /* C7.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/CaseInsensitiveString.swift" /* CaseInsensitiveString.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/CaseInsensitiveString.swift" /* CaseInsensitiveString.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Closable.swift" /* Closable.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Closable.swift" /* Closable.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Connection.swift" /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Connection.swift" /* Connection.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/CustomDataStore.swift" /* CustomDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/CustomDataStore.swift" /* CustomDataStore.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Data.swift" /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Data.swift" /* Data.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Drain.swift" /* Drain.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Drain.swift" /* Drain.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Host.swift" /* Host.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Host.swift" /* Host.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/JSON.swift" /* JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/JSON.swift" /* JSON.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Number.swift" /* Number.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Number.swift" /* Number.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Stream.swift" /* Stream.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Stream.swift" /* Stream.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/StreamError.swift" /* StreamError.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/StreamError.swift" /* StreamError.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/StreamSequence.swift" /* StreamSequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/StreamSequence.swift" /* StreamSequence.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/StructuredData.swift" /* StructuredData.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/StructuredData.swift" /* StructuredData.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift */; };
+		"__src_cc_ref_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift */; };
 		__src_cc_ref_Sources/Compatibility.swift /* Compatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Compatibility.swift /* Compatibility.swift */; };
 		__src_cc_ref_Sources/Document.swift /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Document.swift /* Document.swift */; };
 		__src_cc_ref_Sources/Error.swift /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Error.swift /* Error.swift */; };
@@ -22,11 +47,19 @@
 		__src_cc_ref_Sources/Value.swift /* Value.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Value.swift /* Value.swift */; };
 		__src_cc_ref_Sources/ValueConvertible.swift /* ValueConvertible.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/ValueConvertible.swift /* ValueConvertible.swift */; };
 		__src_cc_ref_Tests/BSON/BSONInternalTests.swift /* BSONInternalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Tests/BSON/BSONInternalTests.swift /* BSONInternalTests.swift */; };
+		__src_cc_ref_Tests/BSON/BSONPerformanceTests.swift /* BSONPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Tests/BSON/BSONPerformanceTests.swift /* BSONPerformanceTests.swift */; };
 		__src_cc_ref_Tests/BSON/BSONPublicTests.swift /* BSONPublicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Tests/BSON/BSONPublicTests.swift /* BSONPublicTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		0AEFF9971D3AA824003366C5 /* PBXContainerItemProxy */ = {
+		F2188C861D4A30C6003DC86B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = __RootObject_ /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = "______Target_C7";
+			remoteInfo = C7;
+		};
+		F2188C871D4A30C6003DC86B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = __RootObject_ /* Project object */;
 			proxyType = 1;
@@ -36,10 +69,34 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		__PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Project.xcconfig; path = BSON.xcodeproj/Configs/Project.xcconfig; sourceTree = "<group>"; };
-		__PBXFileRef_BSONTestSuite_Info.plist /* BSONTestSuite_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = BSONTestSuite_Info.plist; path = BSON.xcodeproj/BSONTestSuite_Info.plist; sourceTree = SOURCE_ROOT; };
-		__PBXFileRef_BSON_Info.plist /* BSON_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = BSON_Info.plist; path = BSON.xcodeproj/BSON_Info.plist; sourceTree = SOURCE_ROOT; };
+		__PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* BSON.xcodeproj/Configs/Project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = BSON.xcodeproj/Configs/Project.xcconfig; sourceTree = "<group>"; };
+		__PBXFileRef_BSONTestSuite_Info.plist /* BSON.xcodeproj/BSONTestSuite_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BSON.xcodeproj/BSONTestSuite_Info.plist; sourceTree = SOURCE_ROOT; };
+		__PBXFileRef_BSON_Info.plist /* BSON.xcodeproj/BSON_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BSON.xcodeproj/BSON_Info.plist; sourceTree = SOURCE_ROOT; };
+		__PBXFileRef_C7_Info.plist /* BSON.xcodeproj/C7_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BSON.xcodeproj/C7_Info.plist; sourceTree = SOURCE_ROOT; };
 		__PBXFileRef_Package.swift /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncConnection.swift" /* AsyncConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncConnection.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncDrain.swift" /* AsyncDrain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncDrain.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncHost.swift" /* AsyncHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncHost.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncStream.swift" /* AsyncStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncStream.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncURIConnection.swift" /* AsyncURIConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncURIConnection.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Byte.swift" /* Byte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Byte.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/C7.swift" /* C7.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = C7.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/CaseInsensitiveString.swift" /* CaseInsensitiveString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseInsensitiveString.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Closable.swift" /* Closable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Closable.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Connection.swift" /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/CustomDataStore.swift" /* CustomDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDataStore.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Data.swift" /* Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Data.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Drain.swift" /* Drain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Drain.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Host.swift" /* Host.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Host.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/JSON.swift" /* JSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSON.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Number.swift" /* Number.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Number.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Stream.swift" /* Stream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stream.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/StreamError.swift" /* StreamError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamError.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/StreamSequence.swift" /* StreamSequence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamSequence.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/StructuredData.swift" /* StructuredData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredData.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Time.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URI.swift; sourceTree = "<group>"; };
+		"__PBXFileRef_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URIConnection.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Compatibility.swift /* Compatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compatibility.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Document.swift /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Error.swift /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
@@ -54,9 +111,13 @@
 		__PBXFileRef_Sources/Value.swift /* Value.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Value.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/ValueConvertible.swift /* ValueConvertible.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValueConvertible.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Tests/BSON/BSONInternalTests.swift /* BSONInternalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BSONInternalTests.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Tests/BSON/BSONPerformanceTests.swift /* BSONPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BSONPerformanceTests.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Tests/BSON/BSONPublicTests.swift /* BSONPublicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BSONPublicTests.swift; sourceTree = "<group>"; };
+		__PBXFileRef_Tools /* Tools */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Tools; sourceTree = "<group>"; };
+		__PBXFileRef_Xcode /* Xcode */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Xcode; sourceTree = "<group>"; };
 		"_____Product_BSON" /* BSON.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = BSON.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		"_____Product_BSONTestSuite" /* BSONTestSuite.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = BSONTestSuite.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		"_____Product_BSONTestSuite" /* <RelativePath:"BSONTestSuite.xctest"> */ = {isa = PBXFileReference; lastKnownFileType = file; name = "<RelativePath:\"BSONTestSuite.xctest\">"; path = BSONTestSuite.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		"_____Product_C7" /* C7.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = C7.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +125,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
 			files = (
+				_LinkFileRef_C7_via_BSON /* C7.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,17 +133,33 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
 			files = (
+				_LinkFileRef_C7_via_BSONTestSuite /* C7.framework in Frameworks */,
 				_LinkFileRef_BSON_via_BSONTestSuite /* BSON.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		"___LinkPhase_C7" /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 0;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		Dependencies_ /* Dependencies */ = {
+			isa = PBXGroup;
+			children = (
+				"_______Group_C7" /* C7 */,
+			);
+			name = Dependencies;
+			sourceTree = "<group>";
+		};
 		TestProducts_ /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				"_____Product_BSONTestSuite" /* BSONTestSuite.xctest */,
+				"_____Product_BSONTestSuite" /* <RelativePath:"BSONTestSuite.xctest"> */,
 			);
 			name = Tests;
 			sourceTree = "<group>";
@@ -92,6 +170,9 @@
 				__PBXFileRef_Package.swift /* Package.swift */,
 				"_____Configs_" /* Configs */,
 				"_____Sources_" /* Sources */,
+				__PBXFileRef_Tools /* Tools */,
+				__PBXFileRef_Xcode /* Xcode */,
+				Dependencies_ /* Dependencies */,
 				"_______Tests_" /* Tests */,
 				"____Products_" /* Products */,
 			);
@@ -101,6 +182,7 @@
 			isa = PBXGroup;
 			children = (
 				TestProducts_ /* Tests */,
+				"_____Product_C7" /* C7.framework */,
 				"_____Product_BSON" /* BSON.framework */,
 			);
 			name = Products;
@@ -109,7 +191,7 @@
 		"_____Configs_" /* Configs */ = {
 			isa = PBXGroup;
 			children = (
-				__PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */,
+				__PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* BSON.xcodeproj/Configs/Project.xcconfig */,
 			);
 			name = Configs;
 			sourceTree = "<group>";
@@ -138,7 +220,7 @@
 				"__PBXFileRef_Sources/Value+Subscript.swift" /* Value+Subscript.swift */,
 				__PBXFileRef_Sources/Value.swift /* Value.swift */,
 				__PBXFileRef_Sources/ValueConvertible.swift /* ValueConvertible.swift */,
-				__PBXFileRef_BSON_Info.plist /* BSON_Info.plist */,
+				__PBXFileRef_BSON_Info.plist /* BSON.xcodeproj/BSON_Info.plist */,
 			);
 			name = BSON;
 			path = Sources;
@@ -148,11 +230,44 @@
 			isa = PBXGroup;
 			children = (
 				__PBXFileRef_Tests/BSON/BSONInternalTests.swift /* BSONInternalTests.swift */,
+				__PBXFileRef_Tests/BSON/BSONPerformanceTests.swift /* BSONPerformanceTests.swift */,
 				__PBXFileRef_Tests/BSON/BSONPublicTests.swift /* BSONPublicTests.swift */,
-				__PBXFileRef_BSONTestSuite_Info.plist /* BSONTestSuite_Info.plist */,
+				__PBXFileRef_BSONTestSuite_Info.plist /* BSON.xcodeproj/BSONTestSuite_Info.plist */,
 			);
 			name = BSONTestSuite;
 			path = Tests/BSON;
+			sourceTree = "<group>";
+		};
+		"_______Group_C7" /* C7 */ = {
+			isa = PBXGroup;
+			children = (
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncConnection.swift" /* AsyncConnection.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncDrain.swift" /* AsyncDrain.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncHost.swift" /* AsyncHost.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncStream.swift" /* AsyncStream.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/AsyncURIConnection.swift" /* AsyncURIConnection.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Byte.swift" /* Byte.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/C7.swift" /* C7.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/CaseInsensitiveString.swift" /* CaseInsensitiveString.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Closable.swift" /* Closable.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Connection.swift" /* Connection.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/CustomDataStore.swift" /* CustomDataStore.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Data.swift" /* Data.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Drain.swift" /* Drain.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Host.swift" /* Host.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/JSON.swift" /* JSON.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Number.swift" /* Number.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Stream.swift" /* Stream.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/StreamError.swift" /* StreamError.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/StreamSequence.swift" /* StreamSequence.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/StructuredData.swift" /* StructuredData.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift */,
+				"__PBXFileRef_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift */,
+				__PBXFileRef_C7_Info.plist /* BSON.xcodeproj/C7_Info.plist */,
+			);
+			name = C7;
+			path = "Packages/C7-0.10.0/Sources";
 			sourceTree = "<group>";
 		};
 		"_______Tests_" /* Tests */ = {
@@ -176,6 +291,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				__Dependency_C7 /* PBXTargetDependency */,
 			);
 			name = BSON;
 			productName = BSON;
@@ -192,12 +308,29 @@
 			buildRules = (
 			);
 			dependencies = (
+				__Dependency_C7 /* PBXTargetDependency */,
 				__Dependency_BSON /* PBXTargetDependency */,
 			);
 			name = BSONTestSuite;
 			productName = BSONTestSuite;
-			productReference = "_____Product_BSONTestSuite" /* BSONTestSuite.xctest */;
+			productReference = "_____Product_BSONTestSuite" /* <RelativePath:"BSONTestSuite.xctest"> */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		"______Target_C7" /* C7 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = "_______Confs_C7" /* Build configuration list for PBXNativeTarget "C7" */;
+			buildPhases = (
+				CompilePhase_C7 /* Sources */,
+				"___LinkPhase_C7" /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = C7;
+			productName = C7;
+			productReference = "_____Product_C7" /* C7.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -206,14 +339,6 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 9999;
-				TargetAttributes = {
-					"______Target_BSON" = {
-						LastSwiftMigration = 0800;
-					};
-					"______Target_BSONTestSuite" = {
-						LastSwiftMigration = 0800;
-					};
-				};
 			};
 			buildConfigurationList = "___RootConfs_" /* Build configuration list for PBXProject "BSON" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -227,6 +352,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				"______Target_C7" /* C7 */,
 				"______Target_BSON" /* BSON */,
 				"______Target_BSONTestSuite" /* BSONTestSuite */,
 			);
@@ -259,7 +385,38 @@
 			buildActionMask = 0;
 			files = (
 				__src_cc_ref_Tests/BSON/BSONInternalTests.swift /* BSONInternalTests.swift in Sources */,
+				__src_cc_ref_Tests/BSON/BSONPerformanceTests.swift /* BSONPerformanceTests.swift in Sources */,
 				__src_cc_ref_Tests/BSON/BSONPublicTests.swift /* BSONPublicTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CompilePhase_C7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncConnection.swift" /* AsyncConnection.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncDrain.swift" /* AsyncDrain.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncHost.swift" /* AsyncHost.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncStream.swift" /* AsyncStream.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/AsyncURIConnection.swift" /* AsyncURIConnection.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Byte.swift" /* Byte.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/C7.swift" /* C7.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/CaseInsensitiveString.swift" /* CaseInsensitiveString.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Closable.swift" /* Closable.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Connection.swift" /* Connection.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/CustomDataStore.swift" /* CustomDataStore.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Data.swift" /* Data.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Drain.swift" /* Drain.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Host.swift" /* Host.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/JSON.swift" /* JSON.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Number.swift" /* Number.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Stream.swift" /* Stream.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/StreamError.swift" /* StreamError.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/StreamSequence.swift" /* StreamSequence.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/StructuredData.swift" /* StructuredData.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift in Sources */,
+				"__src_cc_ref_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -269,7 +426,12 @@
 		__Dependency_BSON /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = "______Target_BSON" /* BSON */;
-			targetProxy = 0AEFF9971D3AA824003366C5 /* PBXContainerItemProxy */;
+			targetProxy = F2188C871D4A30C6003DC86B /* PBXContainerItemProxy */;
+		};
+		__Dependency_C7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = "______Target_C7" /* C7 */;
+			targetProxy = F2188C861D4A30C6003DC86B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -280,11 +442,10 @@
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
 				INFOPLIST_FILE = BSON.xcodeproj/BSON_Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = org.openkitten.bson;
+				PRODUCT_BUNDLE_IDENTIFIER = BSON;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SWIFT_VERSION = 3.0;
@@ -304,17 +465,32 @@
 			};
 			name = Release;
 		};
+		_ReleaseConf_C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				INFOPLIST_FILE = BSON.xcodeproj/C7_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = C7;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
 		"___DebugConf_BSON" /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
 				INFOPLIST_FILE = BSON.xcodeproj/BSON_Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = org.openkitten.bson;
+				PRODUCT_BUNDLE_IDENTIFIER = BSON;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -336,19 +512,34 @@
 			};
 			name = Debug;
 		};
+		"___DebugConf_C7" /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
+				INFOPLIST_FILE = BSON.xcodeproj/C7_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = C7;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Debug;
+		};
 		"_____Release_" /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = __PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */;
+			baseConfigurationReference = __PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* BSON.xcodeproj/Configs/Project.xcconfig */;
 			buildSettings = {
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 			};
 			name = Release;
 		};
 		"_______Debug_" /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = __PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* Project.xcconfig */;
+			baseConfigurationReference = __PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* BSON.xcodeproj/Configs/Project.xcconfig */;
 			buildSettings = {
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 			};
 			name = Debug;
 		};
@@ -378,6 +569,15 @@
 			buildConfigurations = (
 				"___DebugConf_BSONTestSuite" /* Debug */,
 				_ReleaseConf_BSONTestSuite /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		"_______Confs_C7" /* Build configuration list for PBXNativeTarget "C7" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				"___DebugConf_C7" /* Debug */,
+				_ReleaseConf_C7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

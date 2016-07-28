@@ -8,13 +8,13 @@
 
 import Foundation
 
-extension Value : IntegerLiteralConvertible {
+extension Value : ExpressibleByIntegerLiteral {
     public init(integerLiteral: Int) {
         self = .int64(Int64(integerLiteral))
     }
 }
 
-extension Value : StringLiteralConvertible {
+extension Value : ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
         self = .string(value)
     }
@@ -28,25 +28,25 @@ extension Value : StringLiteralConvertible {
     }
 }
 
-extension Value : BooleanLiteralConvertible {
+extension Value : ExpressibleByBooleanLiteral {
     public init(booleanLiteral value: Bool) {
         self = .boolean(value)
     }
 }
 
-extension Value : DictionaryLiteralConvertible {
+extension Value : ExpressibleByDictionaryLiteral {
     public init(dictionaryLiteral elements: (String, Value)...) {
         self = .document(Document(dictionaryElements: elements))
     }
 }
 
-extension Value : ArrayLiteralConvertible {
+extension Value : ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: Value...) {
         self = .array(Document(array: elements))
     }
 }
 
-extension Value : FloatLiteralConvertible {
+extension Value : ExpressibleByFloatLiteral {
     public init(floatLiteral value: Double) {
         self = .double(value)
     }
