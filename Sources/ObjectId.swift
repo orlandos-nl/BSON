@@ -44,11 +44,17 @@ public struct ObjectId {
         // Take the current UNIX epoch as Int32 and take it's bytes
         data += Int32(currentTime.timeIntervalSince1970).bytes
         
+        #if os(Linux)
+            let processInfo = ProcessInfo.processInfo()
+        #else
+            let processInfo = ProcessInfo.processInfo
+        #endif
+        
         // Take the machine identifier
-        data += Array(ProcessInfo.processInfo.hostName.hash.bytes[0...2])
+        data += Array(processInfo.hostName.hash.bytes[0...2])
         
         // Take the process identifier as 2 bytes
-        data += Array(ProcessInfo.processInfo.processIdentifier.bytes[0...1])
+        data += Array(processInfo.processIdentifier.bytes[0...1])
         
         // Take a random number
         data += [ObjectId.random]
