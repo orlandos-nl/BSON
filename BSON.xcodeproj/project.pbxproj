@@ -33,7 +33,6 @@
 		"__src_cc_ref_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift */; };
 		"__src_cc_ref_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift */; };
 		"__src_cc_ref_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = "__PBXFileRef_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift */; };
-		__src_cc_ref_Sources/Compatibility.swift /* Compatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Compatibility.swift /* Compatibility.swift */; };
 		__src_cc_ref_Sources/Document.swift /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Document.swift /* Document.swift */; };
 		__src_cc_ref_Sources/Error.swift /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Error.swift /* Error.swift */; };
 		__src_cc_ref_Sources/ExtendedJSON.swift /* ExtendedJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/ExtendedJSON.swift /* ExtendedJSON.swift */; };
@@ -97,7 +96,6 @@
 		"__PBXFileRef_Packages/C7-0.10.0/Sources/Time.swift" /* Time.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Time.swift; sourceTree = "<group>"; };
 		"__PBXFileRef_Packages/C7-0.10.0/Sources/URI.swift" /* URI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URI.swift; sourceTree = "<group>"; };
 		"__PBXFileRef_Packages/C7-0.10.0/Sources/URIConnection.swift" /* URIConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URIConnection.swift; sourceTree = "<group>"; };
-		__PBXFileRef_Sources/Compatibility.swift /* Compatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compatibility.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Document.swift /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/Error.swift /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
 		__PBXFileRef_Sources/ExtendedJSON.swift /* ExtendedJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedJSON.swift; sourceTree = "<group>"; };
@@ -207,7 +205,6 @@
 		"_______Group_BSON" /* BSON */ = {
 			isa = PBXGroup;
 			children = (
-				__PBXFileRef_Sources/Compatibility.swift /* Compatibility.swift */,
 				__PBXFileRef_Sources/Document.swift /* Document.swift */,
 				__PBXFileRef_Sources/Error.swift /* Error.swift */,
 				__PBXFileRef_Sources/ExtendedJSON.swift /* ExtendedJSON.swift */,
@@ -364,7 +361,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				__src_cc_ref_Sources/Compatibility.swift /* Compatibility.swift in Sources */,
 				__src_cc_ref_Sources/Document.swift /* Document.swift in Sources */,
 				__src_cc_ref_Sources/Error.swift /* Error.swift in Sources */,
 				__src_cc_ref_Sources/ExtendedJSON.swift /* ExtendedJSON.swift in Sources */,
