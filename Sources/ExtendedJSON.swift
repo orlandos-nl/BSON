@@ -8,6 +8,13 @@
 
 import Foundation
 
+private let isoDateFormatter: DateFormatter = {
+    let fmt = DateFormatter()
+    fmt.locale = Locale(identifier: "en_US_POSIX")
+    fmt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+    return fmt
+}()
+
 extension Value {
     /// Creates a JSON `String` from this `Value` formed as ExtendedJSON
     ///
@@ -45,20 +52,8 @@ extension Value {
         case .boolean(let val):
             return val ? "true" : "false"
         case .dateTime(let date):
-            #if os(Linux)
-                let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
-                print(error)
-                return error
-            #else
-                if #available(OSX 10.12, iOS 10, *) {
-                    let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.current, formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
-                    return "{\"$date\": \"\(date)\"}"
-                } else {
-                    let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
-                    print(error)
-                    return error
-                }
-            #endif
+            let dateString = isoDateFormatter.string(from: date)
+            return "{\"$date\": \"\(dateString)\"}"
         case .null:
             return "null"
         case .regularExpression(let pattern, let options):
