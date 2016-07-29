@@ -390,7 +390,7 @@ extension Document {
                 if count == 1 {
                     if let hex = document["$oid"].stringValue {
                         // ObjectID
-                        return try ~ObjectId(hex)
+                        return try .objectId(ObjectId(hex))
                     } else if let dateString = document["$date"].stringValue {
                         // DateTime
                         #if os(Linux)
