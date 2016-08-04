@@ -402,9 +402,9 @@ extension Document {
                         #else
                             if #available(OSX 10.12, iOS 10, *) {
                                 let fmt = ISO8601DateFormatter()
-                                let date = fmt.date(from: dateString)
-                                
-                                return .dateTime(date)
+                                if let date = fmt.date(from: dateString) {
+                                    return .dateTime(date)
+                                }
                             } else {
                                 // Fallback on earlier versions
                                 break subParser
