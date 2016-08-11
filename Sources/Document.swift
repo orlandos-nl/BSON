@@ -998,36 +998,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     
     /// The amount of key-value pairs in the `Document`
     public var count: Int {
-        var position = 4
-        var currentCount = 0
-        
-        while storage.count > position {
-            guard let elementType = ElementType(rawValue: storage[position]) else {
-                return currentCount
-            }
-            
-            position += 1
-            
-            skipKey: while storage.count > position {
-                defer {
-                    position += 1
-                }
-                
-                if storage[position] == 0 {
-                    break skipKey
-                }
-            }
-            
-            position += getLengthOfElement(withDataPosition: position, type: elementType)
-            
-            guard storage.count > position else {
-                return currentCount
-            }
-            
-            currentCount += 1
-        }
-        
-        return currentCount
+        return elementPositions.count
     }
 
     /// The amount of `Byte`s in the `Document`

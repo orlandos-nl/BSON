@@ -60,7 +60,7 @@ class BSONPublicTests: XCTestCase {
     ]
     
     func validateAgainstKitten(_ document: Document) {
-        XCTAssertEqual(document.count, kittenDocument.count)
+        XCTAssertEqual(document.count, 17) //yes, hardcoded!
         XCTAssertEqual(document.bytes, kittenDocument.bytes)
         
         for key in kittenDocument.keys {
