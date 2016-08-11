@@ -126,4 +126,28 @@ class BSONPerformanceTests: XCTestCase {
         
         print("total = \(total)")
     }
+    
+    func testLargeDocumentPerformance() {
+        var document: Document = [:]
+        
+        for i in 0..<3000 {
+            document.append(.int32(Int32(i)), forKey: "test\(i)")
+        }
+        
+        measure {
+            print(document[2450])
+        }
+    }
+    
+    func testLargeDocumentPerformance2() {
+        var document: Document = [:]
+        
+        for i in 0..<3000 {
+            document.append(.int32(Int32(i)), forKey: "test\(i)")
+        }
+        
+        measure {
+            print(document["test2450"])
+        }
+    }
 }

@@ -77,9 +77,10 @@ private enum ElementType : UInt8 {
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
 public struct Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
-    internal var storage: C7.Data
+    internal var storage: [UInt8]
     private var _count: Int? = nil
     private var invalid = false
+    private var elementPositions = [Int]()
     
     // MARK: - Initialization from data
     
@@ -103,7 +104,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        storage = Data(data[0..<Int(length)])
+        storage = Array(data[0..<Int(length)])
+        elementPositions = buildElementPositionsCache()
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
@@ -116,7 +118,22 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        storage = Data(data[0..<Int(length)])
+        storage = Array(data[0..<Int(length)])
+        elementPositions = buildElementPositionsCache()
+    }
+    
+    /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
+    ///
+    /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
+    public init(data: ArraySlice<Byte>) {
+        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
+            self.storage = [5,0,0,0,0]
+            self.invalid = true
+            return
+        }
+        
+        storage = Array(data[0..<Int(length)])
+        elementPositions = buildElementPositionsCache()
     }
     
     /// Initializes an empty `Document`
@@ -166,16 +183,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
     private func getMeta(forKeyBytes keyBytes: [Byte]) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
-        // start at the begin of the element list, the fifth byte
-        var position = 4
-        
-        while storage.count > position {
-            /**** ELEMENT TYPE ****/
-            if storage[position] == 0 {
-                // this is the end of the document
-                return nil
-            }
-            
+        for var position in elementPositions {
             guard let thisElementType = ElementType(rawValue: storage[position]) else {
                 print("Error while parsing BSON document: element type unknown at position \(position).")
                 return nil
@@ -292,16 +300,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         }
     }
     
-    /// the return value of the closure indicates wether the loop must continue (true) or stop (false)
-    
-    /// Creates an iterator that loops over all key-value pairs in this `Document`
-    ///
-    /// - parameter startPos: The byte to start searching from
-    ///
-    /// - returns: An iterator that iterates over all key-value pairs
-    private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
-        var position = startPos
-        return AnyIterator {
+    /// Caches the Element start positions
+    private func buildElementPositionsCache() -> [Int] {
+        var position = 4
+        
+        let iterator = AnyIterator<Int> {
             let startPosition = position
             
             guard self.storage.count - position > 2 else {
@@ -312,6 +315,93 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             guard let type = ElementType(rawValue: self.storage[position]) else {
                 return nil
             }
+            
+            position += 1
+            
+            // get the key data
+            while self.storage.count > position {
+                defer {
+                    position += 1
+                }
+                
+                if self.storage[position] == 0 {
+                    break
+                }
+            }
+            
+            position += self.getLengthOfElement(withDataPosition: position, type: type)
+            
+            return startPosition
+        }
+        
+        
+        var cache = [Int]()
+        
+        for num in iterator {
+            cache.append(num)
+        }
+        
+        return cache
+    }
+    
+    /// Fetches the info for the key-value at the given position
+    private func getMeta(atPosition startPosition: Int) -> (dataPosition: Int, type: ElementType, startPosition: Int)? {
+        var position = startPosition
+        
+        guard self.storage.count - position > 2 else {
+            // Invalid document condition
+            return nil
+        }
+        
+        guard let type = ElementType(rawValue: self.storage[position]) else {
+            return nil
+        }
+        
+        position += 1
+        
+        // get the key data
+        while self.storage.count > position {
+            defer {
+                position += 1
+            }
+            
+            if self.storage[position] == 0 {
+                break
+            }
+        }
+        
+        return (dataPosition: position, type: type, startPosition: startPosition)
+    }
+    
+    /// Creates an iterator that loops over all key-value pairs in this `Document`
+    ///
+    /// - parameter startPos: The byte to start searching from
+    ///
+    /// - returns: An iterator that iterates over all key-value pairs
+    private func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
+        var index = 0
+        
+        return AnyIterator {
+            defer {
+                index += 1
+            }
+            
+            guard self.elementPositions.count > index else {
+                return nil
+            }
+            
+            let startPosition = self.elementPositions[index]
+            var position = startPosition
+            
+            guard self.storage.count - position > 2 else {
+                // Invalid document condition
+                return nil
+            }
+            
+            guard let type = ElementType(rawValue: self.storage[position]) else {
+                return nil
+            }
+            
             position += 1
             
             // get the key data
@@ -357,6 +447,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         // Lastly, the data
         buffer += value.bytes
+        
+        elementPositions.append(storage.endIndex-1)
         
         // Then, insert it into ourselves, before the ending 0-byte.
         storage.insert(contentsOf: buffer, at: storage.endIndex-1)
@@ -631,22 +723,24 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return .nothing
         }
         set {
-            var keyPos = 0
-            
-            for currentKey in makeKeyIterator() {
-                if keyPos == key {
-                    let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
-                    let dataEndPosition = currentKey.dataPosition+len
-                    
-                    storage.removeSubrange(currentKey.dataPosition..<dataEndPosition)
-                    storage.insert(contentsOf: newValue.bytes, at: currentKey.dataPosition)
-                    storage[currentKey.startPosition] = newValue.typeIdentifier
-                    updateDocumentHeader()
-                    
-                    return
+            if let currentKey = getMeta(atPosition: elementPositions[key]) {
+                let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
+                let dataEndPosition = currentKey.dataPosition+len
+                
+                storage.removeSubrange(currentKey.dataPosition..<dataEndPosition)
+                storage.insert(contentsOf: newValue.bytes, at: currentKey.dataPosition)
+                storage[currentKey.startPosition] = newValue.typeIdentifier
+                
+                let oldLength = dataEndPosition - currentKey.dataPosition
+                let relativeLength = newValue.bytes.count - oldLength
+                
+                for (index, element) in elementPositions.enumerated() where element > currentKey.startPosition {
+                    elementPositions[index] = elementPositions[index] + relativeLength
                 }
                 
-                keyPos += 1
+                updateDocumentHeader()
+                
+                return
             }
             
             fatalError("Index out of range")
@@ -730,7 +824,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         let length = Int(UnsafePointer<Int32>(Array(bytes[0..<4])).pointee)
 
         // Check the length
-        guard storage.count == length && storage.bytes.last == 0 else {
+        guard storage.count == length && storage.last == 0 else {
             return false
         }
         
@@ -884,6 +978,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         let length = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
         
         storage.removeSubrange(meta.elementTypePosition..<meta.dataPosition + length)
+        
+        let removedLength = (meta.dataPosition + length) - meta.elementTypePosition
+        
+        for (index, element) in elementPositions.enumerated() where element > meta.elementTypePosition {
+            elementPositions[index] = elementPositions[index] - removedLength
+        }
+        
+        if let index = elementPositions.index(of: meta.elementTypePosition) {
+            elementPositions.remove(at: index)
+        }
+        
         updateDocumentHeader()
         
         return val
@@ -928,17 +1033,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// The amount of `Byte`s in the `Document`
     public var byteCount: Int {
         // TODO: Does this kill the process on empty documents?
-        return Int(UnsafePointer<Int32>(storage.bytes).pointee)
+        return Int(UnsafePointer<Int32>(storage).pointee)
     }
     
     /// The `Byte` `Array` (`[Byte]`) representation of this `Document`
     public var bytes: [UInt8] {
-        return storage.bytes
+        return Array(storage)
     }
     
     /// The `C7.Data` representation of this `Document`
     public var data: C7.Data {
-        return storage
+        return Data(storage)
     }
     
     /// A list of all keys

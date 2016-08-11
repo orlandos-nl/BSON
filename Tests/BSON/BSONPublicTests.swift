@@ -80,7 +80,7 @@ class BSONPublicTests: XCTestCase {
         XCTAssertEqual(document["stringTest"], .nothing)
         XCTAssertEqual(document.removeValue(forKey: "stringTest"), nil)
         
-        XCTAssertEqual(kittenDocument.keys, ["doubleTest", "stringTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
+        XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
         
         let kittenDictionary = kittenDocument.dictionaryValue
         
