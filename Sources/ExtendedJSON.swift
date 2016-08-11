@@ -397,19 +397,9 @@ extension Document {
                         return try .objectId(ObjectId(hex))
                     } else if let dateString = document["$date"].stringValue {
                         // DateTime
-                        #if os(Linux)
-                            break subParser
-                        #else
-                            if #available(OSX 10.12, iOS 10, *) {
-                                let fmt = ISO8601DateFormatter()
-                                if let date = fmt.date(from: dateString) {
-                                    return .dateTime(date)
-                                }
-                            } else {
-                                // Fallback on earlier versions
-                                break subParser
-                            }
-                        #endif
+                        if let date = parseISO8601(from: dateString) {
+                            return .dateTime(date)
+                        }
                     } else if let code = document["$code"].stringValue {
                         return .javascriptCode(code)
                     } else if let numberString = document["$numberLong"].stringValue {
@@ -460,5 +450,233 @@ extension Document {
         
         let jsonVal = try parseObjectOrArray()
         self.init(data: jsonVal.document.bytes)
+    }
+}
+
+func parseTime(from string: String) -> Time? {
+    var index = 0
+    let maxIndex = string.characters.count - 1
+    
+    guard maxIndex >= 6 else {
+        return nil
+    }
+    
+    guard let hours = Int(string[index..<index+2]) else {
+        return nil
+    }
+    
+    index += 2
+    
+    if string[index] == ":" && index + 3 <= maxIndex {
+        index += 1
+    }
+    
+    guard let minutes = Int(string[index..<index+2]) else {
+        return nil
+    }
+    
+    index += 2
+    
+    if string[index] == ":" {
+        index += 1
+    }
+    
+    guard let seconds = Int(string[index..<index+2]) else {
+        return nil
+    }
+    
+    return (hours, minutes, seconds)
+}
+
+/// Parses an ISO8601 string
+///
+/// TODO: Doesn't work with weeks yet
+///
+/// TODO: Doesn't work with empty years yet
+///
+/// TODO: Doesn't work with yeardays, only months
+func parseISO8601(from string: String) -> Date? {
+    let year: Int
+    let maxIndex = string.characters.count - 1
+    var index = 0
+    
+    if string[0] == "-" {
+        year = 2016
+        index += 1
+    } else if string.characters.count >= 4 {
+        guard let tmpYear = Int(string[0..<4]) else {
+            return nil
+        }
+        
+        year = tmpYear
+        index += 4
+    } else {
+        return nil
+    }
+    
+    guard index <= maxIndex else {
+        return nil
+    }
+    
+    if string[index] == "-" {
+        index += 1
+    }
+    
+    if string[index] == "W" {
+        // parse week
+    } else {
+        // parse yearday too, not just months
+        
+        guard index + 2 <= maxIndex else {
+            return nil
+        }
+        
+        guard let month = Int(string[index..<index + 2]) else {
+            return nil
+        }
+        
+        index += 2
+        
+        guard index <= maxIndex else {
+            return date(year: year, month: month)
+        }
+        
+        if string[index] == "-" {
+            index += 1
+        }
+        
+        guard index <= maxIndex else {
+            return date(year: year, month: month)
+        }
+        
+        let day: Int
+        
+        func getDay(length: Int) -> Int? {
+            if let day = Int(string[index..<index + length]) {
+                return day
+            }
+            return nil
+        }
+        
+        if index + 1 > maxIndex {
+            guard let d = getDay(length: 1) else {
+                return nil
+            }
+            
+            day = d
+            
+            return date(year: year, month: month, day: day)
+        } else if index + 2 > maxIndex {
+            guard let d = getDay(length: 2) else {
+                return nil
+            }
+            
+            day = d
+            
+            return date(year: year, month: month, day: day)
+        } else if string[index + 1] == "T" {
+            guard let d = getDay(length: 1) else {
+                return nil
+            }
+            
+            day = d
+            index += 2
+            
+            return date(year: year, month: month, day: day, time: parseTime(from: string[index..<maxIndex]))
+        } else if string[index + 2] == "T" {
+            guard let d = getDay(length: 2) else {
+                return nil
+            }
+            
+            day = d
+            index += 3
+            
+            return date(year: year, month: month, day: day, time: parseTime(from: string[index..<maxIndex + 1]))
+        } else {
+            return nil
+        }
+    }
+    
+    return nil
+}
+
+
+typealias Time = (hours: Int, minutes: Int, seconds: Int)
+
+/// Calculates the amount of passed days
+func totalDays(inMonth month: Int, forYear year: Int, currentDay day: Int) -> Int {
+    // Subtract one day. The provided day is not the amount of days that have passed, it's the current day
+    var days = day - 1
+    
+    // Add leap day for months beyond 2
+    if year % 4 == 0 {
+        days += 1
+    }
+    
+    switch month {
+    case 1:
+        return 0 + day - 1
+    case 2:
+        return 31 + day - 1
+    case 3:
+        return days + 59
+    case 4:
+        return days + 90
+    case 5:
+        return days + 120
+    case 6:
+        return days + 151
+    case 7:
+        return days + 181
+    case 8:
+        return days + 212
+    case 9:
+        return days + 243
+    case 10:
+        return days + 273
+    case 11:
+        return days + 304
+    default:
+        return days + 334
+    }
+}
+
+/// Calculates epoch date from provided timestamp
+func date(year: Int, month: Int, day: Int? = nil, time: Time? = nil) -> Date {
+    let seconds = time?.seconds ?? 0
+    let minutes = time?.minutes ?? 0
+    
+    // Remove one hours, to indicate the hours that passed this day
+    // Not the current hour
+    let hours = (time?.hours ?? 0) - 1
+    let day = day ?? 0
+    let yearDay = totalDays(inMonth: month, forYear: year, currentDay: day)
+    let year = year - 1900
+    
+    let epoch = seconds + minutes*60 + hours*3600 + yearDay*86400 +
+        (year-70)*31536000 + ((year-69)/4)*86400 -
+        ((year-1)/100)*86400 + ((year+299)/400)*86400
+    return Date(timeIntervalSince1970: Double(epoch))
+}
+
+// MARK - String helpers
+extension String {
+    subscript(_ i: Int) -> String {
+        get {
+            let index = self.characters.index(self.characters.startIndex, offsetBy: i)
+            return String(self.characters[index])
+        }
+    }
+    subscript(_ i: CountableRange<Int>) -> String {
+        get {
+            var result = ""
+            
+            for j in i {
+                let index = self.characters.index(self.characters.startIndex, offsetBy: j)
+                 result += String(self.characters[index])
+            }
+            
+            return result
+        }
     }
 }
