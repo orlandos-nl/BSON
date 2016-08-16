@@ -454,38 +454,95 @@ extension Document {
 }
 
 func parseTime(from string: String) -> Time? {
+    func parseTimestamp(_ timestamp: String) -> (hours: Int, minutes: Int, seconds: Int, used: Int)? {
+        var index = 0
+        let maxIndex = timestamp.characters.count
+        
+        guard maxIndex >= 4 else {
+            return nil
+        }
+        
+        guard let hours = Int(timestamp[index..<index+2]) else {
+            return nil
+        }
+        
+        index += 2
+        
+        if timestamp[index] == ":" && index + 3 <= maxIndex {
+            index += 1
+        }
+        
+        guard let minutes = Int(timestamp[index..<index+2]) else {
+            return nil
+        }
+        
+        index += 2
+        var seconds = 0
+        
+        if maxIndex >= index + 3, timestamp[index] == ":" {
+            index += 1
+            
+            guard let s = Int(timestamp[index..<index+2]) else {
+                return nil
+            }
+            
+            seconds = s
+            
+            index += 2
+        }
+        
+        return (hours, minutes, seconds, index)
+    }
+    
     var index = 0
-    let maxIndex = string.characters.count - 1
+    let maxIndex = string.characters.count
     
-    guard maxIndex >= 6 else {
+    guard let result = parseTimestamp(string) else {
         return nil
     }
     
-    guard let hours = Int(string[index..<index+2]) else {
-        return nil
+    index += result.used
+    let hours = result.hours
+    let minutes = result.minutes
+    let seconds = result.seconds
+    
+    var offsetHours = 0
+    var offsetMinutes = 0
+    var offsetSeconds = 0
+    
+    if maxIndex >= index + 3 && (string[index] == "+" || string[index] == "-" || string[index] == "Z") {
+        switch string[index] {
+        case "+":
+            index += 1
+            
+            guard let offsetResult = parseTimestamp(string[index..<maxIndex]) else {
+                return nil
+            }
+            
+            index += offsetResult.used
+            
+            offsetHours = -(offsetResult.hours)
+            offsetMinutes = -(offsetResult.minutes)
+            offsetSeconds = -(offsetResult.seconds)
+        case "-":
+            index += 1
+            guard let offsetResult = parseTimestamp(string[index..<maxIndex]) else {
+                return nil
+            }
+            
+            index += offsetResult.used
+            
+            offsetHours = offsetResult.hours
+            offsetMinutes = offsetResult.minutes
+            offsetSeconds = offsetResult.seconds
+        case "Z":
+            break
+        default:
+            return nil
+        }
     }
     
-    index += 2
-    
-    if string[index] == ":" && index + 3 <= maxIndex {
-        index += 1
-    }
-    
-    guard let minutes = Int(string[index..<index+2]) else {
-        return nil
-    }
-    
-    index += 2
-    
-    if string[index] == ":" {
-        index += 1
-    }
-    
-    guard let seconds = Int(string[index..<index+2]) else {
-        return nil
-    }
-    
-    return (hours, minutes, seconds)
+    return (hours, minutes, seconds, offsetHours, offsetMinutes, offsetSeconds)
 }
 
 /// Parses an ISO8601 string
@@ -551,15 +608,8 @@ func parseISO8601(from string: String) -> Date? {
         
         let day: Int
         
-        func getDay(length: Int) -> Int? {
-            if let day = Int(string[index..<index + length]) {
-                return day
-            }
-            return nil
-        }
-        
         if index + 1 > maxIndex {
-            guard let d = getDay(length: 1) else {
+            guard let d = Int(string[index..<index + 1]) else {
                 return nil
             }
             
@@ -567,7 +617,7 @@ func parseISO8601(from string: String) -> Date? {
             
             return date(year: year, month: month, day: day)
         } else if index + 2 > maxIndex {
-            guard let d = getDay(length: 2) else {
+            guard let d = Int(string[index..<index + 2]) else {
                 return nil
             }
             
@@ -575,7 +625,7 @@ func parseISO8601(from string: String) -> Date? {
             
             return date(year: year, month: month, day: day)
         } else if string[index + 1] == "T" {
-            guard let d = getDay(length: 1) else {
+            guard let d = Int(string[index..<index + 1]) else {
                 return nil
             }
             
@@ -584,7 +634,7 @@ func parseISO8601(from string: String) -> Date? {
             
             return date(year: year, month: month, day: day, time: parseTime(from: string[index..<maxIndex]))
         } else if string[index + 2] == "T" {
-            guard let d = getDay(length: 2) else {
+            guard let d = Int(string[index..<index + 2]) else {
                 return nil
             }
             
@@ -601,7 +651,7 @@ func parseISO8601(from string: String) -> Date? {
 }
 
 
-typealias Time = (hours: Int, minutes: Int, seconds: Int)
+typealias Time = (hours: Int, minutes: Int, seconds: Int, offsetHours: Int, offsetMinutes: Int, offsetSeconds: Int)
 
 /// Calculates the amount of passed days
 func totalDays(inMonth month: Int, forYear year: Int, currentDay day: Int) -> Int {
@@ -643,12 +693,12 @@ func totalDays(inMonth month: Int, forYear year: Int, currentDay day: Int) -> In
 
 /// Calculates epoch date from provided timestamp
 func date(year: Int, month: Int, day: Int? = nil, time: Time? = nil) -> Date {
-    let seconds = time?.seconds ?? 0
-    let minutes = time?.minutes ?? 0
+    let seconds = (time?.seconds ?? 0) - (time?.offsetSeconds ?? 0)
+    let minutes = (time?.minutes ?? 0) - (time?.offsetMinutes ?? 0)
     
     // Remove one hours, to indicate the hours that passed this day
     // Not the current hour
-    let hours = (time?.hours ?? 0) - 1
+    let hours = (time?.hours ?? 0) + (time?.offsetHours ?? 0)
     let day = day ?? 0
     let yearDay = totalDays(inMonth: month, forYear: year, currentDay: day)
     let year = year - 1900

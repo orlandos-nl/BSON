@@ -130,24 +130,24 @@ class BSONPerformanceTests: XCTestCase {
     func testLargeDocumentPerformance() {
         var document: Document = [:]
         
-        for i in 0..<3000 {
+        for i in 0..<9999 {
             document.append(.int32(Int32(i)), forKey: "test\(i)")
         }
         
         measure {
-            print(document[2450])
+            print(document[8765])
         }
     }
     
     func testLargeDocumentPerformance2() {
         var document: Document = [:]
         
-        for i in 0..<3000 {
+        for i in 0..<9999 {
             document.append(.int32(Int32(i)), forKey: "test\(i)")
         }
         
         measure {
-            print(document["test2450"])
+            print(document["test8765"])
         }
     }
 }
