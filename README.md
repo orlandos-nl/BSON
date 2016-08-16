@@ -28,7 +28,7 @@ import PackageDescription
 
 let package = Package(
     name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 2, minor: 2)]
+    dependencies: [.Package(url: "https://github.com/OpenKitten/BSON.git", majorVersion: 3, minor: 5)]
 )
 ```
 
@@ -42,7 +42,7 @@ let package = Package(
 )
 ```
 
-Check the [documentation](https://planteam.github.io/BSON/) for more information.
+Check the [documentation](https://openkitten.github.io/BSON/) for more information.
 
 #### Basic Usage
 
@@ -102,3 +102,9 @@ All non-deprecated BSON 1.0 types are supported.
 - Timestamp
 - Javascript Code
 - Javascript Code with Scope
+
+### Supported features
+
+- MongoDB Extended JSON
+- ISO8601 for Extended JSON Dates
+- **Really** fast BSON Parsing and Serializing
