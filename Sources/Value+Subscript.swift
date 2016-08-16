@@ -9,7 +9,7 @@
 import Foundation
 
 extension Value {
-    public subscript(key: String) -> Value {
+    public subscript(key: [String]) -> Value {
         get {
             switch self {
             case .document(let subdoc):
@@ -34,6 +34,15 @@ extension Value {
                 document[key] = newValue
                 self = .document(document)
             }
+        }
+    }
+    
+    public subscript(key: String...) -> Value {
+        get {
+            return self[key]
+        }
+        set {
+            self[key] = newValue
         }
     }
     

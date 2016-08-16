@@ -639,6 +639,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         }
     }
     
+    
     /// Mutates the key-value pair like you would with a `Dictionary`
     public subscript(key: String) -> Value {
         get {
@@ -689,6 +690,83 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             }
             
             self.append(newValue, forKey: key)
+        }
+    }
+    
+    public subscript(parts: String...) -> Value {
+        get {
+            return self[parts]
+        }
+        set {
+            self[parts] = newValue
+        }
+    }
+    
+    /// Mutates the key-value pair like you would with a `Dictionary`
+    public subscript(parts: [String]) -> Value {
+        get {
+            if parts.count == 1 {
+                if let meta = getMeta(forKeyBytes: [UInt8](parts[0].utf8)) {
+                    return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
+                }
+                
+                // use dot syntax
+                var parts = parts[0].components(separatedBy: ".")
+                
+                guard parts.count >= 2 else {
+                    return .nothing
+                }
+                
+                let firstPart = parts.removeFirst()
+                
+                var value: Value = self[firstPart]
+                while !parts.isEmpty {
+                    let part = parts.removeFirst()
+                    
+                    value = value[part]
+                }
+                
+                return value
+            } else {
+                var parts = parts
+                let firstPart = parts.removeFirst()
+                
+                return self[firstPart][parts]
+            }
+        }
+        
+        set {
+            if parts.count == 1 {
+                let key = parts[0]
+                let parts = key.characters.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+                
+                if parts.count == 2 {
+                    let firstPart = String(parts[0])
+                    let secondPart = String(parts[1])
+                    
+                    self[firstPart][secondPart] = newValue
+                    return
+                }
+                
+                if let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) {
+                    let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+                    let dataEndPosition = meta.dataPosition+len
+                    
+                    storage.removeSubrange(meta.dataPosition..<dataEndPosition)
+                    storage.insert(contentsOf: newValue.bytes, at: meta.dataPosition)
+                    storage[meta.elementTypePosition] = newValue.typeIdentifier
+                    updateDocumentHeader()
+                    
+                    return
+                }
+                
+                self.append(newValue, forKey: key)
+            } else {
+                var parts = parts
+                let firstPart = parts.removeFirst()
+                
+                self[firstPart][parts] = newValue
+            }
         }
     }
     

@@ -229,7 +229,21 @@ class BSONPublicTests: XCTestCase {
         document["minKey"] = "kittens"
         XCTAssertEqual(document["minKey"], "kittens")
         
-        XCTAssertEqual(Value.nothing.makeExtendedJSON(), "{\"$undefined\": true}")
+        XCTAssertEqual(kittenDocument["documentTest", "subArray"][0].string, "henk")
+        
+        let recursiveDocument: Document = [
+            "henk": [
+                "fred": [
+                    "bob": [
+                        "piet": [
+                            "klaas": 3
+                        ]
+                    ]
+                ]
+            ]
+        ]
+        
+        XCTAssertEqual(recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"].int, 3)
     }
     
     func testObjectId() throws {
@@ -286,6 +300,8 @@ class BSONPublicTests: XCTestCase {
         let otherDocument = try Document(extendedJSON: kittenJSON)
         
         XCTAssertEqual(kittenDocument, otherDocument)
+        
+        XCTAssertEqual(Value.nothing.makeExtendedJSON(), "{\"$undefined\": true}")
     }
     
     func testDocumentIndexes() {
