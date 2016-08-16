@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import C7
 
 public protocol BSONArrayProtocol : _ArrayProtocol {}
 extension Array : BSONArrayProtocol {}
@@ -94,10 +93,10 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         self.init(data: byteArray)
     }
     
-    /// Initializes this Doucment with binary `C7.Data`
+    /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
-    /// - parameters data: the `C7.Data` that's being used to initialize this `Document`
-    public init(data: C7.Data) {
+    /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
+    public init(data: [UInt8]) {
         guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
@@ -111,21 +110,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    public init(data: [Byte]) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
-            self.storage = [5,0,0,0,0]
-            self.invalid = true
-            return
-        }
-        
-        storage = Array(data[0..<Int(length)])
-        elementPositions = buildElementPositionsCache()
-    }
-    
-    /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
-    ///
-    /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    public init(data: ArraySlice<Byte>) {
+    public init(data: ArraySlice<UInt8>) {
         guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
@@ -182,7 +167,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter keyBytes: The binary (`[Byte]`) representation of the key's `String` as C-String
     ///
     /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
-    private func getMeta(forKeyBytes keyBytes: [Byte]) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
+    private func getMeta(forKeyBytes keyBytes: [UInt8]) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
         for var position in elementPositions {
             guard let thisElementType = ElementType(rawValue: storage[position]) else {
                 print("Error while parsing BSON document: element type unknown at position \(position).")
@@ -1012,11 +997,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         return Array(storage)
     }
     
-    /// The `C7.Data` representation of this `Document`
-    public var data: C7.Data {
-        return Data(storage)
-    }
-    
     /// A list of all keys
     public var keys: [String] {
         var keys = [String]()
@@ -1103,6 +1083,8 @@ extension Document : CustomStringConvertible {
     }
 #endif
 
+// MARK: Operators
+
 public struct DocumentIndex : Comparable {
     // The byte index is the very start of the element, the element type
     private var byteIndex: Int
@@ -1110,25 +1092,55 @@ public struct DocumentIndex : Comparable {
     private init(byteIndex: Int) {
         self.byteIndex = byteIndex
     }
+    
+    public static func ==(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
+        return lhs.byteIndex == rhs.byteIndex
+    }
+    
+    public static func <(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
+        return lhs.byteIndex < rhs.byteIndex
+    }
 }
 
-public func ==(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
-    return lhs.byteIndex == rhs.byteIndex
+extension Document : Equatable {
+    public static func ==(lhs: Document, rhs: Document) -> Bool {
+        return lhs === rhs // for now
+        // TODO: Implement proper comparison here.
+    }
+    
+    /// Returns true if `lhs` and `rhs` store the same serialized data.
+    /// Implies that `lhs` == `rhs`.
+    public static func ===(lhs: Document, rhs: Document) -> Bool {
+        return lhs.storage == rhs.storage
+    }
 }
 
-public func <(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
-    return lhs.byteIndex < rhs.byteIndex
+extension Document {
+    public static func +(lhs: Document, rhs: Document) -> Document {
+        var new = lhs
+        new += rhs
+        return new
+    }
+    
+    public static func +=(lhs: inout Document, rhs: Document) {
+        let rhsIsSmaller = lhs.count > rhs.count
+        let smallest = rhsIsSmaller ? rhs : lhs
+        let other = rhsIsSmaller ? lhs : rhs
+        
+        let otherKeys = other.keys
+        for key in smallest.keys {
+            if otherKeys.contains(key) {
+                lhs.removeValue(forKey: key)
+            }
+        }
+        
+        lhs.storage.removeLast()
+        
+        let appendData = rhs.storage[4..<rhs.storage.endIndex]
+        lhs.storage.append(contentsOf: appendData)
+        
+        lhs.updateDocumentHeader()
+        lhs.elementPositions = lhs.buildElementPositionsCache()
+    }
 }
 
-// MARK: Operators
-extension Document : Equatable {}
-public func ==(lhs: Document, rhs: Document) -> Bool {
-    return lhs === rhs // for now
-    // TODO: Implement proper comparison here.
-}
-
-/// Returns true if `lhs` and `rhs` store the same serialized data.
-/// Implies that `lhs` == `rhs`.
-public func ===(lhs: Document, rhs: Document) -> Bool {
-    return lhs.storage == rhs.storage
-}
