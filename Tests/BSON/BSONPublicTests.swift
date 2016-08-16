@@ -32,7 +32,8 @@ class BSONPublicTests: XCTestCase {
             ("testDocumentIndexes", testDocumentIndexes),
             ("testComparison", testComparison),
             ("testDotSyntax", testDotSyntax),
-            ("testJSONEscapeSequences", testJSONEscapeSequences)
+            ("testJSONEscapeSequences", testJSONEscapeSequences),
+            ("testDocumentCombineOperators", testDocumentCombineOperators)
         ]
     }
     
@@ -366,6 +367,17 @@ class BSONPublicTests: XCTestCase {
         let json = bson.makeExtendedJSON()
         
         XCTAssertEqual(try Document(extendedJSON: json).bytes, bson.bytes)
+    }
+    
+    func testDocumentCombineOperators() {
+        let stillJustKittenDocument = kittenDocument + kittenDocument
+        validateAgainstKitten(stillJustKittenDocument)
+        
+        let doc1 = ["harrie": "bob", "is": 4, "konijn": true] as Document
+        let doc2 = ["vis": "kaas", "konijn": "nee", "henk": false] as Document
+        let doc3 = doc1 + doc2
+        XCTAssertEqual(doc3, ["harrie": "bob", "is": 4, "vis": "kaas", "konijn": "nee", "henk": false])
+        
     }
     
 }

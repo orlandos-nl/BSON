@@ -14,20 +14,6 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "______Target_C7"
-               BuildableName = "C7.framework"
-               BlueprintName = "C7"
-               ReferencedContainer = "container:BSON.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "______Target_BSON"
                BuildableName = "BSON.framework"
                BlueprintName = "BSON"
@@ -70,9 +56,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "______Target_C7"
-            BuildableName = "C7.framework"
-            BlueprintName = "C7"
+            BlueprintIdentifier = "______Target_BSON"
+            BuildableName = "BSON.framework"
+            BlueprintName = "BSON"
             ReferencedContainer = "container:BSON.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
