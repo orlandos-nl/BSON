@@ -12,7 +12,9 @@ import Foundation
     import Glibc
 #endif
 
-
+/// 12-byte unique ID
+///
+/// Defined as: `UNIX epoch time` + `machine identifier` + `process ID` + `random increment`
 public struct ObjectId {
     public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
     
@@ -96,10 +98,14 @@ public struct ObjectId {
         self._storage = data
     }
     
+    /// Initializes this ObjectId with a tuple of 12 bytes
     public init(raw storage: Raw) {
         self._storage = [storage.0, storage.1, storage.2, storage.3, storage.4, storage.5, storage.6, storage.7, storage.8, storage.9, storage.10, storage.11]
     }
     
+    /// Initializes ObjectId with an array of bytes
+    ///
+    /// Throws when there are not exactly 12 bytes provided
     public init(bytes data: [UInt8]) throws {
         guard data.count == 12 else {
             throw DeserializationError.InvalidElementSize
@@ -108,6 +114,7 @@ public struct ObjectId {
         self._storage = data
     }
     
+    /// The 12 bytes represented as 24-character hex-string
     public var hexString: String {
         return _storage.map {
             var s = String($0, radix: 16, uppercase: false)

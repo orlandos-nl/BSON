@@ -9,10 +9,12 @@
 import Foundation
 
 public extension String {
+    /// The bytes in this `String`
     public var bytes : [UInt8] {
         return Value.string(self).bytes
     }
     
+    /// This `String` as c-string
     public var cStringBytes : [UInt8] {
         var byteArray = self.utf8.filter{$0 != 0x00}
         byteArray.append(0x00)
@@ -33,7 +35,6 @@ public extension String {
         consumedBytes = res.0
         return res.1
     }
-    
     
     private static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
@@ -99,6 +100,7 @@ public extension String {
 }
 
 public extension Int16 {
+    /// This `Int16` as two `UInt8`s
     public var bytes : [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
@@ -117,6 +119,7 @@ public extension Int16 {
 }
 
 public extension Int32 {
+    /// This `Int32` as two `UInt8`s
     public var bytes : [UInt8] {
         return Value.int32(self).bytes
     }
@@ -133,6 +136,7 @@ public extension Int32 {
 }
 
 public extension Int64 {
+    /// This `Int64` as two `UInt8`s
     public var bytes : [UInt8] {
         return Value.int64(self).bytes
     }
@@ -149,6 +153,7 @@ public extension Int64 {
 }
 
 public extension Int {
+    /// This `Int` as `Int64` as two `UInt8`s
     public var bytes : [UInt8] {
         return Value.int64(Int64(self)).bytes
     }

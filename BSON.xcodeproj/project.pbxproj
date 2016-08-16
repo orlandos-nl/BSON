@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0ADA82191D6351A100F7D750 /* ISO8601.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADA82181D6351A100F7D750 /* ISO8601.swift */; };
 		_LinkFileRef_BSON_via_BSONTestSuite /* BSON.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "_____Product_BSON" /* BSON.framework */; };
 		__src_cc_ref_Sources/Document.swift /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Document.swift /* Document.swift */; };
 		__src_cc_ref_Sources/Error.swift /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = __PBXFileRef_Sources/Error.swift /* Error.swift */; };
@@ -36,6 +37,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0ADA82181D6351A100F7D750 /* ISO8601.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ISO8601.swift; sourceTree = "<group>"; };
 		__PBXFileRef_BSON.xcodeproj/Configs/Project.xcconfig /* BSON.xcodeproj/Configs/Project.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = BSON.xcodeproj/Configs/Project.xcconfig; sourceTree = "<group>"; };
 		__PBXFileRef_BSONTestSuite_Info.plist /* BSON.xcodeproj/BSONTestSuite_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BSON.xcodeproj/BSONTestSuite_Info.plist; sourceTree = SOURCE_ROOT; };
 		__PBXFileRef_BSON_Info.plist /* BSON.xcodeproj/BSON_Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = BSON.xcodeproj/BSON_Info.plist; sourceTree = SOURCE_ROOT; };
@@ -142,6 +144,7 @@
 				__PBXFileRef_Sources/Value.swift /* Value.swift */,
 				__PBXFileRef_Sources/ValueConvertible.swift /* ValueConvertible.swift */,
 				__PBXFileRef_BSON_Info.plist /* BSON.xcodeproj/BSON_Info.plist */,
+				0ADA82181D6351A100F7D750 /* ISO8601.swift */,
 			);
 			name = BSON;
 			path = Sources;
@@ -246,6 +249,7 @@
 				"__src_cc_ref_Sources/Value+Subscript.swift" /* Value+Subscript.swift in Sources */,
 				__src_cc_ref_Sources/Value.swift /* Value.swift in Sources */,
 				__src_cc_ref_Sources/ValueConvertible.swift /* ValueConvertible.swift in Sources */,
+				0ADA82191D6351A100F7D750 /* ISO8601.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
