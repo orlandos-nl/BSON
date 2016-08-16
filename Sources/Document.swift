@@ -1144,3 +1144,16 @@ extension Document {
     }
 }
 
+
+extension Sequence where Iterator.Element == Document {
+    /// Converts a sequence of Documents to an array of documents in BSON format
+    public func makeDocument() -> Document {
+        var combination = Document()
+        for doc in self {
+            combination.append(~doc)
+        }
+        
+        return combination
+    }
+}
+
