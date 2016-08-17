@@ -107,7 +107,7 @@ public extension Integer {
         }
     }
     
-    internal static func instantiate(bytes data: [UInt8]) throws -> Self {
+    public static func instantiate(bytes data: [UInt8]) throws -> Self {
         guard data.count >= sizeof(Self.self) else {
             throw DeserializationError.InvalidElementSize
         }
