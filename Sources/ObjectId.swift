@@ -19,12 +19,12 @@ public struct ObjectId {
     public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
     
     #if os(Linux)
-    private static var random: UInt8 = Int32(rand()).bytes[0]
+    private static var random = UInt8(truncatingBitPattern: rand())
+    private static var counter = UInt16(truncatingBitPattern: rand())
     #else
-    private static var random: UInt8 = UInt8(arc4random_uniform(255))
+    private static var random = UInt8(truncatingBitPattern: arc4random_uniform(255))
+    private static var counter = UInt16(truncatingBitPattern: arc4random_uniform(UInt32(UInt16.max)))
     #endif
-    
-    private static var counter: Int16 = 0
     
     public var storage: Raw {
         get {
@@ -61,13 +61,9 @@ public struct ObjectId {
         // Take a random number
         data += [ObjectId.random]
         
-        if ObjectId.counter == Int16.max - 1 {
-            ObjectId.counter = Int16.min
-        }
-        
         // And add a counter as 2 bytes and increment it
         data += ObjectId.counter.bytes
-        ObjectId.counter += 1
+        ObjectId.counter = ObjectId.counter &+ 1
         
         self._storage = data
     }

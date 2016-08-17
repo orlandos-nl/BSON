@@ -99,62 +99,21 @@ public extension String {
     }
 }
 
-public extension Int16 {
-    /// This `Int16` as two `UInt8`s
+public extension Integer {
     public var bytes : [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
-            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Int16.self)))
+            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Self.self)))
         }
     }
     
-    internal static func instantiate(bytes data: [UInt8]) throws -> Int16 {
-        guard data.count >= 2 else {
+    internal static func instantiate(bytes data: [UInt8]) throws -> Self {
+        guard data.count >= sizeof(Self.self) else {
             throw DeserializationError.InvalidElementSize
         }
         
-        let integer = UnsafePointer<Int16>(data).pointee
+        let integer = UnsafePointer<Self>(data).pointee
         return integer
     }
 }
 
-public extension Int32 {
-    /// This `Int32` as two `UInt8`s
-    public var bytes : [UInt8] {
-        return Value.int32(self).bytes
-    }
-    
-    /// Instantiate from 4 bytes of BSON
-    public static func instantiate(bytes data: [UInt8]) throws -> Int32 {
-        guard data.count >= 4 else {
-            throw DeserializationError.InvalidElementSize
-        }
-        
-        let integer = UnsafePointer<Int32>(data).pointee
-        return integer
-    }
-}
-
-public extension Int64 {
-    /// This `Int64` as two `UInt8`s
-    public var bytes : [UInt8] {
-        return Value.int64(self).bytes
-    }
-    
-    /// Restore given Int64 from storage
-    public static func instantiate(bytes data: [UInt8]) throws -> Int64 {
-        guard data.count >= 8 else {
-            throw DeserializationError.InvalidElementSize
-        }
-        
-        let integer = UnsafePointer<Int64>(data).pointee
-        return integer
-    }
-}
-
-public extension Int {
-    /// This `Int` as `Int64` as two `UInt8`s
-    public var bytes : [UInt8] {
-        return Value.int64(Int64(self)).bytes
-    }
-}
