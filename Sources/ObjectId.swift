@@ -61,6 +61,10 @@ public struct ObjectId {
         // Take a random number
         data += [ObjectId.random]
         
+        if ObjectId.counter == Int16.max - 1 {
+            ObjectId.counter = Int16.min
+        }
+        
         // And add a counter as 2 bytes and increment it
         data += ObjectId.counter.bytes
         ObjectId.counter += 1
