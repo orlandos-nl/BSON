@@ -33,7 +33,8 @@ class BSONPublicTests: XCTestCase {
             ("testComparison", testComparison),
             ("testDotSyntax", testDotSyntax),
             ("testJSONEscapeSequences", testJSONEscapeSequences),
-            ("testDocumentCombineOperators", testDocumentCombineOperators)
+            ("testDocumentCombineOperators", testDocumentCombineOperators),
+            ("testDocumentFlattening", testDocumentFlattening)
         ]
     }
     
@@ -393,6 +394,39 @@ class BSONPublicTests: XCTestCase {
         let doc2 = ["vis": "kaas", "konijn": "nee", "henk": false] as Document
         let doc3 = doc1 + doc2
         XCTAssertEqual(doc3, ["harrie": "bob", "is": 4, "vis": "kaas", "konijn": "nee", "henk": false])
+        
+    }
+    
+    func testDocumentFlattening() {
+        let correctFlatKitten: Document = [
+            "doubleTest": 0.04,
+            "stringTest": "foo",
+            "documentTest.documentSubDoubleTest": 13.37,
+            "documentTest.subArray.0": "henk",
+            "documentTest.subArray.1": "fred",
+            "documentTest.subArray.2": "kaas",
+            "documentTest.subArray.3": "goudvis",
+            "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
+            "currentTime": .dateTime(Date(timeIntervalSince1970: Double(1453589266))),
+            "cool32bitNumber": .int32(9001),
+            "cool64bitNumber": 21312153,
+            "code": .javascriptCode("console.log(\"Hello there\");"),
+            "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
+            "nothing": .null,
+            "data": .binary(subtype: BinarySubtype.generic, data: [34,34,34,34,34]),
+            "boolFalse": false,
+            "boolTrue": true,
+            "timestamp": .timestamp(stamp: 2000, increment: 8),
+            "regex": .regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
+            "minKey": .minKey,
+            "maxKey": .maxKey
+        ]
+        
+        var flattenedKitten = kittenDocument
+        flattenedKitten.flatten()
+        
+        XCTAssertEqual(correctFlatKitten, flattenedKitten)
+        XCTAssertTrue(flattenedKitten.validate())
         
     }
     
