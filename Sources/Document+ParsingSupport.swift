@@ -180,6 +180,8 @@ extension Document {
     }
     
     /// Fetches the info for the key-value at the given position
+    ///
+    /// - parameter startPosition: The position of the element type identifier, before the key bytes
     internal func getMeta(atPosition startPosition: Int) -> (dataPosition: Int, type: ElementType, startPosition: Int)? {
         var position = startPosition
         
@@ -194,7 +196,7 @@ extension Document {
         
         position += 1
         
-        // get the key data
+        // move past the key data
         while self.storage.count > position {
             defer {
                 position += 1
@@ -318,6 +320,11 @@ extension Document {
             }
             
             let length = Int(UnsafePointer<Int32>(Array(storage[position..<position+4])).pointee)
+            
+            guard remaining() >= length else {
+                return .nothing
+            }
+            
             let subData = Array(storage[position..<position+length])
             let document = Document(data: subData)
             return type == .document ? .document(document) : .array(document)
