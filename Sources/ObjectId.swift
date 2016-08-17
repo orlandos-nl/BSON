@@ -19,11 +19,11 @@ public struct ObjectId {
     public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
     
     #if os(Linux)
-    private static var random = UInt8(truncatingBitPattern: rand())
-    private static var counter = UInt16(truncatingBitPattern: rand())
+    private static var random = rand()
+    private static var counter = rand()
     #else
-    private static var random = UInt8(truncatingBitPattern: arc4random_uniform(255))
-    private static var counter = UInt16(truncatingBitPattern: arc4random_uniform(UInt32(UInt16.max)))
+    private static var random = arc4random_uniform(UInt32.max)
+    private static var counter = arc4random_uniform(UInt32.max)
     #endif
     
     public var storage: Raw {
@@ -46,20 +46,8 @@ public struct ObjectId {
         // Take the current UNIX epoch as Int32 and take it's bytes
         data += Int32(currentTime.timeIntervalSince1970).bytes
         
-        #if os(Linux)
-            let processInfo = ProcessInfo.processInfo()
-        #else
-            let processInfo = ProcessInfo.processInfo
-        #endif
-        
-        // Take the machine identifier
-        data += Array(processInfo.hostName.hash.bytes[0...2])
-        
-        // Take the process identifier as 2 bytes
-        data += Array(processInfo.processIdentifier.bytes[0...1])
-        
         // Take a random number
-        data += [ObjectId.random]
+        data += ObjectId.random.bytes
         
         // And add a counter as 2 bytes and increment it
         data += ObjectId.counter.bytes

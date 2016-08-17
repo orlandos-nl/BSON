@@ -150,4 +150,12 @@ class BSONPerformanceTests: XCTestCase {
             _ = document["test8765"]
         }
     }
+    
+    func testObjectidPerformance() {
+        measure {
+            for _ in 0..<10_000 {
+                _ = ObjectId()
+            }
+        }
+    }
 }
