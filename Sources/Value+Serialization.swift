@@ -26,7 +26,8 @@ extension Value {
             return value.bytes
         case .binary(let subtype, let data):
             guard data.count < Int(Int32.max) else {
-                return Int32(0).bytes + [0]
+                // 4 bytes for the length and a null terminator byte
+                return [0, 0, 0, 0, 0]
             }
             
             let length = Int32(data.count)

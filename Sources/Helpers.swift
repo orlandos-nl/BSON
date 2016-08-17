@@ -99,21 +99,35 @@ public extension String {
     }
 }
 
-public extension Integer {
+extension Integer {
+    public static var size: Int {
+        return sizeof(Self.self)
+    }
+    
     public var bytes : [UInt8] {
         var integer = self
         return withUnsafePointer(&integer) {
-            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: sizeof(Self.self)))
+            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: Self.size))
         }
     }
     
     public static func instantiate(bytes data: [UInt8]) throws -> Self {
-        guard data.count >= sizeof(Self.self) else {
+        guard data.count >= self.size else {
             throw DeserializationError.InvalidElementSize
         }
         
-        let integer = UnsafePointer<Self>(data).pointee
-        return integer
+        return UnsafePointer<Self>(data).pointee
     }
 }
 
+public extension Int32 {
+    public static var size: Int {
+        return 4
+    }
+}
+
+public extension Int64 {
+    public static var size: Int {
+        return 8
+    }
+}

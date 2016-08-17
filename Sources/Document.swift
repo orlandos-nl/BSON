@@ -173,21 +173,24 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
     public mutating func append(_ value: Value, forKey key: String) {
-        var buffer = [UInt8]()
-        
-        // First, the type
-        buffer.append(value.typeIdentifier)
-        
-        // Then, the key name
-        buffer += key.utf8 + [0x00]
-        
-        // Lastly, the data
-        buffer += value.bytes
-        
+        // We're going to insert the element before the Document null terminator
         elementPositions.append(storage.endIndex-1)
         
-        // Then, insert it into ourselves, before the ending 0-byte.
-        storage.insert(contentsOf: buffer, at: storage.endIndex-1)
+        // Remove Document Null Terminator
+        storage.removeLast()
+        
+        // Append the key-value pair
+        // Type identifier
+        storage.append(value.typeIdentifier)
+        // Key
+        storage.append(contentsOf: key.utf8)
+        // Key null terminator
+        storage.append(0x00)
+        // Value
+        storage.append(contentsOf: value.bytes)
+        
+        // Reappend the Document null terminator
+        storage.append(0x00)
         
         // Increase the bytecount
         updateDocumentHeader()
