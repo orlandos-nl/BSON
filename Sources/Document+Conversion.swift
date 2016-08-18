@@ -16,7 +16,6 @@ extension Document {
     
     /// The amount of `Byte`s in the `Document`
     public var byteCount: Int {
-        // TODO: Does this kill the process on empty documents?
         return Int(UnsafePointer<Int32>(storage).pointee)
     }
     

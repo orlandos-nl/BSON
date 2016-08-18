@@ -12,6 +12,7 @@ public protocol BSONArrayProtocol : _ArrayProtocol {}
 extension Array : BSONArrayProtocol {}
 
 extension BSONArrayProtocol where Iterator.Element == Document {
+    /// Instantiates multiple Documents from an array of bytes
     public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
         var array = [Document]()
         var position = 0
@@ -153,7 +154,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         self.init(array: elements)
     }
     
-    /// Initializes this `Document` as an `Array` using an `Array` literal
+    /// Initializes this `Document` as an `Array` using an `Array`
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [Value]) {
@@ -269,8 +270,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Return the position of the byte after the value
         return DocumentIndex(byteIndex: position + length)
     }
-    
-    // MARK: - The old API had this...
     
     /// Finds the key-value pair for the given key and removes it
     ///

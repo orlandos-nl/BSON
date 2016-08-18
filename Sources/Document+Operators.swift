@@ -9,9 +9,11 @@
 import Foundation
 
 extension Document : Equatable {
+    /// Compares two Documents to be equal to each other
+    ///
+    /// TODO: Implement proper comparison here.
     public static func ==(lhs: Document, rhs: Document) -> Bool {
         return lhs === rhs // for now
-        // TODO: Implement proper comparison here.
     }
     
     /// Returns true if `lhs` and `rhs` store the same serialized data.
@@ -22,12 +24,16 @@ extension Document : Equatable {
 }
 
 extension Document {
+    /// Appends `rhs` to `lhs` overwriting the keys from `lhs` when necessary
+    ///
+    /// - returns: The modified `lhs`
     public static func +(lhs: Document, rhs: Document) -> Document {
         var new = lhs
         new += rhs
         return new
     }
     
+    /// Appends `rhs` to `lhs` overwriting the keys from `lhs` when necessary
     public static func +=(lhs: inout Document, rhs: Document) {
         let rhsIsSmaller = lhs.count > rhs.count
         let smallest = rhsIsSmaller ? rhs : lhs

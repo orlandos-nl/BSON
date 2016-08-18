@@ -10,6 +10,7 @@ import Foundation
 
 
 extension Document : CustomStringConvertible {
+    /// The (debug) description of this Document
     public var description: String {
         return self.makeExtendedJSON()
     }
@@ -17,6 +18,7 @@ extension Document : CustomStringConvertible {
 
 #if os(OSX) || os(iOS)
     extension Document : CustomPlaygroundQuickLookable {
+        /// The Playground QuickLook version of this Document
         public var customPlaygroundQuickLook: PlaygroundQuickLook {
             return .text(self.makeExtendedJSON())
         }

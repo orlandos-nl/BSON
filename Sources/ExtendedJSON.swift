@@ -85,10 +85,19 @@ extension Value {
 extension Document {
     /// All errors that can occur when parsing Extended JSON
     public enum ExtendedJSONError : Error {
+        /// Invalid character at position
         case invalidCharacter(position: String.CharacterView.Index)
+        
+        /// -
         case unexpectedEndOfInput
+        
+        /// Expected a String at position at position
         case stringExpected(position: String.CharacterView.Index)
+        
+        /// Unable to parse the number at position
         case numberParseError(position: String.CharacterView.Index)
+        
+        /// Unable to parse the value at position
         case unparseableValue(position: String.CharacterView.Index)
     }
     

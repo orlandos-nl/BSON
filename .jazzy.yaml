@@ -11,28 +11,27 @@ custom_categories:
     children:
     - Document
     - ObjectId
-    - Binary
-    - "Null"
     - Bool
     - Double
     - Int
     - Int32
     - Int64
-    - NSData
-    - NSDate
+    - Date
     - String
-    - JavaScriptCode
-    - MinKey
-    - MaxKey
-    - RegularExpression
-    - Timestamp
+    - Value
+  
+  - name: Othery
+    children:
+    - ValueConvertible
+    - DocumentIndex
 
   - name: Errors
     children:
     - DeserializationError
+    - ExtendedJSONError
 
   - name: Used internally
     children:
-    - BSONLength
-    - ElementType
-    - BSONElement
+    - BSONArrayProtocol
+    - Integer
+    - Sequence

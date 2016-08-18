@@ -8,9 +8,30 @@
 
 import Foundation
 
+/// All binary subtypes
 public enum BinarySubtype {
-    case generic, function, binaryOld, uuidOld, uuid, md5, userDefined(UInt8)
+    /// The default subtype. Nothing special
+    case generic
     
+    /// A function
+    case function
+    
+    /// Old binary subtype
+    case binaryOld
+    
+    /// Old UUID Subtype
+    case uuidOld
+    
+    /// UUID
+    case uuid
+    
+    /// MD5 hash
+    case md5
+    
+    /// Custom
+    case userDefined(UInt8)
+    
+    /// The raw UInt8 value
     public var rawValue : UInt8 {
         switch self {
         case .generic: return 0x00
@@ -23,6 +44,7 @@ public enum BinarySubtype {
         }
     }
     
+    /// Creates a `BinarySubtype` from an `UInt8`
     public init(rawValue: UInt8) {
         switch rawValue {
         case 0x00: self = .generic
@@ -60,23 +82,60 @@ public enum BinarySubtype {
 /// - maxKey:                             Internal MongoDB type with highest sort order.
 /// - nothing:                            Internal OpenKitten BSON type to indicate that a value is not present.
 public enum Value {
+    /// Double precision floating point
     case double(Double)
+    
+    /// -
     case string(String)
+    
+    /// Dictionary-like Document
     case document(Document)
+    
+    /// Array-like Document
     case array(Document)
+    
+    /// Binary data with an identification subtype
     case binary(subtype: BinarySubtype, data: [UInt8])
+    
+    /// Unique identifier
     case objectId(ObjectId)
+    
+    /// -
     case boolean(Bool)
+    
+    /// `Date`
     case dateTime(Date)
+    
+    /// NULL
     case null
+    
+    /// Regex, primarily used for MongoDB comparison
     case regularExpression(pattern: String, options: String)
+    
+    /// JavaScript Code, used for functions in MongoDB
     case javascriptCode(String)
+    
+    /// JavaScript Code in a scope, used for functions in MongoDB
     case javascriptCodeWithScope(code: String, scope: Document)
+    
+    /// -
     case int32(Int32)
+    
+    /// UNIX Epoch time with increment
     case timestamp(stamp: Int32, increment: Int32)
+    
+    /// -
     case int64(Int64)
+    
+    /// -
     case minKey
+    
+    /// -
     case maxKey
+    
+    /// Used by this BSON library to indicate there is no resulting value.
+    ///
+    /// Primarily used to allow recursive subscripting without `?`
     case nothing
     
     internal var typeIdentifier : UInt8 {

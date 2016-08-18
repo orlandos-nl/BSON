@@ -26,6 +26,7 @@ public struct ObjectId {
     private static var counter = arc4random_uniform(UInt32.max)
     #endif
     
+    /// This ObjectId as 12-byte tuple
     public var storage: Raw {
         get {
             return (_storage[0], _storage[1], _storage[2], _storage[3], _storage[4], _storage[5], _storage[6], _storage[7], _storage[8], _storage[9], _storage[10], _storage[11])
