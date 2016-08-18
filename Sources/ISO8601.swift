@@ -1,7 +1,7 @@
 import Foundation
 
 /// Reads a `String` into hours, minutes and seconds
-fileprivate func parseTimestamp(_ timestamp: String) -> (hours: Int, minutes: Int, seconds: Int, used: Int)? {
+private func parseTimestamp(_ timestamp: String) -> (hours: Int, minutes: Int, seconds: Int, used: Int)? {
     var index = 0
     let maxIndex = timestamp.characters.count
     
@@ -49,7 +49,7 @@ fileprivate func parseTimestamp(_ timestamp: String) -> (hours: Int, minutes: In
 }
 
 /// Parses a timestamp (not date) from a `String` including timezones
-fileprivate func parseTime(from string: String) -> Time? {
+private func parseTime(from string: String) -> Time? {
     var index = 0
     let maxIndex = string.characters.count
     
@@ -227,7 +227,7 @@ internal func parseISO8601(from string: String) -> Date? {
 typealias Time = (hours: Int, minutes: Int, seconds: Int, offsetHours: Int, offsetMinutes: Int, offsetSeconds: Int)
 
 /// Calculates the amount of passed days
-fileprivate func totalDays(inMonth month: Int, forYear year: Int, currentDay day: Int) -> Int {
+private func totalDays(inMonth month: Int, forYear year: Int, currentDay day: Int) -> Int {
     // Subtract one day. The provided day is not the amount of days that have passed, it's the current day
     var days = day - 1
     
@@ -265,7 +265,7 @@ fileprivate func totalDays(inMonth month: Int, forYear year: Int, currentDay day
 }
 
 /// Calculates epoch date from provided time information
-fileprivate func date(year: Int, month: Int, day: Int? = nil, time: Time? = nil) -> Date {
+private func date(year: Int, month: Int, day: Int? = nil, time: Time? = nil) -> Date {
     let seconds = (time?.seconds ?? 0) - (time?.offsetSeconds ?? 0)
     let minutes = (time?.minutes ?? 0) - (time?.offsetMinutes ?? 0)
     
@@ -283,7 +283,7 @@ fileprivate func date(year: Int, month: Int, day: Int? = nil, time: Time? = nil)
 }
 
 // MARK - String helpers
-fileprivate extension String {
+private extension String {
     subscript(_ i: Int) -> String {
         get {
             let index = self.characters.index(self.characters.startIndex, offsetBy: i)
