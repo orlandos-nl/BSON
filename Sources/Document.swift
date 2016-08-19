@@ -207,6 +207,15 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         self.append(value, forKey: key)
     }
     
+    /// Appends the convents of `otherDocument` to `self` overwriting any keys in `self` with the `otherDocument` equivalent in the case of duplicates
+    public mutating func append(contentsOf otherDocument: Document) {
+        if self.validatesAsArray() && otherDocument.validatesAsArray() {
+            self = Document(array: self.arrayValue + otherDocument.arrayValue)
+        } else {
+            self += otherDocument
+        }
+    }
+    
     /// Updates this `Document`'s storage to contain the proper `Document` length header
     internal mutating func updateDocumentHeader() {
         storage.replaceSubrange(0..<4, with: Int32(storage.count).bytes)

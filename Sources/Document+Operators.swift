@@ -11,9 +11,19 @@ import Foundation
 extension Document : Equatable {
     /// Compares two Documents to be equal to each other
     ///
-    /// TODO: Implement proper comparison here.
+    /// TODO: Implement fast comparison here
     public static func ==(lhs: Document, rhs: Document) -> Bool {
-        return lhs === rhs // for now
+        guard lhs.count == rhs.count else {
+            return false
+        }
+        
+        for (key, value) in lhs {
+            guard rhs[key] == value else {
+                return false
+            }
+        }
+        
+        return true
     }
     
     /// Returns true if `lhs` and `rhs` store the same serialized data.
