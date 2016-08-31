@@ -8,17 +8,29 @@
 
 import Foundation
 
-public protocol BSONArrayProtocol : _ArrayProtocol {}
-extension Array : BSONArrayProtocol {}
+public protocol __DocumentProtocolForArrayAdditions {
+    var bytes: [UInt8] { get }
+    init(data: [UInt8])
+    func validate() -> Bool
+}
+extension Document : __DocumentProtocolForArrayAdditions {}
 
-extension BSONArrayProtocol where Iterator.Element == Document {
-    /// Instantiates multiple Documents from an array of bytes
+extension Array where Element : __DocumentProtocolForArrayAdditions {
+    /// The combined data for all documents in the array
+    public var bytes: [UInt8] {
+        return self.map { $0.bytes }.reduce([], +)
+    }
+    
     public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
-        var array = [Document]()
+        var array = [Element]()
         var position = 0
         
         documentLoop: while bytes.count >= position + 5 {
-            let length = Int(UnsafePointer<Int32>(Array(bytes[position..<position+4])).pointee)
+            
+            guard let length = try? Int(fromBytes(bytes[position..<position+4]) as Int32) else {
+                // invalid
+                break
+            }
             
             guard length > 0 else {
                 // invalid
@@ -29,7 +41,7 @@ extension BSONArrayProtocol where Iterator.Element == Document {
                 break documentLoop
             }
             
-            let document = Document(data: Array(bytes[position..<position+length]))
+            let document = Element(data: [UInt8](bytes[position..<position+length]))
             
             if validating {
                 if document.validate() {
@@ -42,12 +54,7 @@ extension BSONArrayProtocol where Iterator.Element == Document {
             position += length
         }
         
-        self.init(array)
-    }
-    
-    /// The combined data for all documents in the array
-    public var bytes: [UInt8] {
-        return self.map { $0.bytes }.reduce([], +)
+        self = array
     }
 }
 
@@ -98,13 +105,13 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: [UInt8]) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
+        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
             return
         }
         
-        storage = Array(data[0..<Int(length)])
+        storage = Array(data[0..<length])
         elementPositions = buildElementPositionsCache()
     }
     
@@ -112,13 +119,13 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<UInt8>) {
-        guard let length = try? Int32.instantiate(bytes: Array(data[0...3])), Int(length) <= data.count else {
+        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count else {
             self.storage = [5,0,0,0,0]
             self.invalid = true
             return
         }
         
-        storage = Array(data[0..<Int(length)])
+        storage = Array(data[0..<length])
         elementPositions = buildElementPositionsCache()
     }
     

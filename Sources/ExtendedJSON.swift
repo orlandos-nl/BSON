@@ -228,7 +228,10 @@ extension Document {
                             continue characterLoop
                         }
                         
-                        let character = Character(UnicodeScalar(code))
+                        guard let scalar = UnicodeScalar(code) else {
+                            continue characterLoop
+                        }
+                        let character = Character(scalar)
                         string.append(character)
                         continue characterLoop
                     } else {

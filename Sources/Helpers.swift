@@ -43,7 +43,7 @@ public extension String {
         }
         
         // Get the length
-        let length = try Int32.instantiate(bytes: Array(data[0...3]))
+        let length = try fromBytes(data[0...3]) as Int32
         
         // Check if the data is at least the right size
         guard data.count >= Int(length) + 4 else {
@@ -99,42 +99,26 @@ public extension String {
     }
 }
 
-extension Integer {
-    /// The amount of bytes in one of `Self`
-    public static var size: Int {
-        return sizeof(Self.self)
-    }
-    
+public protocol BSONBytesProtocol {}
+extension Int : BSONBytesProtocol {}
+extension Int64 : BSONBytesProtocol {}
+extension Int32 : BSONBytesProtocol {}
+extension Int16 : BSONBytesProtocol {}
+extension Int8 : BSONBytesProtocol {}
+extension UInt : BSONBytesProtocol {}
+extension UInt64 : BSONBytesProtocol {}
+extension UInt32 : BSONBytesProtocol {}
+extension UInt16 : BSONBytesProtocol {}
+extension UInt8 : BSONBytesProtocol {}
+extension Double : BSONBytesProtocol {}
+extension BSONBytesProtocol {
     /// The bytes in `Self`
     public var bytes : [UInt8] {
         var integer = self
-        return withUnsafePointer(&integer) {
-            Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>($0), count: Self.size))
+        return withUnsafePointer(to: &integer) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Self>.size) {
+                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Self>.size))
+            }
         }
-    }
-    
-    /// Creates a `Self` from bytes
-    ///
-    /// - throws: Not enough bytes provided
-    public static func instantiate(bytes data: [UInt8]) throws -> Self {
-        guard data.count >= self.size else {
-            throw DeserializationError.InvalidElementSize
-        }
-        
-        return UnsafePointer<Self>(data).pointee
-    }
-}
-
-public extension Int32 {
-    /// The amount of bytes in one `Int32`
-    public static var size: Int {
-        return 4
-    }
-}
-
-public extension Int64 {
-    /// The amount of bytes in one `Int64`
-    public static var size: Int {
-        return 8
     }
 }

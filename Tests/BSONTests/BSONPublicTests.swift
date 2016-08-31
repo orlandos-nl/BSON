@@ -198,7 +198,7 @@ class BSONPublicTests: XCTestCase {
         XCTAssertEqual(multipleDocs[0].bytes, doc1.bytes)
         XCTAssertEqual(multipleDocs[1].bytes, doc2.bytes)
         XCTAssertEqual(multipleDocs[2].bytes, doc3.bytes)
-        
+         
         validateAgainstKitten(multipleDocs[1])
     }
     

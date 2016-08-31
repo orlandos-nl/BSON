@@ -16,7 +16,7 @@ extension Document {
     
     /// The amount of `Byte`s in the `Document`
     public var byteCount: Int {
-        return Int(UnsafePointer<Int32>(storage).pointee)
+        return bytes.count
     }
     
     /// The `Byte` `Array` (`[Byte]`) representation of this `Document`

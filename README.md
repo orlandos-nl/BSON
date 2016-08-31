@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/OpenKitten/BSON.svg?branch=master)](https://travis-ci.org/PlanTeam/BSON)
 [![Swift Version](https://img.shields.io/badge/swift-3.0-orange.svg)](https://swift.org)
 ![License](https://img.shields.io/github/license/planteam/bson.svg)
-[![Slack Status](http://openkitten.org:3000/badge.svg)](http://openkitten.org:3000/)
+
 
 A native, fast BSON library for Swift, written in Swift.
 
@@ -28,7 +28,7 @@ import PackageDescription
 
 let package = Package(
     name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/OpenKitten/BSON.git", majorVersion: 3, minor: 5)]
+    dependencies: [.Package(url: "https://github.com/OpenKitten/BSON.git", majorVersion: 3, minor: 6)]
 )
 ```
 

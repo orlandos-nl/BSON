@@ -1,7 +1,6 @@
 .build
 Packages/
-
-Xcode/BSON.xcodeproj/project.xcworkspace/xcuserdata
+*.xcodeproj
 
 # Created by https://www.gitignore.io/api/xcode
 

@@ -83,7 +83,7 @@ extension Value : ValueConvertible {
     }
 }
 
-prefix operator ~ {}
+prefix operator ~
 public prefix func ~(convertible: ValueConvertible) -> Value {
     return convertible.makeBsonValue()
 }
