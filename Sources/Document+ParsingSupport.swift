@@ -463,4 +463,17 @@ extension Document {
             return .nothing
         }
     }
+    
+    public func type(at key: Int) -> ElementType? {
+        guard self.elementPositions.count > key && key >= 0 else {
+            return nil
+        }
+        
+        let position = self.elementPositions[key]
+        return ElementType(rawValue: storage[position])
+    }
+    
+    public func type(at key: String) -> ElementType? {
+        return getMeta(forKeyBytes: [UInt8](key.utf8))?.type
+    }
 }

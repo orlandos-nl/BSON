@@ -34,7 +34,8 @@ class BSONPublicTests: XCTestCase {
             ("testDotSyntax", testDotSyntax),
             ("testJSONEscapeSequences", testJSONEscapeSequences),
             ("testDocumentCombineOperators", testDocumentCombineOperators),
-            ("testDocumentFlattening", testDocumentFlattening)
+            ("testDocumentFlattening", testDocumentFlattening),
+            ("testTypeChecking", testTypeChecking)
         ]
     }
     
@@ -464,4 +465,21 @@ class BSONPublicTests: XCTestCase {
         
     }
     
+    func testTypeChecking() {
+        XCTAssertEqual(kittenDocument.type(at: 0), .double)
+        XCTAssertEqual(kittenDocument.type(at: 1), .string)
+        XCTAssertEqual(kittenDocument.type(at: 2), .document)
+        XCTAssertEqual(kittenDocument.type(at: -1), nil)
+        XCTAssertEqual(kittenDocument.type(at: 25), nil)
+        XCTAssertEqual(kittenDocument.type(at: kittenDocument.count + 1), nil)
+        
+        XCTAssertEqual(kittenDocument.type(at: "doubleTest"), .double)
+        XCTAssertEqual(kittenDocument.type(at: "stringTest"), .string)
+        XCTAssertEqual(kittenDocument.type(at: "documentTest"), .document)
+        XCTAssertEqual(kittenDocument["documentTest"].documentValue?.type(at: "subArray"), .arrayDocument)
+        XCTAssertEqual(kittenDocument.type(at: "nonRandomObjectId"), .objectId)
+        XCTAssertEqual(kittenDocument.type(at: "bob"), nil)
+        XCTAssertEqual(kittenDocument.type(at: "piet"), nil)
+        XCTAssertEqual(kittenDocument.type(at: "kenk"), nil)
+    }
 }
