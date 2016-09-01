@@ -119,11 +119,7 @@ internal func parseISO8601(from string: String) -> Date? {
     
     if string[0] == "-" {
         let fmt = DateFormatter()
-        #if os(Linux)
-            fmt.locale = Locale(localeIdentifier: "en_US_POSIX")
-        #else
-            fmt.locale = Locale(identifier: "en_US_POSIX")
-        #endif
+        fmt.locale = Locale(identifier: "en_US_POSIX")
         fmt.dateFormat = "yyyy"
         
         guard let yyyy = Int(fmt.string(from: Date())) else {

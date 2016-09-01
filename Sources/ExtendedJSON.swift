@@ -10,11 +10,7 @@ import Foundation
 
 internal let isoDateFormatter: DateFormatter = {
     let fmt = DateFormatter()
-    #if os(Linux)
-        fmt.locale = Locale(localeIdentifier: "en_US_POSIX")
-    #else
-        fmt.locale = Locale(identifier: "en_US_POSIX")
-    #endif
+    fmt.locale = Locale(identifier: "en_US_POSIX")
     fmt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
     return fmt
 }()
