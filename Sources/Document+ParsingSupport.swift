@@ -464,6 +464,13 @@ extension Document {
         }
     }
     
+    /// Returns the type for the given element
+    ///
+    /// For example: `type(at: 2)` returns the type for the third element
+    ///
+    /// - parameter key: The key to look for and return it's `ElementType`
+    ///
+    /// - returns: An element type for the given element
     public func type(at key: Int) -> ElementType? {
         guard self.elementPositions.count > key && key >= 0 else {
             return nil
@@ -473,6 +480,13 @@ extension Document {
         return ElementType(rawValue: storage[position])
     }
     
+    /// Returns the type for the given element
+    ///
+    /// For example: `type(at: 2)` returns the type for the third element
+    ///
+    /// - parameter key: The key to look for and return it's `ElementType`
+    ///
+    /// - returns: An element type for the given element
     public func type(at key: String) -> ElementType? {
         return getMeta(forKeyBytes: [UInt8](key.utf8))?.type
     }
