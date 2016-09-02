@@ -46,34 +46,34 @@ extension Value {
         case .binary(let subtype, let data):
             let base64 = Data(bytes: data).base64EncodedString()
             let subtype = String(subtype.rawValue, radix: 16).uppercased()
-            return "{\"$binary\": \"\(base64)\", \"$type\": \"0x\(subtype)\"}"
+            return "{\"$binary\":\"\(base64)\",\"$type\":\"0x\(subtype)\"}"
         case .objectId(let id):
-            return "{\"$oid\": \"\(id.hexString)\"}"
+            return "{\"$oid\":\"\(id.hexString)\"}"
         case .boolean(let val):
             return val ? "true" : "false"
         case .dateTime(let date):
             let dateString = isoDateFormatter.string(from: date)
-            return "{\"$date\": \"\(dateString)\"}"
+            return "{\"$date\":\"\(dateString)\"}"
         case .null:
             return "null"
         case .regularExpression(let pattern, let options):
-            return "{\"$regex\": \"\(escape(pattern))\", \"$options\": \"\(escape(options))\"}"
+            return "{\"$regex\":\"\(escape(pattern))\",\"$options\":\"\(escape(options))\"}"
         case .javascriptCode(let code):
-            return "{\"$code\": \"\(escape(code))\"}"
+            return "{\"$code\":\"\(escape(code))\"}"
         case .javascriptCodeWithScope(let code, let scope):
-            return "{\"$code\": \"\(escape(code))\", \"$scope\": \(scope.makeExtendedJSON())}"
+            return "{\"$code\":\"\(escape(code))\",\"$scope\":\(scope.makeExtendedJSON())}"
         case .int32(let val):
             return String(val)
         case .timestamp(let t, let i):
-            return "{\"$timestamp\": {\"t\": \(t), \"i\": \(i)}}"
+            return "{\"$timestamp\":{\"t\":\(t),\"i\":\(i)}}"
         case .int64(let val):
-            return "{\"$numberLong\": \"\(val)\"}"
+            return "{\"$numberLong\":\"\(val)\"}"
         case .minKey:
-            return "{\"$minKey\": 1}"
+            return "{\"$minKey\":1}"
         case .maxKey:
-            return "{\"$maxKey\": 1}"
+            return "{\"$maxKey\":1}"
         case .nothing:
-            return "{\"$undefined\": true}"
+            return "{\"$undefined\":true}"
         }
     }
 }
@@ -109,7 +109,7 @@ extension Document {
                 }.reduce("[") { "\($0),\($1)" } + "]"
         } else {
             str = self.makeIterator().map { pair in
-                return "\"\(pair.key)\": \(pair.value.makeExtendedJSON())"
+                return "\"\(pair.key)\":\(pair.value.makeExtendedJSON())"
                 }.reduce("{") { "\($0),\($1)" } + "}"
         }
         

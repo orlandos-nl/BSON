@@ -326,7 +326,7 @@ class BSONPublicTests: XCTestCase {
     
     func testExtendedJSON() throws {
         
-        let simpleJson = "{\"kaas\": 4.2}"
+        let simpleJson = "{\"kaas\":       4.2}"
         let simpleDocument = try Document(extendedJSON: simpleJson)
         XCTAssertEqual(simpleDocument["kaas"], ~4.2)
         
@@ -337,7 +337,7 @@ class BSONPublicTests: XCTestCase {
         
         XCTAssertEqual(kittenDocument, otherDocument)
         
-        XCTAssertEqual(Value.nothing.makeExtendedJSON(), "{\"$undefined\": true}")
+        XCTAssertEqual(Value.nothing.makeExtendedJSON(), "{\"$undefined\":true}")
     }
     
     func testDocumentIndexes() {
