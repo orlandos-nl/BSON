@@ -28,7 +28,7 @@ import PackageDescription
 
 let package = Package(
     name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/OpenKitten/BSON.git", majorVersion: 3, minor: 6)]
+    dependencies: [.Package(url: "https://github.com/OpenKitten/BSON.git", majorVersion: 3, minor: 7)]
 )
 ```
 
