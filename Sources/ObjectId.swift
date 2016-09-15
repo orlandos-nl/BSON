@@ -38,6 +38,8 @@ public struct ObjectId {
     
     internal var _storage: [UInt8]
     
+    private static let counterQueue = DispatchQueue(label: "org.mongokitten.bson.oidcounter")
+    
     /// Generate a new random ObjectId.
     public init() {
         let currentTime = Date()
@@ -51,8 +53,10 @@ public struct ObjectId {
         data += ObjectId.random.bytes
         
         // And add a counter as 2 bytes and increment it
-        data += ObjectId.counter.bytes
-        ObjectId.counter = ObjectId.counter &+ 1
+        ObjectId.counterQueue.sync {
+            data += ObjectId.counter.bytes
+            ObjectId.counter = ObjectId.counter &+ 1
+        }
         
         self._storage = data
     }
