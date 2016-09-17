@@ -54,6 +54,7 @@ extension Document {
                 storage.insert(contentsOf: newValue.bytes, at: meta.dataPosition)
                 storage[meta.elementTypePosition] = newValue.typeIdentifier
                 updateDocumentHeader()
+                self.elementPositions = buildElementPositionsCache()
                 
                 return
             }
