@@ -35,7 +35,8 @@ class BSONPublicTests: XCTestCase {
             ("testJSONEscapeSequences", testJSONEscapeSequences),
             ("testDocumentCombineOperators", testDocumentCombineOperators),
             ("testDocumentFlattening", testDocumentFlattening),
-            ("testTypeChecking", testTypeChecking)
+            ("testTypeChecking", testTypeChecking),
+            ("testExtraction", testExtraction)
         ]
     }
     
@@ -481,5 +482,64 @@ class BSONPublicTests: XCTestCase {
         XCTAssertEqual(kittenDocument.type(at: "bob"), nil)
         XCTAssertEqual(kittenDocument.type(at: "piet"), nil)
         XCTAssertEqual(kittenDocument.type(at: "kenk"), nil)
+    }
+    
+    func testExtraction() {
+        let objectId = kittenDocument.extract("nonRandomObjectId") as ObjectId?
+        let realObjectId = try? ObjectId("0123456789ABCDEF01234567")
+        
+        XCTAssertNotNil(objectId)
+        XCTAssertEqual(objectId, realObjectId)
+        
+        let nilObjectId = kittenDocument.extract("nonRandomObjectId") as Int32?
+        XCTAssertNil(nilObjectId)
+        
+        let double = kittenDocument.extract("doubleTest") as Double?
+        XCTAssertNotNil(double)
+        XCTAssertEqual(double, 0.04)
+        
+        let string = kittenDocument.extract("stringTest") as String?
+        XCTAssertNotNil(string)
+        XCTAssertEqual(string, "foo")
+        
+        let subDocument = kittenDocument.extract("documentTest") as Document?
+        XCTAssertNotNil(subDocument)
+        
+        let subDouble = subDocument?.extract("documentSubDoubleTest") as Double?
+        XCTAssertNotNil(subDouble)
+        XCTAssertEqual(subDouble, 13.37)
+        
+        let time = kittenDocument.extract("currentTime") as Date?
+        XCTAssertNotNil(time)
+        XCTAssertEqual(time, Date(timeIntervalSince1970: Double(1453589266)))
+        
+        let int32 = kittenDocument.extract("cool32bitNumber") as Int32?
+        XCTAssertNotNil(int32)
+        XCTAssertEqual(int32, 9001)
+        
+        let int64 = kittenDocument.extract("cool64bitNumber") as Int64?
+        XCTAssertNotNil(int64)
+        XCTAssertEqual(int64, 21312153)
+        
+        let code = kittenDocument.extract("code") as String?
+        XCTAssertNotNil(code)
+        XCTAssertEqual(code, "console.log(\"Hello there\");")
+        
+        let data = kittenDocument.extract("data") as Data?
+        XCTAssertNotNil(data)
+        XCTAssertEqual(data, Data(bytes: [34,34,34,34,34]))
+        
+        let boolFalse = kittenDocument.extract("boolFalse") as Bool?
+        let boolTrue = kittenDocument.extract("boolTrue") as Bool?
+        
+        XCTAssertNotNil(boolTrue)
+        XCTAssertNotNil(boolFalse)
+        XCTAssertNotEqual(boolTrue, boolFalse)
+        XCTAssertEqual(boolTrue, true)
+        XCTAssertEqual(boolFalse, false)
+        
+        let regex = kittenDocument.extract("regex") as NSRegularExpression?
+        XCTAssertNotNil(regex)
+        XCTAssertEqual(regex, try NSRegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []))
     }
 }
