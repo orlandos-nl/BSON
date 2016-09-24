@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/OpenKitten/BSON.svg?branch=master)](https://travis-ci.org/PlanTeam/BSON)
 [![Swift Version](https://img.shields.io/badge/swift-3.0-orange.svg)](https://swift.org)
 ![License](https://img.shields.io/github/license/planteam/bson.svg)
-[![Slack Status](http://orlandos.nl:3000/badge.svg)](http://orlandos.nl:3000/)
+
 
 A native, fast BSON library for Swift, written in Swift.
 
@@ -28,21 +28,11 @@ import PackageDescription
 
 let package = Package(
     name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 2, minor: 2)]
+    dependencies: [.Package(url: "https://github.com/OpenKitten/BSON.git", majorVersion: 3, minor: 7)]
 )
 ```
 
-Or for Swift 04-12 users:
-```swift
-import PackageDescription
-
-let package = Package(
-    name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/planteam/bson.git", majorVersion: 2, minor: 1)]
-)
-```
-
-Check the [documentation](https://planteam.github.io/BSON/) for more information.
+Check the [documentation](https://openkitten.github.io/BSON/) for more information.
 
 #### Basic Usage
 
@@ -102,3 +92,9 @@ All non-deprecated BSON 1.0 types are supported.
 - Timestamp
 - Javascript Code
 - Javascript Code with Scope
+
+### Supported features
+
+- MongoDB Extended JSON
+- ISO8601 for Extended JSON Dates
+- **Really** fast BSON Parsing and Serializing

@@ -9,7 +9,7 @@
 import Foundation
 
 /// All errors that can occur when (de)serializing BSON
-public enum DeserializationError : ErrorProtocol {
+public enum DeserializationError : Error {
     /// The Document doesn't have a valid length
     case InvalidDocumentLength
     

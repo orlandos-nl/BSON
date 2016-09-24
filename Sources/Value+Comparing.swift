@@ -45,7 +45,6 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
     }
 }
 
-// TODO: Implement this for more types
 public func ==(lhs: Value, rhs: String) -> Bool {
     return lhs.string == rhs
 }
@@ -54,12 +53,82 @@ public func ==(lhs: Value, rhs: Int) -> Bool {
     return lhs.int == rhs
 }
 
+public func ==(lhs: Value, rhs: Int32) -> Bool {
+    return lhs.int32 == rhs
+}
+
+public func ==(lhs: Value, rhs: Int64) -> Bool {
+    return lhs.int64 == rhs
+}
+
+public func ==(lhs: Value, rhs: [UInt8]) -> Bool {
+    guard case .binary(_, let bytes) = lhs else {
+        return false
+    }
+    
+    return bytes == rhs
+}
+
+public func ==(lhs: Value, rhs: [Value]) -> Bool {
+    guard case .array(let document) = lhs, document.validatesAsArray() else {
+        return false
+    }
+    
+    return document.arrayValue == rhs
+}
+
+public func ==(lhs: Value, rhs: Document) -> Bool {
+    if case .document(let document) = lhs {
+        return document == rhs
+    } else if case .array(let array) = lhs {
+        return array == rhs
+    } else {
+        return false
+    }
+}
+
+public func ==(lhs: Value, rhs: [String: Value]) -> Bool {
+    guard case .document(let document) = lhs else {
+        return false
+    }
+    
+    return document.dictionaryValue == rhs
+}
+
 public func ==(lhs: Value, rhs: Bool) -> Bool {
     return lhs.boolValue == rhs
 }
 
 public func ==(lhs: Value, rhs: Double) -> Bool {
     return lhs.double == rhs
+}
+
+public func ==(lhs: Value, rhs: Date) -> Bool {
+    guard case .dateTime(let date) = lhs else {
+        return false
+    }
+    
+    return date == rhs
+}
+
+public func ==(lhs: ObjectId, rhs: ObjectId) -> Bool {
+    return lhs._storage == rhs._storage
+}
+
+public func ==(lhs: Value, rhs: ObjectId) -> Bool {
+    guard let lhs = lhs.objectIdValue else {
+        return false
+    }
+    
+    return lhs == rhs
+}
+
+public func ==(lhs: String, rhs: ObjectId) -> Bool {
+    return lhs.lowercased() == rhs.hexString.lowercased()
+}
+
+public func ==(lhs: ObjectId, rhs: String) -> Bool {
+    return lhs.hexString.lowercased() == rhs.lowercased()
 }
 
 public func ===(lhs: Value, rhs: Value) -> Bool {

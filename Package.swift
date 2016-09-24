@@ -4,4 +4,6 @@
 
 import PackageDescription
 
-let package = Package(name: "BSON")
+let package = Package(
+    name: "BSON"
+)

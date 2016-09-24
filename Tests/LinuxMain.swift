@@ -1,7 +1,7 @@
 #if os(Linux)
 
 import XCTest
-@testable import BSONTestSuite
+@testable import BSONTests
 
 XCTMain([testCase(BSONInternalTests.allTests),
          testCase(BSONPublicTests.allTests)])

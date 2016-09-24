@@ -8,7 +8,17 @@
 
 import Foundation
 
+internal let isoDateFormatter: DateFormatter = {
+    let fmt = DateFormatter()
+    fmt.locale = Locale(identifier: "en_US_POSIX")
+    fmt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+    return fmt
+}()
+
 extension Value {
+    /// Creates a JSON `String` from this `Value` formed as ExtendedJSON
+    ///
+    /// - returns: The JSON `String` representing the `Value`
     public func makeExtendedJSON() -> String {
         func escape(_ string: String) -> String {
             var string = string
@@ -36,57 +46,54 @@ extension Value {
         case .binary(let subtype, let data):
             let base64 = Data(bytes: data).base64EncodedString()
             let subtype = String(subtype.rawValue, radix: 16).uppercased()
-            return "{\"$binary\": \"\(base64)\", \"$type\": \"0x\(subtype)\"}"
+            return "{\"$binary\":\"\(base64)\",\"$type\":\"0x\(subtype)\"}"
         case .objectId(let id):
-            return "{\"$oid\": \"\(id.hexString)\"}"
+            return "{\"$oid\":\"\(id.hexString)\"}"
         case .boolean(let val):
             return val ? "true" : "false"
         case .dateTime(let date):
-            #if os(Linux)
-                let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
-                print(error)
-                return error
-            #else
-                if #available(OSX 10.12, iOS 10, *) {
-                    let date = ISO8601DateFormatter.string(from: date, timeZone: TimeZone.default, formatOptions: [.withFullDate, .withFullTime, .withTimeZone])
-                    return "{\"$date\": \"\(date)\"}"
-                } else {
-                    let error = "\"Unsupported: BSON does not support converting DateTime to JSON on this platform.\""
-                    print(error)
-                    return error
-                }
-            #endif
+            let dateString = isoDateFormatter.string(from: date)
+            return "{\"$date\":\"\(dateString)\"}"
         case .null:
             return "null"
         case .regularExpression(let pattern, let options):
-            return "{\"$regex\": \"\(escape(pattern))\", \"$options\": \"\(escape(options))\"}"
+            return "{\"$regex\":\"\(escape(pattern))\",\"$options\":\"\(escape(options))\"}"
         case .javascriptCode(let code):
-            return "{\"$code\": \"\(escape(code))\"}"
+            return "{\"$code\":\"\(escape(code))\"}"
         case .javascriptCodeWithScope(let code, let scope):
-            return "{\"$code\": \"\(escape(code))\", \"$scope\": \(scope.makeExtendedJSON())}"
+            return "{\"$code\":\"\(escape(code))\",\"$scope\":\(scope.makeExtendedJSON())}"
         case .int32(let val):
             return String(val)
         case .timestamp(let t, let i):
-            return "{\"$timestamp\": {\"t\": \(t), \"i\": \(i)}}"
+            return "{\"$timestamp\":{\"t\":\(t),\"i\":\(i)}}"
         case .int64(let val):
-            return "{\"$numberLong\": \"\(val)\"}"
+            return "{\"$numberLong\":\"\(val)\"}"
         case .minKey:
-            return "{\"$minKey\": 1}"
+            return "{\"$minKey\":1}"
         case .maxKey:
-            return "{\"$maxKey\": 1}"
+            return "{\"$maxKey\":1}"
         case .nothing:
-            return "{\"$undefined\": true}"
+            return "{\"$undefined\":true}"
         }
     }
 }
 
 extension Document {
-    
-    public enum ExtendedJSONError : ErrorProtocol {
+    /// All errors that can occur when parsing Extended JSON
+    public enum ExtendedJSONError : Error {
+        /// Invalid character at position
         case invalidCharacter(position: String.CharacterView.Index)
+        
+        /// -
         case unexpectedEndOfInput
+        
+        /// Expected a String at position at position
         case stringExpected(position: String.CharacterView.Index)
+        
+        /// Unable to parse the number at position
         case numberParseError(position: String.CharacterView.Index)
+        
+        /// Unable to parse the value at position
         case unparseableValue(position: String.CharacterView.Index)
     }
     
@@ -102,7 +109,7 @@ extension Document {
                 }.reduce("[") { "\($0),\($1)" } + "]"
         } else {
             str = self.makeIterator().map { pair in
-                return "\"\(pair.key)\": \(pair.value.makeExtendedJSON())"
+                return "\"\(pair.key)\":\(pair.value.makeExtendedJSON())"
                 }.reduce("{") { "\($0),\($1)" } + "}"
         }
         
@@ -217,7 +224,10 @@ extension Document {
                             continue characterLoop
                         }
                         
-                        let character = Character(UnicodeScalar(code))
+                        guard let scalar = UnicodeScalar(code) else {
+                            continue characterLoop
+                        }
+                        let character = Character(scalar)
                         string.append(character)
                         continue characterLoop
                     } else {
@@ -392,22 +402,12 @@ extension Document {
                 if count == 1 {
                     if let hex = document["$oid"].stringValue {
                         // ObjectID
-                        return try ~ObjectId(hex)
+                        return try .objectId(ObjectId(hex))
                     } else if let dateString = document["$date"].stringValue {
                         // DateTime
-                        #if os(Linux)
-                            break subParser
-                        #else
-                            if #available(OSX 10.12, iOS 10, *) {
-                                let fmt = ISO8601DateFormatter()
-                                let date = fmt.date(from: dateString)
-                                
-                                return .dateTime(date)
-                            } else {
-                                // Fallback on earlier versions
-                                break subParser
-                            }
-                        #endif
+                        if let date = parseISO8601(from: dateString) {
+                            return .dateTime(date)
+                        }
                     } else if let code = document["$code"].stringValue {
                         return .javascriptCode(code)
                     } else if let numberString = document["$numberLong"].stringValue {
@@ -424,7 +424,7 @@ extension Document {
                         return .timestamp(stamp: t, increment: i)
                     }
                 } else if count == 2 {
-                    if let base64 = document["$binary"].stringValue, hexSubtype = document["$type"].stringValue {
+                    if let base64 = document["$binary"].stringValue, let hexSubtype = document["$type"].stringValue {
                         // Binary
                         guard hexSubtype.characters.count > 2 else {
                             break subParser
@@ -443,10 +443,10 @@ extension Document {
                         #else
                             return .binary(subtype: subtype, data: Array<UInt8>(data))
                         #endif
-                    } else if let pattern = document["$regex"].stringValue, options = document["$options"].stringValue {
+                    } else if let pattern = document["$regex"].stringValue, let options = document["$options"].stringValue {
                         // RegularExpression
                         return .regularExpression(pattern: pattern, options: options)
-                    } else if let code = document["$code"].stringValue, scope = document["$scope"].documentValue {
+                    } else if let code = document["$code"].stringValue, let scope = document["$scope"].documentValue {
                         // JS with scope
                         return .javascriptCodeWithScope(code: code, scope: scope)
                     }
