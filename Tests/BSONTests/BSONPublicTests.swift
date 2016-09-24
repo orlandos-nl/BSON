@@ -14,7 +14,7 @@ import XCTest
     import Glibc
 #endif
 
-class BSONPublicTests: XCTestCase {
+final class BSONPublicTests: XCTestCase {
     
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
         return [
