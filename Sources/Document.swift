@@ -80,7 +80,7 @@ public enum ElementType : UInt8 {
 
 /// `Document` is a collection type that uses a BSON document as storage.
 /// As such, it can be stored in a file or instantiated from BSON data.
-/// 
+///
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
 public struct Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
@@ -144,12 +144,29 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
     public init(dictionaryElements elements: [(String, Value)]) {
-        self.init()
-        isArray = false
+        storage = [5,0,0,0]
         
-        for element in elements {
-            self.append(element.1, forKey: element.0)
+        for (key, value) in elements {
+            // Append the key-value pair
+            
+            // Add element to positions cache
+            elementPositions.append(storage.endIndex)
+            
+            // Type identifier
+            storage.append(value.typeIdentifier)
+            // Key
+            storage.append(contentsOf: key.utf8)
+            // Key null terminator
+            storage.append(0x00)
+            // Value
+            storage.append(contentsOf: value.bytes)
         }
+        
+        storage.append(0x00)
+        
+        updateDocumentHeader()
+        
+        isArray = false
     }
     
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
@@ -170,7 +187,28 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [Value]) {
-        self.init(dictionaryElements: elements.enumerated().map { (index, value) in ("\(index)", value) })
+        storage = [5,0,0,0]
+        
+        for (index, value) in elements.enumerated() {
+            // Append the values
+            
+            // Add element to positions cache
+            elementPositions.append(storage.endIndex)
+            
+            // Type identifier
+            storage.append(value.typeIdentifier)
+            // Key
+            storage.append(contentsOf: "\(index)".utf8)
+            // Key null terminator
+            storage.append(0x00)
+            // Value
+            storage.append(contentsOf: value.bytes)
+        }
+        
+        storage.append(0x00)
+        
+        updateDocumentHeader()
+        
         isArray = true
     }
     
@@ -226,7 +264,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     public mutating func append(contentsOf otherDocument: Document) {
         if self.validatesAsArray() && otherDocument.validatesAsArray() {
             self = Document(array: self.arrayValue + otherDocument.arrayValue)
-            isArray = true
         } else {
             self += otherDocument
         }
@@ -234,7 +271,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     
     /// Updates this `Document`'s storage to contain the proper `Document` length header
     internal mutating func updateDocumentHeader() {
-        storage.replaceSubrange(0..<4, with: Int32(storage.count).bytes)
+        var count = Int32(storage.count)
+        memcpy(&storage, &count, 4)
     }
     
     // MARK: - Collection
@@ -308,6 +346,10 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         let val = getValue(atDataPosition: meta.dataPosition, withType: meta.type)
         let length = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+        
+        guard meta.dataPosition + length < storage.count else {
+            return nil
+        }
         
         storage.removeSubrange(meta.elementTypePosition..<meta.dataPosition + length)
         
