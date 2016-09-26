@@ -13,11 +13,11 @@ extension Value : Equatable {}
 public func ==(lhs: Value, rhs: Value) -> Bool {
     switch (lhs, rhs) {
     case (.double(_), _):
-        return lhs.double == rhs.double
+        return lhs.double == rhs.doubleValue
     case (.string(_), _):
-        return lhs.string == rhs.string
+        return lhs.string == rhs.stringValue
     case (.document(_), _), (.array(_), _):
-        return lhs.document == rhs.document
+        return lhs.document == rhs.documentValue
     case (.binary(let subtype1, let data1), .binary(let subtype2, let data2)):
         return subtype1.rawValue == subtype2.rawValue && data1 == data2
     case (.objectId(_), .objectId(_)):
@@ -33,11 +33,11 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
     case (.javascriptCodeWithScope(let code1, let scope1), .javascriptCodeWithScope(let code2, let scope2)):
         return code1 == code2 && scope1 == scope2
     case (.int32(_), _):
-        return lhs.int32 == rhs.int32
+        return lhs.int32 == rhs.int32Value
     case (.timestamp(let val1), .timestamp(let val2)):
         return val1 == val2
     case (.int64(_), _):
-        return lhs.int64 == rhs.int64
+        return lhs.int64 == rhs.int64Value
     case (.minKey, .minKey), (.maxKey, .maxKey), (.null, .null), (.nothing, .nothing):
         return true
     default:
