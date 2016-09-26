@@ -17,7 +17,7 @@ public func ==(lhs: Value, rhs: Value) -> Bool {
     case (.string(_), _):
         return lhs.string == rhs.stringValue
     case (.document(_), _), (.array(_), _):
-        return lhs.document == rhs.documentValue
+        return lhs.document == rhs.documentValue && lhs.document.isArray == rhs.documentValue?.isArray
     case (.binary(let subtype1, let data1), .binary(let subtype2, let data2)):
         return subtype1.rawValue == subtype2.rawValue && data1 == data2
     case (.objectId(_), .objectId(_)):
@@ -70,7 +70,7 @@ public func ==(lhs: Value, rhs: [UInt8]) -> Bool {
 }
 
 public func ==(lhs: Value, rhs: [Value]) -> Bool {
-    guard case .array(let document) = lhs, document.validatesAsArray() else {
+    guard case .array(let document) = lhs, document.validatesAsArray(), document.isArray else {
         return false
     }
     

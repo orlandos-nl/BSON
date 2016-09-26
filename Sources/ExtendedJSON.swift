@@ -103,7 +103,7 @@ extension Document {
     /// - returns: The JSON string. Depending on the type of document, the top level object will either be an array or object.
     public func makeExtendedJSON() -> String {
         var str: String
-        if self.validatesAsArray() {
+        if self.validatesAsArray() && isArray {
             str = self.makeIterator().map { pair in
                 return pair.value.makeExtendedJSON()
                 }.reduce("[") { "\($0),\($1)" } + "]"

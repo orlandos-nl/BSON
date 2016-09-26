@@ -88,6 +88,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     internal var _count: Int? = nil
     internal var invalid = false
     internal var elementPositions = [Int]()
+    internal var isArray: Bool = false
     
     // MARK: - Initialization from data
     
@@ -113,6 +114,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         storage = Array(data[0..<length])
         elementPositions = buildElementPositionsCache()
+        isArray = validatesAsArray()
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
@@ -127,6 +129,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         storage = Array(data[0..<length])
         elementPositions = buildElementPositionsCache()
+        isArray = self.validatesAsArray()
     }
     
     /// Initializes an empty `Document`
@@ -142,6 +145,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
     public init(dictionaryElements elements: [(String, Value)]) {
         self.init()
+        isArray = false
+        
         for element in elements {
             self.append(element.1, forKey: element.0)
         }
@@ -166,6 +171,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [Value]) {
         self.init(dictionaryElements: elements.enumerated().map { (index, value) in ("\(index)", value) })
+        isArray = true
     }
     
     // MARK: - Manipulation & Extracting values
@@ -202,6 +208,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         // Increase the bytecount
         updateDocumentHeader()
+        
+        isArray = false
     }
     
     /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
@@ -218,6 +226,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     public mutating func append(contentsOf otherDocument: Document) {
         if self.validatesAsArray() && otherDocument.validatesAsArray() {
             self = Document(array: self.arrayValue + otherDocument.arrayValue)
+            isArray = true
         } else {
             self += otherDocument
         }
