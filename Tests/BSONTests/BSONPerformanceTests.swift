@@ -50,6 +50,9 @@ class BSONPerformanceTests: XCTestCase {
             let json = kittenDocument.makeExtendedJSON()
             let document = try? Document(extendedJSON: json)
             
+            print(document?.byteCount)
+            print(document?.validate())
+            
             XCTAssertEqual(kittenDocument, document)
         }
     }

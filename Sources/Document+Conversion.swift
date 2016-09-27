@@ -21,7 +21,7 @@ extension Document {
     
     /// The `Byte` `Array` (`[Byte]`) representation of this `Document`
     public var bytes: [UInt8] {
-        return Array(storage)
+        return storage + [0x00]
     }
     
     /// A list of all keys

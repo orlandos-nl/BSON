@@ -56,8 +56,6 @@ extension Document {
             }
         }
         
-        lhs.storage.removeLast()
-        
         let appendData = rhs.storage[4..<rhs.storage.endIndex]
         lhs.storage.append(contentsOf: appendData)
         

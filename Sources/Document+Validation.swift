@@ -18,20 +18,20 @@ extension Document {
                 return false
             }
             
-            guard storage.count > 4 else {
+            guard storage.count >= 4 else {
                 return false
             }
             
             let length = Int(try fromBytes(bytes[0..<4]) as Int32)
             
-            // Check the length
-            guard storage.count == length && storage.last == 0 else {
+            // Check the length (including non-existing null terminator)
+            guard storage.count + 1 == length else {
                 return false
             }
             
             var position = 4
             
-            while position < storage.count + 4 && storage[position] != 0 {
+            while position < storage.count {
                 // Get the element type
                 guard let type = ElementType(rawValue: storage[position]) else {
                     return false
@@ -88,17 +88,12 @@ extension Document {
                 }
                 
                 // Check if the length is correct
-                guard storage.count > position + length else {
+                guard storage.count >= position + length else {
                     return false
                 }
                 
                 // Position after the value
                 position += length
-            }
-            
-            // Check if the document has an end
-            guard position == storage.count - 1 else {
-                return false
             }
             
             return true

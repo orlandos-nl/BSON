@@ -47,7 +47,7 @@ extension Document {
             }
             
             // Loop over all the elements of this document:
-            while storage[index] != 0 {
+            while index < storage.count && storage[index] != 0 {
                 if !isRootDocument {
                     // Prefix the key, and a full stop (.)
                     storage.insert(0x2e, at: index+1)

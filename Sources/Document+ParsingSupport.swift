@@ -92,7 +92,7 @@ extension Document {
         do {
             // check
             func need(_ amountOfBytes: Int) -> Bool {
-                return self.storage.count >= position + amountOfBytes + 1 // the document also has a trailing null
+                return self.storage.count >= position + amountOfBytes // the document doesn't have a trailing null until the bytes are fetched
             }
             
             switch type {
@@ -180,7 +180,6 @@ extension Document {
             
             return startPosition
         }
-        
         
         var cache = [Int]()
         

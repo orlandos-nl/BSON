@@ -106,13 +106,13 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: [UInt8]) {
-        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count else {
-            self.storage = [5,0,0,0,0]
+        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count, data.last == 0x00 else {
+            self.storage = [5,0,0,0]
             self.invalid = true
             return
         }
         
-        storage = Array(data[0..<length])
+        storage = Array(data[0..<Swift.max(length - 1, 0)])
         elementPositions = buildElementPositionsCache()
         isArray = validatesAsArray()
     }
@@ -121,8 +121,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<UInt8>) {
-        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count else {
-            self.storage = [5,0,0,0,0]
+        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length < data.count else {
+            self.storage = [5,0,0,0]
             self.invalid = true
             return
         }
@@ -135,7 +135,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes an empty `Document`
     public init() {
         // the empty document is 5 bytes long.
-        storage = [5,0,0,0,0]
+        storage = [5,0,0,0]
     }
     
     // MARK: - Initialization from Swift Types & Literals
@@ -161,8 +161,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Value
             storage.append(contentsOf: value.bytes)
         }
-        
-        storage.append(0x00)
         
         updateDocumentHeader()
         
@@ -205,8 +203,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             storage.append(contentsOf: value.bytes)
         }
         
-        storage.append(0x00)
-        
         updateDocumentHeader()
         
         isArray = true
@@ -226,10 +222,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter key: The key in the key-value pair
     public mutating func append(_ value: Value, forKey key: String) {
         // We're going to insert the element before the Document null terminator
-        elementPositions.append(storage.endIndex-1)
-        
-        // Remove Document Null Terminator
-        storage.removeLast()
+        elementPositions.append(storage.endIndex)
         
         // Append the key-value pair
         // Type identifier
@@ -240,9 +233,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage.append(0x00)
         // Value
         storage.append(contentsOf: value.bytes)
-        
-        // Reappend the Document null terminator
-        storage.append(0x00)
         
         // Increase the bytecount
         updateDocumentHeader()
@@ -271,7 +261,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     
     /// Updates this `Document`'s storage to contain the proper `Document` length header
     internal mutating func updateDocumentHeader() {
-        var count = Int32(storage.count)
+        // One extra byte for the missing null terminator in the storage
+        var count = Int32(storage.count + 1)
         memcpy(&storage, &count, 4)
     }
     
@@ -347,7 +338,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         let val = getValue(atDataPosition: meta.dataPosition, withType: meta.type)
         let length = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
         
-        guard meta.dataPosition + length < storage.count else {
+        guard meta.dataPosition + length <= storage.count else {
             return nil
         }
         
