@@ -120,12 +120,23 @@ public struct ObjectId {
         
         return String(bytes: bytes, encoding: .utf8)!
     }
+    
+    public var epoch: Date {
+        let epoch = try! fromBytes(_storage[0...3]) as Int32
+        
+        return Date(timeIntervalSince1970: Double(epoch))
+    }
 }
 
 extension ObjectId: Hashable {
-    /// The hash value for this ObjectId is currently the hexstring. Will be more performant in the future
     public var hashValue: Int {
-        return self.hexString.hashValue
+        let epoch = try! fromBytes(_storage[0...3]) as Int32
+        let random = try! fromBytes(_storage[4...7]) as Int32
+        let increment = try! fromBytes(_storage[8...11]) as Int32
+        
+        let total: Int32 = epoch &+ random &+ increment
+        
+        return Int(total)
     }
 }
 

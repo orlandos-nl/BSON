@@ -76,6 +76,45 @@ extension ObjectId : ValueConvertible {
     }
 }
 
+extension Data : ValueConvertible {
+    /// Converts this instance to a BSON `Value`
+    public func makeBsonValue() -> Value {
+        var array = [UInt8](repeating: 0, count: self.count)
+        self.copyBytes(to: &array, count: array.count)
+        
+        return .binary(subtype: .generic, data: array)
+    }
+}
+
+extension NSRegularExpression : ValueConvertible {
+    /// Converts this instance to a BSON `Value`
+    public func makeBsonValue() -> Value {
+        func makeOptions() -> String {
+            var options = ""
+            
+            if self.options.contains(.caseInsensitive) {
+                options.append("i")
+            }
+            
+            if self.options.contains(.anchorsMatchLines) {
+                options.append("m")
+            }
+            
+            if self.options.contains(.allowCommentsAndWhitespace) {
+                options.append("x")
+            }
+            
+            if self.options.contains(.dotMatchesLineSeparators) {
+                options.append("s")
+            }
+            
+            return options
+        }
+        
+        return .regularExpression(pattern: self.pattern, options: makeOptions())
+    }
+}
+
 extension Value : ValueConvertible {
     /// Converts this instance to a BSON `Value`
     public func makeBsonValue() -> Value {

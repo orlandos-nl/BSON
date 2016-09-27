@@ -160,6 +160,58 @@ public enum Value {
         case .nothing: return 0x0A
         }
     }
+    
+    public var rawValue: ValueConvertible? {
+        func regexOptions(fromString s: String) -> NSRegularExpression.Options {
+            var options: NSRegularExpression.Options = []
+            
+            if s.contains("i") {
+                options.update(with: .caseInsensitive)
+            }
+            
+            if s.contains("m") {
+                options.update(with: .anchorsMatchLines)
+            }
+            
+            if s.contains("x") {
+                options.update(with: .allowCommentsAndWhitespace)
+            }
+            
+            if s.contains("s") {
+                options.update(with: .dotMatchesLineSeparators)
+            }
+            
+            return options
+        }
+        
+        switch self {
+        case .double(let value): return value
+        case .string(let value): return value
+        case .document(let value): return value
+        case .array(let value): return value
+        case .binary(_, let value): return Data(bytes: value)
+        case .objectId(let value): return value
+        case .boolean(let value): return value
+        case .dateTime(let value): return value
+        case .regularExpression(let pattern, let options):
+            do {
+                return try NSRegularExpression(pattern: pattern, options: regexOptions(fromString: options))
+            } catch {
+                return nil
+            }
+        case .javascriptCode(let value): return value
+        case .int32(let value): return value
+        case .timestamp(let stamp, _): return Date(timeIntervalSince1970: Double(stamp))
+        case .int64(let value): return value
+            
+        // TODO: Unsupported
+        case .null: return nil
+        case .minKey: return nil
+        case .maxKey: return nil
+        case .javascriptCodeWithScope(_, _): return nil
+        case .nothing: return nil
+        }
+    }
 }
 
 extension Value : Comparable {}
