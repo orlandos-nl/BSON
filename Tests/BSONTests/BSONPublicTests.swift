@@ -14,7 +14,7 @@ import XCTest
     import Glibc
 #endif
 
-class BSONPublicTests: XCTestCase {
+final class BSONPublicTests: XCTestCase {
     
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
         return [
@@ -35,7 +35,7 @@ class BSONPublicTests: XCTestCase {
             ("testJSONEscapeSequences", testJSONEscapeSequences),
             ("testDocumentCombineOperators", testDocumentCombineOperators),
             ("testDocumentFlattening", testDocumentFlattening),
-            ("testTypeChecking", testTypeChecking)
+            ("testTypeChecking", testTypeChecking),
         ]
     }
     
@@ -397,6 +397,16 @@ class BSONPublicTests: XCTestCase {
         XCTAssert(kittenDocument["regex"] == .regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"))
         XCTAssert(kittenDocument["minKey"] == .minKey)
         XCTAssert(kittenDocument["maxKey"] == .maxKey)
+        
+        let emptyDocument = Document()
+        
+        XCTAssertNotEqual(~emptyDocument, .nothing)
+        XCTAssertNotEqual(~emptyDocument, .array([]))
+        XCTAssertEqual(~emptyDocument, .document([:]))
+        XCTAssertNotEqual([:] as Document, [] as Document)
+        XCTAssertEqual([:] as Document, [:] as Document)
+        XCTAssertEqual([] as Document, [] as Document)
+        
     }
     
     func testDotSyntax() {

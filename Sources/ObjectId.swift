@@ -48,14 +48,14 @@ public struct ObjectId {
         var data = [UInt8]()
         
         // Take the current UNIX epoch as Int32 and take it's bytes
-        data += Int32(currentTime.timeIntervalSince1970).bytes
+        data += Int32(currentTime.timeIntervalSince1970).makeBytes()
         
         // Take a random number
-        data += ObjectId.random.bytes
+        data += ObjectId.random.makeBytes()
         
         // And add a counter as 2 bytes and increment it
         ObjectId.counterQueue.sync {
-            data += ObjectId.counter.bytes
+            data += ObjectId.counter.makeBytes()
             ObjectId.counter = ObjectId.counter &+ 1
         }
         
@@ -119,6 +119,13 @@ public struct ObjectId {
         }
         
         return String(bytes: bytes, encoding: .utf8)!
+    }
+}
+
+extension ObjectId: Hashable {
+    /// The hash value for this ObjectId is currently the hexstring. Will be more performant in the future
+    public var hashValue: Int {
+        return self.hexString.hashValue
     }
 }
 

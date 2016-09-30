@@ -23,7 +23,7 @@ extension Document : Equatable {
             }
         }
         
-        return true
+        return lhs.isArray == rhs.isArray
     }
     
     /// Returns true if `lhs` and `rhs` store the same serialized data.

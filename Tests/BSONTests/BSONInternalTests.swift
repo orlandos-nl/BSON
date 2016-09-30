@@ -14,7 +14,7 @@ import XCTest
     import Glibc
 #endif
 
-class BSONInternalTests: XCTestCase {
+final class BSONInternalTests: XCTestCase {
     static var allTests : [(String, (BSONInternalTests) -> () throws -> Void)] {
         return [
             ("testCStringSerialization", testCStringSerialization),
