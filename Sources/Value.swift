@@ -162,8 +162,8 @@ public enum Value {
     }
     
     public var rawValue: ValueConvertible? {
-        func regexOptions(fromString s: String) -> NSRegularExpression.Options {
-            var options: NSRegularExpression.Options = []
+        func regexOptions(fromString s: String) -> RegularExpression.Options {
+            var options: RegularExpression.Options = []
             
             if s.contains("i") {
                 options.update(with: .caseInsensitive)
@@ -195,7 +195,7 @@ public enum Value {
         case .dateTime(let value): return value
         case .regularExpression(let pattern, let options):
             do {
-                return try NSRegularExpression(pattern: pattern, options: regexOptions(fromString: options))
+                return try RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
             } catch {
                 return nil
             }

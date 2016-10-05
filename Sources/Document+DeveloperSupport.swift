@@ -16,7 +16,7 @@ extension Document : CustomStringConvertible {
     }
 }
 
-#if os(OSX) || os(iOS)
+#if os(macOS) || os(iOS)
     extension Document : CustomPlaygroundQuickLookable {
         /// The Playground QuickLook version of this Document
         public var customPlaygroundQuickLook: PlaygroundQuickLook {
