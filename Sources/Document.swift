@@ -247,7 +247,22 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     public mutating func append(_ value: Value) {
         let key = "\(self.count)"
-        self.append(value, forKey: key)
+        
+        // We're going to insert the element before the Document null terminator
+        elementPositions.append(storage.endIndex)
+        
+        // Append the key-value pair
+        // Type identifier
+        storage.append(value.typeIdentifier)
+        // Key
+        storage.append(contentsOf: key.utf8)
+        // Key null terminator
+        storage.append(0x00)
+        // Value
+        storage.append(contentsOf: value.bytes)
+        
+        // Increase the bytecount
+        updateDocumentHeader()
     }
     
     /// Appends the convents of `otherDocument` to `self` overwriting any keys in `self` with the `otherDocument` equivalent in the case of duplicates
@@ -392,11 +407,13 @@ public struct DocumentIndex : Comparable {
 extension Sequence where Iterator.Element == Document {
     /// Converts a sequence of Documents to an array of documents in BSON format
     public func makeDocument() -> Document {
-        var combination = Document()
+        var combination = [] as Document
+        print(combination.isArray)
         for doc in self {
             combination.append(~doc)
         }
         
+        print(combination.isArray)
         return combination
     }
 }
