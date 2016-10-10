@@ -86,7 +86,7 @@ extension Data : ValueConvertible {
     }
 }
 
-extension NSRegularExpression : ValueConvertible {
+extension RegularExpression : ValueConvertible {
     /// Converts this instance to a BSON `Value`
     public func makeBsonValue() -> Value {
         func makeOptions() -> String {
