@@ -10,7 +10,7 @@ import Foundation
 
 public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == UInt8, S.IndexDistance == Int {
     guard bytes.count >= MemoryLayout<T>.size else {
-        throw DeserializationError.InvalidElementSize
+        throw DeserializationError.invalidElementSize
     }
     
     return UnsafeRawPointer([UInt8](bytes)).assumingMemoryBound(to: T.self).pointee

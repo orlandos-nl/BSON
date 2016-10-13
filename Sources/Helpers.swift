@@ -39,7 +39,7 @@ public extension String {
     private static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
-            throw DeserializationError.InvalidLastElement
+            throw DeserializationError.invalidLastElement
         }
         
         // Get the length
@@ -47,7 +47,7 @@ public extension String {
         
         // Check if the data is at least the right size
         guard data.count >= Int(length) + 4 else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.invalidElementSize
         }
         
         // Empty string
@@ -56,13 +56,13 @@ public extension String {
         }
         
         guard length > 0 else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.invalidElementSize
         }
         
         var stringData = Array(data[4..<Int(length + 3)])
         
         guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.unableToInstantiateString(fromBytes: stringData)
         }
         
         return (Int(length + 4), string)
@@ -84,15 +84,15 @@ public extension String {
     
     private static func _cInstant(bytes data: [UInt8]) throws -> (Int, String) {
         guard data.contains(0x00) else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.missingNullTerminatorInString
         }
         
         guard let stringData = data.split(separator: 0x00, maxSplits: 1, omittingEmptySubsequences: false).first else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.noCStringFound
         }
         
         guard let string = String(bytes: stringData, encoding: String.Encoding.utf8) else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.unableToInstantiateString(fromBytes: Array(stringData))
         }
         
         return (stringData.count+1, string)

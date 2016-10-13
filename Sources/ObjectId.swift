@@ -69,7 +69,7 @@ public struct ObjectId {
     /// Throws errors in case of an invalid string (e.g. wrong length)
     public init(_ hexString: String) throws {
         guard hexString.characters.count == 24 else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.InvalidObjectIdLength
         }
         
         var data = [UInt8]()
@@ -86,7 +86,7 @@ public struct ObjectId {
         }
         
         guard data.count == 12 else {
-            throw DeserializationError.ParseError
+            throw DeserializationError.InvalidObjectIdLength
         }
         
         self._storage = data
@@ -102,7 +102,7 @@ public struct ObjectId {
     /// Throws when there are not exactly 12 bytes provided
     public init(bytes data: [UInt8]) throws {
         guard data.count == 12 else {
-            throw DeserializationError.InvalidElementSize
+            throw DeserializationError.invalidElementSize
         }
 
         self._storage = data
