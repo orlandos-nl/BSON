@@ -29,7 +29,7 @@ extension Document {
     ///         "details.chicken": "fred"
     ///     ]
     ///
-    public mutating func flatten() {
+    public mutating func flatten(skippingArrays skipArrays: Bool = false) {
         enum FlattenError : Error {
             case invalidDocument
         }
@@ -59,7 +59,7 @@ extension Document {
                 }
                 
                 // If the element is not a document (or array, which is a document), move past it.
-                guard type == .arrayDocument || type == .document else {
+                guard (type == .arrayDocument && !skipArrays) || type == .document else {
                     index = dataPosition + getLengthOfElement(withDataPosition: dataPosition, type: type)
                     continue
                 }
