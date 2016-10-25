@@ -550,6 +550,6 @@ final class BSONPublicTests: XCTestCase {
         
         let regex = kittenDocument.extract("regex") as RegularExpression?
         XCTAssertNotNil(regex)
-        XCTAssertEqual(regex, try RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []))
+        XCTAssertEqual(regex?.pattern, "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}")
     }
 }
