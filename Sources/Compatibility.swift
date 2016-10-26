@@ -8,6 +8,6 @@
 
 import Foundation
 
-#if os(macOS)
+#if os(macOS) || os(iOS)
 typealias RegularExpression = NSRegularExpression
 #endif
