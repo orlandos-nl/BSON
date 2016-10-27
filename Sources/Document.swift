@@ -21,6 +21,14 @@ extension Array where Element : __DocumentProtocolForArrayAdditions {
         return self.map { $0.bytes }.reduce([], +)
     }
     
+    public init(bsonBytes data: Data, validating: Bool = false) {
+        var buffer = [UInt8](repeating: 0, count:  data.count)
+        
+        data.copyBytes(to: &buffer, count: buffer.count)
+        
+        self.init(bsonBytes: buffer, validating: validating)
+    }
+    
     public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
         var array = [Element]()
         var position = 0
