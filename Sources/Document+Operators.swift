@@ -8,11 +8,11 @@
 
 import Foundation
 
-extension Document : Equatable {
+extension _Document : Equatable {
     /// Compares two Documents to be equal to each other
     ///
     /// TODO: Implement fast comparison here
-    public static func ==(lhs: Document, rhs: Document) -> Bool {
+    static func ==(lhs: _Document, rhs: _Document) -> Bool {
         guard lhs.count == rhs.count else {
             return false
         }
@@ -28,23 +28,23 @@ extension Document : Equatable {
     
     /// Returns true if `lhs` and `rhs` store the same serialized data.
     /// Implies that `lhs` == `rhs`.
-    public static func ===(lhs: Document, rhs: Document) -> Bool {
+    public static func ===(lhs: _Document, rhs: _Document) -> Bool {
         return lhs.storage == rhs.storage
     }
 }
 
-extension Document {
+extension _Document {
     /// Appends `rhs` to `lhs` overwriting the keys from `lhs` when necessary
     ///
     /// - returns: The modified `lhs`
-    public static func +(lhs: Document, rhs: Document) -> Document {
+    public static func +(lhs: _Document, rhs: _Document) -> _Document {
         var new = lhs
         new += rhs
         return new
     }
     
     /// Appends `rhs` to `lhs` overwriting the keys from `lhs` when necessary
-    public static func +=(lhs: inout Document, rhs: Document) {
+    public static func +=(lhs: inout _Document, rhs: _Document) {
         let rhsIsSmaller = lhs.count > rhs.count
         let smallest = rhsIsSmaller ? rhs : lhs
         let other = rhsIsSmaller ? lhs : rhs

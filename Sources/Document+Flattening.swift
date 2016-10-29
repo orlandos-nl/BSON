@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Document {
+extension _Document {
     /// Flattens the document, removing any subdocuments and adding their key-value pairs as individual key-value pairs on the parent document.
     ///
     /// Consider having a document like this:
@@ -111,7 +111,7 @@ extension Document {
     ///         "details.chicken": "fred"
     ///     ]
     ///
-    public func flattened() -> Document {
+    public func flattened() -> _Document {
         var doc = self
         doc.flatten()
         return doc

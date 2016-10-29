@@ -13,9 +13,9 @@ extension Value {
         get {
             switch self {
             case .document(let subdoc):
-                return subdoc[key]
+                return subdoc[key]?.makeBsonValue() ?? BSON.Value.nothing
             case .array(let subdoc):
-                return subdoc[key]
+                return subdoc[key]?.makeBsonValue() ?? BSON.Value.nothing
             default:
                 return .nothing
             }
@@ -50,9 +50,9 @@ extension Value {
         get {
             switch self {
             case .document(let subdoc):
-                return subdoc[key]
+                return subdoc[key]?.makeBsonValue() ?? BSON.Value.nothing
             case .array(let subdoc):
-                return subdoc[key]
+                return subdoc[key]?.makeBsonValue() ?? BSON.Value.nothing
             default:
                 return .nothing
             }

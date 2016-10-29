@@ -1,37 +1,33 @@
 import Foundation
 
-public struct BSONDocument: ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral, ValueConvertible, Swift.Collection, Equatable, __DocumentProtocolForArrayAdditions {
-    public var rawDocument: Document
+public struct Document: ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral, Swift.Collection, Equatable, __DocumentProtocolForArrayAdditions {
+    var rawDocument: _Document
     
     public init(data: [UInt8]) {
-        rawDocument = Document(data: data)
+        rawDocument = _Document(data: data)
     }
     
     public init(data: Foundation.Data) {
-        rawDocument = Document(data: data)
+        rawDocument = _Document(data: data)
     }
 
     public init(data: ArraySlice<UInt8>) {
-        rawDocument = Document(data: data)
+        rawDocument = _Document(data: data)
     }
     
     public init() {
-        rawDocument = Document()
-    }
-    
-    public func makeBsonValue() -> BSON.Value {
-        return rawDocument.makeBsonValue()
+        rawDocument = _Document()
     }
     
     public init(dictionaryLiteral elements: (String, ValueConvertible)...) {
-        self.rawDocument = BSON.Document(dictionaryElements: elements.map { ($0.0, $0.1.makeBsonValue()) })
+        self.rawDocument = _Document(dictionaryElements: elements.map { ($0.0, $0.1.makeBsonValue()) })
     }
     
     public init(arrayLiteral elements: ValueConvertible...) {
-        self.rawDocument = BSON.Document(array: elements.map { $0.makeBsonValue() })
+        self.rawDocument = _Document(array: elements.map { $0.makeBsonValue() })
     }
     
-    public init(_ document: Document) {
+    init(_ document: _Document) {
         self.rawDocument = document
     }
     
@@ -71,7 +67,7 @@ public struct BSONDocument: ExpressibleByDictionaryLiteral, ExpressibleByArrayLi
         }
     }
     
-    public subscript(position: DocumentIndex) -> BSON.Document.IndexIterationElement {
+    public subscript(position: DocumentIndex) -> IndexIterationElement {
         get {
             return rawDocument[position]
         }
@@ -153,15 +149,15 @@ public struct BSONDocument: ExpressibleByDictionaryLiteral, ExpressibleByArrayLi
         return self.rawDocument.validate()
     }
     
-    public static func ==(lhs: BSONDocument, rhs: BSONDocument) -> Bool {
+    public static func ==(lhs: Document, rhs: Document) -> Bool {
         return lhs.rawDocument == rhs.rawDocument
     }
     
-    public static func +(lhs: BSONDocument, rhs: BSONDocument) -> BSONDocument {
-        return BSONDocument(lhs.rawDocument + rhs.rawDocument)
+    public static func +(lhs: Document, rhs: Document) -> Document {
+        return Document(lhs.rawDocument + rhs.rawDocument)
     }
     
-    public static func +=(lhs: inout BSONDocument, rhs: BSONDocument) {
+    public static func +=(lhs: inout Document, rhs: Document) {
         lhs.rawDocument += rhs.rawDocument
     }
     
@@ -169,8 +165,8 @@ public struct BSONDocument: ExpressibleByDictionaryLiteral, ExpressibleByArrayLi
         self.rawDocument.flatten()
     }
     
-    public func flattened() -> BSONDocument {
-        return BSONDocument(self.rawDocument.flattened())
+    public func flattened() -> Document {
+        return Document(self.rawDocument.flattened())
     }
     
     /// Converts the `Document` to the [MongoDB extended JSON](https://docs.mongodb.com/manual/reference/mongodb-extended-json/) format.
@@ -185,18 +181,18 @@ public struct BSONDocument: ExpressibleByDictionaryLiteral, ExpressibleByArrayLi
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [ValueConvertible]) {
-        rawDocument = Document(array: elements.map { $0.makeBsonValue() })
+        rawDocument = _Document(array: elements.map { $0.makeBsonValue() })
     }
     
     public init(extendedJSON json: String) throws {
-        rawDocument = try Document(extendedJSON: json)
+        rawDocument = try _Document(extendedJSON: json)
     }
     
     /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
     public init(dictionaryElements elements: [(String, ValueConvertible)]) {
-        rawDocument = Document(dictionaryElements: elements.map { ($0.0, $0.1.makeBsonValue()) })
+        rawDocument = _Document(dictionaryElements: elements.map { ($0.0, $0.1.makeBsonValue()) })
     }
     
     /// Appends a Key-Value pair to this `Document` where this `Document` acts like a `Dictionary`
@@ -220,7 +216,7 @@ public struct BSONDocument: ExpressibleByDictionaryLiteral, ExpressibleByArrayLi
     }
     
     /// Appends the convents of `otherDocument` to `self` overwriting any keys in `self` with the `otherDocument` equivalent in the case of duplicates
-    public mutating func append(contentsOf otherDocument: BSONDocument) {
+    public mutating func append(contentsOf otherDocument: Document) {
         rawDocument.append(contentsOf: otherDocument.rawDocument)
     }
     
@@ -234,7 +230,7 @@ public struct BSONDocument: ExpressibleByDictionaryLiteral, ExpressibleByArrayLi
         return rawDocument.endIndex
     }
     
-    public func makeIterator() -> AnyIterator<Document.IndexIterationElement> {
+    public func makeIterator() -> AnyIterator<IndexIterationElement> {
         return rawDocument.makeIterator()
     }
 }

@@ -1,4 +1,4 @@
-extension Document {
+extension _Document {
     public func extract<T: ValueConvertible>(_ key: String) -> T? {
         let response = self[key]
         

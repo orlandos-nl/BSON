@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Document {
+extension _Document {
     /// The amount of key-value pairs in the `Document`
     public var count: Int {
         return elementPositions.count

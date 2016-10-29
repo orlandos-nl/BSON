@@ -78,7 +78,7 @@ extension Value {
     }
 }
 
-extension Document {
+extension _Document {
     /// All errors that can occur when parsing Extended JSON
     public enum ExtendedJSONError : Error {
         /// Invalid character at position
@@ -273,7 +273,7 @@ extension Document {
         /// Parse the object at array at the current position. After calling this, the position will be after the end of the object or array.
         func parseObjectOrArray() throws -> Value {
             // This will be the document we're working with
-            var document = Document()
+            var document = _Document()
             
             // There may be whitespace before the start of the object or array
             try skipWhitespace()
@@ -420,7 +420,7 @@ extension Document {
                         return .minKey
                     } else if document["$maxKey"] == 1 {
                         return .maxKey
-                    } else if let timestamp = document["$timestamp"].documentValue, let t = timestamp["t"].int32Value, let i = timestamp["i"].int32Value {
+                    } else if let timestamp = document["$timestamp"].documentValue?.rawDocument, let t = timestamp["t"].int32Value, let i = timestamp["i"].int32Value {
                         return .timestamp(stamp: t, increment: i)
                     }
                 } else if count == 2 {
@@ -453,7 +453,7 @@ extension Document {
                 }
             }
             
-            return isArray ? .array(document) : .document(document)
+            return isArray ? .array(Document(document)) : .document(Document(document))
         }
         
         let jsonVal = try parseObjectOrArray()

@@ -35,13 +35,13 @@ extension Value : ExpressibleByBooleanLiteral {
 }
 
 extension Value : ExpressibleByDictionaryLiteral {
-    public init(dictionaryLiteral elements: (String, Value)...) {
+    public init(dictionaryLiteral elements: (String, ValueConvertible)...) {
         self = .document(Document(dictionaryElements: elements))
     }
 }
 
 extension Value : ExpressibleByArrayLiteral {
-    public init(arrayLiteral elements: Value...) {
+    public init(arrayLiteral elements: ValueConvertible...) {
         self = .array(Document(array: elements))
     }
 }

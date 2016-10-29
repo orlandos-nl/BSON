@@ -16,7 +16,7 @@ public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterato
     return UnsafeRawPointer([UInt8](bytes)).assumingMemoryBound(to: T.self).pointee
 }
 
-extension Document {
+extension _Document {
     
     // MARK: - BSON Parsing Logic
     

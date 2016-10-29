@@ -13,7 +13,9 @@ public protocol __DocumentProtocolForArrayAdditions {
     init(data: [UInt8])
     func validate() -> Bool
 }
-extension Document : __DocumentProtocolForArrayAdditions {}
+extension _Document : __DocumentProtocolForArrayAdditions {}
+
+public typealias IndexIterationElement = (key: String, value: Value)
 
 extension Array where Element : __DocumentProtocolForArrayAdditions {
     /// The combined data for all documents in the array
@@ -91,7 +93,7 @@ public enum ElementType : UInt8 {
 ///
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
-public struct Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
+struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
     internal var storage: [UInt8]
     internal var _count: Int? = nil
     internal var invalid = false
@@ -103,7 +105,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with binary `Foundation.Data`
     ///
     /// - parameters data: the `Foundation.Data` that's being used to initialize this`Document`
-    public init(data: Foundation.Data) {
+    init(data: Foundation.Data) {
         var byteArray = [UInt8](repeating: 0, count: data.count)
         data.copyBytes(to: &byteArray, count: byteArray.count)
         
@@ -113,7 +115,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    public init(data: [UInt8]) {
+    init(data: [UInt8]) {
         guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count, data.last == 0x00 else {
             self.storage = [5,0,0,0]
             self.invalid = true
@@ -219,7 +221,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     // MARK: - Manipulation & Extracting values
     
     public typealias Index = DocumentIndex
-    public typealias IndexIterationElement = (key: String, value: Value)
     
     /// Appends a Key-Value pair to this `Document` where this `Document` acts like a `Dictionary`
     ///
@@ -274,9 +275,9 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     }
     
     /// Appends the convents of `otherDocument` to `self` overwriting any keys in `self` with the `otherDocument` equivalent in the case of duplicates
-    public mutating func append(contentsOf otherDocument: Document) {
+    public mutating func append(contentsOf otherDocument: _Document) {
         if self.validatesAsArray() && otherDocument.validatesAsArray() {
-            self = Document(array: self.arrayValue + otherDocument.arrayValue)
+            self = _Document(array: self.arrayValue + otherDocument.arrayValue)
         } else {
             self += otherDocument
         }

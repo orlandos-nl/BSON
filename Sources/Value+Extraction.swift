@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Value {
+extension ValueConvertible {
     /// Returns this value interpeted as a `Double`.
     /// This works for values of the following types:
     ///
@@ -22,7 +22,7 @@ extension Value {
     ///
     /// If the value cannot be interpeted as a `Double`, Double(0) will be returned.
     public var double : Double {
-        switch self {
+        switch self.makeBsonValue() {
         case .double(let val): return val
         case .string(let val): return Double(val) ?? 0
         case .boolean(let val): return val ? 1 : 0
@@ -47,7 +47,7 @@ extension Value {
     ///
     /// If the value cannot be interpeted as a `Double`, Double(0) will be returned.
     public var string : String {
-        switch self {
+        switch self.makeBsonValue() {
         case .double(let val): return "\(val)"
         case .string(let val): return val
         case .objectId(let val): return val.hexString
@@ -62,7 +62,7 @@ extension Value {
     
     /// Returns the contained document if `self` is `array` or `document`. If self is not `array` or `document`, an empty `Document` will be returned.
     public var document : Document {
-        switch self {
+        switch self.makeBsonValue() {
         case .array(let val): return val
         case .document(let val): return val
         default: return [:]
@@ -80,7 +80,7 @@ extension Value {
     ///
     /// If the value cannot be interpeted as a `Double`, Double(0) will be returned.
     public var bool : Bool {
-        switch self {
+        switch self.makeBsonValue() {
         case .double(let val): return val == 0 ? false : true
         case .string(let val): return val == "true" ? true : false
         case .boolean(let val): return val
@@ -103,7 +103,7 @@ extension Value {
     ///
     /// If the value cannot be interpeted as a `Int64`, Int64(0) will be returned.
     public var int64 : Int64 {
-        switch self {
+        switch self.makeBsonValue() {
         case .double(let val): return Int64(val)
         case .string(let val): return Int64(val) ?? 0
         case .boolean(let val): return val ? 1 : 0
@@ -143,7 +143,7 @@ extension Value {
     ///
     /// If the value cannot be interpeted as a `Int32`, Int32(0) will be returned.
     public var int32 : Int32 {
-        switch self {
+        switch self.makeBsonValue() {
         case .double(let val): return Int32(val)
         case .string(let val): return Int32(val) ?? 0
         case .boolean(let val): return val ? 1 : 0
@@ -156,7 +156,7 @@ extension Value {
     
     // MARK: ... value
     public var storedValue : Any? {
-        switch self {
+        switch self.makeBsonValue() {
         case .double(let val): return val
         case .string(let val): return val
         case .document(let val): return val
@@ -213,14 +213,5 @@ extension Value {
     /// Returns the raw value only if the underlying value is stored as `ObjectId`. Otherwise, returns `nil`.
     public var objectIdValue : ObjectId? {
         return self.storedValue as? ObjectId
-    }
-    
-    public var value : ValueConvertible {
-        get {
-            return self
-        }
-        set {
-            self = newValue.makeBsonValue()
-        }
     }
 }

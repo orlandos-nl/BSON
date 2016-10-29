@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Document {
+extension _Document {
     /// Mutates the key-value pair like you would with a `Dictionary`
     public subscript(key: String) -> Value {
         get {
