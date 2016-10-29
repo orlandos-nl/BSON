@@ -418,7 +418,7 @@ extension Sequence where Iterator.Element == Document {
     public func makeDocument() -> Document {
         var combination = [] as Document
         for doc in self {
-            combination.append(~doc)
+            combination.append(doc)
         }
         
         return combination

@@ -121,8 +121,3 @@ extension Value : ValueConvertible {
         return self
     }
 }
-
-prefix operator ~
-public prefix func ~(convertible: ValueConvertible) -> Value {
-    return convertible.makeBsonValue()
-}
