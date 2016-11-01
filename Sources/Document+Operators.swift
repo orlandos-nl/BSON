@@ -8,17 +8,17 @@
 
 import Foundation
 
-extension _Document : Equatable {
+extension Document : Equatable {
     /// Compares two Documents to be equal to each other
     ///
     /// TODO: Implement fast comparison here
-    static func ==(lhs: _Document, rhs: _Document) -> Bool {
+    public static func ==(lhs: Document, rhs: Document) -> Bool {
         guard lhs.count == rhs.count else {
             return false
         }
         
         for (key, value) in lhs {
-            guard rhs[key] == value else {
+            guard let val = rhs[key], val == value.makeBsonValue() else {
                 return false
             }
         }
@@ -28,23 +28,23 @@ extension _Document : Equatable {
     
     /// Returns true if `lhs` and `rhs` store the same serialized data.
     /// Implies that `lhs` == `rhs`.
-    public static func ===(lhs: _Document, rhs: _Document) -> Bool {
+    public static func ===(lhs: Document, rhs: Document) -> Bool {
         return lhs.storage == rhs.storage
     }
 }
 
-extension _Document {
+extension Document {
     /// Appends `rhs` to `lhs` overwriting the keys from `lhs` when necessary
     ///
     /// - returns: The modified `lhs`
-    public static func +(lhs: _Document, rhs: _Document) -> _Document {
+    public static func +(lhs: Document, rhs: Document) -> Document {
         var new = lhs
         new += rhs
         return new
     }
     
     /// Appends `rhs` to `lhs` overwriting the keys from `lhs` when necessary
-    public static func +=(lhs: inout _Document, rhs: _Document) {
+    public static func +=(lhs: inout Document, rhs: Document) {
         let rhsIsSmaller = lhs.count > rhs.count
         let smallest = rhsIsSmaller ? rhs : lhs
         let other = rhsIsSmaller ? lhs : rhs

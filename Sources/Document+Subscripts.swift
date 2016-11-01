@@ -8,43 +8,19 @@
 
 import Foundation
 
-extension _Document {
+extension Document {
     /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(key: String) -> Value {
+    public subscript(key: String) -> ValueConvertible? {
         get {
             guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
-                // use dot syntax
-                var parts = key.components(separatedBy: ".")
-                
-                guard parts.count >= 2 else {
-                    return .nothing
-                }
-                
-                let firstPart = parts.removeFirst()
-                
-                var value: Value = self[firstPart]
-                while !parts.isEmpty {
-                    let part = parts.removeFirst()
-                    
-                    value = value[part]
-                }
-                
-                return value
+                return nil
             }
             
             return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
         }
         
         set {
-            let parts = key.characters.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
-            
-            if parts.count == 2 {
-                let firstPart = String(parts[0])
-                let secondPart = String(parts[1])
-                
-                self[firstPart][secondPart] = newValue
-                return
-            }
+            let newValue = newValue?.makeBsonValue() ?? .nothing
             
             if let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) {
                 let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
@@ -63,7 +39,7 @@ extension _Document {
         }
     }
     
-    public subscript(parts: String...) -> Value {
+    public subscript(parts: String...) -> ValueConvertible? {
         get {
             return self[parts]
         }
@@ -73,7 +49,7 @@ extension _Document {
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(parts: [String]) -> Value {
+    public subscript(parts: [String]) -> ValueConvertible? {
         get {
             if parts.count == 1 {
                 if let meta = getMeta(forKeyBytes: [UInt8](parts[0].utf8)) {
@@ -84,25 +60,27 @@ extension _Document {
                 var parts = parts[0].components(separatedBy: ".")
                 
                 guard parts.count >= 2 else {
-                    return .nothing
+                    return nil
                 }
                 
                 let firstPart = parts.removeFirst()
                 
-                var value: Value = self[firstPart]
-                while !parts.isEmpty {
+                var value = self[firstPart]
+                while !parts.isEmpty, let newValue = value?.documentValue {
                     let part = parts.removeFirst()
                     
-                    value = value[part]
+                    value = newValue[part]
                 }
                 
                 return value
-            } else {
+            } else if parts.count >= 2 {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                return self[firstPart][parts]
+                return self[firstPart]?.document[parts]
             }
+            
+            return nil
         }
         
         set {
@@ -114,9 +92,11 @@ extension _Document {
                     let firstPart = String(parts[0])
                     let secondPart = String(parts[1])
                     
-                    self[firstPart][secondPart] = newValue
+                    self[firstPart]?.document[secondPart] = newValue
                     return
                 }
+                
+                let newValue = newValue?.makeBsonValue() ?? .nothing
                 
                 if let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) {
                     let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
@@ -131,18 +111,22 @@ extension _Document {
                 }
                 
                 self.append(newValue, forKey: key)
-            } else {
+            } else if parts.count >= 2 {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                self[firstPart][parts] = newValue
+                self[firstPart]?.document[parts] = newValue
             }
         }
     }
     
     /// Mutates the value store like you would with an `Array`
-    public subscript(key: Int) -> Value {
+    public subscript(key: Int) -> ValueConvertible? {
         get {
+            if let value = self["\(key)"] {
+                return value
+            }
+            
             var keyPos = 0
             
             for currentKey in makeKeyIterator() {
@@ -153,9 +137,11 @@ extension _Document {
                 keyPos += 1
             }
             
-            return .nothing
+            return nil
         }
         set {
+            let newValue = newValue?.makeBsonValue() ?? .nothing
+            
             if let currentKey = getMeta(atPosition: elementPositions[key]) {
                 let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
                 let dataEndPosition = currentKey.dataPosition+len
@@ -207,7 +193,9 @@ extension _Document {
                 fatalError("Unable to construct the key bytes into a String")
             }
             
-            let value = getValue(atDataPosition: position, withType: type)
+            guard let value = getValue(atDataPosition: position, withType: type) else {
+                fatalError("Trying to access element in Document that does not exist")
+            }
             
             return (key: key, value: value)
         }
@@ -219,7 +207,9 @@ extension _Document {
                 fatalError("Invalid type found in Document when modifying the Document at the position \(position)")
             }
             
-            storage[position] = newValue.value.typeIdentifier
+            let newBsonValue = newValue.value.makeBsonValue() 
+            
+            storage[position] = newBsonValue.typeIdentifier
             
             position += 1
             let stringPosition = position
@@ -236,7 +226,7 @@ extension _Document {
             let length = getLengthOfElement(withDataPosition: position, type: type)
             
             storage.removeSubrange(position..<position+length)
-            storage.insert(contentsOf: newValue.value.bytes, at: position)
+            storage.insert(contentsOf: newBsonValue.bytes, at: position)
             
             updateDocumentHeader()
         }

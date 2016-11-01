@@ -64,8 +64,8 @@ extension String : ValueConvertible {
 
 extension Document : ValueConvertible {
     /// Converts this instance to a BSON `Value`
-    public func makeBsonValue() -> Value {
-        return self.rawDocument.validatesAsArray() && self.rawDocument.isArray ? .array(self) : .document(self)
+    public func makeBsonValue() -> BSON.Value {
+        return self.validatesAsArray() && self.isArray ? .array(self) : .document(self)
     }
 }
 

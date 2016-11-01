@@ -50,7 +50,13 @@ extension Value {
         case .int32(let value):
             return value.makeBytes()
         case .timestamp(let value):
-            return value.stamp.makeBytes() + value.increment.makeBytes()
+            let bytes = value.makeBytes()
+            
+            guard let t = try? fromBytes(bytes[0..<4]) as UInt32, let i = try? fromBytes(bytes[4..<8]) as UInt32 else {
+                return [0,0,0,0,0,0,0,0]
+            }
+            
+            return t.makeBytes() + i.makeBytes()
         case .int64(let value):
             return value.makeBytes()
         case .null, .minKey, .maxKey, .nothing:

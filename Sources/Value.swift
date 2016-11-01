@@ -8,53 +8,148 @@
 
 import Foundation
 
-/// All binary subtypes
-public enum BinarySubtype {
-    /// The default subtype. Nothing special
-    case generic
+func regexOptions(fromString s: String) -> RegularExpression.Options {
+    var options: RegularExpression.Options = []
     
-    /// A function
-    case function
+    if s.contains("i") {
+        options.update(with: .caseInsensitive)
+    }
     
-    /// Old binary subtype
-    case binaryOld
+    if s.contains("m") {
+        options.update(with: .anchorsMatchLines)
+    }
     
-    /// Old UUID Subtype
-    case uuidOld
+    if s.contains("x") {
+        options.update(with: .allowCommentsAndWhitespace)
+    }
     
-    /// UUID
-    case uuid
+    if s.contains("s") {
+        options.update(with: .dotMatchesLineSeparators)
+    }
     
-    /// MD5 hash
-    case md5
-    
-    /// Custom
-    case userDefined(UInt8)
-    
-    /// The raw UInt8 value
-    public var rawValue : UInt8 {
-        switch self {
-        case .generic: return 0x00
-        case .function: return 0x01
-        case .binaryOld: return 0x02
-        case .uuidOld: return 0x03
-        case .uuid: return 0x04
-        case .md5: return 0x05
-        case .userDefined(let value): return value
+    return options
+}
+
+public protocol BinaryConvertible: ValueConvertible {
+    func makeBinary() -> Binary
+}
+
+extension BinaryConvertible {
+    public func makeBsonValue() -> Value {
+        return makeBinary().makeBsonValue()
+    }
+}
+
+extension Data: BinaryConvertible {
+    public func makeBinary() -> Binary {
+        return Binary(data: self, withSubtype: .userDefined)
+    }
+}
+
+public struct Binary: ValueConvertible {
+    /// All binary subtypes
+    public enum Subtype {
+        /// The default subtype. Nothing special
+        case generic
+        
+        /// A function
+        case function
+        
+        /// Old binary subtype
+        case binaryOld
+        
+        /// Old UUID Subtype
+        case uuidOld
+        
+        /// UUID
+        case uuid
+        
+        /// MD5 hash
+        case md5
+        
+        /// userDefined
+        case userDefined
+        
+        /// Custom
+        case other(UInt8)
+        
+        /// The raw UInt8 value
+        public var rawValue : UInt8 {
+            switch self {
+            case .generic: return 0x00
+            case .function: return 0x01
+            case .binaryOld: return 0x02
+            case .uuidOld: return 0x03
+            case .uuid: return 0x04
+            case .md5: return 0x05
+            case .userDefined: return 0x80
+            case .other(let value): return value
+            }
+        }
+        
+        /// Creates a `BinarySubtype` from an `UInt8`
+        public init(rawValue: UInt8) {
+            switch rawValue {
+            case 0x00: self = .generic
+            case 0x01: self = .function
+            case 0x02: self = .binaryOld
+            case 0x03: self = .uuidOld
+            case 0x04: self = .uuid
+            case 0x05: self = .md5
+            default: self = .other(rawValue)
+            }
         }
     }
     
-    /// Creates a `BinarySubtype` from an `UInt8`
-    public init(rawValue: UInt8) {
-        switch rawValue {
-        case 0x00: self = .generic
-        case 0x01: self = .function
-        case 0x02: self = .binaryOld
-        case 0x03: self = .uuidOld
-        case 0x04: self = .uuid
-        case 0x05: self = .md5
-        default: self = .userDefined(rawValue)
+    public var data: Data
+    public var subtype: Subtype
+    
+    public init(data: Data, withSubtype subtype: Subtype) {
+        self.data = data
+        self.subtype = subtype
+    }
+    
+    public init(data: [UInt8], withSubtype subtype: Subtype) {
+        self.data = Data(bytes: data)
+        self.subtype = subtype
+    }
+    
+    public func makeBsonValue() -> Value {
+        return .binary(subtype: self.subtype, data: makeBytes())
+    }
+    
+    public func makeBytes() -> [UInt8] {
+        var data = [UInt8](repeating: 0, count: self.data.count)
+        
+        self.data.copyBytes(to: &data, count: data.count)
+        
+        return data
+    }
+}
+
+public struct Null: ValueConvertible {
+    public func makeBsonValue() -> Value {
+        return .null
+    }
+    
+    public init() {}
+}
+
+public struct JavascriptCode: ValueConvertible {
+    public func makeBsonValue() -> Value {
+        if let scope = scope {
+            return .javascriptCodeWithScope(code: code, scope: scope)
+        } else {
+            return .javascriptCode(code)
         }
+    }
+    
+    public var code: String
+    public var scope: Document?
+    
+    public init(_ code: String, withScope scope: Document? = nil) {
+        self.code = code
+        self.scope = scope
     }
 }
 
@@ -95,7 +190,7 @@ public enum Value {
     case array(Document)
     
     /// Binary data with an identification subtype
-    case binary(subtype: BinarySubtype, data: [UInt8])
+    case binary(subtype: Binary.Subtype, data: [UInt8])
     
     /// Unique identifier
     case objectId(ObjectId)
@@ -122,7 +217,7 @@ public enum Value {
     case int32(Int32)
     
     /// UNIX Epoch time with increment
-    case timestamp(stamp: Int32, increment: Int32)
+    case timestamp(Int64)
     
     /// -
     case int64(Int64)
@@ -162,28 +257,6 @@ public enum Value {
     }
     
     public var rawValue: ValueConvertible? {
-        func regexOptions(fromString s: String) -> RegularExpression.Options {
-            var options: RegularExpression.Options = []
-            
-            if s.contains("i") {
-                options.update(with: .caseInsensitive)
-            }
-            
-            if s.contains("m") {
-                options.update(with: .anchorsMatchLines)
-            }
-            
-            if s.contains("x") {
-                options.update(with: .allowCommentsAndWhitespace)
-            }
-            
-            if s.contains("s") {
-                options.update(with: .dotMatchesLineSeparators)
-            }
-            
-            return options
-        }
-        
         switch self {
         case .double(let value): return value
         case .string(let value): return value
@@ -199,16 +272,16 @@ public enum Value {
             } catch {
                 return nil
             }
-        case .javascriptCode(let value): return value
+        case .javascriptCode(let value): return JavascriptCode(value)
         case .int32(let value): return value
-        case .timestamp(let stamp, _): return Date(timeIntervalSince1970: Double(stamp))
+        case .timestamp(let stamp): return Date(timeIntervalSince1970: Double(stamp))
         case .int64(let value): return value
+        case .null: return Null()
+        case .javascriptCodeWithScope(let code, let scope): return JavascriptCode(code, withScope: scope)
             
         // TODO: Unsupported
-        case .null: return nil
         case .minKey: return nil
         case .maxKey: return nil
-        case .javascriptCodeWithScope(_, _): return nil
         case .nothing: return nil
         }
     }

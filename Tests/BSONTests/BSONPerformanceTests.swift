@@ -28,22 +28,22 @@ class BSONPerformanceTests: XCTestCase {
             "stringTest": "foo",
             "documentTest": [
                 "documentSubDoubleTest": 13.37,
-                "subArray": ["henk", "fred", "kaas", "goudvis"]
-            ],
-            "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-            "currentTime": .dateTime(Date(timeIntervalSince1970: Double(1453589266))),
-            "cool32bitNumber": .int32(9001),
-            "cool64bitNumber": 21312153544,
-            "code": .javascriptCode("console.log(\"Hello there\");"),
-            "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
-            "nothing": .null,
-            "data": .binary(subtype: BinarySubtype.generic, data: [34,34,34,34,34]),
+                "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
+            ] as Document,
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
+            "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
+            "cool32bitNumber": Int32(9001),
+            "cool64bitNumber": Int64(21312153544),
+            "code": Value.javascriptCode("console.log(\"Hello there\");"),
+            "codeWithScope": Value.javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
+            "nothing": Null(),
+            "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,
-            "timestamp": .timestamp(stamp: 2000, increment: 8),
-            "regex": .regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-            "minKey": .minKey,
-            "maxKey": .maxKey
+            "timestamp": Value.timestamp(try fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
+            "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
+            "minKey": Value.minKey,
+            "maxKey": Value.maxKey
         ]
         
         measure {
@@ -63,22 +63,22 @@ class BSONPerformanceTests: XCTestCase {
                 "stringTest": "foo",
                 "documentTest": [
                     "documentSubDoubleTest": 13.37,
-                    "subArray": ["henk", "fred", "kaas", "goudvis"]
-                ],
-                "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-                "currentTime": .dateTime(Date(timeIntervalSince1970: Double(1453589266))),
-                "cool32bitNumber": .int32(9001),
-                "cool64bitNumber": 21312153544,
-                "code": .javascriptCode("console.log(\"Hello there\");"),
-                "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
-                "nothing": .null,
-                "data": .binary(subtype: BinarySubtype.generic, data: [34,34,34,34,34]),
+                    "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
+                ] as Document,
+                "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
+                "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
+                "cool32bitNumber": Int32(9001),
+                "cool64bitNumber": Int64(21312153544),
+                "code": JavascriptCode("console.log(\"Hello there\");"),
+                "codeWithScope": JavascriptCode("console.log(\"Hello there\");", withScope: ["hey": "hello"]),
+                "nothing": Null(),
+                "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
                 "boolFalse": false,
                 "boolTrue": true,
-                "timestamp": .timestamp(stamp: 2000, increment: 8),
-                "regex": .regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-                "minKey": .minKey,
-                "maxKey": .maxKey
+                "timestamp": Value.timestamp(try! fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
+                "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
+                "minKey": Value.minKey,
+                "maxKey": Value.maxKey
             ]
             
             total += kittenDocument.bytes.count
@@ -87,28 +87,28 @@ class BSONPerformanceTests: XCTestCase {
         print("total = \(total)")
     }
     
-    func testDeserializationPerformance() {
+    func testDeserializationPerformance() throws {
         let kittenDocument: Document = [
             "doubleTest": 0.04,
             "stringTest": "foo",
             "documentTest": [
                 "documentSubDoubleTest": 13.37,
-                "subArray": ["henk", "fred", "kaas", "goudvis"]
-            ],
-            "nonRandomObjectId": try! ~ObjectId("0123456789ABCDEF01234567"),
-            "currentTime": .dateTime(Date(timeIntervalSince1970: Double(1453589266))),
-            "cool32bitNumber": .int32(9001),
-            "cool64bitNumber": 21312153544,
-            "code": .javascriptCode("console.log(\"Hello there\");"),
-            "codeWithScope": .javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
-            "nothing": .null,
-            "data": .binary(subtype: BinarySubtype.generic, data: [34,34,34,34,34]),
+                "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
+            ] as Document,
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
+            "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
+            "cool32bitNumber": Int32(9001),
+            "cool64bitNumber": Int64(21312153544),
+            "code": JavascriptCode("console.log(\"Hello there\");"),
+            "codeWithScope": JavascriptCode("console.log(\"Hello there\");", withScope: ["hey": "hello"]),
+            "nothing": Null(),
+            "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,
-            "timestamp": .timestamp(stamp: 2000, increment: 8),
-            "regex": .regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-            "minKey": .minKey,
-            "maxKey": .maxKey
+            "timestamp": Value.timestamp(try fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
+            "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
+            "minKey": Value.minKey,
+            "maxKey": Value.maxKey
         ]
 
         var total = 0
@@ -118,7 +118,7 @@ class BSONPerformanceTests: XCTestCase {
             
             for (k, v) in kittenDocument {
                 hash += k.characters.count
-                hash += v.bytes.count
+                hash += v.makeBsonValue().bytes.count
             }
             
             total += hash
@@ -131,7 +131,7 @@ class BSONPerformanceTests: XCTestCase {
         var document: Document = [:]
         
         for i in 0..<9999 {
-            document.append(.int32(Int32(i)), forKey: "test\(i)")
+            document.append(Int32(i), forKey: "test\(i)")
         }
         
         measure {
@@ -143,7 +143,7 @@ class BSONPerformanceTests: XCTestCase {
         var document: Document = [:]
         
         for i in 0..<9999 {
-            document.append(.int32(Int32(i)), forKey: "test\(i)")
+            document.append(Int32(i), forKey: "test\(i)")
         }
         
         measure {

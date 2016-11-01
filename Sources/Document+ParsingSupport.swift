@@ -10,13 +10,14 @@ import Foundation
 
 public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == UInt8, S.IndexDistance == Int {
     guard bytes.count >= MemoryLayout<T>.size else {
+        print(T.self)
         throw DeserializationError.invalidElementSize
     }
     
     return UnsafeRawPointer([UInt8](bytes)).assumingMemoryBound(to: T.self).pointee
 }
 
-extension _Document {
+extension Document {
     
     // MARK: - BSON Parsing Logic
     
@@ -278,7 +279,7 @@ extension _Document {
     ///
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
-    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> Value {
+    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> ValueConvertible? {
         do {
             var position = startPosition
             
@@ -289,15 +290,15 @@ extension _Document {
             switch type {
             case .double: // double
                 guard remaining() >= 8 else {
-                    return .nothing
+                    return nil
                 }
                 
                 let double: Double = try fromBytes(storage[position..<position+8])
-                return .double(double)
+                return double
             case .string: // string
                 // Check for null-termination and at least 5 bytes (length spec + terminator)
                 guard remaining() >= 5 else {
-                    return .nothing
+                    return nil
                 }
                 
                 // Get the length
@@ -305,89 +306,86 @@ extension _Document {
                 
                 // Check if the data is at least the right size
                 guard storage.count-position >= Int(length) + 4 else {
-                    return .nothing
+                    return nil
                 }
                 
                 // Empty string
                 if length == 1 {
                     position += 5
                     
-                    return .string("")
+                    return ""
                 }
                 
                 guard length > 0 else {
-                    return .nothing
+                    return nil
                 }
                 
                 var stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
                 guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
-                    return .nothing
+                    return nil
                 }
                 
-                return .string(string)
+                return string
             case .document, .arrayDocument: // document / array
                 guard remaining() >= 5 else {
-                    return .nothing
+                    return nil
                 }
                 
                 let length = Int(try fromBytes(storage[position..<position+4]) as Int32)
                 
                 guard remaining() >= length else {
-                    return .nothing
+                    return nil
                 }
                 
                 let subData = Array(storage[position..<position+length])
-                let document = Document(data: subData)
-                return type == .document ? .document(document) : .array(document)
+                return Document(data: subData)
             case .binary: // binary
                 guard remaining() >= 5 else {
-                    return .nothing
+                    return nil
                 }
                 
                 let length = Int(try fromBytes(storage[position..<position+4]) as Int32)
                 let subType = storage[position+4]
                 
                 guard remaining() >= length + 5 else {
-                    return .nothing
+                    return nil
                 }
                 
                 let realData = length > 0 ? Array(storage[position+5...position+4+length]) : []
                 // length + subType + data
                 position += 4 + 1 + Int(length)
                 
-                return .binary(subtype: BinarySubtype(rawValue: subType), data: realData)
+                return Binary(data: realData, withSubtype: Binary.Subtype(rawValue: subType))
             case .objectId: // objectid
                 guard remaining() >= 12 else {
-                    return .nothing
+                    return nil
                 }
                 
                 if let id = try? ObjectId(bytes: Array(storage[position..<position+12])) {
-                    return .objectId(id)
+                    return id
                 } else {
-                    return .nothing
+                    return nil
                 }
             case .boolean:
                 guard remaining() >= 1 else {
-                    return .nothing
+                    return nil
                 }
                 
-                return storage[position] == 0x00 ? .boolean(false) : .boolean(true)
+                return storage[position] == 0x00 ? false : true
             case .utcDateTime:
                 guard remaining() >= 8 else {
-                    return .nothing
+                    return nil
                 }
                 
                 let interval: Int64 = try fromBytes(storage[position..<position+8])
-                let date = Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
-                
-                return .dateTime(date)
+                return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             case .nullValue:
-                return .null
+                return Null()
             case .regex:
                 let k = storage[position..<storage.endIndex].split(separator: 0x00, maxSplits: 2, omittingEmptySubsequences: false)
                 guard k.count >= 2 else {
-                    return .nothing
+                    return nil
                 }
                 
                 let patternData = Array(k[0])
@@ -395,71 +393,70 @@ extension _Document {
                 
                 guard let pattern = try? String.instantiateFromCString(bytes: patternData + [0x00]),
                     let options = try? String.instantiateFromCString(bytes: optionsData + [0x00]) else {
-                        return .nothing
+                        return nil
                 }
                 
-                return .regularExpression(pattern: pattern, options: options)
+                return try RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
             case .javascriptCode:
                 guard let code = try? String.instantiate(bytes: Array(storage[position..<storage.endIndex])) else {
-                    return .nothing
+                    return nil
                 }
                 
-                return .javascriptCode(code)
+                return JavascriptCode(code)
             case .javascriptCodeWithScope:
                 // min length is 14 bytes: 4 for the int32, 5 for the string and 5 for the document
                 guard remaining() >= 14 else {
-                    return .nothing
+                    return nil
                 }
                 
                 // why did they include this? it's not needed. whatever. we'll validate it.
                 let totalLength = Int(try fromBytes(storage[position..<position+4]) as Int32)
                 guard remaining() >= totalLength else {
-                    return .nothing
+                    return nil
                 }
                 
                 let stringDataAndMore = Array(storage[position+4..<position+totalLength])
                 var trueCodeSize = 0
                 guard let code = try? String.instantiate(bytes: stringDataAndMore, consumedBytes: &trueCodeSize) else {
-                    return .nothing
+                    return nil
                 }
                 
                 // - 4 (length) - 5 (document)
                 guard stringDataAndMore.count - 4 - 5 >= trueCodeSize else {
-                    return .nothing
+                    return nil
                 }
                 
                 let scopeDataAndMaybeMore = Array(stringDataAndMore[trueCodeSize..<stringDataAndMore.endIndex])
                 let scope = Document(data: scopeDataAndMaybeMore)
                 
-                return .javascriptCodeWithScope(code: code, scope: scope)
+                return JavascriptCode(code, withScope: scope)
             case .int32: // int32
                 guard remaining() >= 4 else {
-                    return .nothing
+                    return nil
                 }
                 
-                return .int32(try fromBytes(storage[position..<position+4]))
+                return try fromBytes(storage[position..<position+4]) as Int32
             case .timestamp:
                 guard remaining() >= 8 else {
-                    return .nothing
+                    return nil
                 }
                 
-                let stamp: Int32 = try fromBytes(storage[position..<position+4])
-                let increment: Int32 = try fromBytes(storage[position+4..<position+8])
+                let stamp: Int64 = try fromBytes(storage[position..<position+8])
                 
-                return .timestamp(stamp: stamp, increment: increment)
+                return stamp
             case .int64: // timestamp, int64
                 guard remaining() >= 8 else {
-                    return .nothing
+                    return nil
                 }
                 
-                return .int64(try fromBytes(storage[position..<position+8]))
+                return try fromBytes(storage[position..<position+8]) as Int64
             case .minKey: // MinKey
-                return .minKey
+                return BSON.Value.minKey
             case .maxKey: // MaxKey
-                return .maxKey
+                return BSON.Value.maxKey
             }
         } catch {
-            return .nothing
+            return nil
         }
     }
     

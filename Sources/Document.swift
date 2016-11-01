@@ -8,16 +8,16 @@
 
 import Foundation
 
-public protocol __DocumentProtocolForArrayAdditions {
+public protocol _DocumentProtocolForArrayAdditions {
     var bytes: [UInt8] { get }
     init(data: [UInt8])
     func validate() -> Bool
 }
-extension _Document : __DocumentProtocolForArrayAdditions {}
+extension Document : _DocumentProtocolForArrayAdditions {}
 
-public typealias IndexIterationElement = (key: String, value: Value)
+public typealias IndexIterationElement = (key: String, value: ValueConvertible)
 
-extension Array where Element : __DocumentProtocolForArrayAdditions {
+extension Array where Element : _DocumentProtocolForArrayAdditions {
     /// The combined data for all documents in the array
     public var bytes: [UInt8] {
         return self.map { $0.bytes }.reduce([], +)
@@ -93,7 +93,7 @@ public enum ElementType : UInt8 {
 ///
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
-struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
+public struct Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
     internal var storage: [UInt8]
     internal var _count: Int? = nil
     internal var invalid = false
@@ -105,7 +105,7 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     /// Initializes this Doucment with binary `Foundation.Data`
     ///
     /// - parameters data: the `Foundation.Data` that's being used to initialize this`Document`
-    init(data: Foundation.Data) {
+    public init(data: Foundation.Data) {
         var byteArray = [UInt8](repeating: 0, count: data.count)
         data.copyBytes(to: &byteArray, count: byteArray.count)
         
@@ -115,7 +115,7 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    init(data: [UInt8]) {
+    public init(data: [UInt8]) {
         guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count, data.last == 0x00 else {
             self.storage = [5,0,0,0]
             self.invalid = true
@@ -153,10 +153,11 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
-    public init(dictionaryElements elements: [(String, Value)]) {
+    public init(dictionaryElements elements: [(String, ValueConvertible)]) {
         storage = [5,0,0,0]
         
         for (key, value) in elements {
+            let value = value.makeBsonValue()
             // Append the key-value pair
             
             // Add element to positions cache
@@ -180,24 +181,26 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
     ///
     /// - parameter elements: The `Dictionary` used to initialize this must use `String` for key and `Value` for values
-    public init(dictionaryLiteral elements: (String, Value)...) {
+    public init(dictionaryLiteral elements: (String, ValueConvertible)...) {
         self.init(dictionaryElements: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array` literal
     ///
     /// - parameter elements: The `Array` literal used to initialize the `Document` must be a `[Value]`
-    public init(arrayLiteral elements: Value...) {
+    public init(arrayLiteral elements: ValueConvertible...) {
         self.init(array: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array`
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
-    public init(array elements: [Value]) {
+    public init(array elements: [ValueConvertible]) {
         storage = [5,0,0,0]
         
         for (index, value) in elements.enumerated() {
+            let value = value.makeBsonValue()
+            
             // Append the values
             
             // Add element to positions cache
@@ -229,7 +232,9 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     ///
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
-    public mutating func append(_ value: Value, forKey key: String) {
+    public mutating func append(_ value: ValueConvertible, forKey key: String) {
+        let value = value.makeBsonValue()
+        
         // We're going to insert the element before the Document null terminator
         elementPositions.append(storage.endIndex)
         
@@ -254,7 +259,9 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
     ///
     /// - parameter value: The `Value` to append
-    public mutating func append(_ value: Value) {
+    public mutating func append(_ value: ValueConvertible) {
+        let value = value.makeBsonValue()
+        
         let key = "\(self.count)"
         
         // We're going to insert the element before the Document null terminator
@@ -275,9 +282,9 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     }
     
     /// Appends the convents of `otherDocument` to `self` overwriting any keys in `self` with the `otherDocument` equivalent in the case of duplicates
-    public mutating func append(contentsOf otherDocument: _Document) {
+    public mutating func append(contentsOf otherDocument: Document) {
         if self.validatesAsArray() && otherDocument.validatesAsArray() {
-            self = _Document(array: self.arrayValue + otherDocument.arrayValue)
+            self = Document(array: self.arrayValue + otherDocument.arrayValue)
         } else {
             self += otherDocument
         }
@@ -319,7 +326,9 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
                 return nil
             }
             
-            let value = self.getValue(atDataPosition: key.dataPosition, withType: key.type)
+            guard let value = self.getValue(atDataPosition: key.dataPosition, withType: key.type) else {
+                return nil
+            }
             
             return IndexIterationElement(key: string, value: value)
         }
@@ -354,7 +363,7 @@ struct _Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArra
     /// - parameter key: The `key` in the key-value pair to remove
     ///
     /// - returns: The `Value` in the pair if there was any
-    @discardableResult public mutating func removeValue(forKey key: String) -> Value? {
+    @discardableResult public mutating func removeValue(forKey key: String) -> ValueConvertible? {
         guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
             return nil
         }

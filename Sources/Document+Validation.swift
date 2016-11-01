@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension _Document {
+extension Document {
     /// Validates the current `Document` and checks for any and all errors
     ///
     /// - returns: The status of validation. `true` for valid and vice-versa

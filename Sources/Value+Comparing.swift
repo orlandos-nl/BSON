@@ -8,16 +8,53 @@
 
 import Foundation
 
-extension Value : Equatable {}
+extension Value : Equatable {
+    public static func ==(lhs: Value, rhs: Value) -> Bool {
+        switch (lhs, rhs) {
+        case (.double(_), _):
+            return lhs.double == rhs.doubleValue
+        case (.string(_), _):
+            return lhs.string == rhs.stringValue
+        case (.document(_), _), (.array(_), _):
+            return lhs.document == rhs.documentValue && lhs.documentValue?.isArray == rhs.documentValue?.isArray
+        case (.binary(let subtype1, let data1), .binary(let subtype2, let data2)):
+            return subtype1.rawValue == subtype2.rawValue && data1 == data2
+        case (.objectId(_), .objectId(_)):
+            return lhs.bytes == rhs.bytes
+        case (.boolean(let val1), .boolean(let val2)):
+            return val1 == val2
+        case (.dateTime(let val1), .dateTime(let val2)):
+            return val1 == val2
+        case (.regularExpression(let exp1, let opt1), .regularExpression(let exp2, let opt2)):
+            return exp1 == exp2 && opt1 == opt2
+        case (.javascriptCode(let code1), .javascriptCode(let code2)):
+            return code1 == code2
+        case (.javascriptCodeWithScope(let code1, let scope1), .javascriptCodeWithScope(let code2, let scope2)):
+            return code1 == code2 && scope1 == scope2
+        case (.int32(_), _):
+            return lhs.int32 == rhs.int32Value
+        case (.timestamp(let val1), .timestamp(let val2)):
+            return val1 == val2
+        case (.int64(_), _):
+            return lhs.int64 == rhs.int64Value
+        case (.minKey, .minKey), (.maxKey, .maxKey), (.null, .null), (.nothing, .nothing):
+            return true
+        default:
+            return false
+        }
+    }
+}
 
-public func ==(lhs: Value, rhs: Value) -> Bool {
+public func ==(lhs: ValueConvertible?, rhs: Value) -> Bool {
+    let lhs = lhs?.makeBsonValue() ?? .nothing
+    
     switch (lhs, rhs) {
     case (.double(_), _):
         return lhs.double == rhs.doubleValue
     case (.string(_), _):
         return lhs.string == rhs.stringValue
     case (.document(_), _), (.array(_), _):
-        return lhs.document == rhs.documentValue && lhs.documentValue?.rawDocument.isArray == rhs.documentValue?.rawDocument.isArray
+        return lhs.document == rhs.documentValue && lhs.documentValue?.isArray == rhs.documentValue?.isArray
     case (.binary(let subtype1, let data1), .binary(let subtype2, let data2)):
         return subtype1.rawValue == subtype2.rawValue && data1 == data2
     case (.objectId(_), .objectId(_)):
@@ -69,12 +106,12 @@ public func ==(lhs: Value, rhs: [UInt8]) -> Bool {
     return bytes == rhs
 }
 
-public func ==(lhs: Value, rhs: [Value]) -> Bool {
-    guard case .array(let document) = lhs, document.validatesAsArray(), document.rawDocument.isArray else {
+public func ==(lhs: ValueConvertible, rhs: [ValueConvertible]) -> Bool {
+    guard let document = lhs as? Document else {
         return false
     }
     
-    return document.rawDocument.arrayValue == rhs
+    return document.arrayValue.map({ $0.makeBsonValue() }) == rhs.map({ $0.makeBsonValue() })
 }
 
 public func ==(lhs: Value, rhs: Document) -> Bool {
@@ -85,14 +122,6 @@ public func ==(lhs: Value, rhs: Document) -> Bool {
     } else {
         return false
     }
-}
-
-public func ==(lhs: Value, rhs: [String: Value]) -> Bool {
-    guard case .document(let document) = lhs else {
-        return false
-    }
-    
-    return document.rawDocument.dictionaryValue == rhs
 }
 
 public func ==(lhs: Value, rhs: Bool) -> Bool {

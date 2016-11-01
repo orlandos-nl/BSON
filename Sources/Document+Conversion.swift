@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension _Document {
+extension Document {
     /// The amount of key-value pairs in the `Document`
     public var count: Int {
         return elementPositions.count
@@ -40,8 +40,8 @@ extension _Document {
     }
     
     /// The `Dictionary` representation of this `Document`
-    public var dictionaryValue: [String: Value] {
-        var dictionary = [String: Value]()
+    public var dictionaryValue: [String: ValueConvertible] {
+        var dictionary = [String: ValueConvertible]()
         
         for pos in makeKeyIterator() {
             if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex-1], encoding: String.Encoding.utf8) {
@@ -56,16 +56,10 @@ extension _Document {
     }
     
     /// The `Array` representation of this `Document`
-    public var arrayValue: [Value] {
-        var array = [Value]()
-        
-        for pos in makeKeyIterator() {
-            let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
-            
-            array.append(value)
+    public var arrayValue: [ValueConvertible] {
+        return makeKeyIterator().flatMap { pos in
+            getValue(atDataPosition: pos.dataPosition, withType: pos.type)
         }
-        
-        return array
     }
     
     /// - returns: `true` when this `Document` is a valid BSON `Array`. `false` otherwise

@@ -64,7 +64,12 @@ extension Value {
             return "{\"$code\":\"\(escape(code))\",\"$scope\":\(scope.makeExtendedJSON())}"
         case .int32(let val):
             return String(val)
-        case .timestamp(let t, let i):
+        case .timestamp(let stamp):
+            let bytes = stamp.makeBytes()
+            guard let t = try? fromBytes(bytes[0..<4]) as UInt32, let i = try? fromBytes(bytes[4..<8]) as UInt32 else {
+                return "{\"$undefined\":true}"
+            }
+            
             return "{\"$timestamp\":{\"t\":\(t),\"i\":\(i)}}"
         case .int64(let val):
             return "{\"$numberLong\":\"\(val)\"}"
@@ -78,7 +83,7 @@ extension Value {
     }
 }
 
-extension _Document {
+extension Document {
     /// All errors that can occur when parsing Extended JSON
     public enum ExtendedJSONError : Error {
         /// Invalid character at position
@@ -105,11 +110,11 @@ extension _Document {
         var str: String
         if self.validatesAsArray() && isArray {
             str = self.makeIterator().map { pair in
-                return pair.value.makeExtendedJSON()
+                return pair.value.makeBsonValue().makeExtendedJSON()
                 }.reduce("[") { "\($0),\($1)" } + "]"
         } else {
             str = self.makeIterator().map { pair in
-                return "\"\(pair.key)\":\(pair.value.makeExtendedJSON())"
+                return "\"\(pair.key)\":\(pair.value.makeBsonValue().makeExtendedJSON())"
                 }.reduce("{") { "\($0),\($1)" } + "}"
         }
         
@@ -271,9 +276,9 @@ extension _Document {
         }
         
         /// Parse the object at array at the current position. After calling this, the position will be after the end of the object or array.
-        func parseObjectOrArray() throws -> Value {
+        func parseObjectOrArray() throws -> ValueConvertible? {
             // This will be the document we're working with
-            var document = _Document()
+            var document = Document()
             
             // There may be whitespace before the start of the object or array
             try skipWhitespace()
@@ -338,11 +343,11 @@ extension _Document {
                 }
                 
                 // We are now at the start of the value. We will now get the value and type identifier.
-                let value: Value
+                let value: ValueConvertible?
                 switch try c() {
                 case "\"":
                     // This is a string
-                    value = .string(try getStringValue())
+                    value = try getStringValue()
                 case "{", "[":
                     // This is an object or array
                     value = try parseObjectOrArray()
@@ -363,29 +368,31 @@ extension _Document {
                             throw ExtendedJSONError.numberParseError(position: numberStart)
                         }
                         
-                        value = .double(number)
+                        value = number
                     } else {
                         guard let number = Int32(numberString) else {
                             throw ExtendedJSONError.numberParseError(position: numberStart)
                         }
                         
-                        value = .int32(number)
+                        value = number
                     }
                 case _ where try checkLiteral("true"):
-                    value = .boolean(true)
+                    value = true
                 case _ where try checkLiteral("false"):
-                    value = .boolean(false)
+                    value = false
                 case _ where try checkLiteral("null"):
-                    value = .null
+                    value = Null()
                 default:
                     throw ExtendedJSONError.unparseableValue(position: position)
                 }
                 
-                // All the information to be able to append to the document is now ready:
-                if let key = key {
-                    document.append(value, forKey: key)
-                } else {
-                    document.append(value)
+                if let value = value {
+                    // All the information to be able to append to the document is now ready:
+                    if let key = key {
+                        document.append(value, forKey: key)
+                    } else {
+                        document.append(value)
+                    }
                 }
             }
             
@@ -400,31 +407,29 @@ extension _Document {
                 }
                 
                 if count == 1 {
-                    if let hex = document["$oid"].stringValue {
+                    if let hex = document["$oid"] as? String {
                         // ObjectID
-                        return try .objectId(ObjectId(hex))
-                    } else if let dateString = document["$date"].stringValue {
+                        return try ObjectId(hex)
+                    } else if let dateString = document["$date"] as? String {
                         // DateTime
-                        if let date = parseISO8601(from: dateString) {
-                            return .dateTime(date)
-                        }
-                    } else if let code = document["$code"].stringValue {
-                        return .javascriptCode(code)
-                    } else if let numberString = document["$numberLong"].stringValue {
+                        return parseISO8601(from: dateString)
+                    } else if let code = document["$code"] as? String {
+                        return JavascriptCode(code)
+                    } else if let numberString = document["$numberLong"] as? String {
                         guard let number = Int64(numberString) else {
                             break subParser
                         }
                         
-                        return .int64(number)
-                    } else if document["$minKey"] == 1 {
-                        return .minKey
-                    } else if document["$maxKey"] == 1 {
-                        return .maxKey
-                    } else if let timestamp = document["$timestamp"].documentValue?.rawDocument, let t = timestamp["t"].int32Value, let i = timestamp["i"].int32Value {
-                        return .timestamp(stamp: t, increment: i)
+                        return number
+                    } else if document["$minKey"]?.int == 1 {
+                        return BSON.Value.minKey
+                    } else if document["$maxKey"]?.int == 1 {
+                        return BSON.Value.maxKey
+                    } else if let timestamp = document["$timestamp"] as? Document, let t = timestamp["t"]?.int32Value, let i = timestamp["i"]?.int32Value {
+                        return try fromBytes(t.makeBytes() + i.makeBytes()) as Int64
                     }
                 } else if count == 2 {
-                    if let base64 = document["$binary"].stringValue, let hexSubtype = document["$type"].stringValue {
+                    if let base64 = document["$binary"] as? String, let hexSubtype = document["$type"] as? String {
                         // Binary
                         guard hexSubtype.characters.count > 2 else {
                             break subParser
@@ -434,29 +439,32 @@ extension _Document {
                             break subParser
                         }
                         
-                        let subtype = BinarySubtype(rawValue: subtypeInt)
+                        let subtype = Binary.Subtype(rawValue: subtypeInt)
                         
                         #if os(Linux)
                             var byteBuffer = [UInt8](repeating: 0, count: data.count)
                             data.copyBytes(to: &byteBuffer, count: byteBuffer.count)
-                            return .binary(subtype: subtype, data: byteBuffer)
+                            return Binary(subtype: subtype, data: byteBuffer)
                         #else
-                            return .binary(subtype: subtype, data: Array<UInt8>(data))
+                            return Binary(data: Array<UInt8>(data), withSubtype: subtype)
                         #endif
-                    } else if let pattern = document["$regex"].stringValue, let options = document["$options"].stringValue {
+                    } else if let pattern = document["$regex"] as? String, let options = document["$options"] as? String {
                         // RegularExpression
-                        return .regularExpression(pattern: pattern, options: options)
-                    } else if let code = document["$code"].stringValue, let scope = document["$scope"].documentValue {
+                        return try? RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
+                    } else if let code = document["$code"] as? String, let scope = document["$scope"] as? Document {
                         // JS with scope
-                        return .javascriptCodeWithScope(code: code, scope: scope)
+                        return JavascriptCode(code, withScope: scope)
                     }
                 }
             }
             
-            return isArray ? .array(Document(document)) : .document(Document(document))
+            return document
         }
         
-        let jsonVal = try parseObjectOrArray()
+        guard let jsonVal = try parseObjectOrArray() else {
+            throw ExtendedJSONError.unexpectedEndOfInput
+        }
+        
         self.init(data: jsonVal.document.bytes)
     }
 }
