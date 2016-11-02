@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Sequence Extension Reference</title>
+    <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/jazzy.js" defer></script>
+    
+  </head>
+  <body>
+    <a name="//apple_ref/swift/Extension/Sequence" class="dashAnchor"></a>
+    <a title="Sequence Extension Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="../index.html">BSON Docs</a> (72% documented)</p>
+        <p class="header-right"><a href="https://github.com/OpenKitten/BSON"><img src="../img/gh.png"/>View on GitHub</a></p>
+        <p class="header-right"><a href="dash-feed://http%3A%2F%2Fopenkitten%2Egithub%2Eio%2FBSON%2FBSON%2Exml"><img src="../img/dash.png"/>Install in Dash</a></p>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="../index.html">BSON Reference</a>
+        <img id="carat" src="../img/carat.png" />
+        Sequence Extension Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="../Enums.html">Enums</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Enums/DeserializationError.html">DeserializationError</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Enums/ElementType.html">ElementType</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Enums/Value.html">Value</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Extensions.html">Extensions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Extensions/Array.html">Array</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Bool.html">Bool</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Data.html">Data</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Date.html">Date</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Double.html">Double</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Int.html">Int</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Int32.html">Int32</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Int64.html">Int64</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/RegularExpression.html">RegularExpression</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/Sequence.html">Sequence</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Extensions/String.html">String</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Functions.html">Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi1lFTOS_5ValueS0__Sb">&lt;(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTGSqPS_16ValueConvertible__OS_5Value_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueGSaVs5UInt8__Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueSS_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueSb_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueSd_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueSi_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueV10Foundation4Date_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueVS_8Document_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueVS_8ObjectId_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueVs5Int32_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTOS_5ValueVs5Int64_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTPS_16ValueConvertible_GSaPS0____Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTSSVS_8ObjectId_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTVS_8ObjectIdS0__Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi2eeFTVS_8ObjectIdSS_Sb">==(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSONoi3eeeFTOS_5ValueS0__Sb">===(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:F4BSON9fromBytesu0_R_s10Collectionw_13IndexDistancezSiW_S1_18IntegerLiteralType_zSiW_S1_6Stride_zSiW_S1_19_DisabledRangeIndex_zSiW_8Iterator7Element_zVs5UInt8W_S1_S3_S2__zSirFzq_x">fromBytes(_:)</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Protocols/BSONBytesProtocol.html">BSONBytesProtocol</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Protocols/BinaryConvertible.html">BinaryConvertible</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Protocols/ValueConvertible.html">ValueConvertible</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Protocols/_DocumentProtocolForArrayAdditions.html">_DocumentProtocolForArrayAdditions</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Structs.html">Structs</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Structs/Binary.html">Binary</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/Binary/Subtype.html">– Subtype</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/Document.html">Document</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/Document/ExtendedJSONError.html">– ExtendedJSONError</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/DocumentIndex.html">DocumentIndex</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/JavascriptCode.html">JavascriptCode</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/Null.html">Null</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/ObjectId.html">ObjectId</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Subscripts.html">Subscripts</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Subscripts.html#/s:iV4BSON8Document9subscriptFGSaSS_GSqPS_16ValueConvertible__">subscript(_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Subscripts.html#/s:iV4BSON8Document9subscriptFSSGSqPS_16ValueConvertible__">subscript(_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Subscripts.html#/s:iV4BSON8Document9subscriptFSiGSqPS_16ValueConvertible__">subscript(_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Subscripts.html#/s:iV4BSON8Document9subscriptFVS_13DocumentIndexT3keySS5valuePS_16ValueConvertible__">subscript(_:)</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            <h1>Sequence</h1>
+              <div class="declaration">
+                <div class="language">
+                  <pre class="highlight"><code><span class="kd">protocol</span> <span class="kt">Sequence</span></code></pre>
+
+                </div>
+              </div>
+            
+          </section>
+          <section class="section task-group-section">
+            <div class="task-group">
+              <ul>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:Fe4BSONRxs8SequenceWx8Iterator7Element_zVS_8DocumentrS0_12makeDocumentFT_S3_"></a>
+                    <a name="//apple_ref/swift/Method/makeDocument()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:Fe4BSONRxs8SequenceWx8Iterator7Element_zVS_8DocumentrS0_12makeDocumentFT_S3_">makeDocument()</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Converts a sequence of Documents to an array of documents in BSON format</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">makeDocument</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Structs/Document.html">Document</a></span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </section>
+        <section id="footer">
+          <p>&copy; 2016 <a class="link" href="" target="_blank" rel="external">Robbert Brandsma &amp; Joannis Orlandos</a>. All rights reserved. (Last updated: 2016-11-03)</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.7.2</a>, a <a class="link" href="http://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</div>
+</html>

@@ -1,37 +1,8 @@
 author: "Robbert Brandsma & Joannis Orlandos"
 module: BSON
 readme: README.md
-github_url: https://github.com/PlanTeam/BSON
-swift_version: 3.0
+github_url: https://github.com/OpenKitten/BSON
 xcodebuild_arguments:
   - "-scheme"
   - "BSON"
-custom_categories:
-  - name: BSON Types
-    children:
-    - Document
-    - ObjectId
-    - Bool
-    - Double
-    - Int
-    - Int32
-    - Int64
-    - Date
-    - String
-    - Value
-  
-  - name: Othery
-    children:
-    - ValueConvertible
-    - DocumentIndex
-
-  - name: Errors
-    children:
-    - DeserializationError
-    - ExtendedJSONError
-
-  - name: Used internally
-    children:
-    - BSONArrayProtocol
-    - Integer
-    - Sequence
+dash_url: http://openkitten.github.io/BSON/BSON.xml
