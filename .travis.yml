@@ -8,23 +8,25 @@ dist: trusty
 osx_image: xcode8
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       gem install xcpretty --no-rdoc --no-ri --no-document --quiet;
-      gem install xcpretty-travis-formatter --no-rdoc --no-ri --no-document --quiet; 
+      gem install xcpretty-travis-formatter --no-rdoc --no-ri --no-document --quiet;
     fi
 
 install:
-  - eval "$(curl -sL https://gist.githubusercontent.com/kylef/5c0475ff02b7c7671d2a/raw/9f442512a46d7a2af7b850d65a7e9bd31edfb09b/swiftenv-install.sh)"
+  - if [ "$TRAVIS_OS_NAME" != "osx" ]; then
+      eval "$(curl -sL https://gist.githubusercontent.com/kylef/5c0475ff02b7c7671d2a/raw/9f442512a46d7a2af7b850d65a7e9bd31edfb09b/swiftenv-install.sh)"
+    fi
 
 script:
   - swift build
   - swift test
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
-      xcodebuild clean build -project Bison.xcodeproj -toolchain org.swift.3020161027a -scheme Bison -enableCodeCoverage YES test | xcpretty -c -f `xcpretty-travis-formatter`;
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      xcodebuild clean build -project BSON.xcodeproj -scheme BSON -enableCodeCoverage YES test | xcpretty -c -f `xcpretty-travis-formatter`;
     fi
 
 env:
-  - SWIFT_VERSION=DEVELOPMENT-SNAPSHOT-2016-10-27-a
+  - SWIFT_VERSION=3.0-RELEASE
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
