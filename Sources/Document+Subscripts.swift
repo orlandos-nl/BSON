@@ -51,54 +51,21 @@ extension Document {
     /// Mutates the key-value pair like you would with a `Dictionary`
     public subscript(parts: [String]) -> ValueConvertible? {
         get {
-            if parts.count == 1 {
-                if let meta = getMeta(forKeyBytes: [UInt8](parts[0].utf8)) {
-                    return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
-                }
-                
-                // use dot syntax
-                var parts = parts[0].components(separatedBy: ".")
-                
-                guard parts.count >= 2 else {
-                    return nil
-                }
-                
-                let firstPart = parts.removeFirst()
-                
-                var value = self[firstPart]
-                while !parts.isEmpty, let newValue = value?.documentValue {
-                    let part = parts.removeFirst()
-                    
-                    value = newValue[part]
-                }
-                
-                return value
-            } else if parts.count >= 2 {
-                var parts = parts
-                let firstPart = parts.removeFirst()
-                
-                return self[firstPart]?.document[parts]
+            guard parts.count > 0 else {
+                return nil
             }
             
-            return nil
+            var parts = parts
+            let firstPart = parts.removeFirst()
+            
+            return parts.count == 0 ? self[firstPart] : self[firstPart]?.documentValue?[parts]
         }
         
         set {
             if parts.count == 1 {
-                let key = parts[0]
-                let parts = key.characters.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
-                
-                if parts.count == 2 {
-                    let firstPart = String(parts[0])
-                    let secondPart = String(parts[1])
-                    
-                    self[firstPart]?.document[secondPart] = newValue
-                    return
-                }
-                
                 let newValue = newValue?.makeBsonValue() ?? .nothing
                 
-                if let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) {
+                if let meta = getMeta(forKeyBytes: [UInt8](parts[0].utf8)) {
                     let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                     let dataEndPosition = meta.dataPosition+len
                     
@@ -110,12 +77,15 @@ extension Document {
                     return
                 }
                 
-                self.append(newValue, forKey: key)
+                self.append(newValue, forKey: parts[0])
             } else if parts.count >= 2 {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                self[firstPart]?.document[parts] = newValue
+                var doc = self[firstPart]?.documentValue ?? [:]
+                doc[parts] = newValue
+                
+                self[firstPart] = doc
             }
         }
     }

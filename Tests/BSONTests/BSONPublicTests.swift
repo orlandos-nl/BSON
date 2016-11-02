@@ -31,7 +31,7 @@ final class BSONPublicTests: XCTestCase {
             ("testExtendedJSON", testExtendedJSON),
             ("testDocumentIndexes", testDocumentIndexes),
             ("testComparison", testComparison),
-            ("tesMultiSyntax", tesMultiSyntax),
+            ("testMultiSyntax", testMultiSyntax),
             ("testJSONEscapeSequences", testJSONEscapeSequences),
             ("testDocumentCombineOperators", testDocumentCombineOperators),
             ("testDocumentFlattening", testDocumentFlattening),
@@ -408,12 +408,12 @@ final class BSONPublicTests: XCTestCase {
         
     }
     
-    func tesMultiSyntax() {
+    func testMultiSyntax() {
         var d = kittenDocument
         let v = "harriebob"
         
-        d["kaassapsaus.freddelien"] = v
-        d["hont.kad.varkun.konein"] = v
+        d["kaassapsaus", "freddelien"] = v
+        d["hont", "kad", "varkun", "konein"] = v
         
         XCTAssertEqual(d["kaassapsaus"]?.documentValue?["freddelien"] as? String, v)
         XCTAssertEqual(d["kaassapsaus", "freddelien"] as? String, v)
