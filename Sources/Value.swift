@@ -96,6 +96,7 @@ public struct Binary: ValueConvertible {
             case 0x03: self = .uuidOld
             case 0x04: self = .uuid
             case 0x05: self = .md5
+            case 0x80: self = .userDefined
             default: self = .other(rawValue)
             }
         }

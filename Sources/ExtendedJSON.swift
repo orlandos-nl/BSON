@@ -444,7 +444,7 @@ extension Document {
                         #if os(Linux)
                             var byteBuffer = [UInt8](repeating: 0, count: data.count)
                             data.copyBytes(to: &byteBuffer, count: byteBuffer.count)
-                            return Binary(subtype: subtype, data: byteBuffer)
+                            return Binary(data: byteBuffer, withSubtype: subtype)
                         #else
                             return Binary(data: Array<UInt8>(data), withSubtype: subtype)
                         #endif
