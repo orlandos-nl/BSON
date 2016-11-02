@@ -1,15 +1,30 @@
-# Borrowed from Vapor (https://github.com/qutheory/vapor)
 os:
   - linux
   - osx
+
 language: generic
 sudo: required
 dist: trusty
 osx_image: xcode8
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
+      gem install xcpretty --no-rdoc --no-ri --no-document --quiet;
+      gem install xcpretty-travis-formatter --no-rdoc --no-ri --no-document --quiet; 
+    fi
+
 install:
-  - eval "$(curl -sL swift.qutheory.io/travis)"
+  - eval "$(curl -sL https://gist.githubusercontent.com/kylef/5c0475ff02b7c7671d2a/raw/9f442512a46d7a2af7b850d65a7e9bd31edfb09b/swiftenv-install.sh)"
+
 script:
   - swift build
-  - swift build --configuration release
   - swift test
-  
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
+      xcodebuild clean build -project Bison.xcodeproj -toolchain org.swift.3020161027a -scheme Bison -enableCodeCoverage YES test | xcpretty -c -f `xcpretty-travis-formatter`;
+    fi
+
+env:
+  - SWIFT_VERSION=DEVELOPMENT-SNAPSHOT-2016-10-27-a
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
