@@ -227,6 +227,7 @@ extension ValueConvertible {
         }
     }
     
+    
     /// Returns the raw value only if the underlying value is stored as `Double`. Otherwise, returns `nil`.
     public var doubleValue : Double? {
         return self.storedValue as? Double

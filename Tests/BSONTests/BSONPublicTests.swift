@@ -14,6 +14,52 @@ import XCTest
     import Glibc
 #endif
 
+struct Password: CustomValueConvertible {
+    var password: String
+    
+    init(_ password: String) {
+        self.password = password
+    }
+    
+    init?(_ value: Value) {
+        guard let password = value.stringValue else {
+            return nil
+        }
+        
+        self.password = password
+    }
+    
+    func makeBsonValue() -> Value {
+        return self.password.makeBsonValue()
+    }
+}
+
+struct User: CustomValueConvertible {
+    var username: String
+    var password: Password
+    
+    init(username: String, password: String) {
+        self.username = username
+        self.password = Password(password)
+    }
+    
+    init?(_ value: Value) {
+        guard let user = value.documentValue, let username = user["username"] as? String, let password = user.extract("password") as Password? else {
+            return nil
+        }
+        
+        self.username = username
+        self.password = password
+    }
+    
+    func makeBsonValue() -> Value {
+        return [
+            "username": username,
+            "password": password
+        ]
+    }
+}
+
 final class BSONPublicTests: XCTestCase {
     
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
@@ -441,6 +487,7 @@ final class BSONPublicTests: XCTestCase {
         
     }
     
+    // TODO: Fix this test, AssertEqual fails whilst the strins *are* equal
     func testDocumentFlattening() {
         let correctFlatKitten: Document = [
             "doubleTest": 0.04,
@@ -471,7 +518,20 @@ final class BSONPublicTests: XCTestCase {
         
         XCTAssertEqual(correctFlatKitten, flattenedKitten)
         XCTAssertTrue(flattenedKitten.validate())
+    }
+    
+    func testExtraction() {
+        let user = User(username: "henk", password: "123")
         
+        let documentUser = user.makeBsonValue()
+        
+        guard let userClone = User(documentUser) else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssertEqual(userClone.username, "henk")
+        XCTAssertEqual(userClone.password.password, "123")
     }
     
     func testTypeChecking() {

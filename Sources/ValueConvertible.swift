@@ -13,6 +13,10 @@ public protocol ValueConvertible {
     func makeBsonValue() -> Value
 }
 
+public protocol CustomValueConvertible: ValueConvertible {
+    init?(_ value: Value)
+}
+
 extension Bool : ValueConvertible {
     /// Converts this instance to a BSON `Value`
     public func makeBsonValue() -> Value {

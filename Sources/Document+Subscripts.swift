@@ -12,6 +12,21 @@ extension Document {
     /// Mutates the key-value pair like you would with a `Dictionary`
     public subscript(key: String) -> ValueConvertible? {
         get {
+            let parts = key.components(separatedBy: ".")
+            
+            return self[parts]
+        }
+        
+        set {
+            let parts = key.components(separatedBy: ".")
+            
+            self[parts] = newValue
+        }
+    }
+    
+    /// Mutates the key-value pair like you would with a `Dictionary`
+    public subscript(literal key: String) -> ValueConvertible? {
+        get {
             guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
                 return nil
             }
@@ -39,12 +54,12 @@ extension Document {
         }
     }
     
-    public subscript(parts: String...) -> ValueConvertible? {
+    public subscript(partOne: String, otherParts: String...) -> ValueConvertible? {
         get {
-            return self[parts]
+            return self[[partOne] + otherParts]
         }
         set {
-            self[parts] = newValue
+            self[[partOne] + otherParts] = newValue
         }
     }
     
@@ -58,7 +73,7 @@ extension Document {
             var parts = parts
             let firstPart = parts.removeFirst()
             
-            return parts.count == 0 ? self[firstPart] : self[firstPart]?.documentValue?[parts]
+            return parts.count == 0 ? self[literal: firstPart] : self[literal: firstPart]?.documentValue?[parts]
         }
         
         set {
