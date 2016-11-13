@@ -313,7 +313,7 @@ final class BSONPublicTests: XCTestCase {
         
         XCTAssertEqual(kittenDocument["documentTest", "subArray"]?.documentValue?[0] as? String, "henk")
         
-        let recursiveDocument: Document = [
+        var recursiveDocument: Document = [
             "henk": [
                 "fred": [
                     "bob": [
@@ -326,6 +326,14 @@ final class BSONPublicTests: XCTestCase {
         ]
         
         XCTAssertEqual(recursiveDocument["henk"]?.documentValue?["fred", "bob", "piet"]?.documentValue?["klaas"]?.int, 3)
+        
+        recursiveDocument["henk", "fred", "bob", "piet", "klaas"] = 4
+        
+        recursiveDocument["klaas", "piet", "bob", "fred", "henk"] = true
+        
+        XCTAssertEqual(recursiveDocument["henk"]?.documentValue?["fred", "bob", "piet"]?.documentValue?["klaas"]?.int, 4)
+        
+        XCTAssert(recursiveDocument["klaas", "piet", "bob", "fred", "henk"]?.boolValue ?? false)
     }
     
     func testObjectId() throws {
