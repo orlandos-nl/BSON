@@ -9,36 +9,6 @@
 import Foundation
 
 extension Document {
-    /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(key: String) -> ValueConvertible? {
-        get {
-            guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
-                return nil
-            }
-            
-            return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
-        }
-        
-        set {
-            let newValue = newValue?.makeBsonValue() ?? .nothing
-            
-            if let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) {
-                let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
-                let dataEndPosition = meta.dataPosition+len
-                
-                storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                storage.insert(contentsOf: newValue.bytes, at: meta.dataPosition)
-                storage[meta.elementTypePosition] = newValue.typeIdentifier
-                updateDocumentHeader()
-                self.elementPositions = buildElementPositionsCache()
-                
-                return
-            }
-            
-            self.append(newValue, forKey: key)
-        }
-    }
-    
     public subscript(parts: String...) -> ValueConvertible? {
         get {
             return self[parts]
@@ -51,14 +21,20 @@ extension Document {
     /// Mutates the key-value pair like you would with a `Dictionary`
     public subscript(parts: [String]) -> ValueConvertible? {
         get {
-            guard parts.count > 0 else {
+            if parts.count == 1 {
+                guard let meta = getMeta(forKeyBytes: [UInt8](parts[0].utf8)) else {
+                    return nil
+                }
+                
+                return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
+            } else if parts.count >= 2 {
+                var parts = parts
+                let firstPart = parts.removeFirst()
+                
+                return parts.count == 0 ? self[firstPart] : self[firstPart]?.documentValue?[parts]
+            } else {
                 return nil
             }
-            
-            var parts = parts
-            let firstPart = parts.removeFirst()
-            
-            return parts.count == 0 ? self[firstPart] : self[firstPart]?.documentValue?[parts]
         }
         
         set {
