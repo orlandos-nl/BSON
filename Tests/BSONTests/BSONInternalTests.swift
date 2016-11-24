@@ -43,8 +43,8 @@ final class BSONInternalTests: XCTestCase {
         XCTAssertThrowsError(try fromBytes([0x01]) as Int16)
     }
     
-    func testRegexInit() {
-        let a = Value.regularExpression(pattern: "/([A-Z])\\w+/g", options: "")
-        XCTAssert("/([A-Z])\\w+/g".cStringBytes + "".cStringBytes == a.bytes)
+    func testRegexInit() throws {
+        let a = try RegularExpression(pattern: "/([A-Z])\\w+/g", options: [])
+        XCTAssert("/([A-Z])\\w+/g".cStringBytes + "".cStringBytes == a.makeBSONBinary())
     }
 }

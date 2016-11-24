@@ -116,7 +116,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: [UInt8]) {
-        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count, data.last == 0x00 else {
+        guard data.count > 4, let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count, data.last == 0x00 else {
             self.storage = [5,0,0,0]
             self.invalid = true
             return
@@ -131,7 +131,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<UInt8>) {
-        guard let length = try? Int(fromBytes(data[0...3]) as Int32), length < data.count else {
+        guard data.count > 4, let length = try? Int(fromBytes(data[0...3]) as Int32), length < data.count else {
             self.storage = [5,0,0,0]
             self.invalid = true
             return
@@ -157,7 +157,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage = [5,0,0,0]
         
         for (key, value) in elements {
-            let value = value.makeBsonValue()
+            let value = value.makeBSONPrimitive()
             // Append the key-value pair
             
             // Add element to positions cache
@@ -170,7 +170,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Key null terminator
             storage.append(0x00)
             // Value
-            storage.append(contentsOf: value.bytes)
+            storage.append(contentsOf: value.makeBSONBinary())
         }
         
         updateDocumentHeader()
@@ -199,7 +199,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage = [5,0,0,0]
         
         for (index, value) in elements.enumerated() {
-            let value = value.makeBsonValue()
+            let value = value.makeBSONPrimitive()
             
             // Append the values
             
@@ -213,7 +213,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Key null terminator
             storage.append(0x00)
             // Value
-            storage.append(contentsOf: value.bytes)
+            storage.append(contentsOf: value.makeBSONBinary())
         }
         
         updateDocumentHeader()
@@ -233,7 +233,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
     public mutating func append(_ value: ValueConvertible, forKey key: String) {
-        let value = value.makeBsonValue()
+        let value = value.makeBSONPrimitive()
         
         // We're going to insert the element before the Document null terminator
         elementPositions.append(storage.endIndex)
@@ -246,7 +246,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.bytes)
+        storage.append(contentsOf: value.makeBSONBinary())
         
         // Increase the bytecount
         updateDocumentHeader()
@@ -260,7 +260,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter value: The `Value` to append
     public mutating func append(_ value: ValueConvertible) {
-        let value = value.makeBsonValue()
+        let value = value.makeBSONPrimitive()
         
         let key = "\(self.count)"
         
@@ -275,7 +275,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.bytes)
+        storage.append(contentsOf: value.makeBSONBinary())
         
         // Increase the bytecount
         updateDocumentHeader()

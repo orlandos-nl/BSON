@@ -8,14 +8,14 @@
 
 import Foundation
 
-public extension String {
+internal extension String {
     /// The bytes in this `String`
-    public var bytes : [UInt8] {
-        return Value.string(self).bytes
+    internal var bytes : [UInt8] {
+        return self.makeBSONBinary()
     }
     
     /// This `String` as c-string
-    public var cStringBytes : [UInt8] {
+    internal var cStringBytes : [UInt8] {
         var byteArray = self.utf8.filter{$0 != 0x00}
         byteArray.append(0x00)
         
@@ -23,20 +23,20 @@ public extension String {
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    public static func instantiate(bytes data: [UInt8]) throws -> String {
+    internal static func instantiate(bytes data: [UInt8]) throws -> String {
         var 🖕 = 0
         
         return try instantiate(bytes: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    public static func instantiate(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
+    internal static func instantiate(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
         let res = try _instant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     
-    private static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
+    internal static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.invalidLastElement
@@ -69,20 +69,20 @@ public extension String {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    public static func instantiateFromCString(bytes data: [UInt8]) throws -> String {
+    internal static func instantiateFromCString(bytes data: [UInt8]) throws -> String {
         var 🖕 = 0
         
         return try instantiateFromCString(bytes: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    public static func instantiateFromCString(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
+    internal static func instantiateFromCString(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
         let res = try _cInstant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     
-    private static func _cInstant(bytes data: [UInt8]) throws -> (Int, String) {
+    internal static func _cInstant(bytes data: [UInt8]) throws -> (Int, String) {
         guard data.contains(0x00) else {
             throw DeserializationError.missingNullTerminatorInString
         }
@@ -99,7 +99,7 @@ public extension String {
     }
 }
 
-public protocol BSONBytesProtocol {}
+internal protocol BSONBytesProtocol {}
 
 internal protocol BSONMakeBytesProtocol: BSONBytesProtocol {
     func makeBytes() -> [UInt8]

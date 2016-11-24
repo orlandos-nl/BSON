@@ -8,81 +8,6 @@
 
 import Foundation
 
-internal let isoDateFormatter: DateFormatter = {
-    let fmt = DateFormatter()
-    fmt.locale = Locale(identifier: "en_US_POSIX")
-    fmt.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
-    return fmt
-}()
-
-extension Value {
-    /// Creates a JSON `String` from this `Value` formed as ExtendedJSON
-    ///
-    /// - returns: The JSON `String` representing the `Value`
-    public func makeExtendedJSON() -> String {
-        func escape(_ string: String) -> String {
-            var string = string
-            
-            string = string.replacingOccurrences(of: "\\", with: "\\\\")
-            string = string.replacingOccurrences(of: "\"", with: "\\\"")
-            string = string.replacingOccurrences(of: "\u{8}", with: "\\b")
-            string = string.replacingOccurrences(of: "\u{c}", with: "\\f")
-            string = string.replacingOccurrences(of: "\n", with: "\\n")
-            string = string.replacingOccurrences(of: "\r", with: "\\r")
-            string = string.replacingOccurrences(of: "\t", with: "\\t")
-            
-            return string
-        }
-        
-        switch self {
-        case .double(let val):
-            return String(val)
-        case .string(let val):
-            return "\"\(escape(val))\""
-        case .document(let doc):
-            return doc.makeExtendedJSON()
-        case .array(let doc):
-            return doc.makeExtendedJSON()
-        case .binary(let subtype, let data):
-            let base64 = Data(bytes: data).base64EncodedString()
-            let subtype = String(subtype.rawValue, radix: 16).uppercased()
-            return "{\"$binary\":\"\(base64)\",\"$type\":\"0x\(subtype)\"}"
-        case .objectId(let id):
-            return "{\"$oid\":\"\(id.hexString)\"}"
-        case .boolean(let val):
-            return val ? "true" : "false"
-        case .dateTime(let date):
-            let dateString = isoDateFormatter.string(from: date)
-            return "{\"$date\":\"\(dateString)\"}"
-        case .null:
-            return "null"
-        case .regularExpression(let pattern, let options):
-            return "{\"$regex\":\"\(escape(pattern))\",\"$options\":\"\(escape(options))\"}"
-        case .javascriptCode(let code):
-            return "{\"$code\":\"\(escape(code))\"}"
-        case .javascriptCodeWithScope(let code, let scope):
-            return "{\"$code\":\"\(escape(code))\",\"$scope\":\(scope.makeExtendedJSON())}"
-        case .int32(let val):
-            return String(val)
-        case .timestamp(let stamp):
-            let bytes = stamp.makeBytes()
-            guard let t = try? fromBytes(bytes[0..<4]) as UInt32, let i = try? fromBytes(bytes[4..<8]) as UInt32 else {
-                return "{\"$undefined\":true}"
-            }
-            
-            return "{\"$timestamp\":{\"t\":\(t),\"i\":\(i)}}"
-        case .int64(let val):
-            return "{\"$numberLong\":\"\(val)\"}"
-        case .minKey:
-            return "{\"$minKey\":1}"
-        case .maxKey:
-            return "{\"$maxKey\":1}"
-        case .nothing:
-            return "{\"$undefined\":true}"
-        }
-    }
-}
-
 extension Document {
     /// All errors that can occur when parsing Extended JSON
     public enum ExtendedJSONError : Error {
@@ -110,11 +35,11 @@ extension Document {
         var str: String
         if self.validatesAsArray() && isArray {
             str = self.makeIterator().map { pair in
-                return pair.value.makeBsonValue().makeExtendedJSON()
+                return pair.value.makeExtendedJSON()
                 }.reduce("[") { "\($0),\($1)" } + "]"
         } else {
             str = self.makeIterator().map { pair in
-                return "\"\(pair.key)\":\(pair.value.makeBsonValue().makeExtendedJSON())"
+                return "\"\(pair.key)\":\(pair.value.makeExtendedJSON())"
                 }.reduce("{") { "\($0),\($1)" } + "}"
         }
         
@@ -276,10 +201,8 @@ extension Document {
         }
         
         /// Parse the object at array at the current position. After calling this, the position will be after the end of the object or array.
-        func parseObjectOrArray() throws -> ValueConvertible? {
+        func parseObjectOrArray() throws -> BSONPrimitive? {
             // This will be the document we're working with
-            var document = Document()
-            
             // There may be whitespace before the start of the object or array
             try skipWhitespace()
             
@@ -293,6 +216,8 @@ extension Document {
             default:
                 throw ExtendedJSONError.invalidCharacter(position: position)
             }
+            
+            var document = isArray ? Document(array: []) : Document()
             
             // Advance past the starting character
             advance()
@@ -388,7 +313,7 @@ extension Document {
                 
                 if let value = value {
                     // All the information to be able to append to the document is now ready:
-                    if let key = key {
+                    if let key = key, !isArray {
                         document.append(value, forKey: key)
                     } else {
                         document.append(value)
@@ -422,11 +347,11 @@ extension Document {
                         
                         return number
                     } else if document["$minKey"]?.int == 1 {
-                        return BSON.Value.minKey
+                        return MinKey()
                     } else if document["$maxKey"]?.int == 1 {
-                        return BSON.Value.maxKey
+                        return MaxKey()
                     } else if let timestamp = document["$timestamp"] as? Document, let t = timestamp["t"]?.int32Value, let i = timestamp["i"]?.int32Value {
-                        return try fromBytes(t.makeBytes() + i.makeBytes()) as Int64
+                        return Timestamp(increment: i, timestamp: t)
                     }
                 } else if count == 2 {
                     if let base64 = document["$binary"] as? String, let hexSubtype = document["$type"] as? String {

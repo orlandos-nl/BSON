@@ -129,6 +129,18 @@ public struct ObjectId {
 }
 
 extension ObjectId: Hashable {
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func ==(lhs: ObjectId, rhs: ObjectId) -> Bool {
+        return lhs._storage == rhs._storage
+    }
+
     public var hashValue: Int {
         let epoch = try! fromBytes(_storage[0...3]) as Int32
         let random = try! fromBytes(_storage[4...7]) as Int32

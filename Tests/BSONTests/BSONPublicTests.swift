@@ -21,7 +21,7 @@ struct Password: CustomValueConvertible {
         self.password = password
     }
     
-    init?(_ value: Value) {
+    init?(_ value: BSONPrimitive) {
         guard let password = value.stringValue else {
             return nil
         }
@@ -29,8 +29,8 @@ struct Password: CustomValueConvertible {
         self.password = password
     }
     
-    func makeBsonValue() -> Value {
-        return self.password.makeBsonValue()
+    func makeBSONPrimitive() -> BSONPrimitive {
+        return password
     }
 }
 
@@ -43,7 +43,7 @@ struct User: CustomValueConvertible {
         self.password = Password(password)
     }
     
-    init?(_ value: Value) {
+    init?(_ value: BSONPrimitive) {
         guard let user = value.documentValue, let username = user["username"] as? String, let password = user.extract("password") as Password? else {
             return nil
         }
@@ -52,11 +52,11 @@ struct User: CustomValueConvertible {
         self.password = password
     }
     
-    func makeBsonValue() -> Value {
+    func makeBSONPrimitive() -> BSONPrimitive {
         return [
             "username": username,
             "password": password
-        ]
+        ] as Document
     }
 }
 
@@ -96,25 +96,21 @@ final class BSONPublicTests: XCTestCase {
         "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
         "cool32bitNumber": Int32(9001),
         "cool64bitNumber": Int64(21312153),
-        "code": Value.javascriptCode("console.log(\"Hello there\");"),
+        "code": JavascriptCode("console.log(\"Hello there\");"),
         "codeWithScope": JavascriptCode("console.log(\"Hello there\");", withScope: ["hey": "hello"]),
         "nothing": Null(),
         "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
         "boolFalse": false,
         "boolTrue": true,
-        "timestamp": Value.timestamp(try! fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
-        "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-        "minKey": Value.minKey,
-        "maxKey": Value.maxKey
+        "timestamp": Timestamp(increment: 2000, timestamp: 8),
+        "regex": try! RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
+        "minKey": MinKey(),
+        "maxKey": MaxKey()
     ]
     
     func validateAgainstKitten(_ document: Document) {
         XCTAssertEqual(document.count, 17) //yes, hardcoded!
         XCTAssertEqual(document.bytes, kittenDocument.bytes)
-        
-        for key in kittenDocument.keys {
-            XCTAssertEqual(kittenDocument[key]?.makeBsonValue(), document[key]?.makeBsonValue())
-        }
     }
     
     func testDictionaryLiteral() {
@@ -130,12 +126,6 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, nil)
         
         XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
-        
-        let kittenDictionary = kittenDocument.dictionaryValue
-        
-        for (k, v) in kittenDictionary {
-            XCTAssertEqual(kittenDocument[k]?.makeBsonValue(), v.makeBsonValue())
-        }
     }
     
     func testObjectIdUniqueness() {
@@ -173,18 +163,18 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testInitializedFromData() {
-        let document = Document(data: [121, 1, 0, 0, 1, 100, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 123, 20, 174, 71, 225, 122, 164, 63, 2, 115, 116, 114, 105, 110, 103, 84, 101, 115, 116, 0, 4, 0, 0, 0, 102, 111, 111, 0, 3, 100, 111, 99, 117, 109, 101, 110, 116, 84, 101, 115, 116, 0, 102, 0, 0, 0, 1, 100, 111, 99, 117, 109, 101, 110, 116, 83, 117, 98, 68, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 61, 10, 215, 163, 112, 189, 42, 64, 4, 115, 117, 98, 65, 114, 114, 97, 121, 0, 56, 0, 0, 0, 2, 48, 0, 5, 0, 0, 0, 104, 101, 110, 107, 0, 2, 49, 0, 5, 0, 0, 0, 102, 114, 101, 100, 0, 2, 50, 0, 5, 0, 0, 0, 107, 97, 97, 115, 0, 2, 51, 0, 8, 0, 0, 0, 103, 111, 117, 100, 118, 105, 115, 0, 0, 0, 7, 110, 111, 110, 82, 97, 110, 100, 111, 109, 79, 98, 106, 101, 99, 116, 73, 100, 0, 1, 35, 69, 103, 137, 171, 205, 239, 1, 35, 69, 103, 9, 99, 117, 114, 114, 101, 110, 116, 84, 105, 109, 101, 0, 80, 254, 171, 112, 82, 1, 0, 0, 16, 99, 111, 111, 108, 51, 50, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 41, 35, 0, 0, 18, 99, 111, 111, 108, 54, 52, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 200, 167, 77, 246, 4, 0, 0, 0, 13, 99, 111, 100, 101, 0, 28, 0, 0, 0, 99, 111, 110, 115, 111, 108, 101, 46, 108, 111, 103, 40, 34, 72, 101, 108, 108, 111, 32, 116, 104, 101, 114, 101, 34, 41, 59, 0, 15, 99, 111, 100, 101, 87, 105, 116, 104, 83, 99, 111, 112, 101, 0, 56, 0, 0, 0, 28, 0, 0, 0, 99, 111, 110, 115, 111, 108, 101, 46, 108, 111, 103, 40, 34, 72, 101, 108, 108, 111, 32, 116, 104, 101, 114, 101, 34, 41, 59, 0, 20, 0, 0, 0, 2, 104, 101, 121, 0, 6, 0, 0, 0, 104, 101, 108, 108, 111, 0, 0, 10, 110, 111, 116, 104, 105, 110, 103, 0, 0]).makeBsonValue()
+        let document = Document(data: [121, 1, 0, 0, 1, 100, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 123, 20, 174, 71, 225, 122, 164, 63, 2, 115, 116, 114, 105, 110, 103, 84, 101, 115, 116, 0, 4, 0, 0, 0, 102, 111, 111, 0, 3, 100, 111, 99, 117, 109, 101, 110, 116, 84, 101, 115, 116, 0, 102, 0, 0, 0, 1, 100, 111, 99, 117, 109, 101, 110, 116, 83, 117, 98, 68, 111, 117, 98, 108, 101, 84, 101, 115, 116, 0, 61, 10, 215, 163, 112, 189, 42, 64, 4, 115, 117, 98, 65, 114, 114, 97, 121, 0, 56, 0, 0, 0, 2, 48, 0, 5, 0, 0, 0, 104, 101, 110, 107, 0, 2, 49, 0, 5, 0, 0, 0, 102, 114, 101, 100, 0, 2, 50, 0, 5, 0, 0, 0, 107, 97, 97, 115, 0, 2, 51, 0, 8, 0, 0, 0, 103, 111, 117, 100, 118, 105, 115, 0, 0, 0, 7, 110, 111, 110, 82, 97, 110, 100, 111, 109, 79, 98, 106, 101, 99, 116, 73, 100, 0, 1, 35, 69, 103, 137, 171, 205, 239, 1, 35, 69, 103, 9, 99, 117, 114, 114, 101, 110, 116, 84, 105, 109, 101, 0, 80, 254, 171, 112, 82, 1, 0, 0, 16, 99, 111, 111, 108, 51, 50, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 41, 35, 0, 0, 18, 99, 111, 111, 108, 54, 52, 98, 105, 116, 78, 117, 109, 98, 101, 114, 0, 200, 167, 77, 246, 4, 0, 0, 0, 13, 99, 111, 100, 101, 0, 28, 0, 0, 0, 99, 111, 110, 115, 111, 108, 101, 46, 108, 111, 103, 40, 34, 72, 101, 108, 108, 111, 32, 116, 104, 101, 114, 101, 34, 41, 59, 0, 15, 99, 111, 100, 101, 87, 105, 116, 104, 83, 99, 111, 112, 101, 0, 56, 0, 0, 0, 28, 0, 0, 0, 99, 111, 110, 115, 111, 108, 101, 46, 108, 111, 103, 40, 34, 72, 101, 108, 108, 111, 32, 116, 104, 101, 114, 101, 34, 41, 59, 0, 20, 0, 0, 0, 2, 104, 101, 121, 0, 6, 0, 0, 0, 104, 101, 108, 108, 111, 0, 0, 10, 110, 111, 116, 104, 105, 110, 103, 0, 0])
         
         // {"cool32bitNumber":9001,"cool64bitNumber":{"$numberLong":"21312153544"},"currentTime":{"$date":"1970-01-17T19:46:29.266Z"},"documentTest":{"documentSubDoubleTest":13.37,"subArray":{"0":"henk","1":"fred","2":"kaas","3":"goudvis"}},"doubleTest":0.04,"nonRandomObjectId":{"$oid":"0123456789abcdef01234567"},"nothing":null,"stringTest":"foo"}
         
-        XCTAssertEqual(document["cool32bitNumber"], Value.int32(9001))
-        XCTAssertEqual(document["cool64bitNumber"], Value.int64(21312153544))
-        XCTAssertEqual(document["documentTest"]["documentSubDoubleTest"], Value.double(13.37))
-        XCTAssertEqual(document["documentTest"]["subArray"][1], Value.string("fred"))
-        XCTAssertEqual(document["doubleTest"], Value.double(0.04))
-        XCTAssert(document["nothing"].rawValue is Null)
-        XCTAssertEqual(document["nonexistentkey"], Value.nothing)
-        XCTAssertEqual(document["stringTest"], Value.string("foo"))
+        XCTAssertEqual(document["cool32bitNumber"] as? Int32, Int32(9001))
+        XCTAssertEqual(document["cool64bitNumber"] as? Int64, Int64(21312153544))
+        XCTAssertEqual(document["documentTest", "documentSubDoubleTest"] as? Double, 13.37)
+        XCTAssertEqual(document["documentTest", "subArray", 1]?.stringValue, "fred")
+        XCTAssertEqual(document["doubleTest"] as? Double, 0.04)
+        XCTAssert(document["nothing"] as? Null != nil)
+        XCTAssertEqual(document["nonexistentkey"] as? Document, nil)
+        XCTAssertEqual(document["stringTest"] as? String, "foo")
     }
     
     func testArrayRelatedFunctions() {
@@ -295,9 +285,17 @@ final class BSONPublicTests: XCTestCase {
     
     func testSubscripting() {
         var document = kittenDocument
+        
+        XCTAssertEqual(document[dotNotated: "documentTest.documentSubDoubleTest"] as? Double, 13.37)
+        XCTAssertEqual(document[0] as? Double, 0.04)
+        XCTAssertEqual(document[2, 1, 2] as? String, "kaas")
+        XCTAssertEqual(document["documentTest", "subArray", 2] as? String, "kaas")
+        document["documentTest", "subArray", 2] = "hont"
+        XCTAssertEqual(document["documentTest", "subArray", 2] as? String, "hont")
+        
         XCTAssertEqual(document["stringTest"] as? String, "foo")
         XCTAssertEqual(document[1] as? String, "foo")
-        XCTAssertEqual(document["documentTest"]?.documentValue?[0]?.makeBsonValue(), document["documentTest"]?.documentValue?["documentSubDoubleTest"]?.makeBsonValue())
+        XCTAssertEqual(document["documentTest", 0] as? Double, document["documentTest", "documentSubDoubleTest"] as? Double)
         XCTAssertEqual(document["documentTest"]?.document[0] as? Double, 13.37)
         
         XCTAssertEqual(document[3] as? ObjectId, try! ObjectId("0123456789ABCDEF01234567"))
@@ -305,8 +303,6 @@ final class BSONPublicTests: XCTestCase {
         document[3] = try! ObjectId("0123456789ABCDEF0123456A")
     
         XCTAssertEqual(document[3] as? ObjectId, try! ObjectId("0123456789ABCDEF0123456A"))
-        
-        XCTAssertEqual(document[document.count]?.makeBsonValue(), nil)
         
         document["minKey"] = "kittens"
         XCTAssertEqual(document["minKey"] as? String, "kittens")
@@ -390,8 +386,6 @@ final class BSONPublicTests: XCTestCase {
         let otherDocument = try Document(extendedJSON: kittenJSON)
         
         XCTAssertEqual(kittenDocument, otherDocument)
-        
-        XCTAssertEqual(Value.nothing.makeExtendedJSON(), "{\"$undefined\":true}")
     }
     
     func testDocumentIndexes() {
@@ -402,7 +396,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(firstKittenKV.value as? Double, 0.04)
         
         XCTAssertEqual(lastKittenKV.key, "maxKey")
-        XCTAssertEqual(lastKittenKV.value.makeBsonValue(), Value.maxKey)
+        XCTAssertNotNil(lastKittenKV.value as? MaxKey)
         
         var document = kittenDocument
         
@@ -434,7 +428,7 @@ final class BSONPublicTests: XCTestCase {
         let nonRandomObjectId = try! ObjectId("0123456789ABCDEF01234567")
         XCTAssertEqual(kittenDocument["nonRandomObjectId"] as? ObjectId, nonRandomObjectId)
         XCTAssertEqual(try! ObjectId("0123456789ABCDEF01234567"), nonRandomObjectId)
-        XCTAssert(nonRandomObjectId == "0123456789ABCDEF01234567")
+        XCTAssertEqual(nonRandomObjectId.hexString.uppercased(), "0123456789ABCDEF01234567")
         
         XCTAssertEqual(kittenDocument["currentTime"] as? Date, Date(timeIntervalSince1970: Double(1453589266)))
         XCTAssertEqual(kittenDocument["cool32bitNumber"] as? Int32, 9001)
@@ -447,10 +441,10 @@ final class BSONPublicTests: XCTestCase {
         let bytes: [UInt8] = [34,34,34,34,34]
         XCTAssertEqual((kittenDocument["data"] as? Binary)?.makeBytes() ?? [], bytes)
         
-        XCTAssert(kittenDocument["timestamp"] == Value.timestamp(try! fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64))
+        XCTAssertEqual(kittenDocument["timestamp"] as? Timestamp, Timestamp(increment: 2000, timestamp: 8))
         XCTAssertEqual((kittenDocument["regex"] as? RegularExpression)?.pattern, "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}")
-        XCTAssert(kittenDocument["minKey"] == Value.minKey)
-        XCTAssert(kittenDocument["maxKey"] == Value.maxKey)
+        XCTAssert(kittenDocument["minKey"] is MinKey)
+        XCTAssert(kittenDocument["maxKey"] is MaxKey)
         
         let emptyDocument = Document()
         
@@ -496,7 +490,7 @@ final class BSONPublicTests: XCTestCase {
     }
     
     // TODO: Fix this test, AssertEqual fails whilst the strins *are* equal
-    func testDocumentFlattening() {
+    func testDocumentFlattening() throws {
         let correctFlatKitten: Document = [
             "doubleTest": 0.04,
             "stringTest": "foo",
@@ -515,10 +509,10 @@ final class BSONPublicTests: XCTestCase {
             "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,
-            "timestamp": Value.timestamp(try! fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
-            "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-            "minKey": Value.minKey,
-            "maxKey": Value.maxKey
+            "timestamp": Timestamp(increment: 2000, timestamp: 8),
+            "regex": try RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
+            "minKey": MinKey(),
+            "maxKey": MaxKey()
         ]
         
         var flattenedKitten = kittenDocument
@@ -531,7 +525,7 @@ final class BSONPublicTests: XCTestCase {
     func testExtraction() {
         let user = User(username: "henk", password: "123")
         
-        let documentUser = user.makeBsonValue()
+        let documentUser = user.makeBSONPrimitive()
         
         guard let userClone = User(documentUser) else {
             XCTFail()

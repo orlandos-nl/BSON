@@ -9,5 +9,5 @@
 import Foundation
 
 #if os(macOS) || os(iOS)
-typealias RegularExpression = NSRegularExpression
+public typealias RegularExpression = NSRegularExpression
 #endif

@@ -1,5 +1,9 @@
 extension Document {
     public func extract<V: CustomValueConvertible>(_ key: String...) -> V? {
-        return V(self[key]?.makeBsonValue() ?? .nothing)
+        guard let primitive = self[key]?.makeBSONPrimitive() else {
+            return nil
+        }
+        
+        return V(primitive)
     }
 }

@@ -8,8 +8,38 @@
 
 import Foundation
 
+public enum SubscriptExpression {
+    case string(String)
+    case integer(Int)
+}
+
+public protocol SubscriptExpressionType {
+    var subscriptExpression: SubscriptExpression { get }
+}
+
+extension String : SubscriptExpressionType {
+    public var subscriptExpression: SubscriptExpression {
+        return .string(self)
+    }
+}
+
+extension Int : SubscriptExpressionType {
+    public var subscriptExpression: SubscriptExpression {
+        return .integer(self)
+    }
+}
+
 extension Document {
-    public subscript(parts: String...) -> ValueConvertible? {
+    public subscript(dotNotated key: String) -> BSONPrimitive? {
+        get {
+            return self[key.components(separatedBy: ".")]
+        }
+        set {
+            self[key.components(separatedBy: ".")] = newValue
+        }
+    }
+    
+    public subscript(parts: SubscriptExpressionType...) -> BSONPrimitive? {
         get {
             return self[parts]
         }
@@ -19,14 +49,29 @@ extension Document {
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(parts: [String]) -> ValueConvertible? {
+    public subscript(parts: [SubscriptExpressionType]) -> BSONPrimitive? {
         get {
             if parts.count == 1 {
-                guard let meta = getMeta(forKeyBytes: [UInt8](parts[0].utf8)) else {
-                    return nil
+                switch parts[0].subscriptExpression {
+                case .string(let part):
+                    guard let meta = getMeta(forKeyBytes: [UInt8](part.utf8)) else {
+                        return nil
+                    }
+                    
+                    return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
+                case .integer(let position):
+                    guard elementPositions.count > position else {
+                        fatalError("Index \(position) out of range")
+                    }
+                    
+                    let elementPosition = elementPositions[position]
+                    
+                    guard let currentKey = getMeta(atPosition: elementPosition) else {
+                        fatalError("Index \(position) out of range")
+                    }
+                    
+                    return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
                 }
-                
-                return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
             } else if parts.count >= 2 {
                 var parts = parts
                 let firstPart = parts.removeFirst()
@@ -39,21 +84,68 @@ extension Document {
         
         set {
             if parts.count == 1 {
-                let newValue = newValue?.makeBsonValue() ?? .nothing
-                
-                if let meta = getMeta(forKeyBytes: [UInt8](parts[0].utf8)) {
-                    let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
-                    let dataEndPosition = meta.dataPosition+len
+                switch parts[0].subscriptExpression {
+                case .string(let part):
+                    let newValue = newValue?.makeBSONPrimitive()
                     
-                    storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                    storage.insert(contentsOf: newValue.bytes, at: meta.dataPosition)
-                    storage[meta.elementTypePosition] = newValue.typeIdentifier
+                    if let meta = getMeta(forKeyBytes: [UInt8](part.utf8)) {
+                        let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+                        let dataEndPosition = meta.dataPosition+len
+                        
+                        storage.removeSubrange(meta.dataPosition..<dataEndPosition)
+                        
+                        let oldLength = dataEndPosition - meta.dataPosition
+                        let relativeLength: Int
+                        
+                        if let newValue = newValue {
+                            let newBinary = newValue.makeBSONBinary()
+                            storage.insert(contentsOf: newBinary, at: meta.dataPosition)
+                            storage[meta.elementTypePosition] = newValue.typeIdentifier
+                            relativeLength = newBinary.count - oldLength
+                        } else {
+                            relativeLength = -oldLength
+                        }
+                        
+                        for (index, element) in elementPositions.enumerated() where element > meta.dataPosition {
+                            elementPositions[index] = elementPositions[index] + relativeLength
+                        }
+                        
+                        updateDocumentHeader()
+                        
+                        return
+                    } else if let newValue = newValue {
+                        self.append(newValue, forKey: part)
+                    }
+                case .integer(let position):
+                    let newValue = newValue?.makeBSONPrimitive()
+                    
+                    guard let currentKey = getMeta(atPosition: elementPositions[position]) else {
+                        fatalError("Index out of range")
+                    }
+                    
+                    let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
+                    let dataEndPosition = currentKey.dataPosition+len
+                    
+                    storage.removeSubrange(currentKey.dataPosition..<dataEndPosition)
+                    
+                    let oldLength = dataEndPosition - currentKey.dataPosition
+                    let relativeLength: Int
+                    
+                    if let newValue = newValue {
+                        let newBinary = newValue.makeBSONBinary()
+                        storage.insert(contentsOf: newBinary, at: currentKey.dataPosition)
+                        storage[currentKey.startPosition] = newValue.typeIdentifier
+                        relativeLength = newBinary.count - oldLength
+                    } else {
+                        relativeLength = -oldLength
+                    }
+                    
+                    for (index, element) in elementPositions.enumerated() where element > currentKey.startPosition {
+                        elementPositions[index] = elementPositions[index] + relativeLength
+                    }
+                    
                     updateDocumentHeader()
-                    
-                    return
                 }
-                
-                self.append(newValue, forKey: parts[0])
             } else if parts.count >= 2 {
                 var parts = parts
                 let firstPart = parts.removeFirst()
@@ -63,52 +155,6 @@ extension Document {
                 
                 self[firstPart] = doc
             }
-        }
-    }
-    
-    /// Mutates the value store like you would with an `Array`
-    public subscript(key: Int) -> ValueConvertible? {
-        get {
-            if let value = self["\(key)"] {
-                return value
-            }
-            
-            var keyPos = 0
-            
-            for currentKey in makeKeyIterator() {
-                if keyPos == key {
-                    return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
-                }
-                
-                keyPos += 1
-            }
-            
-            return nil
-        }
-        set {
-            let newValue = newValue?.makeBsonValue() ?? .nothing
-            
-            if let currentKey = getMeta(atPosition: elementPositions[key]) {
-                let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
-                let dataEndPosition = currentKey.dataPosition+len
-                
-                storage.removeSubrange(currentKey.dataPosition..<dataEndPosition)
-                storage.insert(contentsOf: newValue.bytes, at: currentKey.dataPosition)
-                storage[currentKey.startPosition] = newValue.typeIdentifier
-                
-                let oldLength = dataEndPosition - currentKey.dataPosition
-                let relativeLength = newValue.bytes.count - oldLength
-                
-                for (index, element) in elementPositions.enumerated() where element > currentKey.startPosition {
-                    elementPositions[index] = elementPositions[index] + relativeLength
-                }
-                
-                updateDocumentHeader()
-                
-                return
-            }
-            
-            fatalError("Index out of range")
         }
     }
     
@@ -153,7 +199,7 @@ extension Document {
                 fatalError("Invalid type found in Document when modifying the Document at the position \(position)")
             }
             
-            let newBsonValue = newValue.value.makeBsonValue() 
+            let newBsonValue = newValue.value.makeBSONPrimitive()
             
             storage[position] = newBsonValue.typeIdentifier
             
@@ -172,7 +218,7 @@ extension Document {
             let length = getLengthOfElement(withDataPosition: position, type: type)
             
             storage.removeSubrange(position..<position+length)
-            storage.insert(contentsOf: newBsonValue.bytes, at: position)
+            storage.insert(contentsOf: newBsonValue.makeBSONBinary(), at: position)
             
             updateDocumentHeader()
         }

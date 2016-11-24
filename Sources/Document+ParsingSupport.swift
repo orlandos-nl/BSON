@@ -10,7 +10,6 @@ import Foundation
 
 public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == UInt8, S.IndexDistance == Int {
     guard bytes.count >= MemoryLayout<T>.size else {
-        print(T.self)
         throw DeserializationError.invalidElementSize
     }
     
@@ -279,7 +278,7 @@ extension Document {
     ///
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
-    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> ValueConvertible? {
+    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> BSONPrimitive? {
         do {
             var position = startPosition
             
@@ -441,7 +440,7 @@ extension Document {
                     return nil
                 }
                 
-                let stamp: Int64 = try fromBytes(storage[position..<position+8])
+                let stamp = Timestamp(increment: try fromBytes(storage[position..<position+4]), timestamp: try fromBytes(storage[position+4..<position+8]))
                 
                 return stamp
             case .int64: // timestamp, int64
@@ -451,9 +450,9 @@ extension Document {
                 
                 return try fromBytes(storage[position..<position+8]) as Int64
             case .minKey: // MinKey
-                return BSON.Value.minKey
+                return MinKey()
             case .maxKey: // MaxKey
-                return BSON.Value.maxKey
+                return MaxKey()
             }
         } catch {
             return nil

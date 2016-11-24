@@ -29,28 +29,28 @@ class BSONPerformanceTests: XCTestCase {
             "documentTest": [
                 "documentSubDoubleTest": 13.37,
                 "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
-            ] as Document,
+                ] as Document,
             "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
             "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
             "cool32bitNumber": Int32(9001),
             "cool64bitNumber": Int64(21312153544),
-            "code": Value.javascriptCode("console.log(\"Hello there\");"),
-            "codeWithScope": Value.javascriptCodeWithScope(code: "console.log(\"Hello there\");", scope: ["hey": "hello"]),
+            "code": JavascriptCode("console.log(\"Hello there\");"),
+            "codeWithScope": JavascriptCode("console.log(\"Hello there\");", withScope: ["hey": "hello"]),
             "nothing": Null(),
             "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,
-            "timestamp": Value.timestamp(try fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
-            "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-            "minKey": Value.minKey,
-            "maxKey": Value.maxKey
+            "timestamp": Timestamp(increment: 2000, timestamp: 8),
+            "regex": try RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
+            "minKey": MinKey(),
+            "maxKey": MaxKey()
         ]
         
         measure {
             let json = kittenDocument.makeExtendedJSON()
             let document = try? Document(extendedJSON: json)
             
-            XCTAssertEqual(kittenDocument, document)
+            XCTAssert(kittenDocument == document)
         }
     }
     
@@ -64,7 +64,7 @@ class BSONPerformanceTests: XCTestCase {
                 "documentTest": [
                     "documentSubDoubleTest": 13.37,
                     "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
-                ] as Document,
+                    ] as Document,
                 "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
                 "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
                 "cool32bitNumber": Int32(9001),
@@ -75,10 +75,10 @@ class BSONPerformanceTests: XCTestCase {
                 "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
                 "boolFalse": false,
                 "boolTrue": true,
-                "timestamp": Value.timestamp(try! fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
-                "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-                "minKey": Value.minKey,
-                "maxKey": Value.maxKey
+                "timestamp": Timestamp(increment: 2000, timestamp: 8),
+                "regex": try! RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
+                "minKey": MinKey(),
+                "maxKey": MaxKey()
             ]
             
             total += kittenDocument.bytes.count
@@ -105,10 +105,10 @@ class BSONPerformanceTests: XCTestCase {
             "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,
-            "timestamp": Value.timestamp(try fromBytes(UInt32(2000).makeBytes() + UInt32(8).makeBytes()) as Int64),
-            "regex": Value.regularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: "b"),
-            "minKey": Value.minKey,
-            "maxKey": Value.maxKey
+            "timestamp": Timestamp(increment: 2000, timestamp: 8),
+            "regex": try RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
+            "minKey": MinKey(),
+            "maxKey": MaxKey()
         ]
 
         var total = 0
@@ -118,7 +118,7 @@ class BSONPerformanceTests: XCTestCase {
             
             for (k, v) in kittenDocument {
                 hash += k.characters.count
-                hash += v.makeBsonValue().bytes.count
+                hash += v.makeBSONPrimitive().makeBSONBinary().count
             }
             
             total += hash
