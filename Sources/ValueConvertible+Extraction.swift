@@ -67,6 +67,8 @@ extension ValueConvertible {
                 return bool ? "true" : "false"
             } else if let s = self as? String {
                 return s
+            } else if let oid = self as? ObjectId {
+                return oid.hexString
             }
             
             return ""
