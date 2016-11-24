@@ -30,7 +30,7 @@ extension Int : SubscriptExpressionType {
 }
 
 extension Document {
-    public subscript(dotNotated key: String) -> BSONPrimitive? {
+    public subscript(dotNotated key: String) -> ValueConvertible? {
         get {
             return self[key.components(separatedBy: ".")]
         }
@@ -39,7 +39,7 @@ extension Document {
         }
     }
     
-    public subscript(parts: SubscriptExpressionType...) -> BSONPrimitive? {
+    public subscript(parts: SubscriptExpressionType...) -> ValueConvertible? {
         get {
             return self[parts]
         }
@@ -49,7 +49,7 @@ extension Document {
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(parts: [SubscriptExpressionType]) -> BSONPrimitive? {
+    public subscript(parts: [SubscriptExpressionType]) -> ValueConvertible? {
         get {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
