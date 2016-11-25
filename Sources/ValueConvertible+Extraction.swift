@@ -21,7 +21,7 @@ extension ValueConvertible {
     /// - Timestamp
     ///
     /// If the value cannot be interpeted as a `Double`, Double(0) will be returned.
-    public var double : Double {
+    public var double : Double? {
         get {
             if let num = self as? Int32 {
                 return Double(num)
@@ -33,7 +33,7 @@ extension ValueConvertible {
                 return Double(num) ?? 0
             }
             
-            return 0
+            return nil
         }
         set {
             if let newValue = newValue as? Self {
@@ -55,7 +55,7 @@ extension ValueConvertible {
     /// - Timestamp
     ///
     /// If the value cannot be interpeted as a `Double`, Double(0) will be returned.
-    public var string : String {
+    public var string : String? {
         get {
             if let num = self as? Int32 {
                 return String(num)
@@ -71,7 +71,7 @@ extension ValueConvertible {
                 return oid.hexString
             }
             
-            return ""
+            return nil
         }
         set {
             if let newValue = newValue as? Self {
@@ -80,19 +80,7 @@ extension ValueConvertible {
         }
     }
     
-    /// Returns the contained document if `self` is `array` or `document`. If self is not `array` or `document`, an empty `Document` will be returned.
-    public var document : Document {
-        get {
-            return self as? Document ?? [:]
-        }
-        set {
-            if let newValue = newValue as? Self {
-                self = newValue
-            }
-        }
-    }
-    
-    public var int64 : Int64 {
+    public var int64 : Int64? {
         get {
             if let num = self as? Int32 {
                 return Int64(num)
@@ -104,7 +92,7 @@ extension ValueConvertible {
                 return Int64(num) ?? 0
             }
             
-            return 0
+            return nil
         }
         set {
             if let newValue = newValue as? Self {
@@ -113,9 +101,13 @@ extension ValueConvertible {
         }
     }
     
-    public var int : Int {
+    public var int : Int? {
         get {
-            return Int(self.int64)
+            guard let int64 = self.int64 else {
+                return nil
+            }
+            
+            return Int(int64)
         }
         set {
             if let newValue = newValue as? Self {

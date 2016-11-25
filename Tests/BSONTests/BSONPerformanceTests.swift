@@ -135,7 +135,7 @@ class BSONPerformanceTests: XCTestCase {
         }
         
         measure {
-            _ = document[8765]
+            _ = document[raw: 8765]
         }
     }
     
@@ -147,7 +147,7 @@ class BSONPerformanceTests: XCTestCase {
         }
         
         measure {
-            _ = document["test8765"]
+            _ = document[raw: "test8765"]
         }
     }
     

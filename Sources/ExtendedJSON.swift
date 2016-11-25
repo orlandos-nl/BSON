@@ -332,29 +332,29 @@ extension Document {
                 }
                 
                 if count == 1 {
-                    if let hex = document["$oid"] as? String {
+                    if let hex = document["$oid"] as String? {
                         // ObjectID
                         return try ObjectId(hex)
-                    } else if let dateString = document["$date"] as? String {
+                    } else if let dateString = document["$date"] as String? {
                         // DateTime
                         return parseISO8601(from: dateString)
-                    } else if let code = document["$code"] as? String {
+                    } else if let code = document["$code"] as String? {
                         return JavascriptCode(code)
-                    } else if let numberString = document["$numberLong"] as? String {
+                    } else if let numberString = document["$numberLong"] as String? {
                         guard let number = Int64(numberString) else {
                             break subParser
                         }
                         
                         return number
-                    } else if document["$minKey"]?.int == 1 {
+                    } else if document["$minKey"] as Int? == 1 {
                         return MinKey()
-                    } else if document["$maxKey"]?.int == 1 {
+                    } else if document["$maxKey"] as Int? == 1 {
                         return MaxKey()
-                    } else if let timestamp = document["$timestamp"] as? Document, let t = timestamp["t"]?.int32Value, let i = timestamp["i"]?.int32Value {
+                    } else if let timestamp = document["$timestamp"] as Document?, let t = timestamp["t"] as Int32?, let i = timestamp["i"] as Int32? {
                         return Timestamp(increment: i, timestamp: t)
                     }
                 } else if count == 2 {
-                    if let base64 = document["$binary"] as? String, let hexSubtype = document["$type"] as? String {
+                    if let base64 = document["$binary"] as String?, let hexSubtype = document["$type"] as String? {
                         // Binary
                         guard hexSubtype.characters.count > 2 else {
                             break subParser
@@ -373,10 +373,10 @@ extension Document {
                         #else
                             return Binary(data: Array<UInt8>(data), withSubtype: subtype)
                         #endif
-                    } else if let pattern = document["$regex"] as? String, let options = document["$options"] as? String {
+                    } else if let pattern = document["$regex"] as String?, let options = document["$options"] as String? {
                         // RegularExpression
                         return try? RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
-                    } else if let code = document["$code"] as? String, let scope = document["$scope"] as? Document {
+                    } else if let code = document["$code"] as String?, let scope = document["$scope"] as Document? {
                         // JS with scope
                         return JavascriptCode(code, withScope: scope)
                     }
@@ -386,10 +386,10 @@ extension Document {
             return document
         }
         
-        guard let jsonVal = try parseObjectOrArray() else {
+        guard let jsonVal = try parseObjectOrArray()?.documentValue else {
             throw ExtendedJSONError.unexpectedEndOfInput
         }
         
-        self.init(data: jsonVal.document.bytes)
+        self.init(data: jsonVal.bytes)
     }
 }

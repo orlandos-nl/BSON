@@ -32,24 +32,24 @@ extension Int : SubscriptExpressionType {
 extension Document {
     public subscript(dotNotated key: String) -> ValueConvertible? {
         get {
-            return self[key.components(separatedBy: ".")]
+            return self[raw: key.components(separatedBy: ".")]
         }
         set {
-            self[key.components(separatedBy: ".")] = newValue
+            self[raw: key.components(separatedBy: ".")] = newValue
         }
     }
     
-    public subscript(parts: SubscriptExpressionType...) -> ValueConvertible? {
+    public subscript(raw parts: SubscriptExpressionType...) -> ValueConvertible? {
         get {
-            return self[parts]
+            return self[raw: parts]
         }
         set {
-            self[parts] = newValue
+            self[raw: parts] = newValue
         }
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(parts: [SubscriptExpressionType]) -> ValueConvertible? {
+    public subscript(raw parts: [SubscriptExpressionType]) -> ValueConvertible? {
         get {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
@@ -76,7 +76,7 @@ extension Document {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                return parts.count == 0 ? self[firstPart] : self[firstPart]?.documentValue?[parts]
+                return parts.count == 0 ? self[raw: firstPart] : self[raw: firstPart]?.documentValue?[raw: parts]
             } else {
                 return nil
             }
@@ -150,8 +150,8 @@ extension Document {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                var doc = self[firstPart]?.documentValue ?? [:]
-                doc[parts] = newValue
+                var doc = self[firstPart] as Document? ?? [:]
+                doc[raw: parts] = newValue
                 
                 self[firstPart] = doc
             }
