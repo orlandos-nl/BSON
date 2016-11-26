@@ -14,52 +14,6 @@ import XCTest
     import Glibc
 #endif
 
-struct Password: CustomValueConvertible {
-    var password: String
-    
-    init(_ password: String) {
-        self.password = password
-    }
-    
-    init?(_ value: BSONPrimitive) {
-        guard let password = value.stringValue else {
-            return nil
-        }
-        
-        self.password = password
-    }
-    
-    func makeBSONPrimitive() -> BSONPrimitive {
-        return password
-    }
-}
-
-struct User: CustomValueConvertible {
-    var username: String
-    var password: Password
-    
-    init(username: String, password: String) {
-        self.username = username
-        self.password = Password(password)
-    }
-    
-    init?(_ value: BSONPrimitive) {
-        guard let user = value.documentValue, let username = user["username"] as String?, let password = user.extract("password") as Password? else {
-            return nil
-        }
-        
-        self.username = username
-        self.password = password
-    }
-    
-    func makeBSONPrimitive() -> BSONPrimitive {
-        return [
-            "username": username,
-            "password": password
-        ] as Document
-    }
-}
-
 final class BSONPublicTests: XCTestCase {
     
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {

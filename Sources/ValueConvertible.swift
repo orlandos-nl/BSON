@@ -40,10 +40,6 @@ extension BSONPrimitive {
     }
 }
 
-public protocol CustomValueConvertible: ValueConvertible {
-    init?(_ value: BSONPrimitive)
-}
-
 extension ValueConvertible {
     public func makeExtendedJSON() -> String {
         return makeBSONPrimitive().makeExtendedJSON()
