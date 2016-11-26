@@ -30,7 +30,7 @@ extension ValueConvertible {
             } else if let num = self as? Double {
                 return Double(num)
             } else if let num = self as? String {
-                return Double(num) ?? 0
+                return Double(num)
             }
             
             return nil
@@ -89,7 +89,7 @@ extension ValueConvertible {
             } else if let num = self as? Double {
                 return Int64(num)
             } else if let num = self as? String {
-                return Int64(num) ?? 0
+                return Int64(num)
             }
             
             return nil
@@ -116,7 +116,7 @@ extension ValueConvertible {
         }
     }
     
-    public var int32 : Int32 {
+    public var int32 : Int32? {
         get {
             if let num = self as? Int32 {
                 return Int32(num)
@@ -125,10 +125,10 @@ extension ValueConvertible {
             } else if let num = self as? Double {
                 return Int32(num)
             } else if let num = self as? String {
-                return Int32(num) ?? 0
+                return Int32(num)
             }
             
-            return 0
+            return nil
         }
         set {
             if let newValue = newValue as? Self {
