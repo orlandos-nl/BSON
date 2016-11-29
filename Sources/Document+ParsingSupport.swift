@@ -141,6 +141,8 @@ extension Document {
                 }
                 
                 return Int(try fromBytes(storage[position...position+3]) as Int32)
+            case .decimal128:
+                return 16
             }
         } catch {
             return 0
@@ -449,6 +451,12 @@ extension Document {
                 }
                 
                 return try fromBytes(storage[position..<position+8]) as Int64
+            case .decimal128:
+                guard remaining() >= 16 else {
+                    return nil
+                }
+                
+                return Decimal128(slice: storage[position..<position + 16])
             case .minKey: // MinKey
                 return MinKey()
             case .maxKey: // MaxKey

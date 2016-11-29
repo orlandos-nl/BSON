@@ -84,6 +84,7 @@ public enum ElementType : UInt8 {
     case int32 = 0x10
     case timestamp = 0x11
     case int64 = 0x12
+    case decimal128 = 0x13
     case minKey = 0xFF
     case maxKey = 0x7F
 }
