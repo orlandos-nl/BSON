@@ -74,7 +74,7 @@ public protocol BinaryConvertible: ValueConvertible {
 
 extension Data: BinaryConvertible {
     public func makeBinary() -> Binary {
-        return Binary(data: self, withSubtype: .userDefined)
+        return Binary(data: self, withSubtype: .generic)
     }
 }
 
@@ -125,11 +125,11 @@ public struct Binary: BSONPrimitive {
         /// MD5 hash
         case md5
         
-        /// userDefined
-        case userDefined
-        
         /// Custom
-        case other(UInt8)
+        case userDefined(UInt8)
+        
+        /// System reserved
+        case systemReserved(UInt8)
         
         /// The raw UInt8 value
         public var rawValue : UInt8 {
@@ -140,8 +140,8 @@ public struct Binary: BSONPrimitive {
             case .uuidOld: return 0x03
             case .uuid: return 0x04
             case .md5: return 0x05
-            case .userDefined: return 0x80
-            case .other(let value): return value
+            case .systemReserved(let value): return value
+            case .userDefined(let value): return value
             }
         }
         
@@ -154,8 +154,8 @@ public struct Binary: BSONPrimitive {
             case 0x03: self = .uuidOld
             case 0x04: self = .uuid
             case 0x05: self = .md5
-            case 0x80: self = .userDefined
-            default: self = .other(rawValue)
+            case 0x80...0xFF: self = .userDefined(rawValue)
+            default: self = .systemReserved(rawValue)
             }
         }
     }
@@ -422,7 +422,7 @@ extension Data : ValueConvertible {
     }
 
     public func makeBSONPrimitive() -> BSONPrimitive {
-        return Binary(data: self, withSubtype: .userDefined)
+        return Binary(data: self, withSubtype: .generic)
     }
 }
 

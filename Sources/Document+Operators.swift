@@ -19,8 +19,6 @@ extension Document : Equatable {
         
         for (key, value) in lhs {
             guard let val = rhs[raw: key], val.makeBSONPrimitive().makeBSONBinary() == value.makeBSONPrimitive().makeBSONBinary() else {
-                print(rhs[raw: key]!.makeBSONPrimitive().makeBSONBinary())
-                print(value.makeBSONPrimitive().makeBSONBinary())
                 return false
             }
         }
