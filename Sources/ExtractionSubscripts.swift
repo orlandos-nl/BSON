@@ -73,6 +73,32 @@ extension Document {
         }
     }
     
+    public subscript(parts: SubscriptExpressionType...) -> [String: ValueConvertible]? {
+        get {
+            return (self[parts] as Document?)?.dictionaryValue
+        }
+        set {
+            if let newValue = newValue {
+                self[raw: parts] = Document(dictionaryElements: newValue.map { ($0.0, $0.1) })
+            } else {
+                self[raw: parts] = nil
+            }
+        }
+    }
+    
+    public subscript(parts: SubscriptExpressionType...) -> [ValueConvertible]? {
+        get {
+            return (self[parts] as Document?)?.arrayValue
+        }
+        set {
+            if let newValue = newValue {
+                self[raw: parts] = Document(array: newValue)
+            } else {
+                self[raw: parts] = nil
+            }
+        }
+    }
+    
     public subscript(parts: SubscriptExpressionType...) -> ObjectId? {
         get {
             return self[raw: parts]?.objectIdValue

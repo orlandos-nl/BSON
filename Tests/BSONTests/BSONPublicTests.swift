@@ -476,18 +476,11 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertTrue(flattenedKitten.validate())
     }
     
-    func testExtraction() {
-        let user = User(username: "henk", password: "123")
-        
-        let documentUser = user.makeBSONPrimitive()
-        
-        guard let userClone = User(documentUser) else {
-            XCTFail()
-            return
-        }
-        
-        XCTAssertEqual(userClone.username, "henk")
-        XCTAssertEqual(userClone.password.password, "123")
+    func testKeyDetection() {
+        var myDoc: Document = ["balance_status": "Pending"]
+        XCTAssertEqual(myDoc["balance_status"] as String?, "Pending")
+        myDoc["balance"] = 50
+        XCTAssertEqual(myDoc["balance"] as Int?, 50)
     }
     
     func testTypeChecking() {
