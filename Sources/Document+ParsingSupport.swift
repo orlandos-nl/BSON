@@ -50,14 +50,13 @@ extension Document {
                 
                 let keyPos = position - keyPositionOffset
                 
-                // there is still a chance that this is the key, so check for that.
-                if isKey && keyBytes.count > keyPos {
-                    isKey = keyBytes[keyPos] == character
-                }
-                
                 if character == 0 {
                     didEnd = true
                     break keyComparison // end of key data
+                } else if isKey && keyBytes.count > keyPos {
+                    isKey = keyBytes[keyPos] == character
+                } else {
+                    isKey = false
                 }
             }
             

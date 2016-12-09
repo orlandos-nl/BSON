@@ -552,4 +552,11 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertNotNil(regex)
         XCTAssertEqual(regex?.pattern, "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}")
     }
+    
+    func testKeyDetection() {
+        var myDoc: Document = ["balance_status": "Pending"]
+        XCTAssertEqual(myDoc["balance_status"].string, "Pending")
+        myDoc["balance"] = 50
+        XCTAssertEqual(myDoc["balance"].int, 50)
+    }
 }
