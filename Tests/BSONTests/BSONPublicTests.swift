@@ -559,4 +559,16 @@ final class BSONPublicTests: XCTestCase {
         myDoc["balance"] = 50
         XCTAssertEqual(myDoc["balance"].int, 50)
     }
+    
+    func testRawCreation() {
+        var doc: Document = [:]
+        
+        doc[["nestedThings.thing1"]] = [
+            "$exists": true
+        ]
+        
+        XCTAssertEqual(doc[["nestedThings.thing1.$exists"]], .nothing)
+        XCTAssertEqual(doc[["nestedThings.thing1"]]["$exists"], true)
+        XCTAssertEqual(doc["nestedThings"]["thing1"]["$exists"], .nothing)
+    }
 }
