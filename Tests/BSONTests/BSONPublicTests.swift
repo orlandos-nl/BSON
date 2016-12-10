@@ -480,7 +480,20 @@ final class BSONPublicTests: XCTestCase {
         var myDoc: Document = ["balance_status": "Pending"]
         XCTAssertEqual(myDoc["balance_status"] as String?, "Pending")
         myDoc["balance"] = 50
+        XCTAssertEqual(myDoc["balance_status"] as String?, "Pending")
         XCTAssertEqual(myDoc["balance"] as Int?, 50)
+        myDoc["balance_status"] = "Done"
+        XCTAssertEqual(myDoc["balance_status"] as String?, "Done")
+        XCTAssertEqual(myDoc["balance"] as Int?, 50)
+        
+        let name = "coll"
+        var command: Document = ["delete": name]
+        let newDeletes = ["bob", 3, true] as [ValueConvertible]
+        
+        command["deletes"] = Document(array: newDeletes)
+        
+        XCTAssertEqual(command["delete"] as String?, name)
+        XCTAssertEqual(command["deletes"] as Document?, ["bob", 3, true])
     }
     
     func testTypeChecking() {
