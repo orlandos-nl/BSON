@@ -51,6 +51,10 @@ extension Document {
                 let keyPos = position - keyPositionOffset
                 
                 if character == 0 {
+                    if keyBytes.count != keyPos {
+                        isKey = false
+                    }
+                    
                     didEnd = true
                     break keyComparison // end of key data
                 } else if isKey && keyBytes.count > keyPos {
