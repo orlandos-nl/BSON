@@ -231,15 +231,3 @@ extension Double : BSONBytesProtocol {
         }
     }
 }
-
-extension BSONBytesProtocol {
-    /// The bytes in `Self`
-    public var bytes : [UInt8] {
-        var integer = self
-        return withUnsafePointer(to: &integer) {
-            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Self>.size) {
-                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Self>.size))
-            }
-        }
-    }
-}

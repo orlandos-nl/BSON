@@ -154,11 +154,14 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
-    public init(dictionaryElements elements: [(String, ValueConvertible)]) {
+    public init(dictionaryElements elements: [(String, ValueConvertible?)]) {
         storage = [5,0,0,0]
         
         for (key, value) in elements {
-            let value = value.makeBSONPrimitive()
+            guard let value = value?.makeBSONPrimitive() else {
+                continue
+            }
+            
             // Append the key-value pair
             
             // Add element to positions cache
@@ -182,25 +185,27 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
     ///
     /// - parameter elements: The `Dictionary` used to initialize this must use `String` for key and `Value` for values
-    public init(dictionaryLiteral elements: (String, ValueConvertible)...) {
+    public init(dictionaryLiteral elements: (String, ValueConvertible?)...) {
         self.init(dictionaryElements: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array` literal
     ///
     /// - parameter elements: The `Array` literal used to initialize the `Document` must be a `[Value]`
-    public init(arrayLiteral elements: ValueConvertible...) {
+    public init(arrayLiteral elements: ValueConvertible?...) {
         self.init(array: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array`
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
-    public init(array elements: [ValueConvertible]) {
+    public init(array elements: [ValueConvertible?]) {
         storage = [5,0,0,0]
         
         for (index, value) in elements.enumerated() {
-            let value = value.makeBSONPrimitive()
+            guard let value = value?.makeBSONPrimitive() else {
+                continue
+            }
             
             // Append the values
             
