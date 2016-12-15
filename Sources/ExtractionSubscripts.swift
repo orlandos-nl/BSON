@@ -73,15 +73,6 @@ extension Document {
         }
     }
     
-    public subscript(parts: SubscriptExpressionType...) -> ValueConvertible? {
-        get {
-            return self[raw: parts]
-        }
-        set {
-            self[raw: parts] = newValue
-        }
-    }
-    
     public subscript(parts: SubscriptExpressionType...) -> [String: ValueConvertible]? {
         get {
             return (self[parts] as Document?)?.dictionaryValue
