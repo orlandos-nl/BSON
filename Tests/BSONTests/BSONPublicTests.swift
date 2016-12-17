@@ -551,6 +551,9 @@ final class BSONPublicTests: XCTestCase {
         let regex = kittenDocument.extract("regex") as RegularExpression?
         XCTAssertNotNil(regex)
         XCTAssertEqual(regex?.pattern, "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}")
+        
+        XCTAssertEqual(kittenDocument.extract("cool32bitNumber") as Int?, 9001)
+        XCTAssertEqual(kittenDocument.extract("cool64bitNumber") as Int?, 21312153)
     }
     
     func testKeyDetection() {

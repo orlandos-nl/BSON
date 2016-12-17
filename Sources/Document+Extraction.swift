@@ -6,6 +6,10 @@ extension Document {
             return nil
         }
         
+        if T.self == Int.self {
+            return response.int as? T
+        }
+        
         return response.rawValue as? T
     }
 }
