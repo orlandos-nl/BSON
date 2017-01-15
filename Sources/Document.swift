@@ -8,6 +8,25 @@
 
 import Foundation
 
+public protocol StringVariant {
+    var bsonStringBinary: [UInt8] { get }
+}
+
+extension StaticString: StringVariant {
+    public var bsonStringBinary: [UInt8] {
+        var keyData = [UInt8](repeating: 0, count: self.utf8CodeUnitCount)
+        memcpy(&keyData, self.utf8Start, keyData.count)
+        
+        return keyData
+    }
+}
+
+extension String: StringVariant {
+    public var bsonStringBinary: [UInt8] {
+        return [UInt8](self.utf8)
+    }
+}
+
 public protocol _DocumentProtocolForArrayAdditions {
     var bytes: [UInt8] { get }
     init(data: [UInt8])
@@ -154,7 +173,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
-    public init(dictionaryElements elements: [(String, ValueConvertible?)]) {
+    public init(dictionaryElements elements: [(StringVariant, ValueConvertible?)]) {
         storage = [5,0,0,0]
         
         for (key, value) in elements {
@@ -170,11 +189,12 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Type identifier
             storage.append(value.typeIdentifier)
             // Key
-            storage.append(contentsOf: key.utf8)
+            storage.append(contentsOf: key.bsonStringBinary)
             // Key null terminator
             storage.append(0x00)
             // Value
-            storage.append(contentsOf: value.makeBSONBinary())
+            let data = value.makeBSONBinary()
+            storage.append(contentsOf: data)
         }
         
         updateDocumentHeader()
@@ -185,7 +205,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
     ///
     /// - parameter elements: The `Dictionary` used to initialize this must use `String` for key and `Value` for values
-    public init(dictionaryLiteral elements: (String, ValueConvertible?)...) {
+    public init(dictionaryLiteral elements: (StringVariant, ValueConvertible?)...) {
         self.init(dictionaryElements: elements)
     }
     
@@ -249,6 +269,35 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage.append(value.typeIdentifier)
         // Key
         storage.append(contentsOf: key.utf8)
+        // Key null terminator
+        storage.append(0x00)
+        // Value
+        storage.append(contentsOf: value.makeBSONBinary())
+        
+        // Increase the bytecount
+        updateDocumentHeader()
+        
+        isArray = false
+    }
+    
+    /// Appends a Key-Value pair to this `Document` where this `Document` acts like a `Dictionary`
+    ///
+    /// TODO: Analyze what should happen with `Array`-like documents and this function
+    /// TODO: Analyze what happens when you append with a duplicate key
+    ///
+    /// - parameter value: The `Value` to append
+    /// - parameter key: The key in the key-value pair
+    internal mutating func append(_ value: ValueConvertible, forKey key: [UInt8]) {
+        let value = value.makeBSONPrimitive()
+        
+        // We're going to insert the element before the Document null terminator
+        elementPositions.append(storage.endIndex)
+        
+        // Append the key-value pair
+        // Type identifier
+        storage.append(value.typeIdentifier)
+        // Key
+        storage.append(contentsOf: key)
         // Key null terminator
         storage.append(0x00)
         // Value
@@ -327,7 +376,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             guard let key = keys.next() else {
                 return nil
             }
-
+            
             guard let string = String(bytes: key.keyData[0..<key.keyData.endIndex-1], encoding: String.Encoding.utf8) else {
                 return nil
             }
@@ -439,4 +488,3 @@ extension Sequence where Iterator.Element == Document {
         return combination
     }
 }
-

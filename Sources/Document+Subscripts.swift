@@ -10,6 +10,7 @@ import Foundation
 
 public enum SubscriptExpression {
     case string(String)
+    case staticString(StaticString)
     case integer(Int)
 }
 
@@ -20,6 +21,12 @@ public protocol SubscriptExpressionType {
 extension String : SubscriptExpressionType {
     public var subscriptExpression: SubscriptExpression {
         return .string(self)
+    }
+}
+
+extension StaticString : SubscriptExpressionType {
+    public var subscriptExpression: SubscriptExpression {
+        return .staticString(self)
     }
 }
 
@@ -53,6 +60,15 @@ extension Document {
         get {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
+                case .staticString(let part):
+                    var data = [UInt8](repeating: 0, count: part.utf8CodeUnitCount)
+                    memcpy(&data, part.utf8Start, data.count)
+                    
+                    guard let meta = getMeta(forKeyBytes: data) else {
+                        return nil
+                    }
+                    
+                    return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
                 case .string(let part):
                     guard let meta = getMeta(forKeyBytes: [UInt8](part.utf8)) else {
                         return nil
@@ -85,6 +101,40 @@ extension Document {
         set {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
+                case .staticString(let part):
+                    var data = [UInt8](repeating: 0, count: part.utf8CodeUnitCount)
+                    memcpy(&data, part.utf8Start, data.count)
+                    
+                    let newValue = newValue?.makeBSONPrimitive()
+                    
+                    if let meta = getMeta(forKeyBytes: [UInt8](data)) {
+                        let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+                        let dataEndPosition = meta.dataPosition+len
+                        
+                        storage.removeSubrange(meta.dataPosition..<dataEndPosition)
+                        
+                        let oldLength = dataEndPosition - meta.dataPosition
+                        let relativeLength: Int
+                        
+                        if let newValue = newValue {
+                            let newBinary = newValue.makeBSONBinary()
+                            storage.insert(contentsOf: newBinary, at: meta.dataPosition)
+                            storage[meta.elementTypePosition] = newValue.typeIdentifier
+                            relativeLength = newBinary.count - oldLength
+                        } else {
+                            relativeLength = -oldLength
+                        }
+                        
+                        for (index, element) in elementPositions.enumerated() where element > meta.dataPosition {
+                            elementPositions[index] = elementPositions[index] + relativeLength
+                        }
+                        
+                        updateDocumentHeader()
+                        
+                        return
+                    } else if let newValue = newValue {
+                        self.append(newValue, forKey: data)
+                    }
                 case .string(let part):
                     let newValue = newValue?.makeBSONPrimitive()
                     

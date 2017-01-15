@@ -360,6 +360,26 @@ extension String : BSONPrimitive {
     }
 }
 
+extension StaticString : BSONPrimitive {
+    public func makeBSONBinary() -> [UInt8] {
+        return self.withUTF8Buffer {
+            var data = [UInt8](repeating: 0, count: self.utf8CodeUnitCount + 1)
+            memcpy(&data, $0.baseAddress!, self.utf8CodeUnitCount)
+            return data
+        }
+    }
+    
+    public var typeIdentifier: UInt8 {
+        return 0x02
+    }
+    
+    public func makeExtendedJSON() -> String {
+        return self.withUTF8Buffer {
+            String.init(cString: $0.baseAddress!)
+        }
+    }
+}
+
 extension Document : BSONPrimitive {
     public var typeIdentifier: UInt8 {
         return isArray ? 0x04 : 0x03
