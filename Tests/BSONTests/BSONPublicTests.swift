@@ -93,6 +93,16 @@ final class BSONPublicTests: XCTestCase {
         }
     }
     
+    func testInt() {
+        let doc: Document = [
+            "int32": 1,
+            "int64": (Int(Int32.max) + 5)
+        ]
+        
+        XCTAssertEqual(doc.type(at: "int32"), .int32)
+        XCTAssertEqual(doc.type(at: "int64"), .int64)
+    }
+    
     func testAppendingContents() {
         var doc = [1, 2, 3, 4, 5] as Document
         doc.append(contentsOf: [6, 7, 8, 9, 10])
