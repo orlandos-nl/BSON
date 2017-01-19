@@ -306,17 +306,12 @@ extension Int64 : BSONPrimitive {
     }
 }
 
-extension Int : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
-        return 0x12
-    }
-    
-    public func makeBSONBinary() -> [UInt8] {
-        return Int64(self).makeBSONBinary()
-    }
-    
-    public func makeExtendedJSON() -> String {
-        return Int64(self).makeExtendedJSON()
+extension Int : ValueConvertible {
+    public func makeBSONPrimitive() -> BSONPrimitive {
+        if (self < Int(Int32.max)) {
+            return Int32(self)
+        }
+        return Int64(self)
     }
 }
 
