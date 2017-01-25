@@ -337,6 +337,10 @@ final class BSONPublicTests: XCTestCase {
         
         // Wrong initialization string:
         XCTAssertThrowsError(try ObjectId("kaaskaaskaaskaaskaaskaas"))
+        
+        let timeId = ObjectId()
+        
+        XCTAssertLessThan(timeId.epoch.timeIntervalSinceNow, 2)
     }
     
     func testExtendedJSON() throws {

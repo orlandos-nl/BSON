@@ -43,12 +43,12 @@ public struct ObjectId {
     
     /// Generate a new random ObjectId.
     public init() {
-        let currentTime = Date()
-        
         var data = [UInt8]()
         
+        let epoch = Int32(time(nil))
+        
         // Take the current UNIX epoch as Int32 and take it's bytes
-        data += Int32(currentTime.timeIntervalSince1970).makeBigEndianBytes()
+        data += epoch.makeBigEndianBytes()
         
         // Take a random number
         data += ObjectId.random.makeBytes()
@@ -121,8 +121,12 @@ public struct ObjectId {
         return String(bytes: bytes, encoding: .utf8)!
     }
     
+    public var epochSeconds: Int32 {
+        return _storage[0...3].makeInt32()
+    }
+    
     public var epoch: Date {
-        let epoch = try! fromBytes(_storage[0...3]) as Int32
+        let epoch = _storage[0...3].makeInt32()
         
         return Date(timeIntervalSince1970: Double(epoch))
     }
