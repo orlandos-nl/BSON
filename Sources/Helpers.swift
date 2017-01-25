@@ -144,6 +144,17 @@ extension Int32 : BSONBytesProtocol {
             UInt8((integer >> 24) & 0xFF),
         ]
     }
+    
+    internal func makeBigEndianBytes() -> [UInt8] {
+        let integer = self.bigEndian
+        
+        return [
+            UInt8(integer & 0xFF),
+            UInt8((integer >> 8) & 0xFF),
+            UInt8((integer >> 16) & 0xFF),
+            UInt8((integer >> 24) & 0xFF),
+        ]
+    }
 }
 
 extension Int16 : BSONBytesProtocol {

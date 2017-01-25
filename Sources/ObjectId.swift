@@ -48,7 +48,7 @@ public struct ObjectId {
         var data = [UInt8]()
         
         // Take the current UNIX epoch as Int32 and take it's bytes
-        data += Int32(currentTime.timeIntervalSince1970).makeBytes()
+        data += Int32(currentTime.timeIntervalSince1970).makeBigEndianBytes()
         
         // Take a random number
         data += ObjectId.random.makeBytes()
