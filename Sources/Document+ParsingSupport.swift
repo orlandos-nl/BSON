@@ -16,6 +16,64 @@ public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterato
     return UnsafeRawPointer([UInt8](bytes)).assumingMemoryBound(to: T.self).pointee
 }
 
+extension Collection where Self.Iterator.Element == UInt8, Self.Index == Int {
+    public func makeInt32Array() -> [Int32] {
+        var array = [Int32]()
+        for idx in stride(from: self.startIndex, to: self.endIndex, by: MemoryLayout<Int32>.size) {
+            var number: Int32 = 0
+            number |= self.count > 3 ? Int32(self[idx.advanced(by: 3)]) << 24 : 0
+            number |= self.count > 2 ? Int32(self[idx.advanced(by: 2)]) << 16 : 0
+            number |= self.count > 1 ? Int32(self[idx.advanced(by: 1)]) << 8 : 0
+            number |= self.count > 0 ? Int32(self[idx]) : 0
+            array.append(number)
+        }
+        
+        return array
+    }
+    
+    func makeInt64Array() -> [Int64] {
+        var array = [Int64]()
+        for idx in stride(from: self.startIndex, to: self.endIndex, by: MemoryLayout<Int64>.size) {
+            var number: Int64 = 0
+            number |= self.count > 7 ? Int64(self[idx.advanced(by: 7)]) << 56 : 0
+            number |= self.count > 6 ? Int64(self[idx.advanced(by: 6)]) << 48 : 0
+            number |= self.count > 5 ? Int64(self[idx.advanced(by: 5)]) << 40 : 0
+            number |= self.count > 4 ? Int64(self[idx.advanced(by: 4)]) << 32 : 0
+            number |= self.count > 3 ? Int64(self[idx.advanced(by: 3)]) << 24 : 0
+            number |= self.count > 2 ? Int64(self[idx.advanced(by: 2)]) << 16 : 0
+            number |= self.count > 1 ? Int64(self[idx.advanced(by: 1)]) << 8 : 0
+            number |= self.count > 0 ? Int64(self[idx.advanced(by: 0)]) << 0 : 0
+            array.append(number)
+        }
+        
+        return array
+    }
+    
+    public func makeInt32() -> Int32 {
+        var val: Int32 = 0
+        val |= self.count > 3 ? Int32(self[startIndex.advanced(by: 3)]) << 24 : 0
+        val |= self.count > 2 ? Int32(self[startIndex.advanced(by: 2)]) << 16 : 0
+        val |= self.count > 1 ? Int32(self[startIndex.advanced(by: 1)]) << 8 : 0
+        val |= self.count > 0 ? Int32(self[startIndex]) : 0
+        
+        return val
+    }
+    
+    public func makeInt64() -> Int64 {
+        var number: Int64 = 0
+        number |= self.count > 7 ? Int64(self[startIndex.advanced(by: 7)]) << 56 : 0
+        number |= self.count > 6 ? Int64(self[startIndex.advanced(by: 6)]) << 48 : 0
+        number |= self.count > 5 ? Int64(self[startIndex.advanced(by: 5)]) << 40 : 0
+        number |= self.count > 4 ? Int64(self[startIndex.advanced(by: 4)]) << 32 : 0
+        number |= self.count > 3 ? Int64(self[startIndex.advanced(by: 3)]) << 24 : 0
+        number |= self.count > 2 ? Int64(self[startIndex.advanced(by: 2)]) << 16 : 0
+        number |= self.count > 1 ? Int64(self[startIndex.advanced(by: 1)]) << 8 : 0
+        number |= self.count > 0 ? Int64(self[startIndex.advanced(by: 0)]) << 0 : 0
+        
+        return number
+    }
+}
+
 extension Document {
     
     // MARK: - BSON Parsing Logic
@@ -92,63 +150,59 @@ extension Document {
     ///
     /// - returns: The length of the data for this value in bytes
     internal func getLengthOfElement(withDataPosition position: Int, type: ElementType) -> Int {
-        do {
-            // check
-            func need(_ amountOfBytes: Int) -> Bool {
-                return self.storage.count >= position + amountOfBytes // the document doesn't have a trailing null until the bytes are fetched
+        // check
+        func need(_ amountOfBytes: Int) -> Bool {
+            return self.storage.count >= position + amountOfBytes // the document doesn't have a trailing null until the bytes are fetched
+        }
+        
+        switch type {
+        // Static:
+        case .objectId:
+            return 12
+        case .double, .int64, .utcDateTime, .timestamp:
+            return 8
+        case .int32:
+            return 4
+        case .boolean:
+            return 1
+        case .nullValue, .minKey, .maxKey:
+            return 0
+        // Calculated:
+        case .regex: // defined as "cstring cstring"
+            var currentPosition = position
+            var found = 0
+            
+            // iterate over 2 cstrings
+            while storage.count > currentPosition && found < 2 {
+                defer {
+                    currentPosition += 1
+                }
+                
+                if storage[currentPosition] == 0 {
+                    found += 1
+                }
+            }
+            return currentPosition - position // invalid
+        case .string, .javascriptCode: // Types with their entire length EXCLUDING the int32 in the first 4 bytes
+            guard need(5) else { // length definition + null terminator
+                return 0
             }
             
-            switch type {
-            // Static:
-            case .objectId:
-                return 12
-            case .double, .int64, .utcDateTime, .timestamp:
-                return 8
-            case .int32:
-                return 4
-            case .boolean:
-                return 1
-            case .nullValue, .minKey, .maxKey:
+            return Int(storage[position...position+3].makeInt32() + 4)
+        case .binary:
+            guard need(5) else {
                 return 0
-            // Calculated:
-            case .regex: // defined as "cstring cstring"
-                var currentPosition = position
-                var found = 0
-                
-                // iterate over 2 cstrings
-                while storage.count > currentPosition && found < 2 {
-                    defer {
-                        currentPosition += 1
-                    }
-                    
-                    if storage[currentPosition] == 0 {
-                        found += 1
-                    }
-                }
-                return currentPosition - position // invalid
-            case .string, .javascriptCode: // Types with their entire length EXCLUDING the int32 in the first 4 bytes
-                guard need(5) else { // length definition + null terminator
-                    return 0
-                }
-                
-                return Int(try fromBytes(storage[position...position+3]) as Int32 + 4)
-            case .binary:
-                guard need(5) else {
-                    return 0
-                }
-                
-                return Int(try fromBytes(storage[position...position+3]) as Int32) + 5
-            case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
-                guard need(4) else {
-                    return 0
-                }
-                
-                return Int(try fromBytes(storage[position...position+3]) as Int32)
-            case .decimal128:
-                return 16
             }
-        } catch {
-            return 0
+            
+            return Int(storage[position...position+3].makeInt32() + 5)
+        case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
+            guard need(4) else {
+                return 0
+            }
+            
+            return Int(storage[position...position+3].makeInt32())
+        case .decimal128:
+            return 16
         }
     }
     
@@ -306,7 +360,7 @@ extension Document {
                 }
                 
                 // Get the length
-                let length: Int32 = try fromBytes(storage[position...position+3])
+                let length: Int32 = storage[position...position+3].makeInt32()
                 
                 // Check if the data is at least the right size
                 guard storage.count-position >= Int(length) + 4 else {
@@ -336,7 +390,7 @@ extension Document {
                     return nil
                 }
                 
-                let length = Int(try fromBytes(storage[position..<position+4]) as Int32)
+                let length = Int(storage[position..<position+4].makeInt32())
                 
                 guard remaining() >= length else {
                     return nil
@@ -348,7 +402,7 @@ extension Document {
                     return nil
                 }
                 
-                let length = Int(try fromBytes(storage[position..<position+4]) as Int32)
+                let length = Int(storage[position..<position+4].makeInt32())
                 let subType = storage[position+4]
                 
                 guard remaining() >= length + 5 else {
@@ -381,7 +435,7 @@ extension Document {
                     return nil
                 }
                 
-                let interval: Int64 = try fromBytes(storage[position..<position+8])
+                let interval: Int64 = storage[position..<position+8].makeInt64()
                 return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             case .nullValue:
                 return Null()
@@ -413,7 +467,7 @@ extension Document {
                 }
                 
                 // why did they include this? it's not needed. whatever. we'll validate it.
-                let totalLength = Int(try fromBytes(storage[position..<position+4]) as Int32)
+                let totalLength = Int(storage[position..<position+4].makeInt32())
                 guard remaining() >= totalLength else {
                     return nil
                 }
@@ -438,13 +492,13 @@ extension Document {
                     return nil
                 }
                 
-                return try fromBytes(storage[position..<position+4]) as Int32
+                return storage[position..<position+4].makeInt32()
             case .timestamp:
                 guard remaining() >= 8 else {
                     return nil
                 }
                 
-                let stamp = Timestamp(increment: try fromBytes(storage[position..<position+4]), timestamp: try fromBytes(storage[position+4..<position+8]))
+                let stamp = Timestamp(increment: storage[position..<position+4].makeInt32(), timestamp: storage[position+4..<position+8].makeInt32())
                 
                 return stamp
             case .int64: // timestamp, int64

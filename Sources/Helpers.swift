@@ -43,7 +43,7 @@ internal extension String {
         }
         
         // Get the length
-        let length = try fromBytes(data[0...3]) as Int32
+        let length = data[0...3].makeInt32()
         
         // Check if the data is at least the right size
         guard data.count >= Int(length) + 4 else {

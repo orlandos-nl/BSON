@@ -57,10 +57,7 @@ extension Array where Element : _DocumentProtocolForArrayAdditions {
         let byteCount = bytes.count
         
         documentLoop: while byteCount >= position + 5 {
-            guard let length = try? Int(fromBytes(bytes[position..<position+4]) as Int32) else {
-                // invalid
-                break
-            }
+            let length = Int(bytes[position..<position+4].makeInt32())
             
             guard length > 0 else {
                 // invalid
@@ -137,7 +134,15 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: [UInt8]) {
-        guard data.count > 4, let length = try? Int(fromBytes(data[0...3]) as Int32), length <= data.count, data.last == 0x00 else {
+        guard data.count > 4 else {
+            self.storage = [5,0,0,0]
+            self.invalid = true
+            return
+        }
+        
+        let length = Int(data[0...3].makeInt32())
+        
+        guard length <= data.count, data.last == 0x00 else {
             self.storage = [5,0,0,0]
             self.invalid = true
             return
@@ -152,7 +157,15 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<UInt8>) {
-        guard data.count > 4, let length = try? Int(fromBytes(data[data.startIndex...data.startIndex.advanced(by: 3)]) as Int32), length <= data.count, data.last == 0x00 else {
+        guard data.count > 4 else {
+            self.storage = [5,0,0,0]
+            self.invalid = true
+            return
+        }
+        
+        let length = Int(data[data.startIndex...data.startIndex.advanced(by: 3)].makeInt32())
+        
+        guard length <= data.count, data.last == 0x00 else {
             self.storage = [5,0,0,0]
             self.invalid = true
             return

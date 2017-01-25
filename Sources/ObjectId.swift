@@ -104,7 +104,7 @@ public struct ObjectId {
         guard data.count == 12 else {
             throw DeserializationError.invalidElementSize
         }
-
+        
         self._storage = data
     }
     
@@ -140,11 +140,11 @@ extension ObjectId: Hashable {
     public static func ==(lhs: ObjectId, rhs: ObjectId) -> Bool {
         return lhs._storage == rhs._storage
     }
-
+    
     public var hashValue: Int {
-        let epoch = try! fromBytes(_storage[0...3]) as Int32
-        let random = try! fromBytes(_storage[4...7]) as Int32
-        let increment = try! fromBytes(_storage[8...11]) as Int32
+        let epoch = _storage[0...3].makeInt32()
+        let random = _storage[4...7].makeInt32()
+        let increment = _storage[8...11].makeInt32()
         
         let total: Int32 = epoch &+ random &+ increment
         
