@@ -152,13 +152,13 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<UInt8>) {
-        guard data.count > 4, let length = try? Int(fromBytes(data[data.startIndex...data.startIndex.advanced(by: 3)]) as Int32), length <= data.count else {
+        guard data.count > 4, let length = try? Int(fromBytes(data[data.startIndex...data.startIndex.advanced(by: 3)]) as Int32), length <= data.count, data.last == 0x00 else {
             self.storage = [5,0,0,0]
             self.invalid = true
             return
         }
         
-        storage = Array(data[data.startIndex..<data.startIndex.advanced(by: length)])
+        storage = Array(data[data.startIndex..<data.startIndex.advanced(by: length - 1)])
         elementPositions = buildElementPositionsCache()
         isArray = self.validatesAsArray()
     }
