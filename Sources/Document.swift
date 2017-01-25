@@ -30,6 +30,7 @@ extension String: StringVariant {
 public protocol _DocumentProtocolForArrayAdditions {
     var bytes: [UInt8] { get }
     init(data: [UInt8])
+    init(data: ArraySlice<UInt8>)
     func validate() -> Bool
 }
 extension Document : _DocumentProtocolForArrayAdditions {}
@@ -53,9 +54,9 @@ extension Array where Element : _DocumentProtocolForArrayAdditions {
     public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
         var array = [Element]()
         var position = 0
+        let byteCount = bytes.count
         
-        documentLoop: while bytes.count >= position + 5 {
-            
+        documentLoop: while byteCount >= position + 5 {
             guard let length = try? Int(fromBytes(bytes[position..<position+4]) as Int32) else {
                 // invalid
                 break
@@ -66,7 +67,7 @@ extension Array where Element : _DocumentProtocolForArrayAdditions {
                 break
             }
             
-            guard bytes.count >= position + length else {
+            guard byteCount >= position + length else {
                 break documentLoop
             }
             
@@ -151,13 +152,13 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<UInt8>) {
-        guard data.count > 4, let length = try? Int(fromBytes(data[0...3]) as Int32), length < data.count else {
+        guard data.count > 4, let length = try? Int(fromBytes(data[data.startIndex...data.startIndex.advanced(by: 3)]) as Int32), length <= data.count else {
             self.storage = [5,0,0,0]
             self.invalid = true
             return
         }
         
-        storage = Array(data[0..<length])
+        storage = Array(data[data.startIndex..<data.startIndex.advanced(by: length)])
         elementPositions = buildElementPositionsCache()
         isArray = self.validatesAsArray()
     }

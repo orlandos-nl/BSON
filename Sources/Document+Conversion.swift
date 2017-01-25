@@ -64,17 +64,15 @@ extension Document {
     
     /// - returns: `true` when this `Document` is a valid BSON `Array`. `false` otherwise
     public func validatesAsArray() -> Bool {
-        var index = 0
-        
-        for key in self.keys {
-            guard key == String(index) else {
-                return false
+        for key in self.makeKeyIterator() {
+            for byte in key.keyData {
+                guard (byte >= 48 && byte <= 57) || byte == 0x00 else {
+                    return false
+                }
             }
-            
-            index += 1
         }
         
         return true
     }
 }
-    
+

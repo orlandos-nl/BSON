@@ -342,8 +342,7 @@ extension Document {
                     return nil
                 }
                 
-                let subData = Array(storage[position..<position+length])
-                return Document(data: subData)
+                return Document(data: storage[position..<position+length])
             case .binary: // binary
                 guard remaining() >= 5 else {
                     return nil
