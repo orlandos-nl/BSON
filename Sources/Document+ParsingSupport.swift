@@ -209,17 +209,18 @@ extension Document {
     /// Caches the Element start positions
     internal func buildElementPositionsCache() -> [Int] {
         var position = 4
+        var positions = [Int]()
         
-        let iterator = AnyIterator<Int> {
+        loop: while position < self.storage.count {
             let startPosition = position
             
             guard self.storage.count - position > 2 else {
                 // Invalid document condition
-                return nil
+                break loop
             }
             
             guard let type = ElementType(rawValue: self.storage[position]) else {
-                return nil
+                break loop
             }
             
             position += 1
@@ -237,16 +238,10 @@ extension Document {
             
             position += self.getLengthOfElement(withDataPosition: position, type: type)
             
-            return startPosition
+            positions.append(startPosition)
         }
         
-        var cache = [Int]()
-        
-        for num in iterator {
-            cache.append(num)
-        }
-        
-        return cache
+        return positions
     }
     
     /// Fetches the info for the key-value at the given position
