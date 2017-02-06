@@ -149,10 +149,10 @@ extension Int32 : BSONBytesProtocol {
         let integer = self.bigEndian
         
         return [
-            UInt8(integer & 0xFF),
-            UInt8((integer >> 8) & 0xFF),
-            UInt8((integer >> 16) & 0xFF),
             UInt8((integer >> 24) & 0xFF),
+            UInt8((integer >> 16) & 0xFF),
+            UInt8((integer >> 8) & 0xFF),
+            UInt8(integer & 0xFF),
         ]
     }
 }
