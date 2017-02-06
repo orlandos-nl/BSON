@@ -287,7 +287,7 @@ extension Document {
                     
                     let numberString = json[numberStart..<position]
                     
-                    // Determine the type: default to int32, but if it contains a ., double
+                    // Determine the type: default to int32(or int64 if needed), but if it contains a ., double
                     if numberString.contains(".") {
                         guard let number = Double(numberString) else {
                             throw ExtendedJSONError.numberParseError(position: numberStart)
@@ -295,11 +295,15 @@ extension Document {
                         
                         value = number
                     } else {
-                        guard let number = Int32(numberString) else {
-                            throw ExtendedJSONError.numberParseError(position: numberStart)
+                        if let number = Int32(numberString) {
+                            value = number
+                        } else {
+                            guard let number = Int64(numberString) else {
+                                throw ExtendedJSONError.numberParseError(position: numberStart)
+                            }
+                            
+                            value = number
                         }
-                        
-                        value = number
                     }
                 case _ where try checkLiteral("true"):
                     value = true
