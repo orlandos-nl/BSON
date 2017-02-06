@@ -51,3 +51,7 @@ All non-deprecated BSON 1.0 types are supported.
 
 - ISO8601 for Extended JSON Dates
 - **Really** fast BSON Parsing and Serializing
+
+## WIP
+
+- Configurable ExtendedJSON using a fast JSON library
