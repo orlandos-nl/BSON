@@ -7,3 +7,4 @@ dist: trusty
 osx_image: xcode8.1
 script:
   - eval "$(curl -sL https://raw.githubusercontent.com/OpenKitten/Mongo-Assets/master/bson-travisci)"  
+  - eval "$(curl -sL https://raw.githubusercontent.com/OpenKitten/Mongo-Assets/master/codecov)"
