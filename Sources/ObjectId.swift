@@ -122,12 +122,15 @@ public struct ObjectId {
     }
     
     public var epochSeconds: Int32 {
-        return _storage[0...3].makeInt32()
+        let timeData = Data(bytes: _storage[0...3])
+        return Int32(bigEndian:timeData.withUnsafeBytes { $0.pointee } )        
     }
-    
+
+
     public var epoch: Date {
-        let epoch = _storage[0...3].makeInt32()
-        
+        let timeData = Data(bytes: _storage[0...3])
+        let epoch = UInt32(bigEndian: timeData.withUnsafeBytes { $0.pointee } )
+
         return Date(timeIntervalSince1970: Double(epoch))
     }
 }
@@ -146,7 +149,7 @@ extension ObjectId: Hashable {
     }
     
     public var hashValue: Int {
-        let epoch = _storage[0...3].makeInt32()
+        let epoch = self.epochSeconds
         let random = _storage[4...7].makeInt32()
         let increment = _storage[8...11].makeInt32()
         
