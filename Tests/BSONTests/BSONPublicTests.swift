@@ -28,6 +28,8 @@ final class BSONPublicTests: XCTestCase {
             ("testValidation", testValidation),
             ("testSubscripting", testSubscripting),
             ("testObjectId", testObjectId),
+            ("testObjectIdString", testObjectIdString),
+            ("testObjectIdHash", testObjectIdHash ),
             ("testExtendedJSON", testExtendedJSON),
             ("testDocumentIndexes", testDocumentIndexes),
             ("testComparison", testComparison),
