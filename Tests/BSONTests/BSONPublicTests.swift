@@ -355,6 +355,12 @@ final class BSONPublicTests: XCTestCase {
         let otherDocument = try Document(extendedJSON: kittenJSON)
         
         XCTAssertEqual(kittenDocument, otherDocument)
+
+
+        let intJSON = "{\"int32\":14863,\"int64\":1475689234576892}"
+        let intDocument = try Document(extendedJSON: intJSON)
+        XCTAssertEqual(intDocument["int32"] as Int32? , 14863)
+        XCTAssertEqual(intDocument["int64"] as Int64? , 1475689234576892)
     }
     
     func testDocumentIndexes() {
