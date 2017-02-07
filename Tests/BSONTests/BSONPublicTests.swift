@@ -28,6 +28,8 @@ final class BSONPublicTests: XCTestCase {
             ("testValidation", testValidation),
             ("testSubscripting", testSubscripting),
             ("testObjectId", testObjectId),
+            ("testObjectIdString", testObjectIdString),
+            ("testObjectIdHash", testObjectIdHash ),
             ("testExtendedJSON", testExtendedJSON),
             ("testDocumentIndexes", testDocumentIndexes),
             ("testComparison", testComparison),
@@ -342,7 +344,22 @@ final class BSONPublicTests: XCTestCase {
         
         XCTAssertLessThan(timeId.epoch.timeIntervalSinceNow, 2)
     }
-    
+
+    func testObjectIdString() throws {
+        let stringId = try ObjectId("589488560239f4563ddc6ca0")
+        XCTAssertEqual(stringId.epochSeconds, 1486129238)
+        XCTAssertEqual(stringId.hexString, "589488560239f4563ddc6ca0")
+        XCTAssertEqual(stringId.epoch.timeIntervalSince1970, 1486129238)
+    }
+
+    func testObjectIdHash() throws {
+        let firstId = try ObjectId("589488560239f4563ddc6ca0")
+        let secondId = try ObjectId("589488560239f4563ddc6ca0")
+        let thirdId = try ObjectId("589488560239f4563ddc6cab")
+        XCTAssertEqual(firstId.hashValue, secondId.hashValue)
+        XCTAssertNotEqual(firstId.hashValue, thirdId.hashValue)
+    }
+
     func testExtendedJSON() throws {
         
         let simpleJson = "{\"kaas\":       4.2}"
