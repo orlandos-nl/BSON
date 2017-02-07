@@ -163,15 +163,18 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        let length = Int(data[data.startIndex...data.startIndex.advanced(by: 3)].makeInt32())
+        storage = Array(data[data.startIndex..<data.endIndex])
+        var length: UInt32 = 0
         
-        guard length <= data.count, data.last == 0x00 else {
+        memcpy(&length, &storage, 4)
+        
+        guard numericCast(length) <= data.count, data.last == 0x00 else {
             self.storage = [5,0,0,0]
             self.invalid = true
             return
         }
         
-        storage = Array(data[data.startIndex..<data.startIndex.advanced(by: length - 1)])
+        
         elementPositions = buildElementPositionsCache()
         isArray = self.validatesAsArray()
     }

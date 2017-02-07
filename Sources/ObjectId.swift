@@ -20,8 +20,14 @@ public struct ObjectId {
     public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
     
     #if os(Linux)
-    private static var random = rand()
-    private static var counter = rand()
+    private static var random: Int32 = {
+        srand(UInt32(time(nil)))
+        return rand()
+    }()
+    private static var counter: Int32 = {
+        srand(UInt32(time(nil)))
+        return rand()
+    }()
     #else
     private static var random = arc4random_uniform(UInt32.max)
     private static var counter = arc4random_uniform(UInt32.max)
