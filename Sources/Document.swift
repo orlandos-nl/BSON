@@ -163,7 +163,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        storage = Array(data[data.startIndex..<data.endIndex])
+        storage = Array(data[data.startIndex..<data.endIndex.advanced(by: -1)])
         var length: UInt32 = 0
         
         memcpy(&length, &storage, 4)
