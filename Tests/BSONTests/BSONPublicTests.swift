@@ -30,11 +30,9 @@ final class BSONPublicTests: XCTestCase {
             ("testObjectId", testObjectId),
             ("testObjectIdString", testObjectIdString),
             ("testObjectIdHash", testObjectIdHash ),
-            ("testExtendedJSON", testExtendedJSON),
             ("testDocumentIndexes", testDocumentIndexes),
             ("testComparison", testComparison),
             ("testMultiSyntax", testMultiSyntax),
-            ("testJSONEscapeSequences", testJSONEscapeSequences),
             ("testDocumentCombineOperators", testDocumentCombineOperators),
             ("testDocumentFlattening", testDocumentFlattening),
             ("testTypeChecking", testTypeChecking),
@@ -160,11 +158,6 @@ final class BSONPublicTests: XCTestCase {
         
         XCTAssertEqual(arrayDoc.count, arrayValue.count)
         XCTAssertEqual(arrayValue[0] as? String, "kaas")
-        
-        let arrayJSON = reInstantiated.makeExtendedJSON()
-        
-        XCTAssertTrue(arrayJSON.hasPrefix("["))
-        XCTAssertTrue(arrayJSON.hasSuffix("]"))
         
         let anArray: Document = ["0": "hoi", "1": "kaas", "2": "fred"]
         XCTAssertTrue(anArray.validatesAsArray())
@@ -359,26 +352,6 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(firstId.hashValue, secondId.hashValue)
         XCTAssertNotEqual(firstId.hashValue, thirdId.hashValue)
     }
-
-    func testExtendedJSON() throws {
-        
-        let simpleJson = "{\"kaas\":       4.2}"
-        let simpleDocument = try Document(extendedJSON: simpleJson)
-        XCTAssertEqual(simpleDocument["kaas"] as Double?, 4.2)
-        
-        
-        let kittenJSON = kittenDocument.makeExtendedJSON()
-        
-        let otherDocument = try Document(extendedJSON: kittenJSON)
-        
-        XCTAssertEqual(kittenDocument, otherDocument)
-
-
-        let intJSON = "{\"int32\":14863,\"int64\":1475689234576892}"
-        let intDocument = try Document(extendedJSON: intJSON)
-        XCTAssertEqual(intDocument["int32"] as Int32? , 14863)
-        XCTAssertEqual(intDocument["int64"] as Int64? , 1475689234576892)
-    }
     
     func testDocumentIndexes() {
         let firstKittenKV = kittenDocument[kittenDocument.startIndex]
@@ -461,13 +434,6 @@ final class BSONPublicTests: XCTestCase {
         
         XCTAssertEqual(d["hont", "kad", "varkun", "konein"] as String?, v)
         XCTAssertEqual(d[raw: "hont"]?.documentValue?[raw: "kad"]?.documentValue?[raw: "varkun"]?.documentValue?["konein"] as String?, v)
-    }
-    
-    func testJSONEscapeSequences() {
-        let bson: Document = ["hello": "\"fred\n\n\n\t😂", "kaas": "\r\u{c}\u{8}"]
-        let json = bson.makeExtendedJSON()
-        
-        XCTAssertEqual(try Document(extendedJSON: json).bytes, bson.bytes)
     }
     
     func testDocumentCombineOperators() {
