@@ -77,13 +77,13 @@ extension Document {
                     return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
                 case .integer(let position):
                     guard elementPositions.count > position else {
-                        fatalError("Index \(position) out of range")
+                        return nil
                     }
                     
                     let elementPosition = elementPositions[position]
                     
                     guard let currentKey = getMeta(atPosition: elementPosition) else {
-                        fatalError("Index \(position) out of range")
+                        return nil
                     }
                     
                     return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
