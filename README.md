@@ -2,6 +2,15 @@
 
 This branch contains working code for BSON 5.0. Nothing here is final and everything may change. BSON 5.0 does not have a release schedule yet, but will be released alongside MongoKitten 4.0.
 
+### Goals
+
+- Better extraction API
+- Move ExtendedJSON to MongoKitten
+- Do not use Foundation RegularExpression
+- Chained subscripts
+- Generally a more simple and logical API
+- Better unit tests
+
 # BSON
 
 [![Swift 3.1](https://img.shields.io/badge/swift-3.1-orange.svg)](https://swift.org)
