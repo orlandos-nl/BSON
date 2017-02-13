@@ -7,5 +7,9 @@ import BSON
 // Create a document using a dictionary literal
 var document: Document = [
     "hello": "I am a BSON document",
-    "temperature": 42.5
+    "temperature": 444
 ]
+
+document["temperature"]["kaas"]["sap"] = "hoi"
+
+document["temperature"]["kaas"]["sap"]
