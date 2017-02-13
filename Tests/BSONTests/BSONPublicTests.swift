@@ -98,11 +98,17 @@ final class BSONPublicTests: XCTestCase {
     func testInt() {
         let doc: Document = [
             "int32": 1,
-            "int64": (Int(Int32.max) + 5)
+            "int32Max": Int(Int32.max),
+            "int32Min": Int(Int32.min),
+            "int64Positive": (Int(Int32.max) + 5),
+            "int64Negative": (Int(Int32.min) - 5)
         ]
         
         XCTAssertEqual(doc.type(at: "int32"), .int32)
-        XCTAssertEqual(doc.type(at: "int64"), .int64)
+        XCTAssertEqual(doc.type(at: "int32Max"), .int32)
+        XCTAssertEqual(doc.type(at: "int32Min"), .int32)
+        XCTAssertEqual(doc.type(at: "int64Positive"), .int64)
+        XCTAssertEqual(doc.type(at: "int64Negative"), .int64)
     }
     
     func testAppendingContents() {

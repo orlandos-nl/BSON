@@ -308,7 +308,7 @@ extension Int64 : BSONPrimitive {
 
 extension Int : ValueConvertible {
     public func makeBSONPrimitive() -> BSONPrimitive {
-        if (self < Int(Int32.max)) {
+        if self >= Int(Int32.min) && self <= Int(Int32.max) {
             return Int32(self)
         }
         return Int64(self)
