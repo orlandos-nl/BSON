@@ -1,6 +1,10 @@
+# BSON 5.0 - Work in Progress
+
+This branch contains working code for BSON 5.0. Nothing here is final and everything may change. BSON 5.0 does not have a release schedule yet, but will be released alongside MongoKitten 4.0.
+
 # BSON
 
-[![Swift 3.0](https://img.shields.io/badge/swift-3.0-orange.svg)](https://swift.org)
+[![Swift 3.1](https://img.shields.io/badge/swift-3.1-orange.svg)](https://swift.org)
 ![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
 [![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson4)](https://travis-ci.org/OpenKitten/BSON)
 
@@ -26,7 +30,7 @@ Check the [documentation](http://docs.openkitten.org/bson/) for more information
 
 ### Supported Types
 
-All non-deprecated BSON 1.0 types are supported.
+All non-deprecated BSON 1.1 types are supported.
 
 - Double
 - String
@@ -51,7 +55,3 @@ All non-deprecated BSON 1.0 types are supported.
 
 - ISO8601 for Extended JSON Dates
 - **Really** fast BSON Parsing and Serializing
-
-## WIP
-
-- Configurable ExtendedJSON using a fast JSON library
