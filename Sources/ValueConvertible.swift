@@ -46,8 +46,8 @@ extension ValueConvertible {
     }
 }
 
-func regexOptions(fromString s: String) -> RegularExpression.Options {
-    var options: RegularExpression.Options = []
+func regexOptions(fromString s: String) -> NSRegularExpression.Options {
+    var options: NSRegularExpression.Options = []
     
     if s.contains("i") {
         options.update(with: .caseInsensitive)

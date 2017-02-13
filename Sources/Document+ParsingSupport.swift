@@ -448,7 +448,7 @@ extension Document {
                         return nil
                 }
                 
-                return try RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
+                return RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
             case .javascriptCode:
                 guard let code = try? String.instantiate(bytes: Array(storage[position..<storage.endIndex])) else {
                     return nil
