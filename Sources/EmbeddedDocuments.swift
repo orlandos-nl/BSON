@@ -11,13 +11,15 @@ import Foundation
 extension Dictionary : BSONPrimitive {
     public var typeIdentifier: UInt8 { return 0x03 }
     public func makeBSONBinary() -> [UInt8] {
-        guard let `self` = self as? [String : BSONPrimitive] else {
+        guard let dict = self as? [String : BSONPrimitive] else {
             // `assertionFailure` only triggers a crash on debug configurations, not on release.
-            assertionFailure("Only [String : BSONPrimitive] dictionaries are BSONPrimitive")
+            let error = "Only [String : BSONPrimitive] dictionaries are BSONPrimitive. Tried to initialize a document using [\(Key.self) : \(Value.self)]. This will crash on debug and print this message on release configurations."
+            assertionFailure(error)
+            print(error)
             return Document().makeBSONBinary()
         }
         
-        let doc = Document(dictionaryElements: self.map { ($0, $1) })
+        let doc = Document(dictionaryElements: dict.map { ($0, $1) })
         return doc.makeBSONBinary()
     }
 }
@@ -27,7 +29,9 @@ extension Array : BSONPrimitive {
     public func makeBSONBinary() -> [UInt8] {
         guard let `self` = self as? [BSONPrimitive] else {
             // `assertionFailure` only triggers a crash on debug configurations, not on release.
-            assertionFailure("Only [BSONPrimitive] arrays are BSONPrimitive")
+            let error = "Only [BSONPrimitive] arrays are BSONPrimitive. Tried to initialize a document using [\(Element.self)]. This will crash on debug and print this message on release configurations."
+            assertionFailure(error)
+            print(error)
             return ([] as Document).makeBSONBinary()
         }
         
