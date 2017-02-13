@@ -292,7 +292,7 @@ extension Int32 : BSONPrimitive {
     }
 }
 
-extension Int64 : BSONPrimitive {
+extension Int : BSONPrimitive {
     public var typeIdentifier: UInt8 {
         return 0x12
     }
@@ -311,7 +311,7 @@ extension Int : ValueConvertible {
         if (self < Int(Int32.max)) {
             return Int32(self)
         }
-        return Int64(self)
+        return Int(self)
     }
 }
 
@@ -324,7 +324,7 @@ internal let isoDateFormatter: DateFormatter = {
 
 extension Date : BSONPrimitive {
     public func makeBSONBinary() -> [UInt8] {
-        let integer = Int64(self.timeIntervalSince1970 * 1000)
+        let integer = Int(self.timeIntervalSince1970 * 1000)
         return integer.makeBytes()
     }
 

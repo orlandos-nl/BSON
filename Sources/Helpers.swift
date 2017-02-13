@@ -107,17 +107,6 @@ internal protocol BSONMakeBytesProtocol: BSONBytesProtocol {
 
 extension Int : BSONBytesProtocol {
     internal func makeBytes() -> [UInt8] {
-        var integer = self.littleEndian
-        return withUnsafePointer(to: &integer) {
-            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Int>.size) {
-                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Int>.size))
-            }
-        }
-    }
-}
-
-extension Int64 : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
         let integer = self.littleEndian
         
         return [
@@ -175,17 +164,6 @@ extension Int8 : BSONBytesProtocol {
 }
 
 extension UInt : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
-        var integer = self.littleEndian
-        return withUnsafePointer(to: &integer) {
-            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<UInt>.size) {
-                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<UInt>.size))
-            }
-        }
-    }
-}
-
-extension UInt64 : BSONBytesProtocol {
     internal func makeBytes() -> [UInt8] {
         let integer = self.littleEndian
         

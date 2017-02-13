@@ -17,7 +17,7 @@ extension ValueConvertible {
     /// - Boolean
     /// - DateTime - will be converted to seconds since the Unix Epoch
     /// - Int32
-    /// - Int64
+    /// - Int
     /// - Timestamp
     ///
     /// If the value cannot be interpeted as a `Double`, Double(0) will be returned.
@@ -25,7 +25,7 @@ extension ValueConvertible {
         get {
             if let num = self as? Int32 {
                 return Double(num)
-            } else if let num = self as? Int64 {
+            } else if let num = self as? Int {
                 return Double(num)
             } else if let num = self as? Double {
                 return Double(num)
@@ -50,7 +50,7 @@ extension ValueConvertible {
     /// - Boolean
     /// - DateTime - will be converted to seconds sinds the Unix Epoch
     /// - Int32
-    /// - Int64
+    /// - Int
     /// - ObjectId
     /// - Timestamp
     ///
@@ -59,7 +59,7 @@ extension ValueConvertible {
         get {
             if let num = self as? Int32 {
                 return String(num)
-            } else if let num = self as? Int64 {
+            } else if let num = self as? Int {
                 return String(num)
             } else if let num = self as? Double {
                 return String(num)
@@ -80,34 +80,19 @@ extension ValueConvertible {
         }
     }
     
-    public var int64 : Int64? {
+    public var int : Int? {
         get {
             if let num = self as? Int32 {
-                return Int64(num)
-            } else if let num = self as? Int64 {
-                return Int64(num)
+                return Int(num)
+            } else if let num = self as? Int {
+                return Int(num)
             } else if let num = self as? Double {
-                return Int64(num)
+                return Int(num)
             } else if let num = self as? String {
-                return Int64(num)
+                return Int(num)
             }
             
             return nil
-        }
-        set {
-            if let newValue = newValue as? Self {
-                self = newValue
-            }
-        }
-    }
-    
-    public var int : Int? {
-        get {
-            guard let int64 = self.int64 else {
-                return nil
-            }
-            
-            return Int(int64)
         }
         set {
             if let newValue = newValue as? Self {
@@ -120,7 +105,7 @@ extension ValueConvertible {
         get {
             if let num = self as? Int32 {
                 return Int32(num)
-            } else if let num = self as? Int64 {
+            } else if let num = self as? Int {
                 return Int32(num)
             } else if let num = self as? Double {
                 return Int32(num)
@@ -167,9 +152,9 @@ extension ValueConvertible {
         return self as? Int32
     }
     
-    /// Returns the raw value only if the underlying value is stored as `Int64`. Otherwise, returns `nil`.
-    public var int64Value : Int64? {
-        return self as? Int64
+    /// Returns the raw value only if the underlying value is stored as `Int`. Otherwise, returns `nil`.
+    public var intValue : Int? {
+        return self as? Int
     }
     
     /// Returns the raw value only if the underlying value is stored as `ObjectId`. Otherwise, returns `nil`.

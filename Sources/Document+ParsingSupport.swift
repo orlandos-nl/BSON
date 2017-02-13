@@ -31,18 +31,18 @@ extension Collection where Self.Iterator.Element == UInt8, Self.Index == Int {
         return array
     }
     
-    func makeInt64Array() -> [Int64] {
-        var array = [Int64]()
-        for idx in stride(from: self.startIndex, to: self.endIndex, by: MemoryLayout<Int64>.size) {
-            var number: Int64 = 0
-            number |= self.count > 7 ? Int64(self[idx.advanced(by: 7)]) << 56 : 0
-            number |= self.count > 6 ? Int64(self[idx.advanced(by: 6)]) << 48 : 0
-            number |= self.count > 5 ? Int64(self[idx.advanced(by: 5)]) << 40 : 0
-            number |= self.count > 4 ? Int64(self[idx.advanced(by: 4)]) << 32 : 0
-            number |= self.count > 3 ? Int64(self[idx.advanced(by: 3)]) << 24 : 0
-            number |= self.count > 2 ? Int64(self[idx.advanced(by: 2)]) << 16 : 0
-            number |= self.count > 1 ? Int64(self[idx.advanced(by: 1)]) << 8 : 0
-            number |= self.count > 0 ? Int64(self[idx.advanced(by: 0)]) << 0 : 0
+    func makeIntArray() -> [Int] {
+        var array = [Int]()
+        for idx in stride(from: self.startIndex, to: self.endIndex, by: MemoryLayout<Int>.size) {
+            var number: Int = 0
+            number |= self.count > 7 ? Int(self[idx.advanced(by: 7)]) << 56 : 0
+            number |= self.count > 6 ? Int(self[idx.advanced(by: 6)]) << 48 : 0
+            number |= self.count > 5 ? Int(self[idx.advanced(by: 5)]) << 40 : 0
+            number |= self.count > 4 ? Int(self[idx.advanced(by: 4)]) << 32 : 0
+            number |= self.count > 3 ? Int(self[idx.advanced(by: 3)]) << 24 : 0
+            number |= self.count > 2 ? Int(self[idx.advanced(by: 2)]) << 16 : 0
+            number |= self.count > 1 ? Int(self[idx.advanced(by: 1)]) << 8 : 0
+            number |= self.count > 0 ? Int(self[idx.advanced(by: 0)]) << 0 : 0
             array.append(number)
         }
         
@@ -59,16 +59,16 @@ extension Collection where Self.Iterator.Element == UInt8, Self.Index == Int {
         return val
     }
     
-    public func makeInt64() -> Int64 {
-        var number: Int64 = 0
-        number |= self.count > 7 ? Int64(self[startIndex.advanced(by: 7)]) << 56 : 0
-        number |= self.count > 6 ? Int64(self[startIndex.advanced(by: 6)]) << 48 : 0
-        number |= self.count > 5 ? Int64(self[startIndex.advanced(by: 5)]) << 40 : 0
-        number |= self.count > 4 ? Int64(self[startIndex.advanced(by: 4)]) << 32 : 0
-        number |= self.count > 3 ? Int64(self[startIndex.advanced(by: 3)]) << 24 : 0
-        number |= self.count > 2 ? Int64(self[startIndex.advanced(by: 2)]) << 16 : 0
-        number |= self.count > 1 ? Int64(self[startIndex.advanced(by: 1)]) << 8 : 0
-        number |= self.count > 0 ? Int64(self[startIndex.advanced(by: 0)]) << 0 : 0
+    public func makeInt() -> Int {
+        var number: Int = 0
+        number |= self.count > 7 ? Int(self[startIndex.advanced(by: 7)]) << 56 : 0
+        number |= self.count > 6 ? Int(self[startIndex.advanced(by: 6)]) << 48 : 0
+        number |= self.count > 5 ? Int(self[startIndex.advanced(by: 5)]) << 40 : 0
+        number |= self.count > 4 ? Int(self[startIndex.advanced(by: 4)]) << 32 : 0
+        number |= self.count > 3 ? Int(self[startIndex.advanced(by: 3)]) << 24 : 0
+        number |= self.count > 2 ? Int(self[startIndex.advanced(by: 2)]) << 16 : 0
+        number |= self.count > 1 ? Int(self[startIndex.advanced(by: 1)]) << 8 : 0
+        number |= self.count > 0 ? Int(self[startIndex.advanced(by: 0)]) << 0 : 0
         
         return number
     }
@@ -430,7 +430,7 @@ extension Document {
                     return nil
                 }
                 
-                let interval: Int64 = storage[position..<position+8].makeInt64()
+                let interval: Int = storage[position..<position+8].makeInt()
                 return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             case .nullValue:
                 return Null()
@@ -496,12 +496,12 @@ extension Document {
                 let stamp = Timestamp(increment: storage[position..<position+4].makeInt32(), timestamp: storage[position+4..<position+8].makeInt32())
                 
                 return stamp
-            case .int64: // timestamp, int64
+            case .int64:
                 guard remaining() >= 8 else {
                     return nil
                 }
                 
-                return try fromBytes(storage[position..<position+8]) as Int64
+                return try fromBytes(storage[position..<position+8]) as Int
             case .decimal128:
                 guard remaining() >= 16 else {
                     return nil
