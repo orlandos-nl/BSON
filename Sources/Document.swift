@@ -35,7 +35,7 @@ public protocol _DocumentProtocolForArrayAdditions {
 }
 extension Document : _DocumentProtocolForArrayAdditions {}
 
-public typealias IndexIterationElement = (key: String, value: ValueConvertible)
+public typealias IndexIterationElement = (key: String, value: BSONPrimitive)
 
 extension Array where Element : _DocumentProtocolForArrayAdditions {
     /// The combined data for all documents in the array
@@ -190,11 +190,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
-    public init(dictionaryElements elements: [(StringVariant, ValueConvertible?)]) {
+    public init(dictionaryElements elements: [(StringVariant, BSONPrimitive?)]) {
         storage = [5,0,0,0]
         
         for (key, value) in elements {
-            guard let value = value?.makeBSONPrimitive() else {
+            guard let value = value else {
                 continue
             }
             
@@ -222,25 +222,25 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
     ///
     /// - parameter elements: The `Dictionary` used to initialize this must use `String` for key and `Value` for values
-    public init(dictionaryLiteral elements: (StringVariant, ValueConvertible?)...) {
+    public init(dictionaryLiteral elements: (StringVariant, BSONPrimitive?)...) {
         self.init(dictionaryElements: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array` literal
     ///
     /// - parameter elements: The `Array` literal used to initialize the `Document` must be a `[Value]`
-    public init(arrayLiteral elements: ValueConvertible?...) {
+    public init(arrayLiteral elements: BSONPrimitive?...) {
         self.init(array: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array`
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
-    public init(array elements: [ValueConvertible?]) {
+    public init(array elements: [BSONPrimitive?]) {
         storage = [5,0,0,0]
         
         for (index, value) in elements.enumerated() {
-            guard let value = value?.makeBSONPrimitive() else {
+            guard let value = value else {
                 continue
             }
             
@@ -275,9 +275,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
-    public mutating func append(_ value: ValueConvertible, forKey key: String) {
-        let value = value.makeBSONPrimitive()
-        
+    public mutating func append(_ value: BSONPrimitive, forKey key: String) {
         // We're going to insert the element before the Document null terminator
         elementPositions.append(storage.endIndex)
         
@@ -304,9 +302,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
-    internal mutating func append(_ value: ValueConvertible, forKey key: [UInt8]) {
-        let value = value.makeBSONPrimitive()
-        
+    internal mutating func append(_ value: BSONPrimitive, forKey key: [UInt8]) {
         // We're going to insert the element before the Document null terminator
         elementPositions.append(storage.endIndex)
         
@@ -331,9 +327,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
     ///
     /// - parameter value: The `Value` to append
-    public mutating func append(_ value: ValueConvertible) {
-        let value = value.makeBSONPrimitive()
-        
+    public mutating func append(_ value: BSONPrimitive) {
         let key = "\(self.count)"
         
         // We're going to insert the element before the Document null terminator
@@ -435,7 +429,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter key: The `key` in the key-value pair to remove
     ///
     /// - returns: The `Value` in the pair if there was any
-    @discardableResult public mutating func removeValue(forKey key: String) -> ValueConvertible? {
+    @discardableResult public mutating func removeValue(forKey key: String) -> BSONPrimitive? {
         guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
             return nil
         }

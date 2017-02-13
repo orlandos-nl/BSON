@@ -37,7 +37,7 @@ extension Int : SubscriptExpressionType {
 }
 
 extension Document {
-    public subscript(dotNotated key: String) -> ValueConvertible? {
+    public subscript(dotNotated key: String) -> BSONPrimitive? {
         get {
             return self[key.components(separatedBy: ".")]
         }
@@ -46,7 +46,7 @@ extension Document {
         }
     }
     
-    public subscript(parts: SubscriptExpressionType...) -> ValueConvertible? {
+    public subscript(parts: SubscriptExpressionType...) -> BSONPrimitive? {
         get {
             return self[parts]
         }
@@ -56,7 +56,7 @@ extension Document {
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(parts: [SubscriptExpressionType]) -> ValueConvertible? {
+    public subscript(parts: [SubscriptExpressionType]) -> BSONPrimitive? {
         get {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
@@ -92,7 +92,7 @@ extension Document {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                return parts.count == 0 ? self[firstPart] : self[firstPart]?.documentValue?[parts]
+                return parts.count == 0 ? self[firstPart] : (self[firstPart] as? Document)?[parts]
             } else {
                 return nil
             }
@@ -104,8 +104,6 @@ extension Document {
                 case .staticString(let part):
                     var data = [UInt8](repeating: 0, count: part.utf8CodeUnitCount)
                     memcpy(&data, part.utf8Start, data.count)
-                    
-                    let newValue = newValue?.makeBSONPrimitive()
                     
                     if let meta = getMeta(forKeyBytes: [UInt8](data)) {
                         let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
@@ -136,8 +134,6 @@ extension Document {
                         self.append(newValue, forKey: data)
                     }
                 case .string(let part):
-                    let newValue = newValue?.makeBSONPrimitive()
-                    
                     if let meta = getMeta(forKeyBytes: [UInt8](part.utf8)) {
                         let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                         let dataEndPosition = meta.dataPosition+len
@@ -167,8 +163,6 @@ extension Document {
                         self.append(newValue, forKey: part)
                     }
                 case .integer(let position):
-                    let newValue = newValue?.makeBSONPrimitive()
-                    
                     guard let currentKey = getMeta(atPosition: elementPositions[position]) else {
                         fatalError("Index out of range")
                     }
@@ -249,7 +243,7 @@ extension Document {
                 fatalError("Invalid type found in Document when modifying the Document at the position \(position)")
             }
             
-            let newBsonValue = newValue.value.makeBSONPrimitive()
+            let newBsonValue = newValue.value
             
             storage[position] = newBsonValue.typeIdentifier
             

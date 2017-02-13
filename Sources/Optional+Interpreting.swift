@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Optional where Wrapped == ValueConvertible {
+extension Optional where Wrapped == BSONPrimitive {
     
     var interpreted: Double? {
         if let num = self as? Int32 {

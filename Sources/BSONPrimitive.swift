@@ -1,5 +1,5 @@
 //
-//  ValueConvertible.swift
+//  BSONPrimitive.swift
 //  BSON
 //
 //  Created by Robbert Brandsma on 18-04-16.
@@ -22,28 +22,11 @@ func escape(_ string: String) -> String {
     return string
 }
 
-public protocol ValueConvertible {
-    func makeBSONPrimitive() -> BSONPrimitive
-    func makeExtendedJSON() -> String
-}
-
 /// Do not extend. BSON internals
-public protocol BSONPrimitive: ValueConvertible {
+public protocol BSONPrimitive {
     var typeIdentifier: UInt8 { get }
     
     func makeBSONBinary() -> [UInt8]
-}
-
-extension BSONPrimitive {
-    public func makeBSONPrimitive() -> BSONPrimitive {
-        return self
-    }
-}
-
-extension ValueConvertible {
-    public func makeExtendedJSON() -> String {
-        return makeBSONPrimitive().makeExtendedJSON()
-    }
 }
 
 func regexOptions(fromString s: String) -> NSRegularExpression.Options {
@@ -68,16 +51,6 @@ func regexOptions(fromString s: String) -> NSRegularExpression.Options {
     return options
 }
 
-public protocol BinaryConvertible: ValueConvertible {
-    func makeBinary() -> Binary
-}
-
-extension Data: BinaryConvertible {
-    public func makeBinary() -> Binary {
-        return Binary(data: self, withSubtype: .generic)
-    }
-}
-
 public struct Timestamp: BSONPrimitive, Equatable {
     public static func ==(lhs: Timestamp, rhs: Timestamp) -> Bool {
         return lhs.increment == rhs.increment && lhs.timestamp == rhs.timestamp
@@ -97,10 +70,6 @@ public struct Timestamp: BSONPrimitive, Equatable {
     
     public func makeBSONBinary() -> [UInt8] {
         return increment.makeBytes() + timestamp.makeBytes()
-    }
-    
-    public func makeExtendedJSON() -> String {
-        return "{\"$timestamp\":{\"t\":\(timestamp.makeExtendedJSON()),\"i\":\(increment.makeExtendedJSON())}}"
     }
 }
 
@@ -194,13 +163,6 @@ public struct Binary: BSONPrimitive {
         let length = Int32(data.count)
         return length.makeBytes() + [subtype.rawValue] + data
     }
-    
-    public func makeExtendedJSON() -> String {
-        let base64 = self.data.base64EncodedString()
-        let subtype = String(self.subtype.rawValue, radix: 16).uppercased()
-        
-        return "{\"$binary\":\"\(base64)\",\"$type\":\"0x\(subtype)\"}"
-    }
 }
 
 public struct Null: BSONPrimitive {
@@ -212,10 +174,6 @@ public struct Null: BSONPrimitive {
     
     public func makeBSONBinary() -> [UInt8] {
         return []
-    }
-    
-    public func makeExtendedJSON() -> String {
-        return "null"
     }
 }
 
@@ -240,23 +198,11 @@ public struct JavascriptCode: BSONPrimitive {
         self.code = code
         self.scope = scope
     }
-    
-    public func makeExtendedJSON() -> String {
-        if let scope = scope {
-            return "{\"$code\":\"\(escape(code))\",\"$scope\":\(scope.makeExtendedJSON())}"
-        } else {
-            return "{\"$code\":\"\(escape(code))\"}"
-        }
-    }
 }
 
 extension Bool : BSONPrimitive {
     public var typeIdentifier: UInt8 {
         return 0x08
-    }
-    
-    public func makeExtendedJSON() -> String {
-        return self ? "true" : "false"
     }
     
     public func makeBSONBinary() -> [UInt8] {
@@ -269,10 +215,6 @@ extension Double : BSONPrimitive {
         return 0x01
     }
 
-    public func makeExtendedJSON() -> String {
-        return String(self)
-    }
-    
     public func makeBSONBinary() -> [UInt8] {
         return self.makeBytes()
     }
@@ -286,10 +228,6 @@ extension Int32 : BSONPrimitive {
     public func makeBSONBinary() -> [UInt8] {
         return self.makeBytes()
     }
-    
-    public func makeExtendedJSON() -> String {
-        return String(self)
-    }
 }
 
 extension Int : BSONPrimitive {
@@ -299,19 +237,6 @@ extension Int : BSONPrimitive {
     
     public func makeBSONBinary() -> [UInt8] {
         return self.makeBytes()
-    }
-    
-    public func makeExtendedJSON() -> String {
-        return "{\"$numberLong\":\"\(self)\"}"
-    }
-}
-
-extension Int : ValueConvertible {
-    public func makeBSONPrimitive() -> BSONPrimitive {
-        if (self < Int(Int32.max)) {
-            return Int32(self)
-        }
-        return Int(self)
     }
 }
 
@@ -331,11 +256,6 @@ extension Date : BSONPrimitive {
     public var typeIdentifier: UInt8 {
         return 0x09
     }
-    
-    public func makeExtendedJSON() -> String {
-        let dateString = isoDateFormatter.string(from: self)
-        return "{\"$date\":\"\(dateString)\"}"
-    }
 }
 
 extension String : BSONPrimitive {
@@ -348,10 +268,6 @@ extension String : BSONPrimitive {
 
     public var typeIdentifier: UInt8 {
         return 0x02
-    }
-    
-    public func makeExtendedJSON() -> String {
-        return "\"\(escape(self))\""
     }
 }
 
@@ -366,12 +282,6 @@ extension StaticString : BSONPrimitive {
     
     public var typeIdentifier: UInt8 {
         return 0x02
-    }
-    
-    public func makeExtendedJSON() -> String {
-        return self.withUTF8Buffer {
-            String.init(cString: $0.baseAddress!)
-        }
     }
 }
 
@@ -390,10 +300,6 @@ extension ObjectId : BSONPrimitive {
         return 0x07
     }
     
-    public func makeExtendedJSON() -> String {
-        return "{\"$oid\":\"\(self.hexString)\"}"
-    }
-    
     public func makeBSONBinary() -> [UInt8] {
         return self._storage
     }
@@ -404,10 +310,6 @@ struct MinKey: BSONPrimitive {
     
     var typeIdentifier: UInt8 {
         return 0xFF
-    }
-    
-    func makeExtendedJSON() -> String {
-        return "{\"$minKey\":1}"
     }
     
     func makeBSONBinary() -> [UInt8] {
@@ -422,22 +324,8 @@ struct MaxKey: BSONPrimitive {
         return 0x7F
     }
     
-    func makeExtendedJSON() -> String {
-        return "{\"$maxKey\":1}"
-    }
-    
     func makeBSONBinary() -> [UInt8] {
         return []
-    }
-}
-
-extension Data : ValueConvertible {
-    public func makeExtendedJSON() -> String {
-        return self.makeBSONPrimitive().makeExtendedJSON()
-    }
-
-    public func makeBSONPrimitive() -> BSONPrimitive {
-        return Binary(data: self, withSubtype: .generic)
     }
 }
 
@@ -450,10 +338,6 @@ extension RegularExpression : BSONPrimitive {
         return self.pattern.cStringBytes + makeOptions().cStringBytes
     }
 
-    public func makeExtendedJSON() -> String {
-        return "{\"$regex\":\"\(escape(self.pattern))\",\"$options\":\"\(escape(makeOptions()))\"}"
-    }
-    
     func makeOptions() -> String {
         var options = ""
         

@@ -40,8 +40,8 @@ extension Document {
     }
     
     /// The `Dictionary` representation of this `Document`
-    public var dictionaryValue: [String: ValueConvertible] {
-        var dictionary = [String: ValueConvertible]()
+    public var dictionaryValue: [String: BSONPrimitive] {
+        var dictionary = [String: BSONPrimitive]()
         
         for pos in makeKeyIterator() {
             if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex-1], encoding: String.Encoding.utf8) {
@@ -56,7 +56,7 @@ extension Document {
     }
     
     /// The `Array` representation of this `Document`
-    public var arrayValue: [ValueConvertible] {
+    public var arrayValue: [BSONPrimitive] {
         return makeKeyIterator().flatMap { pos in
             getValue(atDataPosition: pos.dataPosition, withType: pos.type)
         }

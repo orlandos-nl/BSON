@@ -9,6 +9,3 @@ var document: Document = [
     "hello": "I am a BSON document",
     "temperature": 42.5
 ]
-
-
-let fred = document["hello"]
