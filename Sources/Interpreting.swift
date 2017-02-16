@@ -89,3 +89,73 @@ extension String {
         }
     }
 }
+
+extension Binary {
+    public init?(_ value: BSONPrimitive?) {
+        guard let binary = value as? Binary else {
+            return nil
+        }
+        
+        self = binary
+    }
+}
+
+extension Data {
+    public init?(_ value: BSONPrimitive?) {
+        guard let data = (value as? Binary)?.data else {
+            return nil
+        }
+        
+        self = data
+    }
+}
+
+extension RegularExpression {
+    public init?(_ value: BSONPrimitive?) {
+        guard let regex = value as? RegularExpression else {
+            return nil
+        }
+        
+        self = regex
+    }
+}
+
+extension ObjectId {
+    public init?(_ value: BSONPrimitive?) {
+        guard let objectId = value as? ObjectId else {
+            return nil
+        }
+        
+        self = objectId
+    }
+}
+
+extension Date {
+    public init?(_ value: BSONPrimitive?) {
+        guard let date = value as? Date else {
+            return nil
+        }
+        
+        self = date
+    }
+}
+
+extension Array where Element == BSONPrimitive {
+    public init?(_ value: BSONPrimitive?) {
+        guard let document = value as? Document else {
+            return nil
+        }
+        
+        self = document.arrayValue
+    }
+}
+
+extension Dictionary where Key == String, Value == BSONPrimitive {
+    public init?(_ value: BSONPrimitive?) {
+        guard let document = value as? Document else {
+            return nil
+        }
+        
+        self = document.dictionaryValue
+    }
+}
