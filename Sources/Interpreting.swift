@@ -90,6 +90,16 @@ extension String {
     }
 }
 
+extension Bool {
+    public init?(_ value: BSONPrimitive?) {
+        guard let bool = value as? Bool else {
+            return nil
+        }
+        
+        self = bool
+    }
+}
+
 extension Binary {
     public init?(_ value: BSONPrimitive?) {
         guard let binary = value as? Binary else {
