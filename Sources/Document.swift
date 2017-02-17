@@ -9,12 +9,12 @@
 import Foundation
 
 public protocol StringVariant {
-    var bsonStringBinary: [UInt8] { get }
+    var bsonStringBinary: Bytes { get }
 }
 
 extension StaticString: StringVariant {
-    public var bsonStringBinary: [UInt8] {
-        var keyData = [UInt8](repeating: 0, count: self.utf8CodeUnitCount)
+    public var bsonStringBinary: Bytes {
+        var keyData = Bytes(repeating: 0, count: self.utf8CodeUnitCount)
         memcpy(&keyData, self.utf8Start, keyData.count)
         
         return keyData
@@ -22,36 +22,36 @@ extension StaticString: StringVariant {
 }
 
 extension String: StringVariant {
-    public var bsonStringBinary: [UInt8] {
-        return [UInt8](self.utf8)
+    public var bsonStringBinary: Bytes {
+        return Bytes(self.utf8)
     }
 }
 
 public protocol _DocumentProtocolForArrayAdditions {
-    var bytes: [UInt8] { get }
-    init(data: [UInt8])
-    init(data: ArraySlice<UInt8>)
+    var bytes: Bytes { get }
+    init(data: Bytes)
+    init(data: ArraySlice<Byte>)
     func validate() -> Bool
 }
 extension Document : _DocumentProtocolForArrayAdditions {}
 
-public typealias IndexIterationElement = (key: String, value: BSONPrimitive)
+public typealias IndexIterationElement = (key: String, value: Primitive)
 
 extension Array where Element : _DocumentProtocolForArrayAdditions {
     /// The combined data for all documents in the array
-    public var bytes: [UInt8] {
+    public var bytes: Bytes {
         return self.map { $0.bytes }.reduce([], +)
     }
     
     public init(bsonBytes data: Data, validating: Bool = false) {
-        var buffer = [UInt8](repeating: 0, count:  data.count)
+        var buffer = Bytes(repeating: 0, count:  data.count)
         
         data.copyBytes(to: &buffer, count: buffer.count)
         
         self.init(bsonBytes: buffer, validating: validating)
     }
     
-    public init(bsonBytes bytes: [UInt8], validating: Bool = false) {
+    public init(bsonBytes bytes: Bytes, validating: Bool = false) {
         var array = [Element]()
         var position = 0
         let byteCount = bytes.count
@@ -68,7 +68,7 @@ extension Array where Element : _DocumentProtocolForArrayAdditions {
                 break documentLoop
             }
             
-            let document = Element(data: [UInt8](bytes[position..<position+length]))
+            let document = Element(data: Bytes(bytes[position..<position+length]))
             
             if validating {
                 if document.validate() {
@@ -85,7 +85,7 @@ extension Array where Element : _DocumentProtocolForArrayAdditions {
     }
 }
 
-public enum ElementType : UInt8 {
+public enum ElementType : Byte {
     case double = 0x01
     case string = 0x02
     case document = 0x03
@@ -112,7 +112,7 @@ public enum ElementType : UInt8 {
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
 public struct Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
-    internal var storage: [UInt8]
+    internal var storage: Bytes
     internal var _count: Int? = nil
     internal var invalid = false
     internal var elementPositions = [Int]()
@@ -124,7 +124,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `Foundation.Data` that's being used to initialize this`Document`
     public init(data: Foundation.Data) {
-        var byteArray = [UInt8](repeating: 0, count: data.count)
+        var byteArray = Bytes(repeating: 0, count: data.count)
         data.copyBytes(to: &byteArray, count: byteArray.count)
         
         self.init(data: byteArray)
@@ -133,7 +133,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    public init(data: [UInt8]) {
+    public init(data: Bytes) {
         guard data.count > 4 else {
             self.storage = [5,0,0,0]
             self.invalid = true
@@ -156,7 +156,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    public init(data: ArraySlice<UInt8>) {
+    public init(data: ArraySlice<Byte>) {
         guard data.count > 4 else {
             self.storage = [5,0,0,0]
             self.invalid = true
@@ -190,7 +190,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
-    public init(dictionaryElements elements: [(StringVariant, BSONPrimitive?)]) {
+    public init(dictionaryElements elements: [(StringVariant, Primitive?)]) {
         storage = [5,0,0,0]
         
         for (key, value) in elements {
@@ -210,7 +210,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Key null terminator
             storage.append(0x00)
             // Value
-            let data = value.makeBSONBinary()
+            let data = value.makeBinary()
             storage.append(contentsOf: data)
         }
         
@@ -222,21 +222,21 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
     ///
     /// - parameter elements: The `Dictionary` used to initialize this must use `String` for key and `Value` for values
-    public init(dictionaryLiteral elements: (StringVariant, BSONPrimitive?)...) {
+    public init(dictionaryLiteral elements: (StringVariant, Primitive?)...) {
         self.init(dictionaryElements: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array` literal
     ///
     /// - parameter elements: The `Array` literal used to initialize the `Document` must be a `[Value]`
-    public init(arrayLiteral elements: BSONPrimitive?...) {
+    public init(arrayLiteral elements: Primitive?...) {
         self.init(array: elements)
     }
     
     /// Initializes this `Document` as an `Array` using an `Array`
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
-    public init(array elements: [BSONPrimitive?]) {
+    public init(array elements: [Primitive?]) {
         storage = [5,0,0,0]
         
         for (index, value) in elements.enumerated() {
@@ -256,7 +256,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Key null terminator
             storage.append(0x00)
             // Value
-            storage.append(contentsOf: value.makeBSONBinary())
+            storage.append(contentsOf: value.makeBinary())
         }
         
         updateDocumentHeader()
@@ -275,7 +275,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
-    public mutating func append(_ value: BSONPrimitive, forKey key: String) {
+    public mutating func append(_ value: Primitive, forKey key: String) {
         // We're going to insert the element before the Document null terminator
         elementPositions.append(storage.endIndex)
         
@@ -287,7 +287,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.makeBSONBinary())
+        storage.append(contentsOf: value.makeBinary())
         
         // Increase the bytecount
         updateDocumentHeader()
@@ -302,7 +302,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
-    internal mutating func append(_ value: BSONPrimitive, forKey key: [UInt8]) {
+    internal mutating func append(_ value: Primitive, forKey key: Bytes) {
         // We're going to insert the element before the Document null terminator
         elementPositions.append(storage.endIndex)
         
@@ -314,7 +314,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.makeBSONBinary())
+        storage.append(contentsOf: value.makeBinary())
         
         // Increase the bytecount
         updateDocumentHeader()
@@ -327,7 +327,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
     ///
     /// - parameter value: The `Value` to append
-    public mutating func append(_ value: BSONPrimitive) {
+    public mutating func append(_ value: Primitive) {
         let key = "\(self.count)"
         
         // We're going to insert the element before the Document null terminator
@@ -341,7 +341,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.makeBSONBinary())
+        storage.append(contentsOf: value.makeBinary())
         
         // Increase the bytecount
         updateDocumentHeader()
@@ -429,8 +429,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter key: The `key` in the key-value pair to remove
     ///
     /// - returns: The `Value` in the pair if there was any
-    @discardableResult public mutating func removeValue(forKey key: String) -> BSONPrimitive? {
-        guard let meta = getMeta(forKeyBytes: [UInt8](key.utf8)) else {
+    @discardableResult public mutating func removeValue(forKey key: String) -> Primitive? {
+        guard let meta = getMeta(forKeyBytes: Bytes(key.utf8)) else {
             return nil
         }
         

@@ -1,13 +1,13 @@
 import Foundation
 
-public struct Decimal128: BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+public struct Decimal128: Primitive {
+    public var typeIdentifier: Byte {
         return 0x13
     }
     
-    public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
+    public typealias Raw = (Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
     
-    fileprivate var _storage = [UInt8]()
+    fileprivate var _storage = Bytes()
     
     public var raw: Raw {
         get {
@@ -20,7 +20,7 @@ public struct Decimal128: BSONPrimitive {
         }
     }
     
-    internal init?(slice: ArraySlice<UInt8>) {
+    internal init?(slice: ArraySlice<Byte>) {
         self._storage = Array(slice)
         
         guard self._storage.count == 16 else {
@@ -32,7 +32,7 @@ public struct Decimal128: BSONPrimitive {
         self.raw = raw
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self._storage
     }
 }

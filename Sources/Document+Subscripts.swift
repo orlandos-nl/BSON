@@ -37,7 +37,7 @@ extension Int : SubscriptExpressionType {
 }
 
 extension Document {
-    public subscript(dotNotated key: String) -> BSONPrimitive? {
+    public subscript(dotNotated key: String) -> Primitive? {
         get {
             return self[key.components(separatedBy: ".")]
         }
@@ -46,7 +46,7 @@ extension Document {
         }
     }
     
-    public subscript(parts: SubscriptExpressionType...) -> BSONPrimitive? {
+    public subscript(parts: SubscriptExpressionType...) -> Primitive? {
         get {
             return self[parts]
         }
@@ -56,12 +56,12 @@ extension Document {
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(parts: [SubscriptExpressionType]) -> BSONPrimitive? {
+    public subscript(parts: [SubscriptExpressionType]) -> Primitive? {
         get {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
                 case .staticString(let part):
-                    var data = [UInt8](repeating: 0, count: part.utf8CodeUnitCount)
+                    var data = Bytes(repeating: 0, count: part.utf8CodeUnitCount)
                     memcpy(&data, part.utf8Start, data.count)
                     
                     guard let meta = getMeta(forKeyBytes: data) else {
@@ -70,7 +70,7 @@ extension Document {
                     
                     return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
                 case .string(let part):
-                    guard let meta = getMeta(forKeyBytes: [UInt8](part.utf8)) else {
+                    guard let meta = getMeta(forKeyBytes: Bytes(part.utf8)) else {
                         return nil
                     }
                     
@@ -102,10 +102,10 @@ extension Document {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
                 case .staticString(let part):
-                    var data = [UInt8](repeating: 0, count: part.utf8CodeUnitCount)
+                    var data = Bytes(repeating: 0, count: part.utf8CodeUnitCount)
                     memcpy(&data, part.utf8Start, data.count)
                     
-                    if let meta = getMeta(forKeyBytes: [UInt8](data)) {
+                    if let meta = getMeta(forKeyBytes: Bytes(data)) {
                         let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                         let dataEndPosition = meta.dataPosition+len
                         
@@ -115,7 +115,7 @@ extension Document {
                         let relativeLength: Int
                         
                         if let newValue = newValue {
-                            let newBinary = newValue.makeBSONBinary()
+                            let newBinary = newValue.makeBinary()
                             storage.insert(contentsOf: newBinary, at: meta.dataPosition)
                             storage[meta.elementTypePosition] = newValue.typeIdentifier
                             relativeLength = newBinary.count - oldLength
@@ -134,7 +134,7 @@ extension Document {
                         self.append(newValue, forKey: data)
                     }
                 case .string(let part):
-                    if let meta = getMeta(forKeyBytes: [UInt8](part.utf8)) {
+                    if let meta = getMeta(forKeyBytes: Bytes(part.utf8)) {
                         let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                         let dataEndPosition = meta.dataPosition+len
                         
@@ -144,7 +144,7 @@ extension Document {
                         let relativeLength: Int
                         
                         if let newValue = newValue {
-                            let newBinary = newValue.makeBSONBinary()
+                            let newBinary = newValue.makeBinary()
                             storage.insert(contentsOf: newBinary, at: meta.dataPosition)
                             storage[meta.elementTypePosition] = newValue.typeIdentifier
                             relativeLength = newBinary.count - oldLength
@@ -176,7 +176,7 @@ extension Document {
                     let relativeLength: Int
                     
                     if let newValue = newValue {
-                        let newBinary = newValue.makeBSONBinary()
+                        let newBinary = newValue.makeBinary()
                         storage.insert(contentsOf: newBinary, at: currentKey.dataPosition)
                         storage[currentKey.startPosition] = newValue.typeIdentifier
                         relativeLength = newBinary.count - oldLength
@@ -212,7 +212,7 @@ extension Document {
             }
             
             position += 1
-            var keyData = [UInt8]()
+            var keyData = Bytes()
             
             while storage[position] != 0 {
                 defer {
@@ -256,13 +256,13 @@ extension Document {
             
             storage.removeSubrange(stringPosition..<position)
             
-            storage.insert(contentsOf: [UInt8](newValue.key.utf8), at: stringPosition)
+            storage.insert(contentsOf: Bytes(newValue.key.utf8), at: stringPosition)
             position = stringPosition + newValue.key.characters.count + 1
             
             let length = getLengthOfElement(withDataPosition: position, type: type)
             
             storage.removeSubrange(position..<position+length)
-            storage.insert(contentsOf: newBsonValue.makeBSONBinary(), at: position)
+            storage.insert(contentsOf: newBsonValue.makeBinary(), at: position)
             
             updateDocumentHeader()
         }

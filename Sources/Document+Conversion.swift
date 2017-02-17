@@ -20,7 +20,7 @@ extension Document {
     }
     
     /// The `Byte` `Array` (`[Byte]`) representation of this `Document`
-    public var bytes: [UInt8] {
+    public var bytes: Bytes {
         return storage + [0x00]
     }
     
@@ -40,8 +40,8 @@ extension Document {
     }
     
     /// The `Dictionary` representation of this `Document`
-    public var dictionaryValue: [String: BSONPrimitive] {
-        var dictionary = [String: BSONPrimitive]()
+    public var dictionaryValue: [String: Primitive] {
+        var dictionary = [String: Primitive]()
         
         for pos in makeKeyIterator() {
             if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex-1], encoding: String.Encoding.utf8) {
@@ -56,7 +56,7 @@ extension Document {
     }
     
     /// The `Array` representation of this `Document`
-    public var arrayValue: [BSONPrimitive] {
+    public var arrayValue: [Primitive] {
         return makeKeyIterator().flatMap { pos in
             getValue(atDataPosition: pos.dataPosition, withType: pos.type)
         }

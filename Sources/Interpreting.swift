@@ -9,7 +9,7 @@
 import Foundation
 
 extension Int {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         switch value {
         case let val as Int32:
             self = Int(val)
@@ -30,7 +30,7 @@ extension Int {
 }
 
 extension Int32 {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         switch value {
         case let val as Int32:
             self = val
@@ -51,7 +51,7 @@ extension Int32 {
 }
 
 extension Double {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         switch value {
         case let val as Double:
             self = val
@@ -72,7 +72,7 @@ extension Double {
 }
 
 extension String {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         switch value {
         case let val as String:
             self = val
@@ -91,7 +91,7 @@ extension String {
 }
 
 extension Binary {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         guard let binary = value as? Binary else {
             return nil
         }
@@ -101,7 +101,7 @@ extension Binary {
 }
 
 extension Data {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         guard let data = (value as? Binary)?.data else {
             return nil
         }
@@ -111,7 +111,7 @@ extension Data {
 }
 
 extension RegularExpression {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         guard let regex = value as? RegularExpression else {
             return nil
         }
@@ -121,7 +121,7 @@ extension RegularExpression {
 }
 
 extension ObjectId {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         guard let objectId = value as? ObjectId else {
             return nil
         }
@@ -131,7 +131,7 @@ extension ObjectId {
 }
 
 extension Date {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         guard let date = value as? Date else {
             return nil
         }
@@ -140,8 +140,8 @@ extension Date {
     }
 }
 
-extension Array where Element == BSONPrimitive {
-    public init?(_ value: BSONPrimitive?) {
+extension Array where Element == Primitive {
+    public init?(_ value: Primitive?) {
         guard let document = value as? Document else {
             return nil
         }
@@ -150,8 +150,8 @@ extension Array where Element == BSONPrimitive {
     }
 }
 
-extension Dictionary where Key == String, Value == BSONPrimitive {
-    public init?(_ value: BSONPrimitive?) {
+extension Dictionary where Key == String, Value == Primitive {
+    public init?(_ value: Primitive?) {
         guard let document = value as? Document else {
             return nil
         }
