@@ -91,7 +91,7 @@ extension String {
 }
 
 extension Bool {
-    public init?(_ value: BSONPrimitive?) {
+    public init?(_ value: Primitive?) {
         guard let bool = value as? Bool else {
             return nil
         }
