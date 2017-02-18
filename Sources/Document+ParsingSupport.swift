@@ -8,15 +8,15 @@
 
 import Foundation
 
-public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == UInt8, S.IndexDistance == Int {
+public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == Byte, S.IndexDistance == Int {
     guard bytes.count >= MemoryLayout<T>.size else {
         throw DeserializationError.invalidElementSize
     }
     
-    return UnsafeRawPointer([UInt8](bytes)).assumingMemoryBound(to: T.self).pointee
+    return UnsafeRawPointer(Bytes(bytes)).assumingMemoryBound(to: T.self).pointee
 }
 
-extension Collection where Self.Iterator.Element == UInt8, Self.Index == Int {
+extension Collection where Self.Iterator.Element == Byte, Self.Index == Int {
     public func makeInt32Array() -> [Int32] {
         var array = [Int32]()
         for idx in stride(from: self.startIndex, to: self.endIndex, by: MemoryLayout<Int32>.size) {
@@ -83,7 +83,7 @@ extension Document {
     /// - parameter keyBytes: The binary (`[Byte]`) representation of the key's `String` as C-String
     ///
     /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
-    internal func getMeta(forKeyBytes keyBytes: [UInt8]) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
+    internal func getMeta(forKeyBytes keyBytes: Bytes) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
         for var position in elementPositions {
             guard let thisElementType = ElementType(rawValue: storage[position]) else {
                 print("Error while parsing BSON document: element type unknown at position \(position).")
@@ -280,7 +280,7 @@ extension Document {
     /// - parameter startPos: The byte to start searching from
     ///
     /// - returns: An iterator that iterates over all key-value pairs
-    internal func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: [UInt8], startPosition: Int)> {
+    internal func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
         var index = 0
         
         return AnyIterator {
@@ -332,7 +332,7 @@ extension Document {
     ///
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
-    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> BSONPrimitive? {
+    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> Primitive? {
         do {
             var position = startPosition
             
@@ -542,6 +542,6 @@ extension Document {
     ///
     /// - returns: An element type for the given element
     public func type(at key: String) -> ElementType? {
-        return getMeta(forKeyBytes: [UInt8](key.utf8))?.type
+        return getMeta(forKeyBytes: Bytes(key.utf8))?.type
     }
 }

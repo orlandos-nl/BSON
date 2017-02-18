@@ -1,5 +1,5 @@
 //
-//  BSONPrimitive.swift
+//  Primitive.swift
 //  BSON
 //
 //  Created by Robbert Brandsma on 18-04-16.
@@ -23,10 +23,10 @@ func escape(_ string: String) -> String {
 }
 
 /// Do not extend. BSON internals
-public protocol BSONPrimitive {
-    var typeIdentifier: UInt8 { get }
+public protocol Primitive {
+    var typeIdentifier: Byte { get }
     
-    func makeBSONBinary() -> [UInt8]
+    func makeBinary() -> Bytes
 }
 
 func regexOptions(fromString s: String) -> NSRegularExpression.Options {
@@ -51,7 +51,7 @@ func regexOptions(fromString s: String) -> NSRegularExpression.Options {
     return options
 }
 
-public struct Timestamp: BSONPrimitive, Equatable {
+public struct Timestamp: Primitive, Equatable {
     public static func ==(lhs: Timestamp, rhs: Timestamp) -> Bool {
         return lhs.increment == rhs.increment && lhs.timestamp == rhs.timestamp
     }
@@ -59,7 +59,7 @@ public struct Timestamp: BSONPrimitive, Equatable {
     var timestamp: Int32
     var increment: Int32
     
-    public var typeIdentifier: UInt8 {
+    public var typeIdentifier: Byte {
         return 0x11
     }
     
@@ -68,12 +68,12 @@ public struct Timestamp: BSONPrimitive, Equatable {
         self.increment = increment
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return increment.makeBytes() + timestamp.makeBytes()
     }
 }
 
-public struct Binary: BSONPrimitive {
+public struct Binary: Primitive {
     /// All binary subtypes
     public enum Subtype {
         /// The default subtype. Nothing special
@@ -95,13 +95,13 @@ public struct Binary: BSONPrimitive {
         case md5
         
         /// Custom
-        case userDefined(UInt8)
+        case userDefined(Byte)
         
         /// System reserved
-        case systemReserved(UInt8)
+        case systemReserved(Byte)
         
-        /// The raw UInt8 value
-        public var rawValue : UInt8 {
+        /// The raw Byte value
+        public var rawValue : Byte {
             switch self {
             case .generic: return 0x00
             case .function: return 0x01
@@ -114,8 +114,8 @@ public struct Binary: BSONPrimitive {
             }
         }
         
-        /// Creates a `BinarySubtype` from an `UInt8`
-        public init(rawValue: UInt8) {
+        /// Creates a `BinarySubtype` from an `Byte`
+        public init(rawValue: Byte) {
             switch rawValue {
             case 0x00: self = .generic
             case 0x01: self = .function
@@ -137,24 +137,24 @@ public struct Binary: BSONPrimitive {
         self.subtype = subtype
     }
     
-    public init(data: [UInt8], withSubtype subtype: Subtype) {
+    public init(data: Bytes, withSubtype subtype: Subtype) {
         self.data = Data(bytes: data)
         self.subtype = subtype
     }
     
-    public func makeBytes() -> [UInt8] {
-        var data = [UInt8](repeating: 0, count: self.data.count)
+    public func makeBytes() -> Bytes {
+        var data = Bytes(repeating: 0, count: self.data.count)
         
         self.data.copyBytes(to: &data, count: data.count)
         
         return data
     }
     
-    public var typeIdentifier: UInt8 {
+    public var typeIdentifier: Byte {
         return 0x05
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         guard data.count < Int(Int32.max) else {
             // 4 bytes for the length and a null terminator byte
             return [0, 0, 0, 0, 0]
@@ -165,27 +165,27 @@ public struct Binary: BSONPrimitive {
     }
 }
 
-public struct Null: BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+public struct Null: Primitive {
+    public var typeIdentifier: Byte {
         return 0x0A
     }
 
     public init() {}
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return []
     }
 }
 
-public struct JavascriptCode: BSONPrimitive {
+public struct JavascriptCode: Primitive {
     public var code: String
     public var scope: Document?
     
-    public var typeIdentifier: UInt8 {
+    public var typeIdentifier: Byte {
         return self.scope == nil ? 0x0D : 0x0F
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         if let scope = scope {
             let data = self.code.bytes + scope.bytes
             return Int32(data.count + 4).makeBytes() + data
@@ -200,42 +200,42 @@ public struct JavascriptCode: BSONPrimitive {
     }
 }
 
-extension Bool : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+extension Bool : Primitive {
+    public var typeIdentifier: Byte {
         return 0x08
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self ? [0x01] : [0x00]
     }
 }
 
-extension Double : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+extension Double : Primitive {
+    public var typeIdentifier: Byte {
         return 0x01
     }
 
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self.makeBytes()
     }
 }
 
-extension Int32 : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+extension Int32 : Primitive {
+    public var typeIdentifier: Byte {
         return 0x10
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self.makeBytes()
     }
 }
 
-extension Int : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+extension Int : Primitive {
+    public var typeIdentifier: Byte {
         return 0x12
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self.makeBytes()
     }
 }
@@ -247,94 +247,94 @@ internal let isoDateFormatter: DateFormatter = {
     return fmt
 }()
 
-extension Date : BSONPrimitive {
-    public func makeBSONBinary() -> [UInt8] {
+extension Date : Primitive {
+    public func makeBinary() -> Bytes {
         let integer = Int(self.timeIntervalSince1970 * 1000)
         return integer.makeBytes()
     }
 
-    public var typeIdentifier: UInt8 {
+    public var typeIdentifier: Byte {
         return 0x09
     }
 }
 
-extension String : BSONPrimitive {
-    public func makeBSONBinary() -> [UInt8] {
+extension String : Primitive {
+    public func makeBinary() -> Bytes {
         var byteArray = Int32(self.utf8.count + 1).makeBytes()
         byteArray.append(contentsOf: self.utf8)
         byteArray.append(0x00)
         return byteArray
     }
 
-    public var typeIdentifier: UInt8 {
+    public var typeIdentifier: Byte {
         return 0x02
     }
 }
 
-extension StaticString : BSONPrimitive {
-    public func makeBSONBinary() -> [UInt8] {
+extension StaticString : Primitive {
+    public func makeBinary() -> Bytes {
         return self.withUTF8Buffer {
-            var data = [UInt8](repeating: 0, count: self.utf8CodeUnitCount + 1)
+            var data = Bytes(repeating: 0, count: self.utf8CodeUnitCount + 1)
             memcpy(&data, $0.baseAddress!, self.utf8CodeUnitCount)
             return data
         }
     }
     
-    public var typeIdentifier: UInt8 {
+    public var typeIdentifier: Byte {
         return 0x02
     }
 }
 
-extension Document : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+extension Document : Primitive {
+    public var typeIdentifier: Byte {
         return isArray ? 0x04 : 0x03
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self.bytes
     }
  }
 
-extension ObjectId : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+extension ObjectId : Primitive {
+    public var typeIdentifier: Byte {
         return 0x07
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self._storage
     }
 }
 
-struct MinKey: BSONPrimitive {
+struct MinKey: Primitive {
     init() {}
     
-    var typeIdentifier: UInt8 {
+    var typeIdentifier: Byte {
         return 0xFF
     }
     
-    func makeBSONBinary() -> [UInt8] {
+    func makeBinary() -> Bytes {
         return []
     }
 }
 
-struct MaxKey: BSONPrimitive {
+struct MaxKey: Primitive {
     init() {}
     
-    var typeIdentifier: UInt8 {
+    var typeIdentifier: Byte {
         return 0x7F
     }
     
-    func makeBSONBinary() -> [UInt8] {
+    func makeBinary() -> Bytes {
         return []
     }
 }
 
-extension RegularExpression : BSONPrimitive {
-    public var typeIdentifier: UInt8 {
+extension RegularExpression : Primitive {
+    public var typeIdentifier: Byte {
         return 0x0B
     }
     
-    public func makeBSONBinary() -> [UInt8] {
+    public func makeBinary() -> Bytes {
         return self.pattern.cStringBytes + makeOptions().cStringBytes
     }
 

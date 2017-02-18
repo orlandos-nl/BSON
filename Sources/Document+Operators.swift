@@ -18,7 +18,7 @@ extension Document : Equatable {
         }
         
         for (key, value) in lhs {
-            guard let val = rhs[key], val.makeBSONBinary() == value.makeBSONBinary() else {
+            guard let val = rhs[key], val.makeBinary() == value.makeBinary() else {
                 return false
             }
         }

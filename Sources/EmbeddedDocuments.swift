@@ -8,34 +8,34 @@
 
 import Foundation
 
-extension Dictionary : BSONPrimitive {
-    public var typeIdentifier: UInt8 { return 0x03 }
-    public func makeBSONBinary() -> [UInt8] {
-        guard let dict = self as? [String : BSONPrimitive] else {
+extension Dictionary : Primitive {
+    public var typeIdentifier: Byte { return 0x03 }
+    public func makeBinary() -> Bytes {
+        guard let dict = self as? [String : Primitive] else {
             // `assertionFailure` only triggers a crash on debug configurations, not on release.
-            let error = "Only [String : BSONPrimitive] dictionaries are BSONPrimitive. Tried to initialize a document using [\(Key.self) : \(Value.self)]. This will crash on debug and print this message on release configurations."
+            let error = "Only [String : BSON.Primitive] dictionaries are BSON.Primitive. Tried to initialize a document using [\(Key.self) : \(Value.self)]. This will crash on debug and print this message on release configurations."
             assertionFailure(error)
             print(error)
-            return Document().makeBSONBinary()
+            return Document().makeBinary()
         }
         
         let doc = Document(dictionaryElements: dict.map { ($0, $1) })
-        return doc.makeBSONBinary()
+        return doc.makeBinary()
     }
 }
 
-extension Array : BSONPrimitive {
-    public var typeIdentifier: UInt8 { return 0x04 }
-    public func makeBSONBinary() -> [UInt8] {
-        guard let `self` = self as? [BSONPrimitive] else {
+extension Array : Primitive {
+    public var typeIdentifier: Byte { return 0x04 }
+    public func makeBinary() -> Bytes {
+        guard let `self` = self as? [Primitive] else {
             // `assertionFailure` only triggers a crash on debug configurations, not on release.
-            let error = "Only [BSONPrimitive] arrays are BSONPrimitive. Tried to initialize a document using [\(Element.self)]. This will crash on debug and print this message on release configurations."
+            let error = "Only [BSON.Primitive] arrays are BSON.Primitive. Tried to initialize a document using [\(Element.self)]. This will crash on debug and print this message on release configurations."
             assertionFailure(error)
             print(error)
-            return ([] as Document).makeBSONBinary()
+            return ([] as Document).makeBinary()
         }
         
         let doc = Document(array: self)
-        return doc.makeBSONBinary()
+        return doc.makeBinary()
     }
 }

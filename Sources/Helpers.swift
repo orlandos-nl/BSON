@@ -8,14 +8,17 @@
 
 import Foundation
 
+public typealias Byte = UInt8
+public typealias Bytes = [UInt8]
+
 internal extension String {
     /// The bytes in this `String`
-    internal var bytes : [UInt8] {
-        return self.makeBSONBinary()
+    internal var bytes : Bytes {
+        return self.makeBinary()
     }
     
     /// This `String` as c-string
-    internal var cStringBytes : [UInt8] {
+    internal var cStringBytes : Bytes {
         var byteArray = self.utf8.filter{$0 != 0x00}
         byteArray.append(0x00)
         
@@ -23,20 +26,20 @@ internal extension String {
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    internal static func instantiate(bytes data: [UInt8]) throws -> String {
+    internal static func instantiate(bytes data: Bytes) throws -> String {
         var 🖕 = 0
         
         return try instantiate(bytes: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    internal static func instantiate(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
+    internal static func instantiate(bytes data: Bytes, consumedBytes: inout Int) throws -> String {
         let res = try _instant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     
-    internal static func _instant(bytes data: [UInt8]) throws -> (Int, String) {
+    internal static func _instant(bytes data: Bytes) throws -> (Int, String) {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.invalidLastElement
@@ -69,20 +72,20 @@ internal extension String {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    internal static func instantiateFromCString(bytes data: [UInt8]) throws -> String {
+    internal static func instantiateFromCString(bytes data: Bytes) throws -> String {
         var 🖕 = 0
         
         return try instantiateFromCString(bytes: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    internal static func instantiateFromCString(bytes data: [UInt8], consumedBytes: inout Int) throws -> String {
+    internal static func instantiateFromCString(bytes data: Bytes, consumedBytes: inout Int) throws -> String {
         let res = try _cInstant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     
-    internal static func _cInstant(bytes data: [UInt8]) throws -> (Int, String) {
+    internal static func _cInstant(bytes data: Bytes) throws -> (Int, String) {
         guard data.contains(0x00) else {
             throw DeserializationError.missingNullTerminatorInString
         }
@@ -102,119 +105,119 @@ internal extension String {
 internal protocol BSONBytesProtocol {}
 
 internal protocol BSONMakeBytesProtocol: BSONBytesProtocol {
-    func makeBytes() -> [UInt8]
+    func makeBytes() -> Bytes
 }
 
 extension Int : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+    internal func makeBytes() -> Bytes {
         let integer = self.littleEndian
         
         return [
-            UInt8(integer & 0xFF),
-            UInt8((integer >> 8) & 0xFF),
-            UInt8((integer >> 16) & 0xFF),
-            UInt8((integer >> 24) & 0xFF),
-            UInt8((integer >> 32) & 0xFF),
-            UInt8((integer >> 40) & 0xFF),
-            UInt8((integer >> 48) & 0xFF),
-            UInt8((integer >> 56) & 0xFF),
+            Byte(integer & 0xFF),
+            Byte((integer >> 8) & 0xFF),
+            Byte((integer >> 16) & 0xFF),
+            Byte((integer >> 24) & 0xFF),
+            Byte((integer >> 32) & 0xFF),
+            Byte((integer >> 40) & 0xFF),
+            Byte((integer >> 48) & 0xFF),
+            Byte((integer >> 56) & 0xFF),
         ]
     }
 }
 
 extension Int32 : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+    internal func makeBytes() -> Bytes {
         let integer = self.littleEndian
         
         return [
-            UInt8(integer & 0xFF),
-            UInt8((integer >> 8) & 0xFF),
-            UInt8((integer >> 16) & 0xFF),
-            UInt8((integer >> 24) & 0xFF),
+            Byte(integer & 0xFF),
+            Byte((integer >> 8) & 0xFF),
+            Byte((integer >> 16) & 0xFF),
+            Byte((integer >> 24) & 0xFF),
         ]
     }
     
-    internal func makeBigEndianBytes() -> [UInt8] {
+    internal func makeBigEndianBytes() -> Bytes {
         let integer = self.bigEndian
         
         return [
-            UInt8(integer & 0xFF),
-            UInt8((integer >> 8) & 0xFF),
-            UInt8((integer >> 16) & 0xFF),
-            UInt8((integer >> 24) & 0xFF),
+            Byte(integer & 0xFF),
+            Byte((integer >> 8) & 0xFF),
+            Byte((integer >> 16) & 0xFF),
+            Byte((integer >> 24) & 0xFF),
         ]
     }
 }
 
 extension Int16 : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+    internal func makeBytes() -> Bytes {
         let integer = self.littleEndian
         
         return [
-            UInt8((integer >> 8) & 0xFF),
-            UInt8(integer & 0xFF)
+            Byte((integer >> 8) & 0xFF),
+            Byte(integer & 0xFF)
         ]
     }
 }
 
 extension Int8 : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
-        return [UInt8(self)]
+    internal func makeBytes() -> Bytes {
+        return [Byte(self)]
     }
 }
 
 extension UInt : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+    internal func makeBytes() -> Bytes {
         let integer = self.littleEndian
         
         return [
-            UInt8(integer & 0xFF),
-            UInt8((integer >> 8) & 0xFF),
-            UInt8((integer >> 16) & 0xFF),
-            UInt8((integer >> 24) & 0xFF),
-            UInt8((integer >> 32) & 0xFF),
-            UInt8((integer >> 40) & 0xFF),
-            UInt8((integer >> 48) & 0xFF),
-            UInt8((integer >> 56) & 0xFF),
+            Byte(integer & 0xFF),
+            Byte((integer >> 8) & 0xFF),
+            Byte((integer >> 16) & 0xFF),
+            Byte((integer >> 24) & 0xFF),
+            Byte((integer >> 32) & 0xFF),
+            Byte((integer >> 40) & 0xFF),
+            Byte((integer >> 48) & 0xFF),
+            Byte((integer >> 56) & 0xFF),
         ]
     }
 }
 
 extension UInt32 : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+    internal func makeBytes() -> Bytes {
         let integer = self.littleEndian
         
         return [
-            UInt8(integer & 0xFF),
-            UInt8((integer >> 8) & 0xFF),
-            UInt8((integer >> 16) & 0xFF),
-            UInt8((integer >> 24) & 0xFF),
+            Byte(integer & 0xFF),
+            Byte((integer >> 8) & 0xFF),
+            Byte((integer >> 16) & 0xFF),
+            Byte((integer >> 24) & 0xFF),
         ]
     }
 }
 
 extension UInt16 : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+    internal func makeBytes() -> Bytes {
         let integer = self.littleEndian
         
         return [
-            UInt8(integer & 0xFF),
-            UInt8((integer >> 8) & 0xFF)
+            Byte(integer & 0xFF),
+            Byte((integer >> 8) & 0xFF)
         ]
     }
 }
 
-extension UInt8 : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+extension Byte : BSONBytesProtocol {
+    internal func makeBytes() -> Bytes {
         return [self]
     }
 }
 
 extension Double : BSONBytesProtocol {
-    internal func makeBytes() -> [UInt8] {
+    internal func makeBytes() -> Bytes {
         var integer = self
         return withUnsafePointer(to: &integer) {
-            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Double>.size) {
+            $0.withMemoryRebound(to: Byte.self, capacity: MemoryLayout<Double>.size) {
                 Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Double>.size))
             }
         }

@@ -17,7 +17,7 @@ import Dispatch
 ///
 /// Defined as: `UNIX epoch time` + `machine identifier` + `process ID` + `random increment`
 public struct ObjectId {
-    public typealias Raw = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
+    public typealias Raw = (Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
     
     #if os(Linux)
     private static var random: Int32 = {
@@ -43,13 +43,13 @@ public struct ObjectId {
         }
     }
     
-    internal var _storage: [UInt8]
+    internal var _storage: Bytes
     
     private static let counterQueue = DispatchQueue(label: "org.mongokitten.bson.oidcounter")
     
     /// Generate a new random ObjectId.
     public init() {
-        var data = [UInt8]()
+        var data = Bytes()
         
         let epoch = Int32(time(nil))
         
@@ -78,13 +78,13 @@ public struct ObjectId {
             throw DeserializationError.InvalidObjectIdLength
         }
         
-        var data = [UInt8]()
+        var data = Bytes()
         
         var gen = hexString.characters.makeIterator()
         while let c1 = gen.next(), let c2 = gen.next() {
             let s = String([c1, c2])
             
-            guard let d = UInt8(s, radix: 16) else {
+            guard let d = Byte(s, radix: 16) else {
                 break
             }
             
@@ -106,7 +106,7 @@ public struct ObjectId {
     /// Initializes ObjectId with an array of bytes
     ///
     /// Throws when there are not exactly 12 bytes provided
-    public init(bytes data: [UInt8]) throws {
+    public init(bytes data: Bytes) throws {
         guard data.count == 12 else {
             throw DeserializationError.invalidElementSize
         }
@@ -116,7 +116,7 @@ public struct ObjectId {
     
     /// The 12 bytes represented as 24-character hex-string
     public var hexString: String {
-        var bytes = [UInt8]()
+        var bytes = Bytes()
         bytes.reserveCapacity(24)
         
         for byte in _storage {
@@ -165,4 +165,4 @@ extension ObjectId: Hashable {
     }
 }
 
-private let radix16table: [UInt8] = [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66]
+private let radix16table: Bytes = [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66]

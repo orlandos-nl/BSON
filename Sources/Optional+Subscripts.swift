@@ -8,9 +8,9 @@
 
 import Foundation
 
-extension Optional where Wrapped == BSONPrimitive {
+extension Optional where Wrapped == Primitive {
     
-    public subscript(parts: SubscriptExpressionType...) -> BSONPrimitive? {
+    public subscript(parts: SubscriptExpressionType...) -> Primitive? {
         get {
             return (self as? Document)?[parts]
         }
