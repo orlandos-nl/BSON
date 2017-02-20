@@ -8,36 +8,9 @@
 
 import Foundation
 
-public protocol StringVariant {
-    var bsonStringBinary: Bytes { get }
-}
-
-extension StaticString: StringVariant {
-    public var bsonStringBinary: Bytes {
-        var keyData = Bytes(repeating: 0, count: self.utf8CodeUnitCount)
-        memcpy(&keyData, self.utf8Start, keyData.count)
-        
-        return keyData
-    }
-}
-
-extension String: StringVariant {
-    public var bsonStringBinary: Bytes {
-        return Bytes(self.utf8)
-    }
-}
-
-public protocol _DocumentProtocolForArrayAdditions {
-    var bytes: Bytes { get }
-    init(data: Bytes)
-    init(data: ArraySlice<Byte>)
-    func validate() -> Bool
-}
-extension Document : _DocumentProtocolForArrayAdditions {}
-
 public typealias IndexIterationElement = (key: String, value: Primitive)
 
-extension Array where Element : _DocumentProtocolForArrayAdditions {
+extension Array where Element == Document {
     /// The combined data for all documents in the array
     public var bytes: Bytes {
         return self.map { $0.bytes }.reduce([], +)
@@ -190,7 +163,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using an existing Swift `Dictionary`
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
-    public init(dictionaryElements elements: [(StringVariant, Primitive?)]) {
+    public init(dictionaryElements elements: [(String, Primitive?)]) {
         storage = [5,0,0,0]
         
         for (key, value) in elements {
@@ -206,7 +179,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Type identifier
             storage.append(value.typeIdentifier)
             // Key
-            storage.append(contentsOf: key.bsonStringBinary)
+            storage.append(contentsOf: key.utf8)
             // Key null terminator
             storage.append(0x00)
             // Value
@@ -222,7 +195,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
     ///
     /// - parameter elements: The `Dictionary` used to initialize this must use `String` for key and `Value` for values
-    public init(dictionaryLiteral elements: (StringVariant, Primitive?)...) {
+    public init(dictionaryLiteral elements: (String, Primitive?)...) {
         self.init(dictionaryElements: elements)
     }
     

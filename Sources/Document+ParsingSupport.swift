@@ -6,6 +6,7 @@
 //
 //
 
+import KittenCore
 import Foundation
 
 public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == Byte, S.IndexDistance == Int {
