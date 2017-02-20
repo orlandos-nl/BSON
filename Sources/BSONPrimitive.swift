@@ -62,7 +62,7 @@ public struct Timestamp: SimplePrimitive, Equatable {
         
         return nil
     }
-
+    
     public static func ==(lhs: Timestamp, rhs: Timestamp) -> Bool {
         return lhs.increment == rhs.increment && lhs.timestamp == rhs.timestamp
     }
@@ -100,7 +100,7 @@ public struct Binary: SimplePrimitive {
         
         return nil
     }
-
+    
     public func convert<S>(toType type: S.Type) -> S.SequenceType.SupportedValue? where S : SerializableObject {
         if Data.self is S.SequenceType.SupportedValue, let data = self.data as? S.SequenceType.SupportedValue {
             return data
@@ -230,7 +230,7 @@ public struct JavascriptCode: SimplePrimitive {
         
         return nil
     }
-
+    
     public var code: String
     public var scope: Document?
     
@@ -267,7 +267,7 @@ extension Double : SimplePrimitive {
     public var typeIdentifier: Byte {
         return 0x01
     }
-
+    
     public func makeBinary() -> Bytes {
         return self.makeBytes()
     }
@@ -305,7 +305,7 @@ extension Date : SimplePrimitive {
         let integer = Int(self.timeIntervalSince1970 * 1000)
         return integer.makeBytes()
     }
-
+    
     public var typeIdentifier: Byte {
         return 0x09
     }
@@ -318,7 +318,7 @@ extension String : SimplePrimitive {
         byteArray.append(0x00)
         return byteArray
     }
-
+    
     public var typeIdentifier: Byte {
         return 0x02
     }
@@ -339,6 +339,46 @@ extension StaticString : SimplePrimitive {
 }
 
 extension Document : Primitive, SerializableObject, InitializableSequence {
+    mutating func convert<IS: InitializableSequence>(toSequence type: IS.Type) -> IS {
+        var iterator = arrayValue.makeIterator()
+        
+        return IS(sequence: self.flatMap { value in
+            guard let value = iterator.next() else {
+                return nil
+            }
+            
+            if let value = value as? IS.SupportedValue {
+                return value
+            } else if let value: IS.SupportedValue = value.convert(toType: type) {
+                return value
+            }
+            
+            return nil
+        })
+    }
+    
+    public func convert<S>(toType type: S.Type) -> S.SequenceType.SupportedValue? where S : SerializableObject {
+        return convert(toObject: type).converted as? S.SequenceType.SupportedValue
+    }
+    
+    public func convert<S>(toType type: S.Type) -> S.SupportedValue? where S : InitializableSequence {
+        var iterator = arrayValue.makeIterator()
+        
+        return S(sequence: self.arrayValue.flatMap { value in
+            guard let value = iterator.next() else {
+                return nil
+            }
+            
+            if let value = value as? S.SupportedValue {
+                return value
+            } else if let value: S.SupportedValue = value.convert(toType: type) {
+                return value
+            }
+            
+            return nil
+        }) as? S.SupportedValue
+    }
+    
     public static func convert(_ value: Any) -> Primitive? {
         switch value {
         case let regex as NSRegularExpression:
@@ -353,11 +393,11 @@ extension Document : Primitive, SerializableObject, InitializableSequence {
             return nil
         }
     }
-
+    
     public func getValue(forKey key: String) -> Primitive? {
         return self[key]
     }
-
+    
     public mutating func setValue(to newValue: Primitive?, forKey key: String) {
         self[key] = newValue
     }
@@ -373,10 +413,10 @@ extension Document : Primitive, SerializableObject, InitializableSequence {
     public func getKeyValuePairs() -> [String : Primitive] {
         return self.dictionaryValue
     }
-
+    
     public typealias SupportedValue = Primitive
     public typealias HashableKey = String
-
+    
     public init(dictionary: [String: Primitive]) {
         let elements: [(String, Primitive?)] = dictionary.map {
             ($0.0, $0.1)
@@ -384,20 +424,12 @@ extension Document : Primitive, SerializableObject, InitializableSequence {
         
         self.init(dictionaryElements: elements)
     }
-
+    
     public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == Primitive {
         self.init(array: Array(sequence))
     }
-
+    
     public typealias SequenceType = Document
-
-    public func convert<S>() -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        return nil
-    }
     
     public var typeIdentifier: Byte {
         return isArray ? 0x04 : 0x03
@@ -406,7 +438,7 @@ extension Document : Primitive, SerializableObject, InitializableSequence {
     public func makeBinary() -> Bytes {
         return self.bytes
     }
- }
+}
 
 extension ObjectId : SimplePrimitive {
     public func convert<S>() -> S? {
@@ -492,7 +524,7 @@ extension RegularExpression : SimplePrimitive {
     public func makeBinary() -> Bytes {
         return self.pattern.cStringBytes + makeOptions().cStringBytes
     }
-
+    
     func makeOptions() -> String {
         var options = ""
         
