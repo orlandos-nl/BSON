@@ -471,7 +471,7 @@ public struct MinKey: SimplePrimitive {
         return nil
     }
     
-    init() {}
+    public init() {}
     
     public var typeIdentifier: Byte {
         return 0xFF
@@ -491,7 +491,7 @@ public struct MaxKey: SimplePrimitive {
         return nil
     }
     
-    init() {}
+    public init() {}
     
     public var typeIdentifier: Byte {
         return 0x7F
