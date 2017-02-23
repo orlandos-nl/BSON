@@ -434,7 +434,7 @@ extension Document {
                 let interval: Int = storage[position..<position+8].makeInt()
                 return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             case .nullValue:
-                return Null()
+                return NSNull()
             case .regex:
                 let k = storage[position..<storage.endIndex].split(separator: 0x00, maxSplits: 2, omittingEmptySubsequences: false)
                 guard k.count >= 2 else {

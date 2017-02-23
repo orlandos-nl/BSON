@@ -6,7 +6,7 @@
 //
 //
 
-import KittenCore
+@_exported import KittenCore
 import Foundation
 
 func escape(_ string: String) -> String {
@@ -208,7 +208,7 @@ public struct Binary: SimplePrimitive {
     }
 }
 
-extension Null : SimplePrimitive {
+extension NSNull : SimplePrimitive {
     public var typeIdentifier: Byte {
         return 0x0A
     }
