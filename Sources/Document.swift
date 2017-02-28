@@ -85,6 +85,9 @@ public enum ElementType : Byte {
 /// Documents behave partially like an array, and partially like a dictionary.
 /// For general information about BSON documents, see http://bsonspec.org/spec.html
 public struct Document : Collection, ExpressibleByDictionaryLiteral, ExpressibleByArrayLiteral {
+    public typealias Key = String
+    public typealias Value = Primitive?
+    
     internal var storage: Bytes
     internal var _count: Int? = nil
     internal var invalid = false

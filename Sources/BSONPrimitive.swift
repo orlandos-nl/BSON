@@ -9,6 +9,12 @@
 @_exported import KittenCore
 import Foundation
 
+public enum BSONData : DataType {
+    public typealias Object = Document
+    public typealias Sequence = Document
+    public typealias SupportedValue = Primitive
+}
+
 func escape(_ string: String) -> String {
     var string = string
     
@@ -55,7 +61,7 @@ func regexOptions(fromString s: String) -> NSRegularExpression.Options {
 }
 
 public struct Timestamp: SimplePrimitive, Equatable {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }
@@ -85,7 +91,7 @@ public struct Timestamp: SimplePrimitive, Equatable {
 }
 
 public struct Binary: SimplePrimitive {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }
@@ -99,22 +105,6 @@ public struct Binary: SimplePrimitive {
         }
         
         return nil
-    }
-    
-    public func convert<S>(toType type: S.Type) -> S.SequenceType.SupportedValue? where S : SerializableObject {
-        if Data.self is S.SequenceType.SupportedValue, let data = self.data as? S.SequenceType.SupportedValue {
-            return data
-        }
-        
-        if NSData.self is S.SequenceType.SupportedValue {
-            return NSData(data: self.data) as? S.SequenceType.SupportedValue
-        }
-        
-        if Data.self is S.SequenceType.SupportedValue, let data = self.data as? S.SequenceType.SupportedValue {
-            return data
-        }
-        
-        return self as? S.SequenceType.SupportedValue
     }
     
     /// All binary subtypes
@@ -219,7 +209,7 @@ extension NSNull : SimplePrimitive {
 }
 
 public struct JavascriptCode: SimplePrimitive {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }
@@ -338,84 +328,39 @@ extension StaticString : SimplePrimitive {
     }
 }
 
-extension Document : Primitive, SerializableObject, InitializableSequence {
-    mutating func convert<IS: InitializableSequence>(toSequence type: IS.Type) -> IS {
-        var iterator = arrayValue.makeIterator()
+extension Document : Primitive, InitializableObject, InitializableSequence {
+    public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == SupportedValue {
+        var doc = Document()
         
-        return IS(sequence: self.flatMap { value in
-            guard let value = iterator.next() else {
-                return nil
-            }
-            
-            if let value = value as? IS.SupportedValue {
-                return value
-            } else if let value: IS.SupportedValue = value.convert(toType: type) {
-                return value
-            }
-            
-            return nil
-        })
-    }
-    
-    public func convert<S>(toType type: S.Type) -> S.SequenceType.SupportedValue? where S : SerializableObject {
-        return convert(toObject: type).converted as? S.SequenceType.SupportedValue
-    }
-    
-    public func convert<S>(toType type: S.Type) -> S.SupportedValue? where S : InitializableSequence {
-        var iterator = arrayValue.makeIterator()
-        
-        return S(sequence: self.arrayValue.flatMap { value in
-            guard let value = iterator.next() else {
-                return nil
-            }
-            
-            if let value = value as? S.SupportedValue {
-                return value
-            } else if let value: S.SupportedValue = value.convert(toType: type) {
-                return value
-            }
-            
-            return nil
-        }) as? S.SupportedValue
-    }
-    
-    public static func convert(_ value: Any) -> Primitive? {
-        switch value {
-        case let regex as NSRegularExpression:
-            return RegularExpression(pattern: regex.pattern, options: regex.options)
-        case let data as NSData:
-            return Binary(data: Data(referencing: data), withSubtype: .generic)
-        case let data as Data:
-            return Binary(data: data, withSubtype: .generic)
-        case let data as [UInt8]:
-            return Binary(data: data, withSubtype: .generic)
-        default:
-            return nil
+        for (key, value) in sequence {
+            doc[key] = value
         }
+        
+        self = doc
     }
-    
-    public func getValue(forKey key: String) -> Primitive? {
-        return self[key]
-    }
-    
-    public mutating func setValue(to newValue: Primitive?, forKey key: String) {
-        self[key] = newValue
-    }
-    
-    public func getKeys() -> [String] {
-        return self.keys
-    }
-    
-    public func getValues() -> [Primitive] {
-        return self.arrayValue
-    }
-    
-    public func getKeyValuePairs() -> [String : Primitive] {
+
+    public var dictionaryRepresentation: [String: Primitive] {
         return self.dictionaryValue
     }
     
-    public typealias SupportedValue = Primitive
-    public typealias HashableKey = String
+//    public static func convert(_ value: Any) -> Primitive? {
+//        switch value {
+//        case let regex as NSRegularExpression:
+//            return RegularExpression(pattern: regex.pattern, options: regex.options)
+//        case let data as NSData:
+//            return Binary(data: Data(referencing: data), withSubtype: .generic)
+//        case let data as Data:
+//            return Binary(data: data, withSubtype: .generic)
+//        case let data as [UInt8]:
+//            return Binary(data: data, withSubtype: .generic)
+//        default:
+//            return nil
+//        }
+//    }
+    
+    public typealias ObjectKey = String
+    public typealias ObjectValue = Primitive
+    public typealias SupportedValue = (String, Primitive)
     
     public init(dictionary: [String: Primitive]) {
         let elements: [(String, Primitive?)] = dictionary.map {
@@ -423,10 +368,6 @@ extension Document : Primitive, SerializableObject, InitializableSequence {
         }
         
         self.init(dictionaryElements: elements)
-    }
-    
-    public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == Primitive {
-        self.init(array: Array(sequence))
     }
     
     public typealias SequenceType = Document
@@ -441,7 +382,7 @@ extension Document : Primitive, SerializableObject, InitializableSequence {
 }
 
 extension ObjectId : SimplePrimitive {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }
@@ -463,7 +404,7 @@ extension ObjectId : SimplePrimitive {
 }
 
 public struct MinKey: SimplePrimitive {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }
@@ -483,7 +424,7 @@ public struct MinKey: SimplePrimitive {
 }
 
 public struct MaxKey: SimplePrimitive {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }
@@ -503,7 +444,7 @@ public struct MaxKey: SimplePrimitive {
 }
 
 extension RegularExpression : SimplePrimitive {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }

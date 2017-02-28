@@ -194,8 +194,8 @@ extension Document {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                var doc = (self[firstPart] as? Document) ?? [:]
-                doc[parts] = newValue
+                var doc = self[firstPart] as? Document
+                doc?[parts] = newValue
                 
                 self[firstPart] = doc
             }

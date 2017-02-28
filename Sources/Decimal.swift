@@ -2,7 +2,7 @@ import Foundation
 import KittenCore
 
 public struct Decimal128: SimplePrimitive {
-    public func convert<S>() -> S? {
+    public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
             return self as? S
         }
