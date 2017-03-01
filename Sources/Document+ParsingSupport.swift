@@ -333,7 +333,7 @@ extension Document {
     ///
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
-    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType) -> Primitive? {
+    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType, kittenString: Bool = false) -> Primitive? {
         do {
             var position = startPosition
             
@@ -376,11 +376,15 @@ extension Document {
                 
                 var stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
-                guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
-                    return nil
+                if kittenString {
+                    return KittenBytes(stringData)
+                } else {
+                    guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
+                        return nil
+                    }
+                    
+                    return string
                 }
-                
-                return string
             case .document, .arrayDocument: // document / array
                 guard remaining() >= 5 else {
                     return nil

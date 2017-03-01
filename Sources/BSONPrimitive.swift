@@ -328,6 +328,16 @@ extension StaticString : SimplePrimitive {
     }
 }
 
+extension KittenBytes : SimplePrimitive {
+    public func makeBinary() -> Bytes {
+        return bytes + [0x00]
+    }
+    
+    public var typeIdentifier: Byte {
+        return 0x02
+    }
+}
+
 extension Document : Primitive, InitializableObject, InitializableSequence {
     public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == SupportedValue {
         var doc = Document()
@@ -338,38 +348,42 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
         
         self = doc
     }
-
+    
+    public func convert<DT : DataType>(to type: DT.Type) -> DT.SupportedValue? {
+        return self.convert(toObject: type) as? DT.SupportedValue
+    }
+    
+    public func convert<DT>(toObject type: DT.Type) -> DT.Object where DT : DataType {
+        return DT.Object(sequence: self.efficientKeyValuePairs.flatMap { key, value in
+            let newKey: DT.Object.ObjectKey
+            
+            if let key = key as? DT.Object.ObjectKey {
+                newKey = key
+            } else if let key = key.convert(DT.Object.ObjectKey.self) {
+                newKey = key
+            } else {
+                return nil
+            }
+            
+            let key = newKey
+            
+            if let value = value as? DT.Object.ObjectValue {
+                return (key, value) as? DT.Object.SupportedValue
+            } else if let value: DT.SupportedValue = value.convert(to: type) {
+                return (key, value) as? DT.Object.SupportedValue
+            }
+            
+            return nil
+        })
+    }
+    
     public var dictionaryRepresentation: [String: Primitive] {
         return self.dictionaryValue
     }
     
-//    public static func convert(_ value: Any) -> Primitive? {
-//        switch value {
-//        case let regex as NSRegularExpression:
-//            return RegularExpression(pattern: regex.pattern, options: regex.options)
-//        case let data as NSData:
-//            return Binary(data: Data(referencing: data), withSubtype: .generic)
-//        case let data as Data:
-//            return Binary(data: data, withSubtype: .generic)
-//        case let data as [UInt8]:
-//            return Binary(data: data, withSubtype: .generic)
-//        default:
-//            return nil
-//        }
-//    }
-    
     public typealias ObjectKey = String
     public typealias ObjectValue = Primitive
     public typealias SupportedValue = (String, Primitive)
-    
-    public init(dictionary: [String: Primitive]) {
-        let elements: [(String, Primitive?)] = dictionary.map {
-            ($0.0, $0.1)
-        }
-        
-        self.init(dictionaryElements: elements)
-    }
-    
     public typealias SequenceType = Document
     
     public var typeIdentifier: Byte {
