@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import BTree
 
 public typealias IndexIterationElement = (key: String, value: Primitive)
 
