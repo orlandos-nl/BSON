@@ -95,6 +95,12 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     internal var searchTree = Map<KittenBytes, Int>()
     internal var isArray: Bool = false
     
+    internal func sortedTree() -> [(KittenBytes, Int)] {
+        return searchTree.sorted(by: { lhs, rhs in
+            return lhs.1 < rhs.1
+        })
+    }
+    
     // MARK: - Initialization from data
     
     /// Initializes this Doucment with binary `Foundation.Data`
@@ -352,11 +358,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     
     /// The last `Index` in this `Document`. Can point to nothing whent he `Document` is empty
     public var endIndex: DocumentIndex {
-        var thisIndex = 4
-        for element in self.makeKeyIterator() {
-            thisIndex = element.startPosition
-        }
-        return DocumentIndex(byteIndex: thisIndex)
+        return DocumentIndex(byteIndex: (sortedTree().last?.1 ?? 4))
     }
     
     /// Creates an iterator that iterates over all key-value pairs

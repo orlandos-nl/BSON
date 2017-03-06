@@ -76,9 +76,7 @@ extension Document {
                         return nil
                     }
                     
-                    let elementPosition = searchTree.sorted(by: { lhs, rhs in
-                        return lhs.1 < rhs.1
-                    })[position].1
+                    let elementPosition = sortedTree()[position].1
                     
                     guard let currentKey = getMeta(atPosition: elementPosition) else {
                         return nil
@@ -129,9 +127,7 @@ extension Document {
                         self.append(newValue, forKey: part.bytes)
                     }
                 case .integer(let position):
-                    let elementPosition = searchTree.sorted(by: { lhs, rhs in
-                        return lhs.1 < rhs.1
-                    })[position].1
+                    let elementPosition = sortedTree()[position].1
                     
                     guard let meta = getMeta(atPosition: elementPosition) else {
                         fatalError("Index out of range")

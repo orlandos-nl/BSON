@@ -493,7 +493,7 @@ extension Document {
             return nil
         }
         
-        let position = self.searchTree.element(atOffset: key).1
+        let position = sortedTree()[key].1
         
         return ElementType(rawValue: storage[position])
     }
