@@ -60,6 +60,6 @@ extension Document {
         lhs.storage.append(contentsOf: appendData)
         
         lhs.updateDocumentHeader()
-        lhs.elementPositions = lhs.buildElementPositionsCache()
+        lhs.searchTree = lhs.buildElementPositionsCache()
     }
 }

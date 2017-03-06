@@ -9,8 +9,7 @@
 import Foundation
 
 public enum SubscriptExpression {
-    case string(String)
-    case staticString(StaticString)
+    case kittenBytes(KittenBytes)
     case integer(Int)
 }
 
@@ -20,13 +19,19 @@ public protocol SubscriptExpressionType {
 
 extension String : SubscriptExpressionType {
     public var subscriptExpression: SubscriptExpression {
-        return .string(self)
+        return .kittenBytes(self.kittenBytes)
     }
 }
 
 extension StaticString : SubscriptExpressionType {
     public var subscriptExpression: SubscriptExpression {
-        return .staticString(self)
+        return .kittenBytes(self.kittenBytes)
+    }
+}
+
+extension KittenBytes : SubscriptExpressionType {
+    public var subscriptExpression: SubscriptExpression {
+        return .kittenBytes(self)
     }
 }
 
@@ -60,27 +65,20 @@ extension Document {
         get {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
-                case .staticString(let part):
-                    var data = Bytes(repeating: 0, count: part.utf8CodeUnitCount)
-                    memcpy(&data, part.utf8Start, data.count)
-                    
-                    guard let meta = getMeta(forKeyBytes: data) else {
-                        return nil
-                    }
-                    
-                    return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
-                case .string(let part):
-                    guard let meta = getMeta(forKeyBytes: Bytes(part.utf8)) else {
+                case .kittenBytes(let part):
+                    guard let meta = getMeta(forKeyBytes: part.bytes) else {
                         return nil
                     }
                     
                     return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
                 case .integer(let position):
-                    guard elementPositions.count > position else {
+                    guard searchTree.count > position else {
                         return nil
                     }
                     
-                    let elementPosition = elementPositions[position]
+                    let elementPosition = searchTree.sorted(by: { lhs, rhs in
+                        return lhs.1 < rhs.1
+                    })[position].1
                     
                     guard let currentKey = getMeta(atPosition: elementPosition) else {
                         return nil
@@ -101,11 +99,8 @@ extension Document {
         set {
             if parts.count == 1 {
                 switch parts[0].subscriptExpression {
-                case .staticString(let part):
-                    var data = Bytes(repeating: 0, count: part.utf8CodeUnitCount)
-                    memcpy(&data, part.utf8Start, data.count)
-                    
-                    if let meta = getMeta(forKeyBytes: Bytes(data)) {
+                case .kittenBytes(let part):
+                    if let meta = getMeta(forKeyBytes: part.bytes) {
                         let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                         let dataEndPosition = meta.dataPosition+len
                         
@@ -123,69 +118,44 @@ extension Document {
                             relativeLength = -oldLength
                         }
                         
-                        for (index, element) in elementPositions.enumerated() where element > meta.dataPosition {
-                            elementPositions[index] = elementPositions[index] + relativeLength
+                        for (key, startPosition) in searchTree where startPosition > meta.dataPosition {
+                            searchTree[key] = startPosition + relativeLength
                         }
                         
                         updateDocumentHeader()
                         
                         return
                     } else if let newValue = newValue {
-                        self.append(newValue, forKey: data)
-                    }
-                case .string(let part):
-                    if let meta = getMeta(forKeyBytes: Bytes(part.utf8)) {
-                        let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
-                        let dataEndPosition = meta.dataPosition+len
-                        
-                        storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                        
-                        let oldLength = dataEndPosition - meta.dataPosition
-                        let relativeLength: Int
-                        
-                        if let newValue = newValue {
-                            let newBinary = newValue.makeBinary()
-                            storage.insert(contentsOf: newBinary, at: meta.dataPosition)
-                            storage[meta.elementTypePosition] = newValue.typeIdentifier
-                            relativeLength = newBinary.count - oldLength
-                        } else {
-                            relativeLength = -oldLength
-                        }
-                        
-                        for (index, element) in elementPositions.enumerated() where element > meta.dataPosition {
-                            elementPositions[index] = elementPositions[index] + relativeLength
-                        }
-                        
-                        updateDocumentHeader()
-                        
-                        return
-                    } else if let newValue = newValue {
-                        self.append(newValue, forKey: part)
+                        self.append(newValue, forKey: part.bytes)
                     }
                 case .integer(let position):
-                    guard let currentKey = getMeta(atPosition: elementPositions[position]) else {
+                    let elementPosition = searchTree.sorted(by: { lhs, rhs in
+                        return lhs.1 < rhs.1
+                    })[position].1
+                    
+                    guard let meta = getMeta(atPosition: elementPosition) else {
                         fatalError("Index out of range")
                     }
                     
-                    let len = getLengthOfElement(withDataPosition: currentKey.dataPosition, type: currentKey.type)
-                    let dataEndPosition = currentKey.dataPosition+len
+                    let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+                    let dataEndPosition = meta.dataPosition+len
                     
-                    storage.removeSubrange(currentKey.dataPosition..<dataEndPosition)
+                    storage.removeSubrange(meta.dataPosition..<dataEndPosition)
                     
-                    let oldLength = dataEndPosition - currentKey.dataPosition
+                    let oldLength = dataEndPosition - meta.dataPosition
                     let relativeLength: Int
                     
                     if let newValue = newValue {
                         let newBinary = newValue.makeBinary()
-                        storage.insert(contentsOf: newBinary, at: currentKey.dataPosition)
-                        storage[currentKey.startPosition] = newValue.typeIdentifier
+                        storage.insert(contentsOf: newBinary, at: meta.dataPosition)
+                        storage[meta.startPosition] = newValue.typeIdentifier
                         relativeLength = newBinary.count - oldLength
                     } else {
                         relativeLength = -oldLength
                     }
                     
-                    for (index, element) in elementPositions.enumerated() where element > currentKey.startPosition {
-                        elementPositions[index] = elementPositions[index] + relativeLength
+                    for (key, startPosition) in searchTree where startPosition > meta.dataPosition {
+                        searchTree[key] = startPosition + relativeLength
                     }
                     
                     updateDocumentHeader()
@@ -194,8 +164,8 @@ extension Document {
                 var parts = parts
                 let firstPart = parts.removeFirst()
                 
-                var doc = self[firstPart] as? Document
-                doc?[parts] = newValue
+                var doc = self[firstPart] as? Document ?? [:]
+                doc[parts] = newValue
                 
                 self[firstPart] = doc
             }

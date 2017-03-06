@@ -44,7 +44,7 @@ final class BSONInternalTests: XCTestCase {
     }
     
     func testRegexInit() throws {
-        let a = try RegularExpression(pattern: "/([A-Z])\\w+/g", options: [])
-        XCTAssert("/([A-Z])\\w+/g".cStringBytes + "".cStringBytes == a.makeBSONBinary())
+        let a = RegularExpression(pattern: "/([A-Z])\\w+/g", options: [])
+        XCTAssert("/([A-Z])\\w+/g".cStringBytes + "".cStringBytes == a.makeBinary())
     }
 }

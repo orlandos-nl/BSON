@@ -12,7 +12,7 @@ import KittenCore
 extension Document {
     /// The amount of key-value pairs in the `Document`
     public var count: Int {
-        return elementPositions.count
+        return searchTree.count
     }
     
     /// The amount of `Byte`s in the `Document`
@@ -27,17 +27,9 @@ extension Document {
     
     /// A list of all keys
     public var keys: [String] {
-        var keys = [String]()
-        for element in self.makeKeyIterator() {
-            guard let key = try? String.instantiateFromCString(bytes: element.keyData) else {
-                // huh?
-                // TODO: Make that init nonfailing.
-                continue
-            }
-            
-            keys.append(key)
-        }
-        return keys
+        return searchTree.sorted { lhs, rhs in
+            return lhs.1 < rhs.1
+            }.flatMap {String(bytes: $0.0.bytes, encoding: .utf8)}
     }
     
     public var efficientKeyValuePairs: [(KittenBytes, Primitive)] {

@@ -237,7 +237,7 @@ public struct JavascriptCode: SimplePrimitive {
         }
     }
     
-    public init(_ code: String, withScope scope: Document? = nil) {
+    public init(code: String, withScope scope: Document? = nil) {
         self.code = code
         self.scope = scope
     }

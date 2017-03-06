@@ -6,6 +6,7 @@
 //
 //
 
+import BTree
 import KittenCore
 import Foundation
 
@@ -85,65 +86,23 @@ extension Document {
     ///
     /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
     internal func getMeta(forKeyBytes keyBytes: Bytes) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
-        for var position in elementPositions {
-            guard let thisElementType = ElementType(rawValue: storage[position]) else {
-                print("Error while parsing BSON document: element type unknown at position \(position).")
-                return nil
-            }
-            
-            let elementTypePosition = position
-            
-            /**** ELEMENT NAME ****/
-            position += 1
-            
-            // compare the key data
-            let keyPositionOffset = position
-            var isKey = true // after the loop this will have the correct value
-            var didEnd = false // we should end with 0, else document is invalid
-            keyComparison: while storage.count > position {
-                defer {
-                    position += 1
-                }
-                
-                let character = storage[position]
-                
-                let keyPos = position - keyPositionOffset
-                
-                if character == 0 {
-                    if keyBytes.count != keyPos {
-                        isKey = false
-                    }
-                    
-                    didEnd = true
-                    break keyComparison // end of key data
-                } else if isKey && keyBytes.count > keyPos {
-                    isKey = keyBytes[keyPos] == character
-                } else {
-                    isKey = false
-                }
-            }
-            
-            // the key MUST end with a 0, else the BSON data is invalid.
-            guard didEnd else {
-                return nil
-            }
-            
-            /**** ELEMENT DATA ****/
-            // The `position` is now at the first byte of the element data, or, when the element has no data, the start of the next element.
-            
-            // this must be the key, then.
-            if isKey {
-                return (elementTypePosition: elementTypePosition, dataPosition: position, type: thisElementType)
-            }
-            
-            // we didn't find the key, so we should skip past this element, and go on to the next one
-            let length = getLengthOfElement(withDataPosition: position, type: thisElementType)
-            position += length
+        guard var position = searchTree[KittenBytes(keyBytes)] else {
+            return nil
         }
         
-        return nil
+        guard let thisElementType = ElementType(rawValue: storage[position]) else {
+            print("Error while parsing BSON document: element type unknown at position \(position).")
+            return nil
+        }
+        
+        let elementTypePosition = position
+        
+        // Element type, key, null terminator
+        position += 1 + keyBytes.count + 1
+        
+        return (elementTypePosition: elementTypePosition, dataPosition: position, type: thisElementType)
     }
-    
+
     /// Returns the length of an element in bytes
     ///
     /// - parameter position: The position of the first byte of data for this value
@@ -208,9 +167,9 @@ extension Document {
     }
     
     /// Caches the Element start positions
-    internal func buildElementPositionsCache() -> [Int] {
+    internal func buildElementPositionsCache() -> Map<KittenBytes, Int> {
         var position = 4
-        var positions = [Int]()
+        var positions = Map<KittenBytes, Int>()
         
         loop: while position < self.storage.count {
             let startPosition = position
@@ -226,6 +185,8 @@ extension Document {
             
             position += 1
             
+            var buffer = Bytes()
+            
             // get the key data
             while self.storage.count > position {
                 defer {
@@ -235,11 +196,13 @@ extension Document {
                 if self.storage[position] == 0 {
                     break
                 }
+                
+                buffer.append(storage[position])
             }
             
             position += self.getLengthOfElement(withDataPosition: position, type: type)
             
-            positions.append(startPosition)
+            positions[KittenBytes(buffer)] = startPosition
         }
         
         return positions
@@ -282,18 +245,13 @@ extension Document {
     ///
     /// - returns: An iterator that iterates over all key-value pairs
     internal func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
-        var index = 0
+        var iterator = searchTree.makeIterator()
         
         return AnyIterator {
-            defer {
-                index += 1
-            }
-            
-            guard self.elementPositions.count > index else {
+            guard let (key, startPosition) = iterator.next() else {
                 return nil
             }
             
-            let startPosition = self.elementPositions[index]
             var position = startPosition
             
             guard self.storage.count - position > 2 else {
@@ -486,7 +444,7 @@ extension Document {
                 let scopeDataAndMaybeMore = Array(stringDataAndMore[trueCodeSize..<stringDataAndMore.endIndex])
                 let scope = Document(data: scopeDataAndMaybeMore)
                 
-                return JavascriptCode(code, withScope: scope)
+                return JavascriptCode(code: code, withScope: scope)
             case .int32: // int32
                 guard remaining() >= 4 else {
                     return nil
@@ -531,11 +489,12 @@ extension Document {
     ///
     /// - returns: An element type for the given element
     public func type(at key: Int) -> ElementType? {
-        guard self.elementPositions.count > key && key >= 0 else {
+        guard self.searchTree.count > key && key >= 0 else {
             return nil
         }
         
-        let position = self.elementPositions[key]
+        let position = self.searchTree.element(atOffset: key).1
+        
         return ElementType(rawValue: storage[position])
     }
     

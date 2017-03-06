@@ -8,6 +8,36 @@
 
 import Foundation
 
+extension Document {
+    public init?(_ value: Primitive?) {
+        guard let value = value as? Document else {
+            return nil
+        }
+        
+        self = value
+    }
+}
+
+extension Timestamp {
+    public init?(_ value: Primitive?) {
+        guard let value = value as? Timestamp else {
+            return nil
+        }
+        
+        self = value
+    }
+}
+
+extension JavascriptCode {
+    public init?(_ value: Primitive?) {
+        guard let value = value as? JavascriptCode else {
+            return nil
+        }
+        
+        self = value
+    }
+}
+
 extension Int {
     public init?(_ value: Primitive?) {
         switch value {

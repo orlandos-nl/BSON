@@ -41,15 +41,15 @@ class BSONPerformanceTests: XCTestCase {
                     "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
                     "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
                     "cool32bitNumber": Int32(9001),
-                    "cool64bitNumber": Int64(21312153544),
-                    "code": JavascriptCode("console.log(\"Hello there\");"),
-                    "codeWithScope": JavascriptCode("console.log(\"Hello there\");", withScope: ["hey": "hello"]),
+                    "cool64bitNumber": 21312153544,
+                    "code": JavascriptCode(code: "console.log(\"Hello there\");"),
+                    "codeWithScope": JavascriptCode(code: "console.log(\"Hello there\");", withScope: ["hey": "hello"]),
                     "nothing": Null(),
                     "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
                     "boolFalse": false,
                     "boolTrue": true,
                     "timestamp": Timestamp(increment: 2000, timestamp: 8),
-                    "regex": try! RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
+                    "regex": RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
                     "minKey": MinKey(),
                     "maxKey": MaxKey()
                 ]
@@ -72,15 +72,15 @@ class BSONPerformanceTests: XCTestCase {
             "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
             "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
             "cool32bitNumber": Int32(9001),
-            "cool64bitNumber": Int64(21312153544),
-            "code": JavascriptCode("console.log(\"Hello there\");"),
-            "codeWithScope": JavascriptCode("console.log(\"Hello there\");", withScope: ["hey": "hello"]),
+            "cool64bitNumber": 21312153544,
+            "code": JavascriptCode(code: "console.log(\"Hello there\");"),
+            "codeWithScope": JavascriptCode(code: "console.log(\"Hello there\");", withScope: ["hey": "hello"]),
             "nothing": Null(),
             "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,
             "timestamp": Timestamp(increment: 2000, timestamp: 8),
-            "regex": try RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
+            "regex": RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: []),
             "minKey": MinKey(),
             "maxKey": MaxKey()
         ]
@@ -92,7 +92,7 @@ class BSONPerformanceTests: XCTestCase {
             
             for (k, v) in kittenDocument {
                 hash += k.characters.count
-                hash += v.makeBSONPrimitive().makeBSONBinary().count
+                hash += v.makeBinary().count
             }
             
             total += hash
@@ -104,24 +104,24 @@ class BSONPerformanceTests: XCTestCase {
     func testLargeDocumentPerformance() {
         var document: Document = [:]
         
-        for i in 0..<9999999 {
+        for i in 0..<999999 {
             document.append(Int32(i), forKey: "test\(i)")
         }
         
         measure {
-            _ = document[raw: 8765123]
+            _ = document[8765123]
         }
     }
     
     func testLargeDocumentPerformance2() {
         var document: Document = [:]
         
-        for i in 0..<9999999 {
+        for i in 0..<999999 {
             document.append(Int32(i), forKey: "test\(i)")
         }
         
         measure {
-            _ = document[raw: "test8765123"]
+            _ = document["test8765123"]
         }
     }
     

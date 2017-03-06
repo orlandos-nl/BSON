@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import BTree
 
 public typealias IndexIterationElement = (key: String, value: Primitive)
 
@@ -91,7 +92,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     internal var storage: Bytes
     internal var _count: Int? = nil
     internal var invalid = false
-    internal var elementPositions = [Int]()
+    internal var searchTree = Map<KittenBytes, Int>()
     internal var isArray: Bool = false
     
     // MARK: - Initialization from data
@@ -125,7 +126,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         }
         
         storage = Array(data[0..<Swift.max(length - 1, 0)])
-        elementPositions = buildElementPositionsCache()
+        searchTree = buildElementPositionsCache()
         isArray = validatesAsArray()
     }
     
@@ -151,7 +152,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         }
         
         
-        elementPositions = buildElementPositionsCache()
+        searchTree = buildElementPositionsCache()
         isArray = self.validatesAsArray()
     }
     
@@ -177,7 +178,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             // Append the key-value pair
             
             // Add element to positions cache
-            elementPositions.append(storage.endIndex)
+            searchTree[KittenBytes(Bytes(key.utf8))] = storage.endIndex
             
             // Type identifier
             storage.append(value.typeIdentifier)
@@ -220,15 +221,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                 continue
             }
             
+            let key = Bytes(index.description.utf8)
+            
             // Append the values
             
             // Add element to positions cache
-            elementPositions.append(storage.endIndex)
+            searchTree[KittenBytes(key)] = storage.endIndex
             
             // Type identifier
             storage.append(value.typeIdentifier)
             // Key
-            storage.append(contentsOf: "\(index)".utf8)
+            storage.append(contentsOf: key)
             // Key null terminator
             storage.append(0x00)
             // Value
@@ -253,7 +256,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter key: The key in the key-value pair
     public mutating func append(_ value: Primitive, forKey key: String) {
         // We're going to insert the element before the Document null terminator
-        elementPositions.append(storage.endIndex)
+        searchTree[KittenBytes(Bytes(key.utf8))] = storage.endIndex
         
         // Append the key-value pair
         // Type identifier
@@ -280,7 +283,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter key: The key in the key-value pair
     internal mutating func append(_ value: Primitive, forKey key: Bytes) {
         // We're going to insert the element before the Document null terminator
-        elementPositions.append(storage.endIndex)
+        searchTree[KittenBytes(key)] = storage.endIndex
         
         // Append the key-value pair
         // Type identifier
@@ -304,10 +307,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter value: The `Value` to append
     public mutating func append(_ value: Primitive) {
-        let key = "\(self.count)"
+        let key = self.count.description
+        
         
         // We're going to insert the element before the Document null terminator
-        elementPositions.append(storage.endIndex)
+        searchTree[KittenBytes(Bytes(key.utf8))] = storage.endIndex
         
         // Append the key-value pair
         // Type identifier
@@ -421,13 +425,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         let removedLength = (meta.dataPosition + length) - meta.elementTypePosition
         
-        for (index, element) in elementPositions.enumerated() where element > meta.elementTypePosition {
-            elementPositions[index] = elementPositions[index] - removedLength
+        for (key, elementPosition) in searchTree where elementPosition > meta.elementTypePosition {
+            searchTree[key] = elementPosition - removedLength
         }
         
-        if let index = elementPositions.index(of: meta.elementTypePosition) {
-            elementPositions.remove(at: index)
-        }
+        searchTree.removeValue(forKey: key.kittenBytes)
         
         updateDocumentHeader()
         
