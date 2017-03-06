@@ -104,7 +104,7 @@ class BSONPerformanceTests: XCTestCase {
     func testLargeDocumentPerformance() {
         var document: Document = [:]
         
-        for i in 0..<999999 {
+        for i in 0..<99999999 {
             document.append(Int32(i), forKey: "test\(i)")
         }
         
@@ -116,7 +116,7 @@ class BSONPerformanceTests: XCTestCase {
     func testLargeDocumentPerformance2() {
         var document: Document = [:]
         
-        for i in 0..<999999 {
+        for i in 0..<99999999 {
             document.append(Int32(i), forKey: "test\(i)")
         }
         
