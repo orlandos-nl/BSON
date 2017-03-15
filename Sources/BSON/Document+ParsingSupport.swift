@@ -8,6 +8,7 @@
 
 import KittenCore
 import Foundation
+import BTree
 
 public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == Byte, S.IndexDistance == Int {
     guard bytes.count >= MemoryLayout<T>.size else {

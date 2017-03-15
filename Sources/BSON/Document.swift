@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import BTree
+import KittenCore
 
 public typealias IndexIterationElement = (key: String, value: Primitive)
 

@@ -2,10 +2,16 @@
   "autoPin": true,
   "pins": [
     {
+      "package": "BTree",
+      "reason": null,
+      "repositoryURL": "https://github.com/lorentey/BTree.git",
+      "version": "4.0.2"
+    },
+    {
       "package": "KittenCore",
       "reason": null,
       "repositoryURL": "https://github.com/OpenKitten/KittenCore.git",
-      "version": "0.2.0"
+      "version": "0.2.2"
     }
   ],
   "version": 1

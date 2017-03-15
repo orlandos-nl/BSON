@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import KittenCore
 
 public enum SubscriptExpression {
     case kittenBytes(KittenBytes)
