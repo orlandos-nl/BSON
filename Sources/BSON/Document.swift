@@ -445,10 +445,10 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter path: The path to write this to
     public func write(toFile path: String) throws {
-        var myData = storage
-        let nsData = NSData(bytes: &myData, length: myData.count)
-        
-        try nsData.write(toFile: path)
+        guard let url = URL(string: "file://" + path) else {
+            throw URLError(.badURL)
+        }
+        try Data(bytes: self.bytes).write(to: url)
     }
 }
 
