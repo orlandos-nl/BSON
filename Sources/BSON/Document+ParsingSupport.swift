@@ -8,7 +8,6 @@
 
 import KittenCore
 import Foundation
-import BTree
 
 public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == Byte, S.IndexDistance == Int {
     guard bytes.count >= MemoryLayout<T>.size else {
@@ -167,9 +166,9 @@ extension Document {
     }
     
     /// Caches the Element start positions
-    internal func buildElementPositionsCache() -> Map<KittenBytes, Int> {
+    internal func buildElementPositionsCache() -> Dictionary<KittenBytes, Int> {
         var position = 4
-        var positions = Map<KittenBytes, Int>()
+        var positions = Dictionary<KittenBytes, Int>()
         
         loop: while position < self.storage.count {
             let startPosition = position
@@ -245,7 +244,7 @@ extension Document {
     ///
     /// - returns: An iterator that iterates over all key-value pairs
     internal func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
-        var iterator = searchTree.makeIterator()
+        var iterator = sortedTree().makeIterator()
         
         return AnyIterator {
             guard let (key, startPosition) = iterator.next() else {

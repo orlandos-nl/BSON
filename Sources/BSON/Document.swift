@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import BTree
 import KittenCore
 
 public typealias IndexIterationElement = (key: String, value: Primitive)
@@ -93,7 +92,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     internal var storage: Bytes
     internal var _count: Int? = nil
     internal var invalid = false
-    internal var searchTree = Map<KittenBytes, Int>()
+    internal var searchTree = Dictionary<KittenBytes, Int>()
     internal var isArray: Bool = false
     
     internal func sortedTree() -> [(KittenBytes, Int)] {
