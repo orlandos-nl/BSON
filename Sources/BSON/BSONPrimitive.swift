@@ -73,8 +73,8 @@ public struct Timestamp: SimplePrimitive, Equatable {
         return lhs.increment == rhs.increment && lhs.timestamp == rhs.timestamp
     }
     
-    var timestamp: Int32
-    var increment: Int32
+    public var timestamp: Int32
+    public var increment: Int32
     
     public var typeIdentifier: Byte {
         return 0x11
