@@ -364,12 +364,6 @@ final class BSONPublicTests: XCTestCase {
         
         var document = kittenDocument
         
-        document[document.endIndex] = (key: "bob", value: 3.14)
-        let lastElement = document[document.endIndex]
-        
-        XCTAssertEqual(lastElement.key, "bob")
-        XCTAssertEqual(lastElement.value as? Double, 3.14)
-        
         XCTAssert(document.startIndex < document.endIndex)
         XCTAssertFalse(document.endIndex < document.startIndex)
         XCTAssertEqual(document.startIndex, document.startIndex)
