@@ -358,7 +358,6 @@ final class BSONPublicTests: XCTestCase {
     
     func testDocumentIndexes() {
         let firstKittenKV = kittenDocument[kittenDocument.startIndex]
-        let lastKittenKV = kittenDocument[kittenDocument.endIndex]
         
         XCTAssertEqual(firstKittenKV.key, "doubleTest")
         XCTAssertEqual(firstKittenKV.value as? Double, 0.04)
