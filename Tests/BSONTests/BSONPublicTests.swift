@@ -362,7 +362,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(firstKittenKV.key, "doubleTest")
         XCTAssertEqual(firstKittenKV.value as? Double, 0.04)
         
-        var document = kittenDocument
+        let document = kittenDocument
         
         XCTAssert(document.startIndex < document.endIndex)
         XCTAssertFalse(document.endIndex < document.startIndex)
