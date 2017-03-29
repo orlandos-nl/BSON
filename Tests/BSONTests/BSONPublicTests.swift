@@ -362,9 +362,6 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(firstKittenKV.key, "doubleTest")
         XCTAssertEqual(firstKittenKV.value as? Double, 0.04)
         
-        XCTAssertEqual(lastKittenKV.key, "maxKey")
-        XCTAssertNotNil(lastKittenKV.value as? MaxKey)
-        
         var document = kittenDocument
         
         document[document.endIndex] = (key: "bob", value: 3.14)
