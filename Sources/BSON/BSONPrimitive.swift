@@ -90,6 +90,16 @@ public struct Timestamp: SimplePrimitive, Equatable {
     }
 }
 
+extension Data : SimplePrimitive {
+    public var typeIdentifier: Byte {
+        return 0x05
+    }
+    
+    public func makeBinary() -> Bytes {
+        return Binary(data: self, withSubtype: .generic).makeBinary()
+    }
+}
+
 public struct Binary: SimplePrimitive {
     public func convert<S>(_ type: S.Type) -> S? {
         if self is S {
