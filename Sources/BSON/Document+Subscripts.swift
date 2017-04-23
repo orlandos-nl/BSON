@@ -105,19 +105,25 @@ extension Document {
                         
                         storage.removeSubrange(meta.dataPosition..<dataEndPosition)
                         
-                        let oldLength = dataEndPosition - meta.dataPosition
                         let relativeLength: Int
                         
                         if let newValue = newValue {
+                            let oldLength = dataEndPosition - meta.dataPosition
                             let newBinary = newValue.makeBinary()
                             storage.insert(contentsOf: newBinary, at: meta.dataPosition)
                             storage[meta.elementTypePosition] = newValue.typeIdentifier
                             relativeLength = newBinary.count - oldLength
                         } else {
-                            relativeLength = -oldLength
+                            storage.removeSubrange(meta.elementTypePosition..<(meta.elementTypePosition + part.bytes.count + 2 + len))
+                            // key + null terminator + type
+                            relativeLength = -((part.bytes.count + 2) + len)
+                            
+                            searchTree[part] = nil
                         }
                         
-                        for (key, startPosition) in searchTree where startPosition > meta.dataPosition {
+                        let affectedPosition = relativeLength >= 0 ? meta.dataPosition : meta.dataPosition + relativeLength
+                        
+                        for (key, startPosition) in searchTree where startPosition > affectedPosition {
                             searchTree[key] = startPosition + relativeLength
                         }
                         
@@ -128,7 +134,7 @@ extension Document {
                         self.append(newValue, forKey: part.bytes)
                     }
                 case .integer(let position):
-                    let elementPosition = sortedTree()[position].1
+                    let (key, elementPosition) = sortedTree()[position]
                     
                     guard let meta = getMeta(atPosition: elementPosition) else {
                         fatalError("Index out of range")
@@ -139,19 +145,24 @@ extension Document {
                     
                     storage.removeSubrange(meta.dataPosition..<dataEndPosition)
                     
-                    let oldLength = dataEndPosition - meta.dataPosition
                     let relativeLength: Int
                     
                     if let newValue = newValue {
                         let newBinary = newValue.makeBinary()
                         storage.insert(contentsOf: newBinary, at: meta.dataPosition)
                         storage[meta.startPosition] = newValue.typeIdentifier
-                        relativeLength = newBinary.count - oldLength
+                        relativeLength = newBinary.count - len
                     } else {
-                        relativeLength = -oldLength
+                        storage.removeSubrange(meta.startPosition..<(meta.startPosition + key.bytes.count + 2 + len))
+                        // key + null terminator + type
+                        relativeLength = -((key.bytes.count + 2) + len)
+                        
+                        searchTree[key] = nil
                     }
                     
-                    for (key, startPosition) in searchTree where startPosition > meta.dataPosition {
+                    let affectedPosition = relativeLength >= 0 ? meta.dataPosition : meta.dataPosition + relativeLength
+                    
+                    for (key, startPosition) in searchTree where startPosition > affectedPosition {
                         searchTree[key] = startPosition + relativeLength
                     }
                     

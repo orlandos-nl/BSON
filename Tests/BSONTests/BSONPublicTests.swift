@@ -62,6 +62,38 @@ final class BSONPublicTests: XCTestCase {
         "maxKey": MaxKey()
     ]
     
+    func testNullToNilInt() {
+        var doc: Document = [
+            "_id": Null(),
+            "name": "Joannis",
+            "email": "joannis@orlandos.nl"
+        ]
+        
+        XCTAssert(doc.validate())
+        XCTAssertEqual(doc.type(at: 0), .nullValue)
+        
+        doc[0] = nil
+        
+        XCTAssert(doc.validate())
+        XCTAssertEqual(doc.type(at: 0), .string)
+    }
+    
+    func testNullToNilString() {
+        var doc: Document = [
+            "_id": Null(),
+            "name": "Joannis",
+            "email": "joannis@orlandos.nl"
+        ]
+        
+        XCTAssert(doc.validate())
+        XCTAssertEqual(doc.type(at: "_id"), .nullValue)
+        
+        doc["_id"] = nil
+        
+        XCTAssert(doc.validate())
+        XCTAssertEqual(doc.type(at: "_id"), nil)
+    }
+    
     func validateAgainstKitten(_ document: Document) {
         XCTAssertEqual(document.count, 17) //yes, hardcoded!
         XCTAssertEqual(document.bytes, kittenDocument.bytes)
