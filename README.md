@@ -1,4 +1,4 @@
-# BSON 5.0 - Work in Progress
+# BSON 5.0
 
 This branch contains working code for BSON 5.0. Nothing here is final and everything may change. BSON 5.0 does not have a release schedule yet, but will be released alongside MongoKitten 4.0.
 
@@ -121,8 +121,3 @@ All non-deprecated BSON 1.1 types are supported.
 - Javascript Code
 - Javascript Code with Scope
 - Decimal128
-
-### Supported features
-
-- ISO8601 for Extended JSON Dates
-- **Really** fast BSON Parsing and Serializing
