@@ -106,11 +106,11 @@ public struct Binary: SimplePrimitive {
             return self as? S
         }
         
-        if Data.self is S, let data = self.data as? S {
+        if let data = self.data as? S {
             return data
         }
         
-        if NSData.self is S, let data = NSData(data: self.data) as? S {
+        if let data = NSData(data: self.data) as? S {
             return data
         }
         
@@ -224,7 +224,7 @@ public struct JavascriptCode: SimplePrimitive {
             return self as? S
         }
         
-        if String.self is S, let string  = self.code as? S {
+        if let string  = self.code as? S {
             return string
         }
         
@@ -360,7 +360,25 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
     }
     
     public func convert<DT : DataType>(to type: DT.Type) -> DT.SupportedValue? {
-        return self.convert(toObject: type) as? DT.SupportedValue
+        if self.isArray {
+            return self.convert(toArray: type) as? DT.SupportedValue
+        } else {
+            return self.convert(toObject: type) as? DT.SupportedValue
+        }
+    }
+    
+    public func convert<DT>(toArray type: DT.Type) -> DT.Sequence where DT : DataType {
+        let s: [DT.Sequence.SupportedValue] = self.arrayValue.flatMap { value in
+            if let value = value as? DT.Object.ObjectValue {
+                return value as? DT.Sequence.SupportedValue
+            } else if let value: DT.SupportedValue = value.convert(to: type) {
+                return value as? DT.Sequence.SupportedValue
+            }
+            
+            return nil
+        }
+        
+        return DT.Sequence(sequence: s)
     }
     
     public func convert<DT>(toObject type: DT.Type) -> DT.Object where DT : DataType {
@@ -411,8 +429,8 @@ extension ObjectId : SimplePrimitive {
             return self as? S
         }
         
-        if String.self is S {
-            return self.hexString as? S
+        if let s = self.hexString as? S {
+            return s
         }
         
         return nil
@@ -473,10 +491,8 @@ extension RegularExpression : SimplePrimitive {
             return self as? S
         }
         
-        if NSRegularExpression.self is S {
-            let regex = try? NSRegularExpression(pattern: self.pattern, options: self.options)
-            
-            return regex as? S
+        if let regex = try? NSRegularExpression(pattern: self.pattern, options: self.options) as? S {
+            return regex
         }
         
         return nil
