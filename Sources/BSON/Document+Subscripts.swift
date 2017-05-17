@@ -103,26 +103,29 @@ extension Document {
                         let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                         let dataEndPosition = meta.dataPosition+len
                         
-                        storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                        
                         let relativeLength: Int
                         
                         if let newValue = newValue {
+                            storage.removeSubrange(meta.dataPosition..<dataEndPosition)
                             let oldLength = dataEndPosition - meta.dataPosition
                             let newBinary = newValue.makeBinary()
                             storage.insert(contentsOf: newBinary, at: meta.dataPosition)
                             storage[meta.elementTypePosition] = newValue.typeIdentifier
                             relativeLength = newBinary.count - oldLength
+                            
+                            for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
+                                searchTree[key] = startPosition + relativeLength
+                            }
                         } else {
                             storage.removeSubrange(meta.elementTypePosition..<(meta.elementTypePosition + part.bytes.count + 2 + len))
                             // key + null terminator + type
                             relativeLength = -((part.bytes.count + 2) + len)
                             
                             searchTree[part] = nil
-                        }
-                        
-                        for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
-                            searchTree[key] = startPosition + relativeLength
+                            
+                            for (key, startPosition) in searchTree where startPosition > meta.dataPosition + relativeLength {
+                                searchTree[key] = startPosition + relativeLength
+                            }
                         }
                         
                         updateDocumentHeader()
