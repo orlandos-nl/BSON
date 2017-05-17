@@ -62,6 +62,16 @@ final class BSONPublicTests: XCTestCase {
         "maxKey": MaxKey()
     ]
     
+    func testRelativeLength() {
+        var document: Document = [
+            "_id": ObjectId(),
+            "henk": ["$db": "kaas", "$sap": "saus"]
+        ]
+        
+        document["henk"] = ObjectId()
+        XCTAssert(!document.validatesAsArray())
+    }
+    
     func testNullToNilInt() {
         var doc: Document = [
             "_id": Null(),

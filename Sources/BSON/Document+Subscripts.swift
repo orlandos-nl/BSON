@@ -121,9 +121,7 @@ extension Document {
                             searchTree[part] = nil
                         }
                         
-                        let affectedPosition = relativeLength >= 0 ? meta.dataPosition : meta.dataPosition + relativeLength
-                        
-                        for (key, startPosition) in searchTree where startPosition > affectedPosition {
+                        for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
                             searchTree[key] = startPosition + relativeLength
                         }
                         
