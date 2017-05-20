@@ -1,21 +1,8 @@
-# BSON 5.0
-
-This branch contains working code for BSON 5.0. Nothing here is final and everything may change. BSON 5.0 does not have a release schedule yet, but will be released alongside MongoKitten 4.0.
-
-### Goals
-
-- Better extraction API
-- Move ExtendedJSON to MongoKitten
-- Do not use Foundation RegularExpression
-- Chained subscripts
-- Generally a more simple and logical API
-- Better unit tests
-
 # BSON
 
 [![Swift 3.1](https://img.shields.io/badge/swift-3.1-orange.svg)](https://swift.org)
 ![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
-[![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson4)](https://travis-ci.org/OpenKitten/BSON)
+[![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson5)](https://travis-ci.org/OpenKitten/BSON)
 
 
 A native, fast BSON library for Swift, written in Swift.
