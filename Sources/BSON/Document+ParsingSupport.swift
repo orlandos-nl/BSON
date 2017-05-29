@@ -210,7 +210,7 @@ extension Document {
     /// Fetches the info for the key-value at the given position
     ///
     /// - parameter startPosition: The position of the element type identifier, before the key bytes
-    internal func getMeta(atPosition startPosition: Int) -> (dataPosition: Int, type: ElementType, startPosition: Int)? {
+    internal func getMeta(atPosition startPosition: Int) -> (dataPosition: Int, type: ElementType, startPosition: Int, elementTypePosition: Int)? {
         var position = startPosition
         
         guard self.storage.count - position > 2 else {
@@ -221,6 +221,8 @@ extension Document {
         guard let type = ElementType(rawValue: self.storage[position]) else {
             return nil
         }
+        
+        let elementTypePosition = position
         
         position += 1
         
@@ -235,7 +237,7 @@ extension Document {
             }
         }
         
-        return (dataPosition: position, type: type, startPosition: startPosition)
+        return (dataPosition: position, type: type, startPosition: startPosition, elementTypePosition: elementTypePosition)
     }
     
     /// Creates an iterator that loops over all key-value pairs in this `Document`

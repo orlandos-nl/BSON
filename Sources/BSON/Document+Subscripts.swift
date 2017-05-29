@@ -135,7 +135,7 @@ extension Document {
                         self.append(newValue, forKey: part.bytes)
                     }
                 case .integer(let position):
-                    let (key, elementPosition) = sortedTree()[position]
+                    let (part, elementPosition) = sortedTree()[position]
                     
                     guard let meta = getMeta(atPosition: elementPosition) else {
                         fatalError("Index out of range")
@@ -144,30 +144,34 @@ extension Document {
                     let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
                     let dataEndPosition = meta.dataPosition+len
                     
-                    storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                    
                     let relativeLength: Int
                     
                     if let newValue = newValue {
+                        storage.removeSubrange(meta.dataPosition..<dataEndPosition)
+                        let oldLength = dataEndPosition - meta.dataPosition
                         let newBinary = newValue.makeBinary()
                         storage.insert(contentsOf: newBinary, at: meta.dataPosition)
-                        storage[meta.startPosition] = newValue.typeIdentifier
-                        relativeLength = newBinary.count - len
-                    } else {
-                        storage.removeSubrange(meta.startPosition..<(meta.startPosition + key.bytes.count + 2 + len))
-                        // key + null terminator + type
-                        relativeLength = -((key.bytes.count + 2) + len)
+                        storage[meta.elementTypePosition] = newValue.typeIdentifier
+                        relativeLength = newBinary.count - oldLength
                         
-                        searchTree[key] = nil
-                    }
-                    
-                    let affectedPosition = relativeLength >= 0 ? meta.dataPosition : meta.dataPosition + relativeLength
-                    
-                    for (key, startPosition) in searchTree where startPosition > affectedPosition {
-                        searchTree[key] = startPosition + relativeLength
+                        for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
+                            searchTree[key] = startPosition + relativeLength
+                        }
+                    } else {
+                        storage.removeSubrange(meta.elementTypePosition..<(meta.elementTypePosition + part.bytes.count + 2 + len))
+                        // key + null terminator + type
+                        relativeLength = -((part.bytes.count + 2) + len)
+                        
+                        searchTree[part] = nil
+                        
+                        for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
+                            searchTree[key] = startPosition + relativeLength
+                        }
                     }
                     
                     updateDocumentHeader()
+                    
+                    return
                 }
             } else if parts.count >= 2 {
                 var parts = parts

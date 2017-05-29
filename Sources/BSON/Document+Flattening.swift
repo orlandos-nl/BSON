@@ -54,7 +54,7 @@ extension Document {
                     storage.insert(contentsOf: keyPrefixBytes, at: index+1)
                 }
                 
-                guard let (dataPosition, type, startPosition) = getMeta(atPosition: index) else {
+                guard let (dataPosition, type, startPosition, _) = getMeta(atPosition: index) else {
                     throw FlattenError.invalidDocument
                 }
                 
