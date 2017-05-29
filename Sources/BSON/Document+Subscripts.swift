@@ -123,7 +123,7 @@ extension Document {
                             
                             searchTree[part] = nil
                             
-                            for (key, startPosition) in searchTree where startPosition > meta.dataPosition + relativeLength {
+                            for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
                                 searchTree[key] = startPosition + relativeLength
                             }
                         }
