@@ -552,4 +552,14 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(kittenDocument.type(at: "piet"), nil)
         XCTAssertEqual(kittenDocument.type(at: "kenk"), nil)
     }
+    
+    func testCacheCorruption() {
+        var document: Document = try! [
+            "_id": ObjectId("5925985d7d6496b6f5346fc2"),
+            "foo": Data(bytes: [UInt8](repeatElement(0, count: 100)))
+        ]
+        
+        document["foo"] = nil
+        _ = document["_id"] // crash
+    }
 }
