@@ -205,7 +205,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(arrayValue[0] as? String, "kaas")
         
         let anArray: Document = ["0": "hoi", "1": "kaas", "2": "fred"]
-        XCTAssertTrue(anArray.validatesAsArray())
+        XCTAssertFalse(anArray.validatesAsArray())
         XCTAssertFalse(kittenDocument.validatesAsArray())
         
         // TODO: BSON specifies that arrays should be stored in the correct sequence

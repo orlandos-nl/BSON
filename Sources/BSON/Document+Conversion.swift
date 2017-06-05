@@ -12,7 +12,16 @@ import KittenCore
 extension Document {
     /// The amount of key-value pairs in the `Document`
     public var count: Int {
-        return searchTree.count
+        index(recursive: nil, lookingFor: nil)
+        
+        var count = 0
+        
+        // Only top-level keys
+        for key in searchTree.storage.keys where key.keys.count == 1 {
+            count = count &+ 1
+        }
+        
+        return count
     }
     
     /// The amount of `Byte`s in the `Document`
@@ -27,9 +36,9 @@ extension Document {
     
     /// A list of all keys
     public var keys: [String] {
-        return searchTree.sorted { lhs, rhs in
-            return lhs.1 < rhs.1
-            }.flatMap {String(bytes: $0.0.bytes, encoding: .utf8)}
+        index(recursive: nil, lookingFor: nil)
+        
+        return searchTree.storage.filter({ $0.key.keys.count == 1 }).sorted(by: { $0.0.1 < $0.1.1 }).flatMap({ $0.key.keys.first }).flatMap { String(bytes: $0.bytes, encoding: .utf8) }
     }
     
     public var efficientKeyValuePairs: [(KittenBytes, Primitive)] {
@@ -71,6 +80,10 @@ extension Document {
     
     /// - returns: `true` when this `Document` is a valid BSON `Array`. `false` otherwise
     public func validatesAsArray() -> Bool {
+        if isArray == false {
+            return false
+        }
+        
         for key in self.makeKeyIterator() {
             for byte in key.keyData {
                 guard (byte >= 48 && byte <= 57) || byte == 0x00 else {

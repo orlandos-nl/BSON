@@ -13,10 +13,6 @@ extension Document {
     ///
     /// - returns: The status of validation. `true` for valid and vice-versa
     public func validate() -> Bool {
-        if self.invalid {
-            return false
-        }
-        
         guard storage.count >= 4 else {
             return false
         }

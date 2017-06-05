@@ -86,8 +86,6 @@ extension Document {
         
         let _ = try? flatten(start: 0, keyPrefixBytes: ArraySlice<Byte>(), isRootDocument: true)
         
-        // After flattening, we should recalculate the index and document header:
-        self.searchTree = self.buildElementPositionsCache()
         self.updateDocumentHeader()
     }
     

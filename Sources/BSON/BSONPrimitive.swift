@@ -360,7 +360,7 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
     }
     
     public func convert<DT : DataType>(to type: DT.Type) -> DT.SupportedValue? {
-        if self.isArray {
+        if self.validatesAsArray() {
             return self.convert(toArray: type) as? DT.SupportedValue
         } else {
             return self.convert(toObject: type) as? DT.SupportedValue
@@ -415,7 +415,7 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
     public typealias SequenceType = Document
     
     public var typeIdentifier: Byte {
-        return isArray ? 0x04 : 0x03
+        return self.validatesAsArray() ? 0x04 : 0x03
     }
     
     public func makeBinary() -> Bytes {

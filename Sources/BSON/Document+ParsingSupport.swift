@@ -1,4 +1,4 @@
-//
+    //
 //  Document+InternalByteLevelOperations.swift
 //  BSON
 //
@@ -77,6 +77,99 @@ extension Collection where Self.Iterator.Element == Byte, Self.Index == Int {
 
 extension Document {
     
+    internal typealias ElementMetadata = (elementTypePosition: Int, dataPosition: Int, type: ElementType)
+    
+    @discardableResult
+    internal func index(recursive keys: IndexKey? = nil, lookingFor matcher: IndexKey?) -> ElementMetadata? {
+        if searchTree.complete {
+            return nil
+        }
+        
+        var position: Int
+            
+        if let keys = keys, let pos = searchTree.storage[keys] {
+            position = pos
+        } else {
+            position = 4
+        }
+        
+        if keys != nil {
+            guard position &+ 2 < self.storage.count else {
+                return nil
+            }
+            
+            // elementTypePosition + 1 (key position)
+            keySkipper : for i in position + 1..<storage.count {
+                guard self.storage[i] != 0 else {
+                    // null terminator + length
+                    position = i &+ 5
+                    break keySkipper
+                }
+            }
+        }
+        
+        iterator: while position < self.storage.count {
+            guard position &+ 2 < self.storage.count else {
+                return nil
+            }
+            
+            guard let type = ElementType(rawValue: self.storage[position]) else {
+                return nil
+            }
+            
+            guard position &+ 1 < storage.count else {
+                return nil
+            }
+            
+            var buffer = Bytes()
+            
+            // elementTypePosition + 1 (key position)
+            keyBuilder : for i in position + 1..<storage.count {
+                guard self.storage[i] != 0 else {
+                    break keyBuilder
+                }
+                
+                buffer.append(storage[i])
+            }
+            
+            let key = IndexKey((keys?.keys ?? []) + [KittenBytes(buffer)])
+            
+            searchTree.storage[key] = position
+            
+            let dataPosition = position &+ 1 &+ buffer.count &+ 1
+            
+            if let matcher = matcher, key.keys == matcher.keys {
+                return (position, dataPosition, type)
+            }
+            
+            position = dataPosition &+ self.getLengthOfElement(withDataPosition: dataPosition, type: type)
+            
+            if type == .document || type == .arrayDocument {
+                if let matcher = matcher {
+                    guard matcher.keys.count > key.keys.count else {
+                        continue iterator
+                    }
+                    
+                    for (pos, key) in key.keys.enumerated() {
+                        guard matcher.keys[pos] == key else {
+                            continue iterator
+                        }
+                    }
+                }
+                
+                if let result = index(recursive: key, lookingFor: matcher), matcher != nil {
+                    return result
+                }
+            }
+        }
+        
+        if matcher == nil {
+            searchTree.complete = true
+        }
+        
+        return nil
+    }
+    
     // MARK: - BSON Parsing Logic
     
     /// This function traverses the document and searches for the type and data belonging to the key
@@ -84,9 +177,9 @@ extension Document {
     /// - parameter keyBytes: The binary (`[Byte]`) representation of the key's `String` as C-String
     ///
     /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
-    internal func getMeta(forKeyBytes keyBytes: Bytes) -> (elementTypePosition: Int, dataPosition: Int, type: ElementType)? {
-        guard var position = searchTree[KittenBytes(keyBytes)] else {
-            return nil
+    internal func getMeta(for indexKey: IndexKey) -> ElementMetadata? {
+        guard let keyByteCount = indexKey.keys.last?.bytes.count, let position = searchTree.storage[indexKey], position < storage.count else {
+            return index(recursive: nil, lookingFor: indexKey)
         }
         
         guard let thisElementType = ElementType(rawValue: storage[position]) else {
@@ -94,12 +187,8 @@ extension Document {
             return nil
         }
         
-        let elementTypePosition = position
-        
-        // Element type, key, null terminator
-        position += 1 + keyBytes.count + 1
-        
-        return (elementTypePosition: elementTypePosition, dataPosition: position, type: thisElementType)
+        // dataPosition = Element type, key, null terminator
+        return (elementTypePosition: position, dataPosition: position &+ 1 &+ keyByteCount &+ 1, type: thisElementType)
     }
 
     /// Returns the length of an element in bytes
@@ -224,12 +313,12 @@ extension Document {
         
         let elementTypePosition = position
         
-        position += 1
+        position = position &+ 1
         
         // move past the key data
         while self.storage.count > position {
             defer {
-                position += 1
+                position = position &+ 1
             }
             
             if self.storage[position] == 0 {
@@ -246,14 +335,16 @@ extension Document {
     ///
     /// - returns: An iterator that iterates over all key-value pairs
     internal func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
-        var iterator = sortedTree().makeIterator()
+        index(recursive: nil, lookingFor: nil)
+        
+        var iterator = searchTree.storage.sorted(by: { 
+            $0.0.value < $0.1.value
+        }).filter({ $0.key.keys.count == 1 }).makeIterator()
         
         return AnyIterator {
-            guard let (key, startPosition) = iterator.next() else {
+            guard let position = iterator.next()?.1 else {
                 return nil
             }
-            
-            var position = startPosition
             
             guard self.storage.count - position > 2 else {
                 // Invalid document condition
@@ -264,25 +355,13 @@ extension Document {
                 return nil
             }
             
-            position += 1
-            
-            // get the key data
-            let keyStart = position
-            while self.storage.count > position {
-                defer {
-                    position += 1
-                }
-                
-                if self.storage[position] == 0 {
-                    break
+            for i in position + 1 ..< self.storage.count {
+                if self.storage[i] == 0 {
+                    return (dataPosition: i &+ 1, type: type, keyData: Array(self.storage[position + 1..<i]), startPosition: position)
                 }
             }
             
-            defer {
-                position += self.getLengthOfElement(withDataPosition: position, type: type)
-            }
-            
-            return (dataPosition: position, type: type, keyData: Array(self.storage[keyStart..<position]), startPosition: startPosition)
+            return nil
         }
     }
     
@@ -490,13 +569,8 @@ extension Document {
     ///
     /// - returns: An element type for the given element
     public func type(at key: Int) -> ElementType? {
-        guard self.searchTree.count > key && key >= 0 else {
-            return nil
-        }
-        
-        let position = sortedTree()[key].1
-        
-        return ElementType(rawValue: storage[position])
+        let indexKey = makeIndexKey(from: [key])
+        return getMeta(for: indexKey)?.type
     }
     
     /// Returns the type for the given element
@@ -507,6 +581,7 @@ extension Document {
     ///
     /// - returns: An element type for the given element
     public func type(at key: String) -> ElementType? {
-        return getMeta(forKeyBytes: Bytes(key.utf8))?.type
+        let indexKey = makeIndexKey(from: [key])
+        return getMeta(for: indexKey)?.type
     }
 }

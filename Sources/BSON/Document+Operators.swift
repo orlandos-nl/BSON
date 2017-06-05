@@ -17,13 +17,19 @@ extension Document : Equatable {
             return false
         }
         
+        if let lhsIsArray = lhs.isArray, let rhsIsArray = rhs.isArray {
+            guard lhsIsArray == rhsIsArray else {
+                return false
+            }
+        }
+        
         for (key, value) in lhs {
             guard let val = rhs[key], val.makeBinary() == value.makeBinary() else {
                 return false
             }
         }
         
-        return lhs.isArray == rhs.isArray
+        return true
     }
     
     /// Returns true if `lhs` and `rhs` store the same serialized data.
@@ -60,6 +66,6 @@ extension Document {
         lhs.storage.append(contentsOf: appendData)
         
         lhs.updateDocumentHeader()
-        lhs.searchTree = lhs.buildElementPositionsCache()
+        lhs.searchTree = IndexTree()
     }
 }

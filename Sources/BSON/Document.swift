@@ -89,17 +89,9 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     public typealias Key = String
     public typealias Value = Primitive?
     
+    internal var isArray: Bool?
     internal var storage: Bytes
-    internal var _count: Int? = nil
-    internal var invalid = false
-    internal var searchTree = Dictionary<KittenBytes, Int>()
-    internal var isArray: Bool = false
-    
-    internal func sortedTree() -> [(KittenBytes, Int)] {
-        return searchTree.sorted(by: { lhs, rhs in
-            return lhs.1 < rhs.1
-        })
-    }
+    internal var searchTree = IndexTree()
     
     // MARK: - Initialization from data
     
@@ -117,55 +109,36 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: Bytes) {
-        guard data.count > 4 else {
-            self.storage = [5,0,0,0]
-            self.invalid = true
-            return
-        }
-        
         let length = Int(data[0...3].makeInt32())
         
         guard length <= data.count, data.last == 0x00 else {
-            self.storage = [5,0,0,0]
-            self.invalid = true
+            storage = Array(data[0..<data.count &- 1])
             return
         }
         
-        storage = Array(data[0..<Swift.max(length - 1, 0)])
-        searchTree = buildElementPositionsCache()
-        isArray = validatesAsArray()
+        storage = Array(data[0..<Swift.max(length &- 1, 0)])
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<Byte>) {
-        guard data.count > 4 else {
-            self.storage = [5,0,0,0]
-            self.invalid = true
-            return
-        }
-        
         storage = Array(data[data.startIndex..<data.endIndex.advanced(by: -1)])
         var length: UInt32 = 0
         
         memcpy(&length, &storage, 4)
         
         guard numericCast(length) <= data.count, data.last == 0x00 else {
-            self.storage = [5,0,0,0]
-            self.invalid = true
+            storage = Array(data[0..<data.count &- 1])
             return
         }
-        
-        
-        searchTree = buildElementPositionsCache()
-        isArray = self.validatesAsArray()
     }
     
     /// Initializes an empty `Document`
     public init() {
         // the empty document is 5 bytes long.
         storage = [5,0,0,0]
+        self.isArray = false
     }
     
     // MARK: - Initialization from Swift Types & Literals
@@ -175,6 +148,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
     public init(dictionaryElements elements: [(String, Primitive?)]) {
         storage = [5,0,0,0]
+        self.isArray = false
         
         for (key, value) in elements {
             guard let value = value else {
@@ -182,9 +156,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             }
             
             // Append the key-value pair
-            
-            // Add element to positions cache
-            searchTree[KittenBytes(Bytes(key.utf8))] = storage.endIndex
             
             // Type identifier
             storage.append(value.typeIdentifier)
@@ -196,10 +167,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             let data = value.makeBinary()
             storage.append(contentsOf: data)
         }
-        
         updateDocumentHeader()
-        
-        isArray = false
     }
     
     /// Initializes this `Document` as a `Dictionary` using a `Dictionary` literal
@@ -221,6 +189,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [Primitive?]) {
         storage = [5,0,0,0]
+        self.isArray = true
         
         for (index, value) in elements.enumerated() {
             guard let value = value else {
@@ -230,9 +199,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             let key = Bytes(index.description.utf8)
             
             // Append the values
-            
-            // Add element to positions cache
-            searchTree[KittenBytes(key)] = storage.endIndex
             
             // Type identifier
             storage.append(value.typeIdentifier)
@@ -245,8 +211,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         }
         
         updateDocumentHeader()
-        
-        isArray = true
     }
     
     // MARK: - Manipulation & Extracting values
@@ -261,9 +225,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
     public mutating func append(_ value: Primitive, forKey key: String) {
-        // We're going to insert the element before the Document null terminator
-        searchTree[KittenBytes(Bytes(key.utf8))] = storage.endIndex
-        
         // Append the key-value pair
         // Type identifier
         storage.append(value.typeIdentifier)
@@ -276,8 +237,142 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         // Increase the bytecount
         updateDocumentHeader()
+    }
+    
+    internal mutating func update(value: Primitive, for key: IndexKey) {
+        var relativeLength = 0
+        var mutatedPosition = 0
         
-        isArray = false
+        if let meta = getMeta(for: key) {
+            let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+            let dataEndPosition = meta.dataPosition &+ len
+            
+            storage.removeSubrange(meta.dataPosition..<dataEndPosition)
+            let oldLength = dataEndPosition - meta.dataPosition
+            let newBinary = value.makeBinary()
+            storage.insert(contentsOf: newBinary, at: meta.dataPosition)
+            storage[meta.elementTypePosition] = value.typeIdentifier
+            relativeLength = newBinary.count - oldLength
+            
+            mutatedPosition = meta.elementTypePosition
+            
+            // update element
+        } else if let lastPart = key.keys.last {
+            if key.keys.count == 1 {
+                // Append the key-value pair
+                // Type identifier
+                self.storage.append(value.typeIdentifier)
+                // Key
+                self.storage.append(contentsOf: lastPart.bytes)
+                // Key null terminator
+                self.storage.append(0x00)
+                // Value
+                self.storage.append(contentsOf: value.makeBinary())
+            } else {
+                var keys = key.keys
+                keys.removeLast()
+                let key = IndexKey(keys)
+                
+                func insert(_ value: Primitive, into position: Int, for key: KittenBytes) {
+                    // If it's a Document, insert, otherwise, do nothing
+                    guard let type = ElementType(rawValue: storage[position]), (type == .arrayDocument || type == .document) else {
+                        return
+                    }
+                    
+                    let dataLength = getLengthOfElement(withDataPosition: position, type: type)
+                    
+                    // Serialize the value
+                    let serializedValue = value.makeBinary()
+                    let serializedPair = [value.typeIdentifier] + key.bytes + [0x00] + serializedValue
+                    
+                    // Set up the parameters for post-insert updates
+                    relativeLength = key.bytes.count &+ 2 &+ serializedValue.count
+                    mutatedPosition = position &+ dataLength &- 1
+                    
+                    // Insert the new value into the subdocument
+                    self.storage.insert(contentsOf: serializedPair, at: mutatedPosition)
+                }
+                
+                // Look for the subdocument
+                if let position = searchTree.storage[key] ?? index(recursive: nil, lookingFor: key)?.elementTypePosition {
+                    replaceLoop: for i in position..<storage.count {
+                        if storage[position] == 0x00 {
+                            insert(value, into: position, for: lastPart)
+                            break replaceLoop
+                        }
+                    }
+                } else {
+                    var subDocuments = [KittenBytes]()
+                    
+                    loop: while true {
+                        defer {
+                            if keys.count > 0 {
+                                subDocuments.append(keys.removeLast())
+                            }
+                        }
+                        
+                        guard let meta = getMeta(for: IndexKey(keys)) else {
+                            guard keys.count > 0 else {
+                                if subDocuments.count > 0 {
+                                    let key = subDocuments.removeLast()
+                                    var document = Document()
+                                    
+                                    document[subDocuments.reversed() + [lastPart]] = value
+                                    self.append(document, forKey: key.bytes)
+                                }
+                                
+                                break loop
+                            }
+                            
+                            continue
+                        }
+                        
+                        if subDocuments.count > 0 {
+                            let firstSubDocument = subDocuments.removeLast()
+                            var document = Document()
+                            
+                            document[subDocuments.reversed() + [lastPart]] = value
+                            
+                            insert(document, into: meta.dataPosition, for: firstSubDocument)
+                            
+                            break loop
+                        }
+                        
+                        insert(value, into: meta.dataPosition, for: lastPart)
+                        
+                        break loop
+                    }
+                }
+            }
+        }
+        
+        // Modify the searchTree efficienty, where necessary
+        for (key, startPosition) in searchTree.storage where startPosition > mutatedPosition {
+            searchTree.storage[key] = startPosition &+ relativeLength
+        }
+        
+        if key.keys.count > 1 {
+            // Update all document headers, including sub documents
+            for pos in 1..<key.keys.count {
+                updateDocumentHeader(for: IndexKey(Array(key.keys[0..<pos])), relativeLength: relativeLength)
+            }
+        }
+        
+        updateDocumentHeader()
+    }
+    
+    internal mutating func updateDocumentHeader(for key: IndexKey, relativeLength: Int) {
+        guard let dataPosition = getMeta(for: key)?.dataPosition, dataPosition < storage.count else {
+            return
+        }
+        
+        guard var count = storage.withUnsafeMutableBytes({ $0 }).baseAddress?.advanced(by: dataPosition).assumingMemoryBound(to: Int32.self) else {
+            return
+        }
+        
+        count = count + relativeLength
+        
+        memcpy(&storage, &count, 4)
     }
     
     /// Appends a Key-Value pair to this `Document` where this `Document` acts like a `Dictionary`
@@ -288,9 +383,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
     internal mutating func append(_ value: Primitive, forKey key: Bytes) {
-        // We're going to insert the element before the Document null terminator
-        searchTree[KittenBytes(key)] = storage.endIndex
-        
         // Append the key-value pair
         // Type identifier
         storage.append(value.typeIdentifier)
@@ -303,8 +395,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         // Increase the bytecount
         updateDocumentHeader()
-        
-        isArray = false
     }
     
     /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
@@ -314,10 +404,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     public mutating func append(_ value: Primitive) {
         let key = self.count.description
-        
-        
-        // We're going to insert the element before the Document null terminator
-        searchTree[KittenBytes(Bytes(key.utf8))] = storage.endIndex
         
         // Append the key-value pair
         // Type identifier
@@ -356,9 +442,9 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         return DocumentIndex(byteIndex: 4)
     }
     
-    /// The last `Index` in this `Document`. Can point to nothing whent the `Document` is empty
+    /// The last `Index` in this `Document`. Can point to nothing when the `Document` is empty
     public var endIndex: DocumentIndex {
-        return index(after: DocumentIndex(byteIndex: (sortedTree().last?.1 ?? 4)))
+        return DocumentIndex(byteIndex: self.storage.count)
     }
     
     /// Creates an iterator that iterates over all key-value pairs
@@ -370,7 +456,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                 return nil
             }
             
-            guard let string = String(bytes: key.keyData[0..<key.keyData.endIndex-1], encoding: String.Encoding.utf8) else {
+            guard let string = String(bytes: key.keyData[0..<key.keyData.endIndex], encoding: String.Encoding.utf8) else {
                 return nil
             }
             
@@ -412,7 +498,10 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - returns: The `Value` in the pair if there was any
     @discardableResult public mutating func removeValue(forKey key: String) -> Primitive? {
-        guard let meta = getMeta(forKeyBytes: Bytes(key.utf8)) else {
+        let indexString = KittenBytes([UInt8](key.utf8))
+        let key = IndexKey([indexString])
+        
+        guard let meta = getMeta(for: key) else {
             return nil
         }
         
@@ -425,13 +514,12 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         storage.removeSubrange(meta.elementTypePosition..<meta.dataPosition + length)
         
-        let removedLength = (meta.dataPosition + length) - meta.elementTypePosition
+        searchTree.storage[key] = nil
         
-        for (key, elementPosition) in searchTree where elementPosition > meta.elementTypePosition {
-            searchTree[key] = elementPosition - removedLength
+        // Modify the searchTree efficienty, where necessary
+        for (searchKey, startPosition) in searchTree.storage where startPosition > meta.elementTypePosition {
+            searchTree.storage[searchKey] = startPosition &- (length &+ indexString.bytes.count &+ 2)
         }
-        
-        searchTree.removeValue(forKey: key.kittenBytes)
         
         updateDocumentHeader()
         

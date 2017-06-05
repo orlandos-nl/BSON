@@ -61,127 +61,139 @@ extension Document {
         }
     }
     
-    /// Mutates the key-value pair like you would with a `Dictionary`
-    public subscript(parts: [SubscriptExpressionType]) -> Primitive? {
-        get {
-            if parts.count == 1 {
-                switch parts[0].subscriptExpression {
-                case .kittenBytes(let part):
-                    guard let meta = getMeta(forKeyBytes: part.bytes) else {
-                        return nil
-                    }
-                    
-                    return getValue(atDataPosition: meta.dataPosition, withType: meta.type)
-                case .integer(let position):
-                    guard searchTree.count > position else {
-                        return nil
-                    }
-                    
-                    let elementPosition = sortedTree()[position].1
-                    
-                    guard let currentKey = getMeta(atPosition: elementPosition) else {
-                        return nil
-                    }
-                    
-                    return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
+    func makeIndexKey(from keyParts: [SubscriptExpressionType]) -> IndexKey {
+        var parts = [KittenBytes]()
+        
+        indexKeyBuilder: for part in keyParts {
+            switch part.subscriptExpression {
+            case .kittenBytes(let bytes):
+                parts.append(bytes)
+            case .integer(let pos):
+                guard pos > -1 else {
+                    parts.append(KittenBytes(Bytes(pos.description.utf8)))
+                    continue indexKeyBuilder
                 }
-            } else if parts.count >= 2 {
-                var parts = parts
-                let firstPart = parts.removeFirst()
                 
-                return parts.count == 0 ? self[firstPart] : (self[firstPart] as? Document)?[parts]
-            } else {
-                return nil
+                var i = 0
+                var pointer: Int
+                
+                if parts.count == 0 {
+                    pointer = 4
+                } else {
+                    guard let meta = getMeta(for: IndexKey(parts)) else {
+                        parts.append(KittenBytes(Bytes(pos.description.utf8)))
+                        continue indexKeyBuilder
+                    }
+                    
+                    pointer = meta.dataPosition &+ 4
+                }
+                
+                keySkipper: while i < pos {
+                    defer { i = i &+ 1 }
+                    
+                    for i in pointer..<storage.count {
+                        guard self.storage[i] != 0 else {
+                            guard let type = ElementType(rawValue: self.storage[pointer]) else {
+                                parts.append(KittenBytes(Bytes(pos.description.utf8)))
+                                continue indexKeyBuilder
+                            }
+                            
+                            pointer = i &+ 1 &+ getLengthOfElement(withDataPosition: i &+ 1, type: type)
+                            
+                            continue keySkipper
+                        }
+                    }
+                }
+                
+                var key = Bytes()
+                
+                pointer = pointer &+ 1
+                
+                guard pointer < storage.count else {
+                    parts.append(KittenBytes(key))
+                    
+                    continue indexKeyBuilder
+                }
+                
+                for i in pointer..<storage.count {
+                    guard self.storage[i] != 0 else {
+                        parts.append(KittenBytes(key))
+                        
+                        continue indexKeyBuilder
+                    }
+                    
+                    key.append(storage[i])
+                }
             }
         }
         
-        set {
-            if parts.count == 1 {
-                switch parts[0].subscriptExpression {
-                case .kittenBytes(let part):
-                    if let meta = getMeta(forKeyBytes: part.bytes) {
-                        let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
-                        let dataEndPosition = meta.dataPosition+len
-                        
-                        let relativeLength: Int
-                        
-                        if let newValue = newValue {
-                            storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                            let oldLength = dataEndPosition - meta.dataPosition
-                            let newBinary = newValue.makeBinary()
-                            storage.insert(contentsOf: newBinary, at: meta.dataPosition)
-                            storage[meta.elementTypePosition] = newValue.typeIdentifier
-                            relativeLength = newBinary.count - oldLength
-                            
-                            for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
-                                searchTree[key] = startPosition + relativeLength
-                            }
-                        } else {
-                            storage.removeSubrange(meta.elementTypePosition..<(meta.elementTypePosition + part.bytes.count + 2 + len))
-                            // key + null terminator + type
-                            relativeLength = -((part.bytes.count + 2) + len)
-                            
-                            searchTree[part] = nil
-                            
-                            for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
-                                searchTree[key] = startPosition + relativeLength
-                            }
-                        }
-                        
-                        updateDocumentHeader()
-                        
-                        return
-                    } else if let newValue = newValue {
-                        self.append(newValue, forKey: part.bytes)
-                    }
-                case .integer(let position):
-                    let (part, elementPosition) = sortedTree()[position]
-                    
-                    guard let meta = getMeta(atPosition: elementPosition) else {
-                        fatalError("Index out of range")
-                    }
-                    
-                    let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
-                    let dataEndPosition = meta.dataPosition+len
-                    
-                    let relativeLength: Int
-                    
-                    if let newValue = newValue {
-                        storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                        let oldLength = dataEndPosition - meta.dataPosition
-                        let newBinary = newValue.makeBinary()
-                        storage.insert(contentsOf: newBinary, at: meta.dataPosition)
-                        storage[meta.elementTypePosition] = newValue.typeIdentifier
-                        relativeLength = newBinary.count - oldLength
-                        
-                        for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
-                            searchTree[key] = startPosition + relativeLength
-                        }
-                    } else {
-                        storage.removeSubrange(meta.elementTypePosition..<(meta.elementTypePosition + part.bytes.count + 2 + len))
-                        // key + null terminator + type
-                        relativeLength = -((part.bytes.count + 2) + len)
-                        
-                        searchTree[part] = nil
-                        
-                        for (key, startPosition) in searchTree where startPosition > meta.elementTypePosition {
-                            searchTree[key] = startPosition + relativeLength
-                        }
-                    }
-                    
-                    updateDocumentHeader()
-                    
-                    return
+        return IndexKey(parts)
+    }
+    
+    /// Mutates the key-value pair like you would with a `Dictionary`
+    public subscript(parts: [SubscriptExpressionType]) -> Primitive? {
+        get {
+            let key = makeIndexKey(from: parts)
+            
+            if let position = searchTree.storage[key] {
+                guard let currentKey = getMeta(atPosition: position) else {
+                    return nil
                 }
-            } else if parts.count >= 2 {
-                var parts = parts
-                let firstPart = parts.removeFirst()
                 
-                var doc = self[firstPart] as? Document ?? [:]
-                doc[parts] = newValue
-                
-                self[firstPart] = doc
+                return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
+            } else if let metadata = index(recursive: nil, lookingFor: key) {
+                return getValue(atDataPosition: metadata.dataPosition, withType: metadata.type)
             }
+            
+            return nil
+        }
+        
+        set {
+            let key = makeIndexKey(from: parts)
+            
+            guard let meta = getMeta(for: key) else {
+                if let newValue = newValue {
+                    self.update(value: newValue, for: key)
+                }
+                
+                return
+            }
+            
+            let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+            let dataEndPosition = meta.dataPosition+len
+            
+            let relativeLength: Int
+            
+            if let newValue = newValue {
+                storage.removeSubrange(meta.dataPosition..<dataEndPosition)
+                let oldLength = dataEndPosition - meta.dataPosition
+                let newBinary = newValue.makeBinary()
+                storage.insert(contentsOf: newBinary, at: meta.dataPosition)
+                storage[meta.elementTypePosition] = newValue.typeIdentifier
+                relativeLength = newBinary.count - oldLength
+                
+                for (key, startPosition) in searchTree.storage where startPosition > meta.elementTypePosition {
+                    searchTree.storage[key] = startPosition + relativeLength
+                }
+            } else if let lastKey = key.keys.last {
+                storage.removeSubrange(meta.elementTypePosition..<(meta.elementTypePosition + lastKey.bytes.count + 2 + len))
+                // key + null terminator + type
+                relativeLength = -((lastKey.bytes.count + 2) + len)
+                
+                searchTree.storage[key] = nil
+                
+                for (key, startPosition) in searchTree.storage where startPosition > meta.elementTypePosition {
+                    self.searchTree.storage[key] = startPosition + relativeLength
+                }
+            } else {
+                return
+            }
+            
+            for i in 1 ..< parts.count {
+                updateDocumentHeader(for: IndexKey(Array(parts[0..<i])), relativeLength: relativeLength)
+            }
+            
+            updateDocumentHeader()
         }
     }
     
