@@ -62,10 +62,8 @@ extension Document {
             }
         }
         
-        let appendData = rhs.storage[4..<rhs.storage.endIndex]
-        lhs.storage.append(contentsOf: appendData)
-        
-        lhs.updateDocumentHeader()
+        lhs.storage.append(contentsOf: rhs.storage)
         lhs.searchTree = IndexTree()
+        lhs.index(recursive: nil, lookingFor: nil)
     }
 }

@@ -41,9 +41,6 @@ extension Document {
             // We're now at the start of this document, where the 4-byte length resides. We'll delete that.
             if !isRootDocument {
                 storage.removeSubrange(index..<index+4)
-            } else {
-                // or, in the case of the root document, move past it...
-                index += 4
             }
             
             // Loop over all the elements of this document:
@@ -84,9 +81,9 @@ extension Document {
             return index
         }
         
-        let _ = try? flatten(start: 0, keyPrefixBytes: ArraySlice<Byte>(), isRootDocument: true)
-        
-        self.updateDocumentHeader()
+        _ = try? flatten(start: 0, keyPrefixBytes: ArraySlice<Byte>(), isRootDocument: true)
+        self.searchTree = IndexTree()
+        self.index(recursive: nil, lookingFor: nil)
     }
     
     /// Returns the document, removing any subdocuments and adding their key-value pairs as individual key-value pairs on the parent document.

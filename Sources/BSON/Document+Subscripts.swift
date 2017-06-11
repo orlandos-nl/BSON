@@ -78,7 +78,7 @@ extension Document {
                 var pointer: Int
                 
                 if parts.count == 0 {
-                    pointer = 4
+                    pointer = 0
                 } else {
                     guard let meta = getMeta(for: IndexKey(parts)) else {
                         parts.append(KittenBytes(Bytes(pos.description.utf8)))
@@ -151,49 +151,12 @@ extension Document {
         set {
             let key = makeIndexKey(from: parts)
             
-            guard let meta = getMeta(for: key) else {
-                if let newValue = newValue {
-                    self.update(value: newValue, for: key)
-                }
-                
+            guard let newValue = newValue else {
+                unset(key)
                 return
             }
             
-            let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
-            let dataEndPosition = meta.dataPosition+len
-            
-            let relativeLength: Int
-            
-            if let newValue = newValue {
-                storage.removeSubrange(meta.dataPosition..<dataEndPosition)
-                let oldLength = dataEndPosition - meta.dataPosition
-                let newBinary = newValue.makeBinary()
-                storage.insert(contentsOf: newBinary, at: meta.dataPosition)
-                storage[meta.elementTypePosition] = newValue.typeIdentifier
-                relativeLength = newBinary.count - oldLength
-                
-                for (key, startPosition) in searchTree.storage where startPosition > meta.elementTypePosition {
-                    searchTree.storage[key] = startPosition + relativeLength
-                }
-            } else if let lastKey = key.keys.last {
-                storage.removeSubrange(meta.elementTypePosition..<(meta.elementTypePosition + lastKey.bytes.count + 2 + len))
-                // key + null terminator + type
-                relativeLength = -((lastKey.bytes.count + 2) + len)
-                
-                searchTree.storage[key] = nil
-                
-                for (key, startPosition) in searchTree.storage where startPosition > meta.elementTypePosition {
-                    self.searchTree.storage[key] = startPosition + relativeLength
-                }
-            } else {
-                return
-            }
-            
-            for i in 1 ..< parts.count {
-                updateDocumentHeader(for: IndexKey(Array(parts[0..<i])), relativeLength: relativeLength)
-            }
-            
-            updateDocumentHeader()
+            self.set(value: newValue, for: key)
         }
     }
     
@@ -258,8 +221,6 @@ extension Document {
             
             storage.removeSubrange(position..<position+length)
             storage.insert(contentsOf: newBsonValue.makeBinary(), at: position)
-            
-            updateDocumentHeader()
         }
     }
 }

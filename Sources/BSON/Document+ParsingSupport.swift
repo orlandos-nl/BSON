@@ -1,4 +1,4 @@
-    //
+//
 //  Document+InternalByteLevelOperations.swift
 //  BSON
 //
@@ -79,19 +79,31 @@ extension Document {
     
     internal typealias ElementMetadata = (elementTypePosition: Int, dataPosition: Int, type: ElementType)
     
+    internal func buildAndReturnIndex() -> IndexTree {
+        self.index(recursive: nil, lookingFor: nil)
+        return searchTree
+    }
+    
     @discardableResult
     internal func index(recursive keys: IndexKey? = nil, lookingFor matcher: IndexKey?) -> ElementMetadata? {
         if searchTree.complete {
             return nil
         }
         
+        var unset = false
         var position: Int
-            
+        
+        let thisKey = keys ?? IndexKey([])
+        
         if let keys = keys, let pos = searchTree.storage[keys] {
             position = pos
+        } else if let resume = searchTree.unindexedList[thisKey] {
+            position = resume
         } else {
-            position = 4
+            position = 0
         }
+
+        defer { searchTree.unindexedList[thisKey] = unset ? nil : position }
         
         if keys != nil {
             guard position &+ 2 < self.storage.count else {
@@ -107,7 +119,7 @@ extension Document {
                 }
             }
         }
-        
+    
         iterator: while position < self.storage.count {
             guard position &+ 2 < self.storage.count else {
                 return nil
@@ -132,11 +144,15 @@ extension Document {
                 buffer.append(storage[i])
             }
             
-            let key = IndexKey((keys?.keys ?? []) + [KittenBytes(buffer)])
+            let key = IndexKey(thisKey.keys + [KittenBytes(buffer)])
             
             searchTree.storage[key] = position
             
             let dataPosition = position &+ 1 &+ buffer.count &+ 1
+            
+            if type == .document || type == .arrayDocument {
+                self.searchTree.unindexedList[key] = dataPosition &+ 4
+            }
             
             if let matcher = matcher, key.keys == matcher.keys {
                 return (position, dataPosition, type)
@@ -162,10 +178,12 @@ extension Document {
                 }
             }
         }
-        
+    
         if matcher == nil {
-            searchTree.complete = true
+            searchTree.fullyIndexed = true
         }
+        
+        unset = true
         
         return nil
     }
@@ -256,7 +274,7 @@ extension Document {
     
     /// Caches the Element start positions
     internal func buildElementPositionsCache() -> Dictionary<KittenBytes, Int> {
-        var position = 4
+        var position = 0
         var positions = Dictionary<KittenBytes, Int>()
         
         loop: while position < self.storage.count {
@@ -334,11 +352,11 @@ extension Document {
     /// - parameter startPos: The byte to start searching from
     ///
     /// - returns: An iterator that iterates over all key-value pairs
-    internal func makeKeyIterator(startingAtByte startPos: Int = 4) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
+    internal func makeKeyIterator(startingAtByte startPos: Int = 0) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
         index(recursive: nil, lookingFor: nil)
         
         var iterator = searchTree.storage.sorted(by: { 
-            $0.0.value < $0.1.value
+            $0.value < $1.value
         }).filter({ $0.key.keys.count == 1 }).makeIterator()
         
         return AnyIterator {

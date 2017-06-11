@@ -31,14 +31,46 @@ extension Document {
     
     /// The `Byte` `Array` (`[Byte]`) representation of this `Document`
     public var bytes: Bytes {
-        return storage + [0x00]
+        return makeDocumentLength() + storage + [0x00]
     }
     
     /// A list of all keys
     public var keys: [String] {
-        index(recursive: nil, lookingFor: nil)
+        var array = [String]()
         
-        return searchTree.storage.filter({ $0.key.keys.count == 1 }).sorted(by: { $0.0.1 < $0.1.1 }).flatMap({ $0.key.keys.first }).flatMap { String(bytes: $0.bytes, encoding: .utf8) }
+        var position = 0
+        
+        while position < storage.count {
+            guard position &+ 2 < self.storage.count else {
+                return array
+            }
+            
+            guard let type = ElementType(rawValue: self.storage[position]) else {
+                return array
+            }
+            
+            var buffer = Bytes()
+            
+            keySkipper : for i in position + 1..<storage.count {
+                guard self.storage[i] != 0 else {
+                    // null terminator + length
+                    position = i &+ 1
+                    break keySkipper
+                }
+                
+                buffer.append(self.storage[i])
+            }
+            
+            guard let key = String(bytes: buffer, encoding: .utf8) else {
+                return array
+            }
+            
+            array.append(key)
+            
+            position = position &+ self.getLengthOfElement(withDataPosition: position, type: type)
+        }
+        
+        return array
     }
     
     public var efficientKeyValuePairs: [(KittenBytes, Primitive)] {
@@ -73,9 +105,37 @@ extension Document {
     
     /// The `Array` representation of this `Document`
     public var arrayValue: [Primitive] {
-        return makeKeyIterator().flatMap { pos in
-            getValue(atDataPosition: pos.dataPosition, withType: pos.type)
+        var array = [Primitive]()
+        
+        var position = 0
+        
+        while position < storage.count {
+            guard position &+ 2 < self.storage.count else {
+                return array
+            }
+            
+            guard let type = ElementType(rawValue: self.storage[position]) else {
+                return array
+            }
+            
+            keySkipper : for i in position + 1..<storage.count {
+                guard self.storage[i] != 0 else {
+                    // null terminator + length
+                    position = i &+ 1
+                    break keySkipper
+                }
+            }
+            
+            guard let value = getValue(atDataPosition: position, withType: type) else {
+                return array
+            }
+            
+            array.append(value)
+            
+            position = position &+ self.getLengthOfElement(withDataPosition: position, type: type)
         }
+        
+        return array
     }
     
     /// - returns: `true` when this `Document` is a valid BSON `Array`. `false` otherwise

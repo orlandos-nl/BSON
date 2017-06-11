@@ -13,18 +13,7 @@ extension Document {
     ///
     /// - returns: The status of validation. `true` for valid and vice-versa
     public func validate() -> Bool {
-        guard storage.count >= 4 else {
-            return false
-        }
-        
-        let length = Int(bytes[0..<4].makeInt32())
-        
-        // Check the length (including non-existing null terminator)
-        guard storage.count + 1 == length else {
-            return false
-        }
-        
-        var position = 4
+        var position = 0
         
         while position < storage.count {
             // Get the element type

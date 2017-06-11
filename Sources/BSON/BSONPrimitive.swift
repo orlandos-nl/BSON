@@ -415,7 +415,7 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
     public typealias SequenceType = Document
     
     public var typeIdentifier: Byte {
-        return self.validatesAsArray() ? 0x04 : 0x03
+        return self.isArray ?? validatesAsArray() ? 0x04 : 0x03
     }
     
     public func makeBinary() -> Bytes {

@@ -39,7 +39,11 @@ struct IndexKey: Hashable {
 
 class IndexTree {
     var storage = Dictionary<IndexKey, Int>()
-    var complete: Bool = false
+    var fullyIndexed: Bool = false
+    var unindexedList: [IndexKey : Int] = [IndexKey([]): 0]
+    var complete: Bool {
+        return fullyIndexed && unindexedList.count == 0
+    }
     
     init() {}
 }

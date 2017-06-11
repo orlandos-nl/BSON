@@ -20,7 +20,7 @@ extension Dictionary : Primitive {
             return Document().makeBinary()
         }
         
-        let doc = Document(dictionaryElements: dict.map { ($0, $1) })
+        let doc = Document(dictionaryElements: dict.map { ($0.0, $0.1) })
         return doc.makeBinary()
     }
 }
