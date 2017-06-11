@@ -90,20 +90,20 @@ extension Document {
             return nil
         }
         
-        var unset = false
+//        var unset = false
         var position: Int
         
         let thisKey = keys ?? IndexKey([])
         
         if let keys = keys, let pos = searchTree.storage[keys] {
             position = pos
-        } else if let resume = searchTree.unindexedList[thisKey] {
-            position = resume
+//        } else if let resume = searchTree.unindexedList[thisKey] {
+//            position = resume
         } else {
             position = 0
         }
 
-        defer { searchTree.unindexedList[thisKey] = unset ? nil : position }
+//        defer { searchTree.unindexedList[thisKey] = unset ? nil : position }
         
         if keys != nil {
             guard position &+ 2 < self.storage.count else {
@@ -150,9 +150,9 @@ extension Document {
             
             let dataPosition = position &+ 1 &+ buffer.count &+ 1
             
-            if type == .document || type == .arrayDocument {
-                self.searchTree.unindexedList[key] = dataPosition &+ 4
-            }
+//            if type == .document || type == .arrayDocument {
+//                self.searchTree.unindexedList[key] = dataPosition &+ 4
+//            }
             
             if let matcher = matcher, key.keys == matcher.keys {
                 return (position, dataPosition, type)
@@ -183,7 +183,7 @@ extension Document {
             searchTree.fullyIndexed = true
         }
         
-        unset = true
+//        unset = true
         
         return nil
     }
@@ -389,12 +389,11 @@ extension Document {
     ///
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
-    internal func getValue(atDataPosition startPosition: Int, withType type: ElementType, kittenString: Bool = false) -> Primitive? {
+    internal func getValue(atDataPosition position: Int, withType type: ElementType, kittenString: Bool = false) -> Primitive? {
         do {
-            var position = startPosition
             
             func remaining() -> Int {
-                return storage.endIndex - startPosition
+                return storage.endIndex - position
             }
             
             switch type {
@@ -421,8 +420,6 @@ extension Document {
                 
                 // Empty string
                 if length == 1 {
-                    position += 5
-                    
                     return ""
                 }
                 
@@ -452,7 +449,20 @@ extension Document {
                     return nil
                 }
                 
-                return Document(data: storage[position..<position+length])
+                let cache = IndexTree()
+                // TODO: Check if this subdocument is fully indexed, not the entire document
+                cache.fullyIndexed = true
+                cache.storage.reserveCapacity(self.searchTree.storage.count &- 1)
+                
+                for (key, value) in self.searchTree.storage where value > position && value < position + length && key.keys.count > 1 {
+                    var keys = key.keys
+                    keys.removeFirst()
+                    
+                    // pos - document header
+                    cache.storage[IndexKey(keys)] = value &- 4 &- position
+                }
+                
+                return Document(data: storage[position + 4..<position+length-1], copying: cache)
             case .binary: // binary
                 guard remaining() >= 5 else {
                     return nil
@@ -466,8 +476,6 @@ extension Document {
                 }
                 
                 let realData = length > 0 ? Array(storage[position+5...position+4+length]) : []
-                // length + subType + data
-                position += 4 + 1 + Int(length)
                 
                 return Binary(data: realData, withSubtype: Binary.Subtype(rawValue: subType))
             case .objectId: // objectid

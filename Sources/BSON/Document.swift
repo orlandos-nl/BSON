@@ -144,6 +144,19 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage = Array(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
     }
     
+    /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
+    ///
+    /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
+    internal init(data: ArraySlice<Byte>, copying cache: IndexTree) {
+        guard data.count > 5 else {
+            storage = []
+            return
+        }
+        
+        storage = Array(data)
+        self.searchTree = cache
+    }
+    
     /// Initializes an empty `Document`
     public init() {
         // the empty document is 5 bytes long.
