@@ -87,6 +87,20 @@ extension Document {
     @discardableResult
     internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, offset: Int = 0, levels: Int? = nil) -> ElementMetadata? {
         if searchTree.fullyIndexed {
+            guard let matcher = matcher, let pos = searchTree[position: matcher] else {
+                return nil
+            }
+            
+            guard let type = ElementType(rawValue: self.storage[pos]) else {
+                return nil
+            }
+            
+            keySkipper : for i in pos &+ 1..<storage.count {
+                guard self.storage[i] != 0 else {
+                    return (pos, i &+ 1, type)
+                }
+            }
+            
             return nil
         }
         
@@ -94,7 +108,9 @@ extension Document {
         
         let thisKey = keys ?? []
         
-        resumeCheck: if var keys = keys {
+        resumeCheck: if let matcher = matcher, let pos = searchTree[position: matcher] {
+            position = pos
+        } else if var keys = keys {
             if let pos = searchTree[position: keys] {
                 if searchTree[keys]?.fullyIndexed == true {
                     return nil
@@ -125,7 +141,7 @@ extension Document {
             }
             
             // elementTypePosition + 1 (key position)
-            keySkipper : for i in position + 1..<storage.count {
+            keySkipper : for i in position &+ 1..<storage.count {
                 guard self.storage[i] != 0 else {
                     // null terminator + length
                     position = i &+ 5
@@ -201,8 +217,8 @@ extension Document {
         
         if let keys = keys {
             self.searchTree[keys]?.fullyIndexed = true
-        } else {
-            self.searchTree.fullyIndexed = true
+        } else if levels == nil {
+            self.searchTree.fullyIndexed = self.searchTree.storage.values.reduce(true) { $0.1.fullyIndexed && $0.0 }
         }
         
 //        unset = true
