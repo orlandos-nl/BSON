@@ -1,47 +1,12 @@
 import KittenCore
 
 struct IndexKey: Hashable {
-    let keys: [KittenBytes]
+    let key: KittenBytes
     let hashValue: Int
     
-    init(_ keys: [KittenBytes]) {
-        self.keys = keys
-        
-        guard keys.count > 0 else {
-            self.hashValue = 0
-            return
-        }
-        
-        var hash = 0
-        var h2: Int
-        
-        for i in 0..<keys.count {
-            guard keys[i].bytes.count > 0 else {
-                hash = (hash &+ i) &* (i &+ 1)
-                continue
-            }
-            
-            h2 = 0
-            
-            for j in 0..<keys[i].bytes.count {
-                h2 = 31 &* h2 &+ numericCast(keys[i].bytes[j])
-            }
-            
-            hash = (hash &+ h2 &+ i) &* (i &+ 1)
-        }
-        
-        self.hashValue = hash
-    }
-    
-    init(_ parts: [SubscriptExpressionType]) {
-        self.init(parts.map {
-            switch $0.subscriptExpression {
-            case .kittenBytes(let bytes):
-                return bytes
-            case .integer(let pos):
-                return pos.description.kittenBytes
-            }
-        })
+    init(_ key: KittenBytes) {
+        self.key = key
+        self.hashValue = key.hashValue
     }
     
     static func ==(lhs: IndexKey, rhs: IndexKey) -> Bool {
@@ -49,17 +14,121 @@ struct IndexKey: Hashable {
     }
     
     var s: String {
-        return String(bytes: keys.map { $0.bytes }.joined(separator: []), encoding: .utf8)!
+        return String(bytes: key.bytes, encoding: .utf8)!
     }
 }
 
-class IndexTree {
-    var storage = Dictionary<IndexKey, Int>()
+class IndexTrieNode {
+    var storage = Dictionary<IndexKey, IndexTrieNode>()
+    var value: Int
     var fullyIndexed: Bool = false
-    //var unindexedList: [IndexKey : Int] = [IndexKey([]): 0]
-    var complete: Bool {
-        return fullyIndexed// && unindexedList.count == 0
+    
+    init(_ value: Int) {
+        self.value = value
     }
     
-    init() {}
+    subscript(position path: [IndexKey]) -> Int? {
+        get {
+            var position = 0
+            var iterator = path.makeIterator()
+            
+            guard let first = iterator.next() else {
+                return nil
+            }
+            
+            guard var node: IndexTrieNode = storage[first] else {
+                return nil
+            }
+            
+            position += node.value
+            var previousComponentLength: Int = first.key.bytes.count
+            
+            while let component = iterator.next() {
+                guard let subNode = node.storage[component] else {
+                    return nil
+                }
+                
+                node = subNode
+                
+                position += subNode.value &+ 6 &+ previousComponentLength
+                
+                previousComponentLength = component.key.bytes.count
+            }
+            
+            return position
+        }
+    }
+    
+    subscript(_ path: [IndexKey]) -> IndexTrieNode? {
+        get {
+            var iterator = path.makeIterator()
+            
+            guard let first = iterator.next() else {
+                return nil
+            }
+            
+            guard var node: IndexTrieNode = storage[first] else {
+                return nil
+            }
+            
+            while let component = iterator.next() {
+                guard let subNode = node.storage[component] else {
+                    return nil
+                }
+                
+                node = subNode
+            }
+            
+            return node
+        }
+        set {
+            var iterator = path.makeIterator()
+            
+            guard let newValue = newValue else {
+                guard let first = iterator.next() else {
+                    return
+                }
+                
+                var node: IndexTrieNode? = self.storage[first]
+                
+                func mutate(_ node: inout IndexTrieNode?) {
+                    if node != nil, let next = iterator.next() {
+                        var newNode = node?.storage[next]
+                        
+                        mutate(&newNode)
+                        
+                        node?.storage[next] = newNode
+                    } else {
+                        node = nil
+                    }
+                }
+                
+                mutate(&node)
+                
+                self.storage[first] = node
+                return
+            }
+            
+            var node: IndexTrieNode = self
+            var last: IndexKey?
+            
+            while let next = iterator.next() {
+                last = next
+                guard let nextNode = node.storage[next] else {
+                    guard iterator.next() == nil else {
+                        return
+                    }
+                    
+                    node.storage[next] = newValue
+                    return
+                }
+                
+                node = nextNode
+            }
+            
+            if let last = last {
+                node.storage[last] = newValue
+            }
+        }
+    }
 }

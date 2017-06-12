@@ -14,14 +14,7 @@ extension Document {
     public var count: Int {
         index(recursive: nil, lookingFor: nil)
         
-        var count = 0
-        
-        // Only top-level keys
-        for key in searchTree.storage.keys where key.keys.count == 1 {
-            count = count &+ 1
-        }
-        
-        return count
+        return searchTree.storage.count
     }
     
     /// The amount of `Byte`s in the `Document`

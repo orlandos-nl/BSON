@@ -82,7 +82,7 @@ extension Document {
         }
         
         _ = try? flatten(start: 0, keyPrefixBytes: ArraySlice<Byte>(), isRootDocument: true)
-        self.searchTree = IndexTree()
+        self.searchTree = IndexTrieNode(0)
         self.index(recursive: nil, lookingFor: nil)
     }
     

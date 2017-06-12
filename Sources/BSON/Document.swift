@@ -91,7 +91,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     
     internal var isArray: Bool?
     internal var storage: Bytes
-    internal var searchTree = IndexTree()
+    internal var searchTree = IndexTrieNode(0) {
+        willSet {
+            if !original {
+                let trie = IndexTrieNode(searchTree.value)
+                trie.storage = searchTree.storage
+                trie.value = 0
+                original = true
+            }
+        }
+    }
+    internal var original = true
     
     // MARK: - Initialization from data
     
@@ -147,7 +157,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    internal init(data: ArraySlice<Byte>, copying cache: IndexTree) {
+    internal init(data: ArraySlice<Byte>, copying cache: IndexTrieNode) {
         guard data.count > 5 else {
             storage = []
             return
@@ -264,7 +274,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage.append(contentsOf: value.makeBinary())
     }
     
-    internal mutating func unset(_ key: IndexKey) {
+    internal mutating func unset(_ key: [IndexKey]) {
         guard let meta = getMeta(for: key) else {
             return
         }
@@ -275,59 +285,88 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage.removeSubrange(meta.elementTypePosition..<dataEndPosition)
         let relativeLength = dataEndPosition - meta.elementTypePosition
         
-        self.searchTree.storage[key] = nil
+        // Remove indexes for this key since the value is being removed
+        self.searchTree[key] = nil
         
-        unsetSubkeys(for: key)
+        for (key, value) in self.searchTree.storage where value.value > meta.elementTypePosition {
+            self.searchTree.storage[key]?.value = value.value &- relativeLength
+        }
         
         updateCache(mutatingPosition: meta.elementTypePosition, by: -relativeLength, for: key)
     }
     
-    internal mutating func set(value: Primitive, for key: IndexKey) {
+    internal mutating func set(value: Primitive, for key: [IndexKey]) {
         var relativeLength = 0
         var mutatedPosition = 0
         
-        unsetSubkeys(for: key)
+        // Creates a trie node for the value at the given position
+        // Will be called later down the line with the position
+        // Additonally copies the index from the value if it's a document
+        func makeTrie(for mutatedPosition: Int, with value: Primitive, key: [IndexKey]) {
+            let node = IndexTrieNode(mutatedPosition)
+            
+            if let trie = (value as? Document)?.buildAndReturnIndex().storage {
+                node.storage = trie
+            }
+            
+            self.searchTree[key] = node
+        }
         
+        // If the key already has a value
         if let meta = getMeta(for: key) {
+            // Remove the value (not the key)
             let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
             let dataEndPosition = meta.dataPosition &+ len
             
             storage.removeSubrange(meta.dataPosition..<dataEndPosition)
+            
+            // Add the new value after the key
             let oldLength = dataEndPosition - meta.dataPosition
             let newBinary = value.makeBinary()
             storage.insert(contentsOf: newBinary, at: meta.dataPosition)
+            
+            // Replace the element type
             storage[meta.elementTypePosition] = value.typeIdentifier
             relativeLength = newBinary.count - oldLength
             
+            // Update the trie cache
             mutatedPosition = meta.elementTypePosition
             
+            // Update relevant document headers
             updateCache(mutatingPosition: mutatedPosition, by: relativeLength, for: key)
             
-            if value is Document {
-                for (subKey, position) in (value as! Document).buildAndReturnIndex().storage {
-                    self.searchTree.storage[IndexKey(key.keys + subKey.keys)] = position &+ mutatedPosition
-                }
+            makeTrie(for: mutatedPosition, with: value, key: key)
+            
+            for (key, value) in self.searchTree.storage where value.value > meta.elementTypePosition {
+                self.searchTree.storage[key]?.value = value.value &+ relativeLength
             }
             
             // update element
-        } else if let lastPart = key.keys.last {
-            if key.keys.count == 1 {
-                self.searchTree.storage[key] = self.storage.endIndex
+        } else if let lastPart = key.last {
+            // The value doesn't exist, and the key provided is valid (has a key)
+            
+            // If the key is top-level, append to the end of the Document
+            if key.count == 1 {
+                // Create a new trie node
+                makeTrie(for: self.storage.endIndex, with: value, key: key)
+                
                 // Append the key-value pair
                 // Type identifier
                 self.storage.append(value.typeIdentifier)
                 // Key
-                self.storage.append(contentsOf: lastPart.bytes)
+                self.storage.append(contentsOf: lastPart.key.bytes)
                 // Key null terminator
                 self.storage.append(0x00)
                 // Value
                 self.storage.append(contentsOf: value.makeBinary())
             } else {
+                // The value doesn't exist and resides in a subdocument, this is complex
                 let fullKey = key
-                var keys = key.keys
-                keys.removeLast()
-                let key = IndexKey(keys)
+                var key = key
+                key.removeLast()
                 
+                // Inserts the provided value into the document at the given position
+                // Seeks to the end of the document and inserts it at the end
                 func insert(_ value: Primitive, into position: Int, for keyName: KittenBytes) {
                     // If it's a Document, insert, otherwise, do nothing
                     guard let type = ElementType(rawValue: storage[position]), (type == .arrayDocument || type == .document) else {
@@ -344,107 +383,89 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                     relativeLength = keyName.bytes.count &+ 2 &+ serializedValue.count
                     mutatedPosition = position &+ dataLength &- 1
                     
+                    makeTrie(for: mutatedPosition, with: value, key: fullKey)
+                    
                     // Insert the new value into the subdocument
-                    self.searchTree.storage[fullKey] = self.storage.endIndex
                     self.storage.insert(contentsOf: serializedPair, at: mutatedPosition)
                 }
                 
-                // Look for the subdocument
-                if let position = searchTree.storage[key] ?? index(recursive: nil, lookingFor: key)?.elementTypePosition {
+                // Look for the highest level matching subdocument, and create the necessary structure in there
+                
+                // If all of the subdocuments exist, but the key isn't there yet, add the value
+                if let position = searchTree[position: key] ?? index(recursive: nil, lookingFor: key)?.elementTypePosition {
                     replaceLoop: for i in position..<storage.count {
                         if storage[i] == 0x00 {
-                            insert(value, into: position, for: lastPart)
-                            break replaceLoop
+                            // Insert the value into the provided document
+                            insert(value, into: i &+ 1, for: lastPart.key)
+                            return
                         }
                     }
                 } else {
-                    var subDocuments: [KittenBytes] = [lastPart]
+                    var subDocuments: [KittenBytes] = [lastPart.key]
                     
+                    // Look through all keys in the path until an existing subdocument is found (or none is found)
+                    // All skipped keys will be created and inserted at the best matching (sub)document
                     loop: while true {
-                        if keys.count > 0 {
-                            subDocuments.append(keys.removeLast())
+                        // Remove the next key from the path and append it as a subdocument
+                        if key.count > 0 {
+                            subDocuments.append(key.removeLast().key)
                         }
                         
-                        guard let meta = getMeta(for: IndexKey(keys)) else {
-                            guard keys.count > 0 else {
+                        // If the current path doesn't exist
+                        guard let meta = getMeta(for: key) else {
+                            // There must be remaining keys, otherwise, insert it top-level
+                            guard key.count > 0 else {
                                 let key = subDocuments.removeLast()
                                 var document = Document()
                                 
                                 document[subDocuments.reversed()] = value
-                                let appendPosition = storage.endIndex
+                                makeTrie(for: self.storage.endIndex, with: document, key: [IndexKey(key)])
                                 self.append(document, forKey: key.bytes)
                                 
+                                // Update relevant document headers
                                 updateCache(mutatingPosition: mutatedPosition, by: relativeLength, for: fullKey)
                                 
-                                self.searchTree.storage[IndexKey([key])] = appendPosition
-                                
-                                for (subKey, position) in document.buildAndReturnIndex().storage {
-                                    // element, 
-                                    self.searchTree.storage[IndexKey([key] + subKey.keys)] = position &+ 6 &+ key.bytes.count &+ appendPosition
-                                }
                                 break loop
                             }
                             
                             continue
                         }
                         
+                        // If the path does exist, and there are subdocuments to be created
                         if subDocuments.count > 0 {
                             let firstSubDocument = subDocuments.removeLast()
                             var document = Document()
+                            subDocuments.reverse()
                             
-                            document[subDocuments.reversed() + [lastPart]] = value
+                            document[subDocuments + [lastPart.key]] = value
                             
-                            insert(document, into: meta.elementTypePosition, for: firstSubDocument)
+                            insert(document, into: meta.dataPosition, for: firstSubDocument)
                             
                             updateCache(mutatingPosition: mutatedPosition, by: relativeLength, for: key)
+                            makeTrie(for: meta.dataPosition, with: document, key: key)
+                        } else {
+                            // If there are no necessary subdocuments to be created
                             
-                            self.searchTree.storage[IndexKey([firstSubDocument])] = meta.elementTypePosition
-                            
-                            for (subKey, position) in document.buildAndReturnIndex().storage {
-                                self.searchTree.storage[IndexKey(key.keys + subKey.keys)] = position &+ 6 &+ firstSubDocument.bytes.count &+ mutatedPosition
-                            }
-                            
-                            break loop
+                            // Insert the value into this subdocument
+                            insert(value, into: meta.elementTypePosition, for: lastPart.key)
+                            makeTrie(for: meta.elementTypePosition, with: value, key: [lastPart])
                         }
-                        
-                        insert(value, into: meta.elementTypePosition, for: lastPart)
-                        
-                        self.searchTree.storage[IndexKey([lastPart])] = meta.elementTypePosition
-                        
-                        break loop
                     }
                 }
             }
-        } else {
-            return
         }
     }
     
-    fileprivate func unsetSubkeys(for key: IndexKey) {
-        nextKey: for indexKey in searchTree.storage.keys where indexKey.keys.count > key.keys.count {
-            for i in 0..<key.keys.count where indexKey.keys[i] != key.keys[i] {
-                continue nextKey
-            }
-            
-            searchTree.storage[indexKey] = nil
-        }
-    }
-    
-    fileprivate mutating func updateCache(mutatingPosition position: Int, by relativeLength: Int, for key: IndexKey) {
-        // Modify the searchTree efficienty, where necessary
-        for (key, startPosition) in searchTree.storage where startPosition > position {
-            searchTree.storage[key] = startPosition &+ relativeLength
-        }
-        
-        if key.keys.count > 1 {
+    fileprivate mutating func updateCache(mutatingPosition position: Int, by relativeLength: Int, for key: [IndexKey]) {
+        if key.count > 1 {
             // Update all document headers, including sub documents
-            for pos in 1..<key.keys.count {
-                self.updateDocumentHeader(for: IndexKey(Array(key.keys[0..<pos])), relativeLength: relativeLength)
+            for pos in 1..<key.count {
+                self.updateDocumentHeader(for: Array(key[0..<pos]), relativeLength: relativeLength)
             }
         }
     }
     
-    internal mutating func updateDocumentHeader(for key: IndexKey, relativeLength: Int) {
+    internal mutating func updateDocumentHeader(for key: [IndexKey], relativeLength: Int) {
         guard let dataPosition = getMeta(for: key)?.dataPosition, dataPosition < storage.count else {
             return
         }
@@ -579,9 +600,9 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - returns: The `Value` in the pair if there was any
     @discardableResult public mutating func removeValue(forKey key: String) -> Primitive? {
         let indexString = KittenBytes([UInt8](key.utf8))
-        let key = IndexKey([indexString])
+        let key = IndexKey(indexString)
         
-        guard let meta = getMeta(for: key) else {
+        guard let meta = getMeta(for: [key]) else {
             return nil
         }
         
@@ -597,8 +618,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         searchTree.storage[key] = nil
         
         // Modify the searchTree efficienty, where necessary
-        for (searchKey, startPosition) in searchTree.storage where startPosition > meta.elementTypePosition {
-            searchTree.storage[searchKey] = startPosition &- (length &+ indexString.bytes.count &+ 2)
+        for node in searchTree.storage.values where node.value > meta.elementTypePosition {
+            node.value = node.value &- (length &+ indexString.bytes.count &+ 2)
         }
         
         return val

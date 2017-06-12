@@ -61,16 +61,16 @@ extension Document {
         }
     }
     
-    func makeIndexKey(from keyParts: [SubscriptExpressionType]) -> IndexKey {
-        var parts = [KittenBytes]()
+    func makeIndexKey(from keyParts: [SubscriptExpressionType]) -> [IndexKey] {
+        var parts = [IndexKey]()
         
         indexKeyBuilder: for part in keyParts {
             switch part.subscriptExpression {
             case .kittenBytes(let bytes):
-                parts.append(bytes)
+                parts.append(IndexKey(bytes))
             case .integer(let pos):
                 guard pos > -1 else {
-                    parts.append(KittenBytes(Bytes(pos.description.utf8)))
+                    parts.append(IndexKey(KittenBytes(Bytes(pos.description.utf8))))
                     continue indexKeyBuilder
                 }
                 
@@ -80,8 +80,9 @@ extension Document {
                 if parts.count == 0 {
                     pointer = 0
                 } else {
-                    guard let meta = getMeta(for: IndexKey(parts)) else {
-                        parts.append(KittenBytes(Bytes(pos.description.utf8)))
+                    // TODO: Leave this in?
+                    guard let meta = getMeta(for: parts) else {
+                        parts.append(IndexKey(KittenBytes(Bytes(pos.description.utf8))))
                         continue indexKeyBuilder
                     }
                     
@@ -94,7 +95,7 @@ extension Document {
                     for i in pointer..<storage.count {
                         guard self.storage[i] != 0 else {
                             guard let type = ElementType(rawValue: self.storage[pointer]) else {
-                                parts.append(KittenBytes(Bytes(pos.description.utf8)))
+                                parts.append(IndexKey(KittenBytes(Bytes(pos.description.utf8))))
                                 continue indexKeyBuilder
                             }
                             
@@ -110,14 +111,14 @@ extension Document {
                 pointer = pointer &+ 1
                 
                 guard pointer < storage.count else {
-                    parts.append(KittenBytes(key))
+                    parts.append(IndexKey(KittenBytes(key)))
                     
                     continue indexKeyBuilder
                 }
                 
                 for i in pointer..<storage.count {
                     guard self.storage[i] != 0 else {
-                        parts.append(KittenBytes(key))
+                        parts.append(IndexKey(KittenBytes(key)))
                         
                         continue indexKeyBuilder
                     }
@@ -127,7 +128,7 @@ extension Document {
             }
         }
         
-        return IndexKey(parts)
+        return parts
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
@@ -135,7 +136,7 @@ extension Document {
         get {
             let key = makeIndexKey(from: parts)
             
-            if let position = searchTree.storage[key] {
+            if let position = searchTree[position: key] {
                 guard let currentKey = getMeta(atPosition: position) else {
                     return nil
                 }

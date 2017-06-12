@@ -79,31 +79,30 @@ extension Document {
     
     internal typealias ElementMetadata = (elementTypePosition: Int, dataPosition: Int, type: ElementType)
     
-    internal func buildAndReturnIndex() -> IndexTree {
+    internal func buildAndReturnIndex() -> IndexTrieNode {
         self.index(recursive: nil, lookingFor: nil)
         return searchTree
     }
     
     @discardableResult
-    internal func index(recursive keys: IndexKey? = nil, lookingFor matcher: IndexKey?) -> ElementMetadata? {
-        if searchTree.complete {
+    internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, offset: Int = 0) -> ElementMetadata? {
+        if searchTree.fullyIndexed {
             return nil
         }
         
-//        var unset = false
         var position: Int
         
-        let thisKey = keys ?? IndexKey([])
+        let thisKey = keys ?? []
         
-        if let keys = keys, let pos = searchTree.storage[keys] {
-            position = pos
-//        } else if let resume = searchTree.unindexedList[thisKey] {
-//            position = resume
+        if let keys = keys {
+            if let pos = searchTree[position: keys] {
+                position = pos
+            } else {
+                fatalError()
+            }
         } else {
             position = 0
         }
-
-//        defer { searchTree.unindexedList[thisKey] = unset ? nil : position }
         
         if keys != nil {
             guard position &+ 2 < self.storage.count else {
@@ -144,17 +143,13 @@ extension Document {
                 buffer.append(storage[i])
             }
             
-            let key = IndexKey(thisKey.keys + [KittenBytes(buffer)])
+            let key = thisKey + [IndexKey(KittenBytes(buffer))]
             
-            searchTree.storage[key] = position
+            searchTree[key] = IndexTrieNode(position &- offset)
             
             let dataPosition = position &+ 1 &+ buffer.count &+ 1
             
-//            if type == .document || type == .arrayDocument {
-//                self.searchTree.unindexedList[key] = dataPosition &+ 4
-//            }
-            
-            if let matcher = matcher, key.keys == matcher.keys {
+            if let matcher = matcher, key == matcher {
                 return (position, dataPosition, type)
             }
             
@@ -162,18 +157,18 @@ extension Document {
             
             if type == .document || type == .arrayDocument {
                 if let matcher = matcher {
-                    guard matcher.keys.count > key.keys.count else {
+                    guard matcher.count > key.count else {
                         continue iterator
                     }
                     
-                    for (pos, key) in key.keys.enumerated() {
-                        guard matcher.keys[pos] == key else {
+                    for (pos, key) in key.enumerated() {
+                        guard matcher[pos] == key else {
                             continue iterator
                         }
                     }
                 }
                 
-                if let result = index(recursive: key, lookingFor: matcher), matcher != nil {
+                if let result = index(recursive: key, lookingFor: matcher, offset: dataPosition &+ 4), matcher != nil {
                     return result
                 }
             }
@@ -195,8 +190,8 @@ extension Document {
     /// - parameter keyBytes: The binary (`[Byte]`) representation of the key's `String` as C-String
     ///
     /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
-    internal func getMeta(for indexKey: IndexKey) -> ElementMetadata? {
-        guard let keyByteCount = indexKey.keys.last?.bytes.count, let position = searchTree.storage[indexKey], position < storage.count else {
+    internal func getMeta(for indexKey: [IndexKey]) -> ElementMetadata? {
+        guard let keyByteCount = indexKey.last?.key.bytes.count, let position = searchTree[position: indexKey], position < storage.count else {
             return index(recursive: nil, lookingFor: indexKey)
         }
         
@@ -356,15 +351,15 @@ extension Document {
         index(recursive: nil, lookingFor: nil)
         
         var iterator = searchTree.storage.sorted(by: { 
-            $0.value < $1.value
-        }).filter({ $0.key.keys.count == 1 }).makeIterator()
+            $0.value.value < $1.value.value
+        }).makeIterator()
         
         return AnyIterator {
-            guard let position = iterator.next()?.1 else {
+            guard let position = iterator.next()?.1.value else {
                 return nil
             }
             
-            guard self.storage.count - position > 2 else {
+            guard self.storage.count &- position > 2 else {
                 // Invalid document condition
                 return nil
             }
@@ -389,7 +384,7 @@ extension Document {
     ///
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
-    internal func getValue(atDataPosition position: Int, withType type: ElementType, kittenString: Bool = false) -> Primitive? {
+    internal func getValue(atDataPosition position: Int, withType type: ElementType, kittenString: Bool = false, forIndexKey indexKey: [IndexKey]? = nil) -> Primitive? {
         do {
             
             func remaining() -> Int {
@@ -449,20 +444,11 @@ extension Document {
                     return nil
                 }
                 
-                let cache = IndexTree()
-                // TODO: Check if this subdocument is fully indexed, not the entire document
-                cache.fullyIndexed = true
-                cache.storage.reserveCapacity(self.searchTree.storage.count &- 1)
-                
-                for (key, value) in self.searchTree.storage where value > position && value < position + length && key.keys.count > 1 {
-                    var keys = key.keys
-                    keys.removeFirst()
-                    
-                    // pos - document header
-                    cache.storage[IndexKey(keys)] = value &- 4 &- position
+                if let indexKey = indexKey, let node = self.searchTree[indexKey] {
+                    return Document(data: storage[position + 4..<position+length-1], copying: node)
+                } else {
+                    return Document(data: storage[position..<position+length])
                 }
-                
-                return Document(data: storage[position + 4..<position+length-1], copying: cache)
             case .binary: // binary
                 guard remaining() >= 5 else {
                     return nil

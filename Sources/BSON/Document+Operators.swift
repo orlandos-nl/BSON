@@ -63,7 +63,7 @@ extension Document {
         }
         
         lhs.storage.append(contentsOf: rhs.storage)
-        lhs.searchTree = IndexTree()
+        lhs.searchTree = IndexTrieNode(0)
         lhs.index(recursive: nil, lookingFor: nil)
     }
 }
