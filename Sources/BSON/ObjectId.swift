@@ -49,20 +49,19 @@ public struct ObjectId {
     
     /// Generate a new random ObjectId.
     public init() {
-        var data = Bytes()
+        var data = Bytes(repeating: 0, count: 12)
         
-        let epoch = Int32(time(nil))
+        var epoch = Int32(time(nil)).bigEndian
         
-        // Take the current UNIX epoch as Int32 and take it's bytes
-        data += epoch.makeBigEndianBytes()
-        
-        // Take a random number
-        data += ObjectId.random.makeBytes()
-        
-        // And add a counter as 2 bytes and increment it
-        ObjectId.counterQueue.sync {
-            data += ObjectId.counter.makeBytes()
-            ObjectId.counter = ObjectId.counter &+ 1
+        data.withUnsafeMutableBufferPointer { ptr in
+            memcpy(ptr.baseAddress!, &epoch, 4)
+            memcpy(ptr.baseAddress!.advanced(by: 4), &ObjectId.random, 4)
+            
+            // And add a counter as 2 bytes and increment it
+            ObjectId.counterQueue.sync {
+                memcpy(ptr.baseAddress!.advanced(by: 8), &ObjectId.counter, 4)
+                ObjectId.counter = ObjectId.counter &+ 1
+            }
         }
         
         self._storage = data

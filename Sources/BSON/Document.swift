@@ -215,23 +215,35 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         storage = []
         self.isArray = true
         
-        for (index, value) in elements.enumerated() {
-            guard let value = value else {
-                continue
+        var reserved = 0
+        var counter = 0
+        
+        let elements: [(UInt8, [UInt8], [UInt8])] = elements.flatMap { element in
+            defer { counter = counter &+ 1 }
+            guard let element = element else {
+                return nil
             }
             
-            let key = Bytes(index.description.utf8)
+            let key = [UInt8](counter.description.utf8)
+            let data = element.makeBinary()
+            reserved = reserved &+ data.count &+ key.count &+ 2
             
+            return (element.typeIdentifier, key, data)
+        }
+        
+        storage.reserveCapacity(reserved)
+        
+        for (type, key, value) in elements {
             // Append the values
             
             // Type identifier
-            storage.append(value.typeIdentifier)
+            storage.append(type)
             // Key
             storage.append(contentsOf: key)
             // Key null terminator
             storage.append(0x00)
             // Value
-            storage.append(contentsOf: value.makeBinary())
+            storage.append(contentsOf: value)
         }
     }
     
