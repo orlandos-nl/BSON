@@ -83,7 +83,6 @@ extension Document {
         
         _ = try? flatten(start: 0, keyPrefixBytes: ArraySlice<Byte>(), isRootDocument: true)
         self.searchTree = IndexTrieNode(0)
-        self.index(recursive: nil, lookingFor: nil)
     }
     
     /// Returns the document, removing any subdocuments and adding their key-value pairs as individual key-value pairs on the parent document.

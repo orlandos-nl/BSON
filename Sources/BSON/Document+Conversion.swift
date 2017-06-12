@@ -12,7 +12,8 @@ import KittenCore
 extension Document {
     /// The amount of key-value pairs in the `Document`
     public var count: Int {
-        index(recursive: nil, lookingFor: nil)
+        // top level scan
+        index(recursive: nil, lookingFor: nil, levels: 0)
         
         return searchTree.storage.count
     }

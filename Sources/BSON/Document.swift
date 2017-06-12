@@ -119,10 +119,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: Bytes) {
-        defer {
-            index(recursive: nil, lookingFor: nil)
-        }
-        
         guard data.count > 5 else {
             storage = []
             return
@@ -142,10 +138,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<Byte>) {
-        defer {
-            index(recursive: nil, lookingFor: nil)
-        }
-        
         guard data.count > 5 else {
             storage = []
             return
@@ -180,10 +172,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
     public init(dictionaryElements elements: [(String, Primitive?)]) {
-        defer {
-            index(recursive: nil, lookingFor: nil)
-        }
-        
         storage = []
         self.isArray = false
         
@@ -224,10 +212,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [Primitive?]) {
-        defer {
-            index(recursive: nil, lookingFor: nil)
-        }
-        
         storage = []
         self.isArray = true
         

@@ -85,7 +85,7 @@ extension Document {
     }
     
     @discardableResult
-    internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, offset: Int = 0) -> ElementMetadata? {
+    internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, offset: Int = 0, levels: Int? = nil) -> ElementMetadata? {
         if searchTree.fullyIndexed {
             return nil
         }
@@ -94,11 +94,22 @@ extension Document {
         
         let thisKey = keys ?? []
         
-        if let keys = keys {
+        resumeCheck: if var keys = keys {
             if let pos = searchTree[position: keys] {
                 position = pos
             } else {
-                fatalError()
+                var keys2 = [IndexKey]()
+                
+                while keys.count > 0 {
+                    keys2.append(keys.removeLast())
+                    
+                    if let pos = searchTree[position: keys] {
+                        position = pos
+                        break resumeCheck
+                    }
+                }
+                
+                position = 0
             }
         } else {
             position = 0
@@ -165,6 +176,16 @@ extension Document {
                         guard matcher[pos] == key else {
                             continue iterator
                         }
+                    }
+                }
+                
+                if let levels = levels {
+                    guard levels > 0 else {
+                        continue iterator
+                    }
+                    
+                    if let result = index(recursive: key, lookingFor: matcher, offset: dataPosition &+ 4, levels: levels &- 1), matcher != nil {
+                        return result
                     }
                 }
                 
@@ -348,8 +369,6 @@ extension Document {
     ///
     /// - returns: An iterator that iterates over all key-value pairs
     internal func makeKeyIterator(startingAtByte startPos: Int = 0) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
-        index(recursive: nil, lookingFor: nil)
-        
         var iterator = searchTree.storage.sorted(by: { 
             $0.value.value < $1.value.value
         }).makeIterator()
