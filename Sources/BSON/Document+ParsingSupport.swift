@@ -96,6 +96,10 @@ extension Document {
         
         resumeCheck: if var keys = keys {
             if let pos = searchTree[position: keys] {
+                if searchTree[keys]?.fullyIndexed == true {
+                    return nil
+                }
+                
                 position = pos
             } else {
                 var keys2 = [IndexKey]()
@@ -194,9 +198,11 @@ extension Document {
                 }
             }
         }
-    
-        if matcher == nil {
-            searchTree.fullyIndexed = true
+        
+        if let keys = keys {
+            self.searchTree[keys]?.fullyIndexed = true
+        } else {
+            self.searchTree.fullyIndexed = true
         }
         
 //        unset = true

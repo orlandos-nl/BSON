@@ -289,7 +289,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         func makeTrie(for mutatedPosition: Int, with value: Primitive, key: [IndexKey]) {
             let node = IndexTrieNode(mutatedPosition)
             
-            if let trie = (value as? Document)?.buildAndReturnIndex().storage {
+            if let trie = (value as? Document)?.searchTree.storage {
                 node.storage = trie
             }
             
