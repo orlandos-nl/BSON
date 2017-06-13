@@ -460,7 +460,7 @@ extension Document {
                 
                 let double: Double = try fromBytes(storage[position..<position+8])
                 return double
-            case .string, .javascriptCode: // string
+            case .javascriptCode:
                 // Check for null-termination and at least 5 bytes (length spec + terminator)
                 guard remaining() >= 5 else {
                     return nil
@@ -483,24 +483,38 @@ extension Document {
                     return nil
                 }
                 
-                var stringData = Array(storage[position+4..<position+Int(length + 3)])
+                let stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
-                if type == .javascriptCode {
-                    guard let string = String(bytes: stringData, encoding: .utf8) else {
-                        return nil
-                    }
-                    
-                    return JavascriptCode(string)
+                return String(bytes: stringData, encoding: .utf8)
+            case .string: // string
+                // Check for null-termination and at least 5 bytes (length spec + terminator)
+                guard remaining() >= 5 else {
+                    return nil
                 }
+                
+                // Get the length
+                let length: Int32 = storage[position...position+3].makeInt32()
+                
+                // Check if the data is at least the right size
+                guard storage.count-position >= Int(length) + 4 else {
+                    return nil
+                }
+                
+                // Empty string
+                if length == 1 {
+                    return ""
+                }
+                
+                guard length > 0 else {
+                    return nil
+                }
+                
+                let stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
                 if kittenString {
                     return KittenBytes(stringData)
                 } else {
-                    guard let string = String(bytes: stringData, encoding: .utf8) else {
-                        return nil
-                    }
-                    
-                    return string
+                    return String(bytes: stringData, encoding: .utf8)
                 }
             case .document, .arrayDocument: // document / array
                 guard remaining() >= 5 else {
