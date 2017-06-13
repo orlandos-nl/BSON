@@ -57,7 +57,13 @@ extension Document {
                 
                 // If the element is not a document (or array, which is a document), move past it.
                 guard (type == .arrayDocument && !skipArrays) || type == .document else {
-                    index = dataPosition + getLengthOfElement(withDataPosition: dataPosition, type: type)
+                    let len = getLengthOfElement(withDataPosition: dataPosition, type: type)
+                    
+                    guard len >= 0 else {
+                        throw FlattenError.invalidDocument
+                    }
+                    
+                    index = dataPosition + len
                     continue
                 }
                 

@@ -61,7 +61,13 @@ extension Document {
             
             array.append(key)
             
-            position = position &+ self.getLengthOfElement(withDataPosition: position, type: type)
+            let len = self.getLengthOfElement(withDataPosition: position, type: type)
+            
+            guard len >= 0 else {
+                return array
+            }
+            
+            position = position &+ len
         }
         
         return array
@@ -126,7 +132,13 @@ extension Document {
             
             array.append(value)
             
-            position = position &+ self.getLengthOfElement(withDataPosition: position, type: type)
+            let len = self.getLengthOfElement(withDataPosition: position, type: type)
+            
+            guard len >= 0 else {
+                return array
+            }
+            
+            position = position &+ len
         }
         
         return array

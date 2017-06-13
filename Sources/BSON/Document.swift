@@ -120,7 +120,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: Bytes) {
-        guard data.count > 5 else {
+        guard data.count > 4 else {
             invalid = true
             storage = []
             return
@@ -140,7 +140,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        storage = Array(data[4..<Swift.max(length &- 1, 0)])
+        storage = Array(data[4..<length &- 1])
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
@@ -300,6 +300,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         }
         
         let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+        
+        guard len >= 0 else {
+            return
+        }
+        
         let dataEndPosition = meta.dataPosition &+ len
         
         storage.removeSubrange(meta.elementTypePosition..<dataEndPosition)
@@ -336,6 +341,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         if let meta = getMeta(for: key) {
             // Remove the value (not the key)
             let len = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+            
+            guard len >= 0 else {
+                return
+            }
+            
             let dataEndPosition = meta.dataPosition &+ len
             
             storage.removeSubrange(meta.dataPosition..<dataEndPosition)
@@ -394,6 +404,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                     }
                     
                     let dataLength = getLengthOfElement(withDataPosition: position, type: type)
+                    
+                    guard dataLength >= 0 else {
+                        return
+                    }
+                    
                     
                     // Serialize the value
                     let serializedValue = value.makeBinary()
@@ -609,6 +624,10 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         let length = getLengthOfElement(withDataPosition: position, type: type)
         
+        guard length >= 0 else {
+            fatalError("Invalid value found in Document when finding the next key at position \(position)")
+        }
+        
         // Return the position of the byte after the value
         return DocumentIndex(byteIndex: position + length)
     }
@@ -628,6 +647,10 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         let val = getValue(atDataPosition: meta.dataPosition, withType: meta.type)
         let length = getLengthOfElement(withDataPosition: meta.dataPosition, type: meta.type)
+        
+        guard length >= 0 else {
+            return nil
+        }
         
         guard meta.dataPosition + length <= storage.count else {
             return nil
