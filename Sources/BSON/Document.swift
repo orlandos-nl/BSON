@@ -91,6 +91,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     
     internal var isArray: Bool?
     internal var storage: Bytes
+    internal var invalid: Bool = false
     internal var searchTree = IndexTrieNode(0) {
         willSet {
             if !original {
@@ -120,13 +121,21 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: Bytes) {
         guard data.count > 5 else {
+            invalid = true
             storage = []
             return
         }
         
         let length = Int(data[0...3].makeInt32())
         
+        guard length > 4 else {
+            invalid = true
+            storage = data
+            return
+        }
+        
         guard length <= data.count, data.last == 0x00 else {
+            invalid = true
             storage = Array(data[4..<data.count &- 1])
             return
         }
@@ -139,7 +148,22 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: ArraySlice<Byte>) {
         guard data.count > 5 else {
+            invalid = true
             storage = []
+            return
+        }
+        
+        let length = Int(data[data.startIndex...data.startIndex.advanced(by: 3)].makeInt32())
+        
+        guard length > 4 else {
+            invalid = true
+            storage = Array(data)
+            return
+        }
+        
+        guard length <= data.count, data.last == 0x00 else {
+            invalid = true
+            storage = Array(data[4..<data.count &- 1])
             return
         }
         

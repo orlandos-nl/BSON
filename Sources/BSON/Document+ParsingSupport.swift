@@ -77,6 +77,8 @@ extension Collection where Self.Iterator.Element == Byte, Self.Index == Int {
 
 extension Document {
     
+    // MARK: - BSON Parsing Logic
+    
     internal typealias ElementMetadata = (elementTypePosition: Int, dataPosition: Int, type: ElementType)
     
     internal func buildAndReturnIndex() -> IndexTrieNode {
@@ -84,8 +86,16 @@ extension Document {
         return searchTree
     }
     
+    /// Searches through this document and it's subdocument until the matching key has been found.
+    ///
+    /// Incrementally updates the index as it goes along and continues where it left until either the key is found, doesn't exist or the level depth has been reached.
+    ///
+    /// - parameter keys: The key path to start looking from, useful for continueing a recursive search. If nil, start top-level.
+    /// - parameter matcher: The key path to look for recursively. If nil, it will look for everything
+    /// - parameter levels: The depth to stop scanning at. `0` is top level.
     @discardableResult
-    internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, offset: Int = 0, levels: Int? = nil) -> ElementMetadata? {
+    internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, levels: Int? = nil) -> ElementMetadata? {
+        // If the key path is indexes, return the data about this key path
         if searchTree.fullyIndexed {
             guard let matcher = matcher, let pos = searchTree[position: matcher] else {
                 return nil
@@ -108,6 +118,7 @@ extension Document {
         
         let thisKey = keys ?? []
         
+        // Look for the place to resume, or start from nothing
         resumeCheck: if let matcher = matcher, let pos = searchTree[position: matcher] {
             position = pos
         } else if var keys = keys {
@@ -135,6 +146,7 @@ extension Document {
             position = 0
         }
         
+        // Skip over the last key, to the start of the elements
         if keys != nil {
             guard position &+ 2 < self.storage.count else {
                 return nil
@@ -149,12 +161,16 @@ extension Document {
                 }
             }
         }
-    
+        
+        let basePosition = position
+        
+        // Iterate over all keys, caching as we go along
         iterator: while position < self.storage.count {
             guard position &+ 2 < self.storage.count else {
                 return nil
             }
             
+            // Extract the type
             guard let type = ElementType(rawValue: self.storage[position]) else {
                 return nil
             }
@@ -165,7 +181,7 @@ extension Document {
             
             var buffer = Bytes()
             
-            // elementTypePosition + 1 (key position)
+            // Iterate over the key, put it into the buffer
             keyBuilder : for i in position + 1..<storage.count {
                 guard self.storage[i] != 0 else {
                     break keyBuilder
@@ -176,17 +192,23 @@ extension Document {
             
             let key = thisKey + [IndexKey(KittenBytes(buffer))]
             
-            searchTree[key] = IndexTrieNode(position &- offset)
+            // Create an index for this entry
+            searchTree[key] = IndexTrieNode(position &- basePosition)
             
             let dataPosition = position &+ 1 &+ buffer.count &+ 1
             
+            // If there's a match, return thr results
             if let matcher = matcher, key == matcher {
                 return (position, dataPosition, type)
             }
             
+            // Skip to the next key
             position = dataPosition &+ self.getLengthOfElement(withDataPosition: dataPosition, type: type)
             
+            // If this element was a Document
             if type == .document || type == .arrayDocument {
+                // If there was a matcher, continue iterating if this wasn't a match, otherwise, dive in!
+                // If there was no matcher, dive in anyways
                 if let matcher = matcher {
                     guard matcher.count > key.count else {
                         continue iterator
@@ -199,17 +221,18 @@ extension Document {
                     }
                 }
                 
+                // Diving in? Sure. But don't go too deep if there's a depth specified
                 if let levels = levels {
                     guard levels > 0 else {
                         continue iterator
                     }
                     
-                    if let result = index(recursive: key, lookingFor: matcher, offset: dataPosition &+ 4, levels: levels &- 1), matcher != nil {
+                    if let result = index(recursive: key, lookingFor: matcher, levels: levels &- 1), matcher != nil {
                         return result
                     }
                 }
                 
-                if let result = index(recursive: key, lookingFor: matcher, offset: dataPosition &+ 4), matcher != nil {
+                if let result = index(recursive: key, lookingFor: matcher), matcher != nil {
                     return result
                 }
             }
@@ -221,12 +244,8 @@ extension Document {
             self.searchTree.fullyIndexed = self.searchTree.storage.values.reduce(true) { $0.1.fullyIndexed && $0.0 }
         }
         
-//        unset = true
-        
         return nil
     }
-    
-    // MARK: - BSON Parsing Logic
     
     /// This function traverses the document and searches for the type and data belonging to the key
     ///
@@ -391,6 +410,7 @@ extension Document {
     ///
     /// - returns: An iterator that iterates over all key-value pairs
     internal func makeKeyIterator(startingAtByte startPos: Int = 0) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
+        self.index(recursive: nil, lookingFor: nil, levels: 0)
         var iterator = searchTree.storage.sorted(by: { 
             $0.value.value < $1.value.value
         }).makeIterator()
@@ -440,7 +460,7 @@ extension Document {
                 
                 let double: Double = try fromBytes(storage[position..<position+8])
                 return double
-            case .string: // string
+            case .string, .javascriptCode: // string
                 // Check for null-termination and at least 5 bytes (length spec + terminator)
                 guard remaining() >= 5 else {
                     return nil
@@ -465,10 +485,18 @@ extension Document {
                 
                 var stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
+                if type == .javascriptCode {
+                    guard let string = String(bytes: stringData, encoding: .utf8) else {
+                        return nil
+                    }
+                    
+                    return JavascriptCode(string)
+                }
+                
                 if kittenString {
                     return KittenBytes(stringData)
                 } else {
-                    guard let string = String(bytesNoCopy: &stringData, length: stringData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
+                    guard let string = String(bytes: stringData, encoding: .utf8) else {
                         return nil
                     }
                     
@@ -545,12 +573,6 @@ extension Document {
                 }
                 
                 return RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
-            case .javascriptCode:
-                guard let code = try? String.instantiate(bytes: Array(storage[position..<storage.endIndex])) else {
-                    return nil
-                }
-                
-                return JavascriptCode(code)
             case .javascriptCodeWithScope:
                 // min length is 14 bytes: 4 for the int32, 5 for the string and 5 for the document
                 guard remaining() >= 14 else {

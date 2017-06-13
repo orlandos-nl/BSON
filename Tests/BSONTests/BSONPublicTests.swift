@@ -126,6 +126,8 @@ final class BSONPublicTests: XCTestCase {
         
         XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
        XCTAssert(document.validate())
+        
+        XCTAssertEqual(document.dictionaryValue.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
     }
     
     func testObjectIdUniqueness() {

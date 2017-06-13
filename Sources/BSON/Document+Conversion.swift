@@ -71,7 +71,7 @@ extension Document {
         var pairs = [(KittenBytes, Primitive)]()
         
         for pos in makeKeyIterator() {
-            let key = KittenBytes(Array(pos.keyData[0..<pos.keyData.endIndex-1]))
+            let key = KittenBytes(Array(pos.keyData[0..<pos.keyData.endIndex]))
             
             if let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type, kittenString: true) {
                 pairs.append((key, value))
@@ -86,7 +86,7 @@ extension Document {
         var dictionary = [String: Primitive]()
         
         for pos in makeKeyIterator() {
-            if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex-1], encoding: String.Encoding.utf8) {
+            if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex], encoding: String.Encoding.utf8) {
                 
                 let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
                 

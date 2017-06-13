@@ -13,6 +13,10 @@ extension Document {
     ///
     /// - returns: The status of validation. `true` for valid and vice-versa
     public func validate() -> Bool {
+        if invalid {
+            return false
+        }
+        
         var position = 0
         
         while position < storage.count {
@@ -35,7 +39,7 @@ extension Document {
             }
             
             // Check that the String ends with a null-terminator
-            guard storage[position] == 0 else {
+            guard position < storage.count, storage[position] == 0 else {
                 return false
             }
             
@@ -71,15 +75,21 @@ extension Document {
                 length = getLengthOfElement(withDataPosition: position, type: type)
             }
             
-            // Check if the length is correct
-            guard storage.count >= position + length else {
-                return false
-            }
-            
             // Position after the value
             position += length
+            
+            if type == .string {
+                guard position - 1 < storage.count, storage[position - 1] == 0x00 else {
+                    return false
+                }
+            }
+            
+            // Check if the length is correct
+            guard storage.count >= position else {
+                return false
+            }
         }
         
-        return true
+        return position == storage.count
     }
 }

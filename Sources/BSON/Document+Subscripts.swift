@@ -184,7 +184,7 @@ extension Document {
             // Skip beyond the null-terminator
             position += 1
             
-            guard let key = String(bytesNoCopy: &keyData, length: keyData.count, encoding: String.Encoding.utf8, freeWhenDone: false) else {
+            guard let key = String(bytes: keyData, encoding: .utf8) else {
                 fatalError("Unable to construct the key bytes into a String")
             }
             
