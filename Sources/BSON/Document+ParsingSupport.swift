@@ -440,7 +440,7 @@ extension Document {
                 
                 // Empty string
                 if length == 1 {
-                    return ""
+                    return JavascriptCode(code: "")
                 }
                 
                 guard length > 0 else {
@@ -449,7 +449,11 @@ extension Document {
                 
                 let stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
-                return String(bytes: stringData, encoding: .utf8)
+                guard let code = String(bytes: stringData, encoding: .utf8) else {
+                    return nil
+                }
+                
+                return JavascriptCode(code: code)
             case .string: // string
                 // Check for null-termination and at least 5 bytes (length spec + terminator)
                 guard remaining() >= 5 else {
@@ -573,11 +577,6 @@ extension Document {
                 let stringDataAndMore = Array(storage[position+4..<position+totalLength])
                 var trueCodeSize = 0
                 guard let code = try? String.instantiate(bytes: stringDataAndMore, consumedBytes: &trueCodeSize) else {
-                    return nil
-                }
-                
-                // - 4 (length) - 5 (document)
-                guard stringDataAndMore.count - 4 - 5 >= trueCodeSize else {
                     return nil
                 }
                 

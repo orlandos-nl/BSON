@@ -63,7 +63,7 @@ extension Document {
                     return false
                 }
             default:
-                guard storage.count > position + 4 + (type == .binary ? 1 : 0) else {
+                guard storage.count >= position + 4 + (type == .binary ? 1 : 0) else {
                     return false
                 }
                 
