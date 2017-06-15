@@ -36,6 +36,8 @@ final class BSONPublicTests: XCTestCase {
             ("testDocumentCombineOperators", testDocumentCombineOperators),
             ("testDocumentFlattening", testDocumentFlattening),
             ("testTypeChecking", testTypeChecking),
+            ("testCacheCorruption", testCacheCorruption),
+            ("testBinaryEquatable", testBinaryEquatable)
         ]
     }
     
@@ -564,5 +566,11 @@ final class BSONPublicTests: XCTestCase {
         
         document["foo"] = nil
         _ = document["_id"] // crash
+    }
+    
+    func testBinaryEquatable() {
+        XCTAssert(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
+        XCTAssertFalse(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .uuid))
+        XCTAssertFalse(Binary(data: [0x00, 0x00], withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
     }
 }
