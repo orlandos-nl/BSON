@@ -19,6 +19,14 @@ class BSONCodableTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
+    
+    func testSecuenceCoding() throws {
+        let array = ["Hoi", "Sup", "abcdefghijklmnop"]
+        let document = Document(array: array)
+        let codedDocument = try BSONEncoder().encode(array)
+        XCTAssertEqual(document.bytes, codedDocument.bytes)
+    }
+    
     @available(OSX 10.12, *)
     func testEncoding() throws {
         struct Cat : Encodable {

@@ -199,7 +199,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     
     func superEncoder() -> Encoder {
         // TODO: Check: is this OK?
-        return encoder
+        return nestedEncoder()
     }
     
     func encode(_ value: Bool) throws { try encoder.target.document.append(encoder.convert(value)) }
@@ -221,6 +221,10 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
 
 fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
     let encoder: _BSONEncoder
+    
+    init(encoder: _BSONEncoder) {
+        self.encoder = encoder
+    }
     
     func encodeNil() throws { encoder.target.primitive = nil }
     func encode(_ value: Bool) throws { try encoder.target.primitive = encoder.convert(value) }
