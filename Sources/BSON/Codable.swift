@@ -1,5 +1,5 @@
 //
-//  Encoding.swift
+//  Codable.swift
 //  BSON
 //
 //  Created by Robbert Brandsma on 13/06/2017.
@@ -29,7 +29,7 @@ public class BSONEncoder {
     
 }
 
-fileprivate class _BSONEncoder : Encoder {
+fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
     enum Target {
         case document(Document)
         case primitive(get: () -> Primitive?, set: (Primitive?) -> ())
@@ -70,12 +70,12 @@ fileprivate class _BSONEncoder : Encoder {
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> {
-        let container = _BSONKeyedEncodingContainer<Key>(encoder: self, codingPath: codingPath)
+        let container = _BSONKeyedEncodingContainer<Key>(encoder: self)
         return KeyedEncodingContainer(container)
     }
     
     func unkeyedContainer() -> UnkeyedEncodingContainer {
-        fatalError()
+        return _BSONUnkeyedEncodingContainer(encoder: self)
     }
     
     func singleValueContainer() -> SingleValueEncodingContainer {
@@ -85,18 +85,6 @@ fileprivate class _BSONEncoder : Encoder {
     init(codingPath: [CodingKey?] = [], target: Target = .document([:])) {
         self.codingPath = codingPath
         self.target = target
-    }
-    
-    // MARK: - Coding Path Operations
-    /// Performs the given closure with the given key pushed onto the end of the current coding path.
-    ///
-    /// - parameter key: The key to push. May be nil for unkeyed containers.
-    /// - parameter work: The work to perform with the key in the path.
-    func with<T>(pushedKey key: CodingKey?, _ work: () throws -> T) rethrows -> T {
-        self.codingPath.append(key)
-        let ret: T = try work()
-        self.codingPath.removeLast()
-        return ret
     }
     
     // MARK: - Value conversion
@@ -123,40 +111,112 @@ fileprivate class _BSONEncoder : Encoder {
         // BSON only supports 64 bit platforms where UInt64 is the same size as Int64
         return try convert(UInt(value))
     }
+    func encode<T : Encodable>(_ value: T) throws -> Primitive? {
+        if let primitive = value as? Primitive {
+            return primitive
+        } else {
+            var primitive: Primitive? = nil
+            let encoder = _BSONEncoder(target: .primitive(get: { primitive }, set: { primitive = $0 }))
+            try value.encode(to: encoder)
+            return primitive
+        }
+    }
 }
 
-fileprivate struct _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingContainerProtocol {
+fileprivate class _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingContainerProtocol, _BSONCodingPathContaining {
     let encoder: _BSONEncoder
-    
     var codingPath: [CodingKey?]
     
+    init(encoder: _BSONEncoder) {
+        self.encoder = encoder
+        self.codingPath = encoder.codingPath
+    }
+    
     func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
-        if let primitive = value as? Primitive {
-            self.encoder.target.document[key.stringValue] = primitive
-        } else {
-            let encoder = _BSONEncoder(target: .primitive(get: { self.encoder.target.document[key.stringValue] }, set: { self.encoder.target.document[key.stringValue] = $0 }))
-            try value.encode(to: encoder)
+        try with(pushedKey: key) {
+            encoder.target.document[key.stringValue] = try encoder.encode(value)
+        }
+    }
+    
+    private func nestedEncoder(forKey key: CodingKey) -> _BSONEncoder {
+        return self.encoder.with(pushedKey: key) {
+            return _BSONEncoder(codingPath: self.encoder.codingPath, target: .primitive(get: { self.encoder.target.document[key.stringValue] }, set: { self.encoder.target.document[key.stringValue] = $0 }))
         }
     }
     
     func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> {
-        let encoder = _BSONEncoder(target: .primitive(get: { self.encoder.target.document[key.stringValue] }, set: { self.encoder.target.document[key.stringValue] = $0 }))
+        let encoder = nestedEncoder(forKey: key)
         return encoder.container(keyedBy: keyType)
     }
     
-    mutating func nestedUnkeyedContainer(forKey key: K) -> UnkeyedEncodingContainer {
-        fatalError("Unimplemented")
+    func nestedUnkeyedContainer(forKey key: K) -> UnkeyedEncodingContainer {
+        let encoder = nestedEncoder(forKey: key)
+        return encoder.unkeyedContainer()
     }
     
-    mutating func superEncoder() -> Encoder {
-        fatalError("Unimplemented")
+    func superEncoder() -> Encoder {
+        return nestedEncoder(forKey: _BSONSuperKey.super)
     }
     
-    mutating func superEncoder(forKey key: K) -> Encoder {
-        fatalError("Unimplemented")
+    func superEncoder(forKey key: K) -> Encoder {
+        return nestedEncoder(forKey: key)
     }
     
     typealias Key = K
+}
+
+fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
+    var encoder: _BSONEncoder
+    var codingPath: [CodingKey?] {
+        get {
+            return encoder.codingPath
+        }
+        set {
+            encoder.codingPath = newValue
+        }
+    }
+    
+    init(encoder: _BSONEncoder) {
+        self.encoder = encoder
+    }
+    
+    private func nestedEncoder() -> _BSONEncoder {
+        let index = self.encoder.target.document.count
+        self.encoder.target.document.append(Document())
+        return _BSONEncoder(codingPath: codingPath, target: .primitive(get: { self.encoder.target.document[index] }, set: { self.encoder.target.document[index] = $0 }))
+    }
+    
+    func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> {
+        let encoder = nestedEncoder()
+        let container = _BSONKeyedEncodingContainer<NestedKey>(encoder: encoder)
+        return KeyedEncodingContainer(container)
+    }
+    
+    func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
+        let encoder = nestedEncoder()
+        return _BSONUnkeyedEncodingContainer(encoder: encoder)
+    }
+    
+    func superEncoder() -> Encoder {
+        // TODO: Check: is this OK?
+        return encoder
+    }
+    
+    func encode(_ value: Bool) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: Int) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: Int8) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: Int16) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: Int32) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: Int64) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: UInt) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: UInt8) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: UInt16) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: UInt32) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: UInt64) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: String) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: Float) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode(_ value: Double) throws { try encoder.target.document.append(encoder.convert(value)) }
+    func encode<T : Encodable>(_ value: T) throws { try encoder.target.document.append(unwrap(encoder.encode(value), codingPath: codingPath)) }
 }
 
 fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
@@ -215,7 +275,7 @@ fileprivate func unwrap<T>(_ value: T?, codingPath: [CodingKey?]) throws -> T {
     return value
 }
 
-fileprivate class _BSONDecoder : Decoder {
+fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     enum Target {
         case document(Document)
         case primitive(get: () -> Primitive?)
@@ -243,7 +303,7 @@ fileprivate class _BSONDecoder : Decoder {
     }
     let target: Target
     
-    var codingPath: [CodingKey?] = []
+    var codingPath: [CodingKey?]
     
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
@@ -253,15 +313,16 @@ fileprivate class _BSONDecoder : Decoder {
     }
     
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        fatalError("Unimplemented")
+        return _BSONUnkeyedDecodingContainer(decoder: self)
     }
     
     func singleValueContainer() throws -> SingleValueDecodingContainer {
         return _BSONSingleValueDecodingContainer(decoder: self)
     }
     
-    init(target: Target) {
+    init(codingPath: [CodingKey?] = [], target: Target) {
         self.target = target
+        self.codingPath = codingPath
     }
     
     /// Performs the given closure with the given key pushed onto the end of the current coding path.
@@ -544,21 +605,148 @@ fileprivate struct _BSONKeyedDecodingContainer<Key : CodingKey> : KeyedDecodingC
         }
     }
     
-    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
-        fatalError("Unimplemented")
+    private func nestedDecoder(forKey key: CodingKey) -> _BSONDecoder {
+        return decoder.with(pushedKey: key) {
+            return _BSONDecoder(codingPath: self.decoder.codingPath, target: .primitive(get: { self.decoder.target.document[key.stringValue] }))
+        }
+    }
+    
+    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> {
+        return try nestedDecoder(forKey: key).container(keyedBy: type)
     }
     
     func nestedUnkeyedContainer(forKey key: Key) throws -> UnkeyedDecodingContainer {
-        fatalError("Unimplemented")
+        return try nestedDecoder(forKey: key).unkeyedContainer()
     }
     
     func superDecoder() throws -> Decoder {
-        fatalError("Unimplemented")
+        return nestedDecoder(forKey: _BSONSuperKey.super)
     }
     
     func superDecoder(forKey key: Key) throws -> Decoder {
-        fatalError("Unimplemented")
+        return nestedDecoder(forKey: key)
     }
+}
+
+fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSONCodingPathContaining {
+    let decoder: _BSONDecoder
+    var codingPath: [CodingKey?]
+    
+    init(decoder: _BSONDecoder) {
+        self.decoder = decoder
+        self.codingPath = decoder.codingPath
+    }
+    
+    var count: Int? { return decoder.target.document.count }
+    var currentIndex: Int = 0
+    var isAtEnd: Bool {
+        return currentIndex >= self.count!
+    }
+    
+    func next() -> Primitive? {
+        let value = decoder.target.document[currentIndex]
+        currentIndex += 1
+        return value
+    }
+    
+    func decodeIfPresent(_ type: Bool.Type) throws -> Bool? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: Int.Type) throws -> Int? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: Int8.Type) throws -> Int8? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: Int16.Type) throws -> Int16? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: Int32.Type) throws -> Int32? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: Int64.Type) throws -> Int64? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: UInt.Type) throws -> UInt? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: UInt8.Type) throws -> UInt8? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: UInt16.Type) throws -> UInt16? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: UInt32.Type) throws -> UInt32? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: UInt64.Type) throws -> UInt64? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: Float.Type) throws -> Float? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: Double.Type) throws -> Double? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent(_ type: String.Type) throws -> String? {
+        guard !isAtEnd else { return nil }
+        return try decoder.unwrap(next())
+    }
+    
+    func decodeIfPresent<T>(_ type: T.Type) throws -> T? where T : Decodable {
+        guard !isAtEnd else { return nil }
+        return try decoder.decode(next())
+    }
+    
+    func nestedDecoder() throws -> _BSONDecoder {
+        return try decoder.with(pushedKey: nil) {
+            guard !isAtEnd else {
+                throw DecodingError.valueNotFound(Decoder.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot get nested decoder -- unkeyed container is at end."))
+            }
+            
+            let value = next()
+            return _BSONDecoder(target: .storedPrimitive(value))
+        }
+    }
+    
+    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> {
+        return try nestedDecoder().container(keyedBy: type)
+    }
+    
+    func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
+        return try nestedDecoder().unkeyedContainer()
+    }
+    
+    func superDecoder() throws -> Decoder {
+        return try nestedDecoder()
+    }
+    
 }
 
 fileprivate struct _BSONSingleValueDecodingContainer : SingleValueDecodingContainer {
@@ -585,4 +773,29 @@ fileprivate struct _BSONSingleValueDecodingContainer : SingleValueDecodingContai
     func decode(_ type: String.Type) throws -> String { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
     func decode<T>(_ type: T.Type) throws -> T where T : Decodable { return try unwrap(decoder.decode(decoder.target.primitive)) }
     
+}
+
+// - MARK: Supporting Protocols
+fileprivate protocol _BSONCodingPathContaining : class {
+    var codingPath: [CodingKey?] { get set }
+}
+
+extension _BSONCodingPathContaining {
+    // MARK: - Coding Path Operations
+    /// Performs the given closure with the given key pushed onto the end of the current coding path.
+    ///
+    /// - parameter key: The key to push. May be nil for unkeyed containers.
+    /// - parameter work: The work to perform with the key in the path.
+    func with<T>(pushedKey key: CodingKey?, _ work: () throws -> T) rethrows -> T {
+        self.codingPath.append(key)
+        let ret: T = try work()
+        self.codingPath.removeLast()
+        return ret
+    }
+}
+
+// - MARK: Shared Super Key
+
+fileprivate enum _BSONSuperKey : String, CodingKey {
+    case `super`
 }

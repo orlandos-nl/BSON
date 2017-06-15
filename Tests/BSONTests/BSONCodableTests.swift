@@ -30,6 +30,8 @@ class BSONCodableTests: XCTestCase {
                 var length = Measurement(value: 30, unit: UnitLength.centimeters)
             }
             var tail = Tail()
+            
+            var otherNames = ["King", "Queen"]
         }
         let cat = Cat()
         let doc = try BSONEncoder().encode(cat)
@@ -44,13 +46,15 @@ class BSONCodableTests: XCTestCase {
             var _id: ObjectId
             var name: String
             var sample: Float
+            var otherNames: [String]
         }
         
-        let doc: Document = ["_id": ObjectId(), "name": "Harrie", "sample": 4.5]
+        let doc: Document = ["_id": ObjectId(), "name": "Harrie", "sample": 4.5, "otherNames": ["King", "Queen"]]
         let cat = try BSONDecoder().decode(Cat.self, from: doc)
         XCTAssertEqual(doc["name"] as? String, cat.name)
         XCTAssertEqual(doc["_id"] as? ObjectId, cat._id)
         XCTAssertEqual(doc["sample"] as? Double, Double(cat.sample))
+        XCTAssertEqual(["King", "Queen"], cat.otherNames)
     }
     
 }
