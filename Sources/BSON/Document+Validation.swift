@@ -28,11 +28,6 @@ extension Document {
             // Position after the element type
             position += 1
             
-            // This musn't be the end of the document or key
-            guard storage[position] != 0 else {
-                return false
-            }
-            
             // Find the end of the key - if any
             while position < storage.count && storage[position] != 0 {
                 position += 1
@@ -63,23 +58,49 @@ extension Document {
             // Calculated:
             case .regex: // defined as "cstring cstring"
                 length = getLengthOfElement(withDataPosition: position, type: type)
-            case .binary:
-                guard storage.count > position + 5 else {
+                
+                guard length >= 0 else {
                     return false
                 }
-                length = getLengthOfElement(withDataPosition: position, type: type)
             default:
-                guard storage.count > position + 4 else {
+                guard storage.count >= position + 4 + (type == .binary ? 1 : 0) else {
                     return false
                 }
+                
                 length = getLengthOfElement(withDataPosition: position, type: type)
+                
+                guard length >= 0 else {
+                    return false
+                }
+            }
+            
+            if type == .document || type == .arrayDocument {
+                guard position + length - 1 < storage.count else {
+                    return false
+                }
+                
+                let doc = Document(data: Array(storage[position...position + length - 1]))
+                guard doc.validate() else {
+                    return false
+                }
+                
+                // The BSON spec requires this, but MongoDB's unit tests specifically require ignoring this
+//                if type == .arrayDocument && !doc.validatesAsArray() {
+//                    return false
+//                }
+            }
+            
+            if type == .boolean {
+                guard storage[position] == 0x00 || storage[position] == 0x01 else {
+                    return false
+                }
             }
             
             // Position after the value
             position += length
             
             if type == .string {
-                guard position - 1 < storage.count, storage[position - 1] == 0x00 else {
+                guard length > 4, position - 1 < storage.count, storage[position - 1] == 0x00 else {
                     return false
                 }
             }

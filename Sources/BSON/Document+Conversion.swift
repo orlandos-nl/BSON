@@ -61,7 +61,13 @@ extension Document {
             
             array.append(key)
             
-            position = position &+ self.getLengthOfElement(withDataPosition: position, type: type)
+            let len = self.getLengthOfElement(withDataPosition: position, type: type)
+            
+            guard len >= 0 else {
+                return array
+            }
+            
+            position = position &+ len
         }
         
         return array
@@ -82,7 +88,13 @@ extension Document {
     }
     
     /// The `Dictionary` representation of this `Document`
+    @available(*, deprecated, renamed: "dictionaryRepresentation")
     public var dictionaryValue: [String: Primitive] {
+        return self.dictionaryRepresentation
+    }
+    
+    /// The `Dictionary` representation of this `Document`
+    public var dictionaryRepresentation: [String: Primitive] {
         var dictionary = [String: Primitive]()
         
         for pos in makeKeyIterator() {
@@ -98,7 +110,14 @@ extension Document {
     }
     
     /// The `Array` representation of this `Document`
+    @available(*, deprecated, renamed: "arrayRepresentation")
     public var arrayValue: [Primitive] {
+        return self.arrayRepresentation
+    }
+    
+    /// The `Array` representation of this `Document`.
+    /// Returns all values as an array, discarding the keys.
+    public var arrayRepresentation: [Primitive] {
         var array = [Primitive]()
         
         var position = 0
@@ -126,7 +145,13 @@ extension Document {
             
             array.append(value)
             
-            position = position &+ self.getLengthOfElement(withDataPosition: position, type: type)
+            let len = self.getLengthOfElement(withDataPosition: position, type: type)
+            
+            guard len >= 0 else {
+                return array
+            }
+            
+            position = position &+ len
         }
         
         return array

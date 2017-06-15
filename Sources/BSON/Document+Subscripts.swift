@@ -99,7 +99,13 @@ extension Document {
                                 continue indexKeyBuilder
                             }
                             
-                            pointer = i &+ 1 &+ getLengthOfElement(withDataPosition: i &+ 1, type: type)
+                            let len = getLengthOfElement(withDataPosition: i &+ 1, type: type)
+                            
+                            guard len >= 0 else {
+                                return []
+                            }
+                            
+                            pointer = i &+ 1 &+ len
                             
                             continue keySkipper
                         }
@@ -219,6 +225,10 @@ extension Document {
             position = stringPosition + newValue.key.characters.count + 1
             
             let length = getLengthOfElement(withDataPosition: position, type: type)
+            
+            guard length >= 0 else {
+                return
+            }
             
             storage.removeSubrange(position..<position+length)
             storage.insert(contentsOf: newBsonValue.makeBinary(), at: position)

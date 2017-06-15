@@ -127,7 +127,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
        XCTAssert(document.validate())
         
-        XCTAssertEqual(document.dictionaryValue.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
+        XCTAssertEqual(document.dictionaryRepresentation.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
     }
     
     func testObjectIdUniqueness() {
@@ -202,7 +202,7 @@ final class BSONPublicTests: XCTestCase {
         let bytes = arrayDoc.bytes
         let reInstantiated = Document(data: bytes)
         
-        let arrayValue = reInstantiated.arrayValue
+        let arrayValue = reInstantiated.arrayRepresentation
         
         XCTAssertEqual(arrayDoc.count, arrayValue.count)
         XCTAssertEqual(arrayValue[0] as? String, "kaas")

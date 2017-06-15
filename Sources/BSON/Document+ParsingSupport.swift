@@ -202,8 +202,14 @@ extension Document {
                 return (position, dataPosition, type)
             }
             
+            let len = getLengthOfElement(withDataPosition: dataPosition, type: type)
+            
+            guard len >= 0 else {
+                return nil
+            }
+            
             // Skip to the next key
-            position = dataPosition &+ self.getLengthOfElement(withDataPosition: dataPosition, type: type)
+            position = dataPosition &+ len
             
             // If this element was a Document
             if type == .document || type == .arrayDocument {
@@ -308,67 +314,25 @@ extension Document {
             return currentPosition - position // invalid
         case .string, .javascriptCode: // Types with their entire length EXCLUDING the int32 in the first 4 bytes
             guard need(5) else { // length definition + null terminator
-                return 0
+                return -1
             }
             
             return Int(storage[position...position+3].makeInt32() + 4)
         case .binary:
             guard need(5) else {
-                return 0
+                return -1
             }
             
             return Int(storage[position...position+3].makeInt32() + 5)
         case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
             guard need(4) else {
-                return 0
+                return -1
             }
             
             return Int(storage[position...position+3].makeInt32())
         case .decimal128:
             return 16
         }
-    }
-    
-    /// Caches the Element start positions
-    internal func buildElementPositionsCache() -> Dictionary<KittenBytes, Int> {
-        var position = 0
-        var positions = Dictionary<KittenBytes, Int>()
-        
-        loop: while position < self.storage.count {
-            let startPosition = position
-            
-            guard self.storage.count - position > 2 else {
-                // Invalid document condition
-                break loop
-            }
-            
-            guard let type = ElementType(rawValue: self.storage[position]) else {
-                break loop
-            }
-            
-            position += 1
-            
-            var buffer = Bytes()
-            
-            // get the key data
-            while self.storage.count > position {
-                defer {
-                    position += 1
-                }
-                
-                if self.storage[position] == 0 {
-                    break
-                }
-                
-                buffer.append(storage[position])
-            }
-            
-            position += self.getLengthOfElement(withDataPosition: position, type: type)
-            
-            positions[KittenBytes(buffer)] = startPosition
-        }
-        
-        return positions
     }
     
     /// Fetches the info for the key-value at the given position
@@ -460,7 +424,37 @@ extension Document {
                 
                 let double: Double = try fromBytes(storage[position..<position+8])
                 return double
-            case .string, .javascriptCode: // string
+            case .javascriptCode:
+                // Check for null-termination and at least 5 bytes (length spec + terminator)
+                guard remaining() >= 5 else {
+                    return nil
+                }
+                
+                // Get the length
+                let length: Int32 = storage[position...position+3].makeInt32()
+                
+                // Check if the data is at least the right size
+                guard storage.count-position >= Int(length) + 4 else {
+                    return nil
+                }
+                
+                // Empty string
+                if length == 1 {
+                    return JavascriptCode(code: "")
+                }
+                
+                guard length > 0 else {
+                    return nil
+                }
+                
+                let stringData = Array(storage[position+4..<position+Int(length + 3)])
+                
+                guard let code = String(bytes: stringData, encoding: .utf8) else {
+                    return nil
+                }
+                
+                return JavascriptCode(code: code)
+            case .string: // string
                 // Check for null-termination and at least 5 bytes (length spec + terminator)
                 guard remaining() >= 5 else {
                     return nil
@@ -483,24 +477,12 @@ extension Document {
                     return nil
                 }
                 
-                var stringData = Array(storage[position+4..<position+Int(length + 3)])
-                
-                if type == .javascriptCode {
-                    guard let string = String(bytes: stringData, encoding: .utf8) else {
-                        return nil
-                    }
-                    
-                    return JavascriptCode(string)
-                }
+                let stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
                 if kittenString {
                     return KittenBytes(stringData)
                 } else {
-                    guard let string = String(bytes: stringData, encoding: .utf8) else {
-                        return nil
-                    }
-                    
-                    return string
+                    return String(bytes: stringData, encoding: .utf8)
                 }
             case .document, .arrayDocument: // document / array
                 guard remaining() >= 5 else {
@@ -548,7 +530,14 @@ extension Document {
                     return nil
                 }
                 
-                return storage[position] == 0x00 ? false : true
+                switch storage[position] {
+                case 0x00:
+                    return false
+                case 0x01:
+                    return true
+                default:
+                    return nil
+                }
             case .utcDateTime:
                 guard remaining() >= 8 else {
                     return nil
@@ -588,11 +577,6 @@ extension Document {
                 let stringDataAndMore = Array(storage[position+4..<position+totalLength])
                 var trueCodeSize = 0
                 guard let code = try? String.instantiate(bytes: stringDataAndMore, consumedBytes: &trueCodeSize) else {
-                    return nil
-                }
-                
-                // - 4 (length) - 5 (document)
-                guard stringDataAndMore.count - 4 - 5 >= trueCodeSize else {
                     return nil
                 }
                 

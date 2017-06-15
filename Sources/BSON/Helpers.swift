@@ -62,7 +62,7 @@ internal extension String {
             throw DeserializationError.invalidElementSize
         }
         
-        var stringData = Array(data[4..<Int(length + 3)])
+        let stringData = Array(data[4..<Int(length + 3)])
         
         guard let string = String(bytes: stringData, encoding: .utf8) else {
             throw DeserializationError.unableToInstantiateString(fromBytes: stringData)
