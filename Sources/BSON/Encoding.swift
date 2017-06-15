@@ -22,16 +22,49 @@ public class BSONEncoder {
         let encoder = _BSONEncoder()
         try value.encode(to: encoder)
         
-        return encoder.storage
+        return encoder.target.document
     }
     
 }
 
 fileprivate class _BSONEncoder : Encoder {
-    var storage: Document
+    enum Target {
+        case document(Document)
+        case primitive(get: () -> Primitive?, set: (Primitive?) -> ())
+        
+        var document: Document {
+            get {
+                switch self {
+                case .document(let doc): return doc
+                case .primitive(let get, _): return get() as? Document ?? Document()
+                }
+            }
+            set {
+                switch self {
+                case .document: self = .document(newValue)
+                case .primitive(_, let set): set(newValue)
+                }
+            }
+        }
+        
+        var primitive: Primitive? {
+            get {
+                switch self {
+                case .document(let doc): return doc
+                case .primitive(let get, _): return get()
+                }
+            }
+            set {
+                switch self {
+                case .document: self = .document(newValue as! Document)
+                case .primitive(_, let set): set(newValue)
+                }
+            }
+        }
+    }
+    var target: Target
     
     var codingPath: [CodingKey?]
-    
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> {
@@ -44,32 +77,49 @@ fileprivate class _BSONEncoder : Encoder {
     }
     
     func singleValueContainer() -> SingleValueEncodingContainer {
-        fatalError()
+        return _BSONSingleValueContainer(encoder: self)
     }
     
-    init(codingPath: [CodingKey?] = []) {
+    init(codingPath: [CodingKey?] = [], target: Target = .document([:])) {
         self.codingPath = codingPath
-        self.storage = Document()
-    }
-}
-
-fileprivate class _NestedBSONEncoder : _BSONEncoder {
-    private let parent: _BSONEncoder
-    private let parentKey: String
-    
-    override var storage: Document {
-        get {
-            return parent.storage[parentKey] as? Document ?? Document()
-        }
-        set {
-            parent.storage[parentKey] = newValue
-        }
+        self.target = target
     }
     
-    init(parent: _BSONEncoder, parentKey: String, codingPath: [CodingKey?] = []) {
-        self.parent = parent
-        self.parentKey = parentKey
-        super.init(codingPath: codingPath)
+    // MARK: - Coding Path Operations
+    /// Performs the given closure with the given key pushed onto the end of the current coding path.
+    ///
+    /// - parameter key: The key to push. May be nil for unkeyed containers.
+    /// - parameter work: The work to perform with the key in the path.
+    func with<T>(pushedKey key: CodingKey?, _ work: () throws -> T) rethrows -> T {
+        self.codingPath.append(key)
+        let ret: T = try work()
+        self.codingPath.removeLast()
+        return ret
+    }
+    
+    // MARK: - Value conversion
+    func convert(_ value: Bool) throws -> Primitive { return value }
+    func convert(_ value: Int) throws -> Primitive { return value }
+    func convert(_ value: Int8) throws -> Primitive { return Int32(value) }
+    func convert(_ value: Int16) throws -> Primitive { return Int32(value) }
+    func convert(_ value: Int32) throws -> Primitive { return value }
+    func convert(_ value: Int64) throws -> Primitive { return Int(value) }
+    func convert(_ value: UInt8) throws -> Primitive { return Int32(value) }
+    func convert(_ value: UInt16) throws -> Primitive { return Int32(value) }
+    func convert(_ value: UInt32) throws -> Primitive { return Int(value) }
+    func convert(_ value: Float) throws -> Primitive { return Double(value) }
+    func convert(_ value: Double) throws -> Primitive { return value }
+    func convert(_ value: String) throws -> Primitive { return value }
+    func convert(_ value: UInt) throws -> Primitive {
+        guard value < Int.max else {
+            throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: codingPath, debugDescription: "Value exceeds \(Int.max) which is the BSON Int limit"))
+        }
+        
+        return Int(value)
+    }
+    func convert(_ value: UInt64) throws -> Primitive {
+        // BSON only supports 64 bit platforms where UInt64 is the same size as Int64
+        return try convert(UInt(value))
     }
 }
 
@@ -78,27 +128,18 @@ fileprivate struct _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingCon
     
     var codingPath: [CodingKey?]
     
-    func encode(_ value: Bool, forKey key: K) throws { encoder.storage[key.stringValue] = value }
-    func encode(_ value: Int, forKey key: K) throws { encoder.storage[key.stringValue] = value }
-    func encode(_ value: Int8, forKey key: K) throws { encoder.storage[key.stringValue] = Int32(value) }
-    func encode(_ value: Int16, forKey key: K) throws { encoder.storage[key.stringValue] = Int32(value) }
-    func encode(_ value: Int32, forKey key: K) throws { encoder.storage[key.stringValue] = value }
-    func encode(_ value: Int64, forKey key: K) throws { encoder.storage[key.stringValue] = Int(value) }
-    func encode(_ value: UInt8, forKey key: K) throws { encoder.storage[key.stringValue] = Int32(value) }
-    func encode(_ value: UInt16, forKey key: K) throws { encoder.storage[key.stringValue] = Int32(value) }
-    func encode(_ value: UInt32, forKey key: K) throws { encoder.storage[key.stringValue] = Int(value) }
-    func encode(_ value: Float, forKey key: K) throws { encoder.storage[key.stringValue] = Double(value) }
-    func encode(_ value: Double, forKey key: K) throws { encoder.storage[key.stringValue] = value }
-    func encode(_ value: String, forKey key: K) throws { encoder.storage[key.stringValue] = value }
-    
     func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
-        print(value)
-        fatalError("Unimplemented")
+        if let primitive = value as? Primitive {
+            self.encoder.target.document[key.stringValue] = primitive
+        } else {
+            let encoder = _BSONEncoder(target: .primitive(get: { self.encoder.target.document[key.stringValue] }, set: { self.encoder.target.document[key.stringValue] = $0 }))
+            try value.encode(to: encoder)
+        }
     }
     
-    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> {
-        let nestedEncoder = _NestedBSONEncoder(parent: encoder, parentKey: key.stringValue)
-        return nestedEncoder.container(keyedBy: NestedKey.self)
+    func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> {
+        let encoder = _BSONEncoder(target: .primitive(get: { self.encoder.target.document[key.stringValue] }, set: { self.encoder.target.document[key.stringValue] = $0 }))
+        return encoder.container(keyedBy: keyType)
     }
     
     mutating func nestedUnkeyedContainer(forKey key: K) -> UnkeyedEncodingContainer {
@@ -113,20 +154,41 @@ fileprivate struct _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingCon
         fatalError("Unimplemented")
     }
     
-    func encode(_ value: UInt, forKey key: K) throws {
-        guard value < Int.max else {
-            throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: codingPath, debugDescription: "Value exceeds \(Int.max) which is the BSON Int limit"))
-        }
-        
-        encoder.storage[key.stringValue] = Int(value)
-    }
     
-    func encode(_ value: UInt64, forKey key: K) throws {
-        // BSON only supports 64 bit platforms where UInt64 is the same size as Int64
-        try encode(UInt(value), forKey: key)
-    }
     
     typealias Key = K
     
+}
+
+fileprivate struct _BSONSingleValueContainer : SingleValueEncodingContainer {
+    let encoder: _BSONEncoder
+    
+    mutating func encodeNil() throws {
+        encoder.target.primitive = nil
+    }
+    
+    func encode(_ value: Bool) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Int) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Int8) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Int16) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Int32) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Int64) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: UInt8) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: UInt16) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: UInt32) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Float) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Double) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: String) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: UInt) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: UInt64) throws { try encoder.target.primitive = encoder.convert(value) }
+        
+    func encode<T>(_ value: T) throws where T : Encodable {
+        // Encode BSON primitives directly
+        if let primitive = value as? Primitive {
+            encoder.target.primitive = primitive
+        } else {
+            try value.encode(to: encoder)
+        }
+    }
 }
 

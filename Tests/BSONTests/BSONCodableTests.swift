@@ -20,15 +20,24 @@ class BSONCodableTests: XCTestCase {
         super.tearDown()
     }
     
+    @available(OSX 10.12, *)
     func testExample() throws {
         struct Cat : Encodable {
             var _id = ObjectId()
             var name = "Fred"
+            var sample: Float = 5.0
+            
+            struct Tail : Encodable {
+                var length = Measurement(value: 30, unit: UnitLength.centimeters)
+            }
+            var tail = Tail()
         }
         
         let cat = Cat()
         let doc = try BSONEncoder().encode(cat)
         XCTAssertEqual(doc["name"] as? String, cat.name)
+        XCTAssertEqual(doc["_id"] as? ObjectId, cat._id)
+        XCTAssertEqual(doc["sample"] as? Double, Double(cat.sample))
     }
     
 }
