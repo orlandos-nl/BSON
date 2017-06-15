@@ -43,6 +43,40 @@ class BSONCodableTests: XCTestCase {
         XCTAssertEqual(decodedDictionary, dictionary)
     }
     
+    private struct Wrapper<T : Codable> : Codable {
+        var value: T
+    }
+    
+    private func validateEncodesAsPrimitive<T : Primitive & Equatable & Codable>(_ value: T) throws -> Bool {
+        let wrapped = Wrapper(value: value)
+        let encodedDocument = try BSONEncoder().encode(wrapped)
+        return encodedDocument["value"] as? T == value
+    }
+    
+    private func validateEncodedResult<T : Equatable & Codable, R : Primitive & Equatable>(_ value: T, expected: R) throws -> Bool {
+        let wrapped = Wrapper(value: value)
+        let encodedDocument = try BSONEncoder().encode(wrapped)
+        return encodedDocument["value"] as? R == expected
+    }
+    
+    func testObjectIdEncodesAsPrimitive() throws {
+        try XCTAssert(validateEncodesAsPrimitive(ObjectId()))
+    }
+    
+    func testDateEncodesAsPrimitive() throws {
+        try XCTAssert(validateEncodesAsPrimitive(Date()))
+    }
+    
+    func testDataEncodesAsBinary() throws {
+        try XCTAssert(validateEncodedResult(Data(), expected: Binary(data: [], withSubtype: .generic)))
+    }
+    
+    func testFloatEncodesAsDouble() throws {
+        let floatArray: [Float] = [4]
+        let codedDocument = try BSONEncoder().encode(floatArray)
+        XCTAssertEqual(codedDocument[0] as? Double, 4)
+    }
+    
     @available(OSX 10.12, *)
     func testEncoding() throws {
         struct Cat : Encodable {

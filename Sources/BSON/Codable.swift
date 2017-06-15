@@ -241,15 +241,7 @@ fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContai
     func encode(_ value: String) throws { try encoder.target.primitive = encoder.convert(value) }
     func encode(_ value: UInt) throws { try encoder.target.primitive = encoder.convert(value) }
     func encode(_ value: UInt64) throws { try encoder.target.primitive = encoder.convert(value) }
-        
-    func encode<T>(_ value: T) throws where T : Encodable {
-        // Encode BSON primitives directly
-        if let primitive = value as? Primitive {
-            encoder.target.primitive = primitive
-        } else {
-            try value.encode(to: encoder)
-        }
-    }
+    func encode<T>(_ value: T) throws where T : Encodable { try encoder.target.primitive = encoder.encode(value) }
 }
 
 // MARK: - Decoding
