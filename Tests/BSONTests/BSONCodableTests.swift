@@ -20,11 +20,27 @@ class BSONCodableTests: XCTestCase {
         super.tearDown()
     }
     
-    func testSecuenceCoding() throws {
+    func testArrayCodingDecodesCorrectly() throws {
         let array = ["Hoi", "Sup", "abcdefghijklmnop"]
         let document = Document(array: array)
         let codedDocument = try BSONEncoder().encode(array)
         XCTAssertEqual(document.bytes, codedDocument.bytes)
+        let decodedArray = try BSONDecoder().decode([String].self, from: codedDocument)
+        XCTAssertEqual(decodedArray, array)
+    }
+    
+    func testSetEncodingDecodesCorrectly() throws {
+        let set: Set<String> = ["Hoi", "Sup", "abcdefghijklmnop"]
+        let codedDocument = try BSONEncoder().encode(set)
+        let decodedSet = try BSONDecoder().decode(Set<String>.self, from: codedDocument)
+        XCTAssertEqual(decodedSet, set)
+    }
+    
+    func testDictionaryEncodingDecodesCorrectly() throws {
+        let dictionary = ["sample": 4.0, "other": 2.0]
+        let codedDocument = try BSONEncoder().encode(dictionary)
+        let decodedDictionary = try BSONDecoder().decode([String: Double].self, from: codedDocument)
+        XCTAssertEqual(decodedDictionary, dictionary)
     }
     
     @available(OSX 10.12, *)
