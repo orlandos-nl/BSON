@@ -19,9 +19,8 @@ class BSONCodableTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-    
     @available(OSX 10.12, *)
-    func testExample() throws {
+    func testEncoding() throws {
         struct Cat : Encodable {
             var _id = ObjectId()
             var name = "Fred"
@@ -32,9 +31,23 @@ class BSONCodableTests: XCTestCase {
             }
             var tail = Tail()
         }
-        
         let cat = Cat()
         let doc = try BSONEncoder().encode(cat)
+        XCTAssertEqual(doc["name"] as? String, cat.name)
+        XCTAssertEqual(doc["_id"] as? ObjectId, cat._id)
+        XCTAssertEqual(doc["sample"] as? Double, Double(cat.sample))
+    }
+    
+    @available(OSX 10.12, *)
+    func testDecoding() throws {
+        struct Cat : Decodable {
+            var _id: ObjectId
+            var name: String
+            var sample: Float
+        }
+        
+        let doc: Document = ["_id": ObjectId(), "name": "Harrie", "sample": 4.5]
+        let cat = try BSONDecoder().decode(Cat.self, from: doc)
         XCTAssertEqual(doc["name"] as? String, cat.name)
         XCTAssertEqual(doc["_id"] as? ObjectId, cat._id)
         XCTAssertEqual(doc["sample"] as? Double, Double(cat.sample))
