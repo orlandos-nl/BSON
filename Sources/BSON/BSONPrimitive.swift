@@ -208,6 +208,18 @@ public struct Binary: SimplePrimitive {
     }
 }
 
+extension Binary : Equatable {
+    public static func ==(lhs: Binary, rhs: Binary) -> Bool {
+        return lhs.data == rhs.data && lhs.subtype == rhs.subtype
+    }
+}
+
+extension Binary.Subtype : Equatable {
+    public static func ==(lhs: Binary.Subtype, rhs: Binary.Subtype) -> Bool {
+        return lhs.rawValue == rhs.rawValue
+    }
+}
+
 extension NSNull : SimplePrimitive {
     public var typeIdentifier: Byte {
         return 0x0A
