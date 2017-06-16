@@ -24,8 +24,18 @@ extension Document : Equatable {
         }
         
         for (key, value) in lhs {
-            guard let val = rhs[key], val.makeBinary() == value.makeBinary() else {
+            guard let val = rhs[key] else {
                 return false
+            }
+            
+            if let val = val as? Document, let value = value as? Document {
+                guard val == value else {
+                    return false
+                }
+            } else {
+                guard val.makeBinary() == value.makeBinary() else {
+                    return false
+                }
             }
         }
         
