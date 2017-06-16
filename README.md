@@ -91,7 +91,7 @@ Check the [documentation](http://docs.openkitten.org/bson/) for more information
 
 The performance in this BSON library is thanks to specialized algorithms per-operation with a centralized cache for indexed information. BSON is 100% lazy, so if you don't read data, it doesn't cost *any* performance.
 
-### Supported Types
+## Supported Types
 
 All non-deprecated BSON 1.1 types are supported.
 
