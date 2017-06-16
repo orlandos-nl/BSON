@@ -163,7 +163,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         guard length <= data.count, data.last == 0x00 else {
             invalid = true
-            storage = Array(data[4..<data.count &- 1])
+            storage = Array(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
             return
         }
         
