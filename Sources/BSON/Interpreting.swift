@@ -197,7 +197,7 @@ extension Array where Element == Primitive {
             return nil
         }
         
-        self = document.arrayValue
+        self = document.arrayRepresentation
     }
 }
 
@@ -207,6 +207,6 @@ extension Dictionary where Key == String, Value == Primitive {
             return nil
         }
         
-        self = document.dictionaryValue
+        self = document.dictionaryRepresentation
     }
 }

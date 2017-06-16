@@ -208,6 +208,18 @@ public struct Binary: SimplePrimitive {
     }
 }
 
+extension Binary : Equatable {
+    public static func ==(lhs: Binary, rhs: Binary) -> Bool {
+        return lhs.data == rhs.data && lhs.subtype == rhs.subtype
+    }
+}
+
+extension Binary.Subtype : Equatable {
+    public static func ==(lhs: Binary.Subtype, rhs: Binary.Subtype) -> Bool {
+        return lhs.rawValue == rhs.rawValue
+    }
+}
+
 extension NSNull : SimplePrimitive {
     public var typeIdentifier: Byte {
         return 0x0A
@@ -368,7 +380,7 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
     }
     
     public func convert<DT>(toArray type: DT.Type) -> DT.Sequence where DT : DataType {
-        let s: [DT.Sequence.SupportedValue] = self.arrayValue.flatMap { value in
+        let s: [DT.Sequence.SupportedValue] = self.arrayRepresentation.flatMap { value in
             if let value = value as? DT.Object.ObjectValue {
                 return value as? DT.Sequence.SupportedValue
             } else if let value: DT.SupportedValue = value.convert(to: type) {
@@ -403,10 +415,6 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
             
             return nil
         })
-    }
-    
-    public var dictionaryRepresentation: [String: Primitive] {
-        return self.dictionaryValue
     }
     
     public typealias ObjectKey = String

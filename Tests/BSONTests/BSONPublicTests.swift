@@ -36,6 +36,8 @@ final class BSONPublicTests: XCTestCase {
             ("testDocumentCombineOperators", testDocumentCombineOperators),
             ("testDocumentFlattening", testDocumentFlattening),
             ("testTypeChecking", testTypeChecking),
+            ("testCacheCorruption", testCacheCorruption),
+            ("testBinaryEquatable", testBinaryEquatable)
         ]
     }
     
@@ -127,7 +129,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
        XCTAssert(document.validate())
         
-        XCTAssertEqual(document.dictionaryValue.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
+        XCTAssertEqual(document.dictionaryRepresentation.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
     }
     
     func testObjectIdUniqueness() {
@@ -202,7 +204,7 @@ final class BSONPublicTests: XCTestCase {
         let bytes = arrayDoc.bytes
         let reInstantiated = Document(data: bytes)
         
-        let arrayValue = reInstantiated.arrayValue
+        let arrayValue = reInstantiated.arrayRepresentation
         
         XCTAssertEqual(arrayDoc.count, arrayValue.count)
         XCTAssertEqual(arrayValue[0] as? String, "kaas")
@@ -564,5 +566,11 @@ final class BSONPublicTests: XCTestCase {
         
         document["foo"] = nil
         _ = document["_id"] // crash
+    }
+    
+    func testBinaryEquatable() {
+        XCTAssert(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
+        XCTAssertFalse(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .uuid))
+        XCTAssertFalse(Binary(data: [0x00, 0x00], withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
     }
 }

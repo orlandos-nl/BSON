@@ -559,7 +559,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Appends the convents of `otherDocument` to `self` overwriting any keys in `self` with the `otherDocument` equivalent in the case of duplicates
     public mutating func append(contentsOf otherDocument: Document) {
         if self.validatesAsArray() && otherDocument.validatesAsArray() {
-            self = Document(array: self.arrayValue + otherDocument.arrayValue)
+            self = Document(array: self.arrayRepresentation + otherDocument.arrayRepresentation)
         } else {
             self += otherDocument
         }
