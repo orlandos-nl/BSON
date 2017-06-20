@@ -92,16 +92,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     internal var isArray: Bool?
     internal var storage: Bytes
     internal var invalid: Bool = false
-    internal var searchTree = IndexTrieNode(0) {
-        willSet {
-            if !original {
-                let trie = IndexTrieNode(searchTree.value)
-                trie.storage = searchTree.storage
-                trie.value = 0
-                original = true
-            }
-        }
-    }
+    internal var searchTree = IndexTrieNode(0)
     internal var original = true
     
     // MARK: - Initialization from data
@@ -334,7 +325,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                 node.storage = trie
             }
             
-            self.searchTree[key] = node
+            if isKnownUniquelyReferenced(&searchTree) {
+                self.searchTree[key] = node
+            } else {
+                self.searchTree[key] = node.copy()
+            }
         }
         
         // If the key already has a value

@@ -59,6 +59,17 @@ class IndexTrieNode {
         }
     }
     
+    func copy() -> IndexTrieNode {
+        let copy = IndexTrieNode(self.value)
+        copy.fullyIndexed = self.fullyIndexed
+        
+        for (key, value) in self.storage {
+            copy.storage[key] = value.copy()
+        }
+        
+        return copy
+    }
+    
     subscript(_ path: [IndexKey]) -> IndexTrieNode? {
         get {
             var iterator = path.makeIterator()
@@ -97,7 +108,11 @@ class IndexTrieNode {
                         
                         mutate(&newNode)
                         
-                        node?.storage[next] = newNode
+                        if isKnownUniquelyReferenced(&node) {
+                            node?.storage[next] = newNode
+                        } else {
+                            node?.storage[next] = newNode?.copy()
+                        }
                     } else {
                         node = nil
                     }
@@ -132,3 +147,4 @@ class IndexTrieNode {
         }
     }
 }
+
