@@ -15,6 +15,7 @@ func escape(_ string: String) -> String {
     string = string.replacingOccurrences(of: "\"", with: "\\\"")
     string = string.replacingOccurrences(of: "\u{8}", with: "\\b")
     string = string.replacingOccurrences(of: "\u{c}", with: "\\f")
+    string = string.replacingOccurrences(of: "\r\n", with: "\\r\\n")
     string = string.replacingOccurrences(of: "\n", with: "\\n")
     string = string.replacingOccurrences(of: "\r", with: "\\r")
     string = string.replacingOccurrences(of: "\t", with: "\\t")
