@@ -7,14 +7,72 @@
 
 import Foundation
 
-// MARK: - Encoding
+// MARK: - Codable Conformance
 
-extension ObjectId : Encodable {
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(self.hexString)
+fileprivate struct DocumentCodingKey : CodingKey {
+    let intValue: Int? = nil
+    var stringValue: String
+    
+    init?(intValue: Int) {
+        return nil
+    }
+    
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+    }
+    
+    init(_ string: String) {
+        self.stringValue = string
     }
 }
+
+extension ObjectId : Codable {
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        
+        if let container = container as? _BSONSingleValueEncodingContainer {
+            container.encoder.target.primitive = self
+            return
+        }
+        
+        try container.encode(self.hexString)
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let singleValueContainer = try decoder.singleValueContainer()
+        
+        if let container = singleValueContainer as? _BSONSingleValueDecodingContainer {
+            guard let id = container.decoder.target.primitive as? ObjectId else {
+                throw DecodingError.typeMismatch(ObjectId.self, DecodingError.Context(codingPath: container.decoder.codingPath, debugDescription: "Expected ObjectId but got \(String(describing: container.decoder.target.primitive ?? nil))"))
+            }
+            
+            self = id
+            return
+        }
+        
+        let string = try singleValueContainer.decode(String.self)
+        self = try ObjectId(string)
+    }
+}
+
+extension Document : Codable {
+    public func encode(to encoder: Encoder) throws {
+        throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Document can only be encoded by BSONEncoder."))
+    }
+    
+    public init(from decoder: Decoder) throws {
+        throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Document can only be decoded by BSONDecoder."))
+    }
+}
+
+// MARK: - Helpers
+
+// These primitives cannot be added to the document using a subscript
+fileprivate protocol _BSONFakePrimitive {}
+extension Dictionary : _BSONFakePrimitive {}
+extension Array : _BSONFakePrimitive {}
+
+// MARK: - Encoding
 
 public class BSONEncoder {
     
@@ -112,7 +170,7 @@ fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
         return try convert(UInt(value))
     }
     func encode<T : Encodable>(_ value: T) throws -> Primitive? {
-        if let primitive = value as? Primitive {
+        if let primitive = value as? Primitive, !(primitive is _BSONFakePrimitive) {
             return primitive
         } else {
             var primitive: Primitive? = nil
@@ -221,9 +279,11 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
 
 fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
     let encoder: _BSONEncoder
+    let codingPath: [CodingKey?]
     
     init(encoder: _BSONEncoder) {
         self.encoder = encoder
+        self.codingPath = encoder.codingPath
     }
     
     func encodeNil() throws { encoder.target.primitive = nil }
@@ -237,7 +297,11 @@ fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContai
     func encode(_ value: UInt16) throws { try encoder.target.primitive = encoder.convert(value) }
     func encode(_ value: UInt32) throws { try encoder.target.primitive = encoder.convert(value) }
     func encode(_ value: Float) throws { try encoder.target.primitive = encoder.convert(value) }
-    func encode(_ value: Double) throws { try encoder.target.primitive = encoder.convert(value) }
+    func encode(_ value: Double) throws {
+        try encoder.with(replacedPath: codingPath) {
+            try encoder.target.primitive = encoder.convert(value)
+        }
+    }
     func encode(_ value: String) throws { try encoder.target.primitive = encoder.convert(value) }
     func encode(_ value: UInt) throws { try encoder.target.primitive = encoder.convert(value) }
     func encode(_ value: UInt64) throws { try encoder.target.primitive = encoder.convert(value) }
@@ -245,14 +309,6 @@ fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContai
 }
 
 // MARK: - Decoding
-
-extension ObjectId : Decodable {
-    public init(from decoder: Decoder) throws {
-        let singleValueContainer = try decoder.singleValueContainer()
-        let string = try singleValueContainer.decode(String.self)
-        self = try ObjectId(string)
-    }
-}
 
 public class BSONDecoder {
     public func decode<T : Decodable>(_ type: T.Type, from document: Document) throws -> T {
@@ -334,7 +390,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     
     // MARK: - Value conversion
     func unwrap<T : Primitive>(_ value: Primitive?) throws -> T? {
-        guard let primitiveValue = value else {
+        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
             return nil
         }
         
@@ -346,7 +402,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Int32? {
-        guard let primitiveValue = value else {
+        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
             return nil
         }
         
@@ -369,7 +425,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Int? {
-        guard let primitiveValue = value else {
+        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
             return nil
         }
         
@@ -389,7 +445,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Double? {
-        guard let primitiveValue = value else {
+        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
             return nil
         }
         
@@ -406,7 +462,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Bool? {
-        guard let primitiveValue = value else {
+        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
             return nil
         }
         
@@ -483,13 +539,19 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func decode<T>(_ value: Primitive?) throws -> T? where T : Decodable {
-        guard let value = value else {
+        guard let value = value, !(value is NSNull) else {
             return nil
         }
         
         if T.self == ObjectId.self {
             let id = try BSON.unwrap(unwrap(value), codingPath: codingPath) as ObjectId as! T
             return id
+        } else if T.self == Date.self {
+            let date = try BSON.unwrap(unwrap(value), codingPath: codingPath) as Date as! T
+            return date
+        } else if T.self == Document.self {
+            let document = try BSON.unwrap(unwrap(value), codingPath: codingPath) as Document as! T
+            return document
         }
         
         let decoder = _BSONDecoder(target: .storedPrimitive(value))
@@ -786,6 +848,14 @@ extension _BSONCodingPathContaining {
         self.codingPath.append(key)
         let ret: T = try work()
         self.codingPath.removeLast()
+        return ret
+    }
+    
+    func with<T>(replacedPath path: [CodingKey?], _ work: () throws -> T) rethrows -> T {
+        let originalPath = self.codingPath
+        self.codingPath = path
+        let ret: T = try work()
+        self.codingPath = originalPath
         return ret
     }
 }
