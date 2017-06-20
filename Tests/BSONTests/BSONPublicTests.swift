@@ -74,6 +74,23 @@ final class BSONPublicTests: XCTestCase {
         XCTAssert(!document.validatesAsArray())
     }
     
+    func testTrieCopy() {
+        var doc = Document()
+        doc["username"] = "bob"
+        doc["password"] = "Secrat"
+        
+        var doc2 = doc
+        
+        let id = ObjectId()
+        let id2 = ObjectId()
+        
+        doc["_id"] = id
+        doc2["_id"] = id2
+        
+        XCTAssertEqual(ObjectId(doc["_id"]), id)
+        XCTAssertEqual(ObjectId(doc2["_id"]), id2)
+    }
+    
     func testNullToNilInt() {
         var doc: Document = [
             "_id": Null(),

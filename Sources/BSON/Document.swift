@@ -325,11 +325,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                 node.storage = trie
             }
             
-            if isKnownUniquelyReferenced(&searchTree) {
-                self.searchTree[key] = node
-            } else {
-                self.searchTree[key] = node.copy()
+            if !isKnownUniquelyReferenced(&searchTree) {
+                searchTree = searchTree.copy()
             }
+            
+            self.searchTree[key] = node
         }
         
         // If the key already has a value
