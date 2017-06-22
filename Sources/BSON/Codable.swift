@@ -78,7 +78,7 @@ public class BSONEncoder {
     
     public init() {}
     
-    public func encode<T : Encodable>(_ value: T) throws -> Document {
+    public func encode(_ value: Encodable) throws -> Document {
         let encoder = _BSONEncoder()
         try value.encode(to: encoder)
         
