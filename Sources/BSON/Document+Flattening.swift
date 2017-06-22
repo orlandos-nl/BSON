@@ -111,9 +111,9 @@ extension Document {
     ///         "details.chicken": "fred"
     ///     ]
     ///
-    public func flattened() -> Document {
+    public func flattened(skippingArrays skipArrays: Bool = false) -> Document {
         var doc = self
-        doc.flatten()
+        doc.flatten(skippingArrays: skipArrays)
         return doc
     }
 }
