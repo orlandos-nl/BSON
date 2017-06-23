@@ -7,6 +7,22 @@
 
 import Foundation
 
+// MARK: - Linux fix
+
+#if os(Linux)
+    // As of now (june 23 2017) Date is not Codable on Linux
+    extension Date : Codable {
+        public init(from decoder: Decoder) throws {
+            throw DecodingError.invalidValue(self, EncodingError.Context(codingPath: decoder.codingPath, debugDescription: "Date on Linux is not Codable"))
+        }
+        
+        public func encode(to encoder: Encoder) throws {
+            assertionFailure("Only supported with BSONEncoder")
+        }
+    }
+#endif
+
+
 // MARK: - Codable Conformance
 
 fileprivate struct DocumentCodingKey : CodingKey {
