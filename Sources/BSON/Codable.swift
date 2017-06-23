@@ -130,8 +130,8 @@ extension Binary.Subtype : Codable {
 
 extension Binary : Codable {
     enum CodingKeys : String, CodingKey {
-        case subtype
-        case data
+        case subtype = "$type"
+        case data = "$binary"
     }
     
     public func encode(to encoder: Encoder) throws {
