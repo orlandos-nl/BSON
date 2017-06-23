@@ -236,6 +236,10 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     
     init(encoder: _BSONEncoder) {
         self.encoder = encoder
+        
+        if (self.encoder.target.document.count == 0) {
+            self.encoder.target.document = [] // array
+        }
     }
     
     private func nestedEncoder() -> _BSONEncoder {
