@@ -13,11 +13,12 @@ import Foundation
     // As of now (june 23 2017) Date is not Codable on Linux
     extension Date : Codable {
         public init(from decoder: Decoder) throws {
-            throw DecodingError.invalidValue(self, EncodingError.Context(codingPath: decoder.codingPath, debugDescription: "Date on Linux is not Codable"))
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Date on Linux is not Codable"))
+            
         }
         
         public func encode(to encoder: Encoder) throws {
-            assertionFailure("Only supported with BSONEncoder")
+            throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Date on Linux is not Codable"))
         }
     }
 #endif
