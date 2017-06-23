@@ -57,11 +57,110 @@ extension ObjectId : Codable {
 
 extension Document : Codable {
     public func encode(to encoder: Encoder) throws {
-        throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Document can only be encoded by BSONEncoder."))
+        if encoder is _BSONEncoder {
+            let container = encoder.singleValueContainer() as! _BSONSingleValueEncodingContainer
+            container.encoder.target.document = self
+            return
+        }
+        
+        var container = encoder.container(keyedBy: DocumentCodingKey.self)
+        
+        for (key, primitive) in self {
+            let codingKey = DocumentCodingKey(key)
+            
+            // FIXME: Support missing primtives, commented out below
+            switch primitive {
+            case let value as Double:
+                try container.encode(value, forKey: codingKey)
+            case let value as String:
+                try container.encode(value, forKey: codingKey)
+            case let value as Document:
+                try container.encode(value, forKey: codingKey)
+            case let value as Binary:
+                try container.encode(value, forKey: codingKey)
+            case let value as ObjectId:
+                try container.encode(value, forKey: codingKey)
+            case let value as Bool:
+                try container.encode(value, forKey: codingKey)
+            case let value as Date:
+                try container.encode(value, forKey: codingKey)
+//            case let value as RegularExpression:
+//                try container.encode(value, forKey: codingKey)
+//            case let value as JavascriptCode:
+//                try container.encode(value, forKey: codingKey)
+            case let value as Int32:
+                try container.encode(value, forKey: codingKey)
+            case let value as Int:
+                try container.encode(value, forKey: codingKey)
+//            case let value as Decimal128:
+//                try container.encode(value, forKey: codingKey)
+            default:
+                throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Value of type \(type(of: primitive)) in Document is not Encodable"))
+            }
+        }
     }
     
     public init(from decoder: Decoder) throws {
-        throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Document can only be decoded by BSONDecoder."))
+        if decoder is _BSONDecoder {
+            let container = try decoder.singleValueContainer() as! _BSONSingleValueDecodingContainer
+            
+            guard container.decoder.target.primitive is Document else {
+                throw DecodingError.typeMismatch(Document.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Tried to decode a document from BSON, but the primitive found is of type \(type(of: container.decoder.target.primitive))"))
+            }
+            
+            self = container.decoder.target.document
+            return
+        }
+        
+        throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Document can currently only be decoded by BSONDecoder."))
+    }
+}
+
+extension Binary.Subtype : Codable {
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.rawValue)
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self = Binary.Subtype(rawValue: try container.decode(Byte.self))
+    }
+}
+
+extension Binary : Codable {
+    enum CodingKeys : String, CodingKey {
+        case subtype
+        case data
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        if encoder is _BSONEncoder {
+            let container = encoder.singleValueContainer() as! _BSONSingleValueEncodingContainer
+            container.encoder.target.primitive = self
+            return
+        }
+        
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.subtype.rawValue, forKey: .subtype)
+        try container.encode(self.data, forKey: .data)
+    }
+    
+    public init(from decoder: Decoder) throws {
+        if decoder is _BSONDecoder {
+            let container = try decoder.singleValueContainer() as! _BSONSingleValueDecodingContainer
+            
+            guard let id = container.decoder.target.primitive as? Binary else {
+                throw DecodingError.typeMismatch(Binary.self, DecodingError.Context(codingPath: container.decoder.codingPath, debugDescription: "Expected Binary but got \(String(describing: container.decoder.target.primitive ?? nil))"))
+            }
+            
+            self = id
+            return
+        }
+        
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.data = try container.decode(Data.self, forKey: .data)
+        self.subtype = try container.decode(Binary.Subtype.self, forKey: .subtype)
     }
 }
 
