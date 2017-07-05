@@ -1,24 +1,12 @@
-# BSON 5.0
-
-This branch contains working code for BSON 5.0. Nothing here is final and everything may change. BSON 5.0 does not have a release schedule yet, but will be released alongside MongoKitten 4.0.
-
-### Goals
-
-- Better extraction API
-- Move ExtendedJSON to MongoKitten
-- Do not use Foundation RegularExpression
-- Chained subscripts
-- Generally a more simple and logical API
-- Better unit tests
-
 # BSON
 
 [![Swift 3.1](https://img.shields.io/badge/swift-3.1-orange.svg)](https://swift.org)
 ![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
-[![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson4)](https://travis-ci.org/OpenKitten/BSON)
+[![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson5)](https://travis-ci.org/OpenKitten/BSON)
 
-
-A native, fast BSON library for Swift, written in Swift.
+BSON 5 is the fastest BSON library speeding past all libraries including C. It's compliant to the whole C BSON specification test suite, and even passes official libraries in compliance slightly.
+ 
+It's not only fast, it's also got an extremely easy and intuitive API for extraction.
 
 BSON is parsed and generated as specified for version 1.1 of the [BSON specification](http://bsonspec.org/spec.html).
 
@@ -99,7 +87,11 @@ let obbutLastName = String(object["users"][1]["profile"]["lastName"]) // "Brands
 
 Check the [documentation](http://docs.openkitten.org/bson/) for more information.
 
-### Supported Types
+## Performance
+
+The performance in this BSON library is thanks to specialized algorithms per-operation with a centralized cache for indexed information. BSON is 100% lazy, so if you don't read data, it doesn't cost *any* performance.
+
+## Supported Types
 
 All non-deprecated BSON 1.1 types are supported.
 
