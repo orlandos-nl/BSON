@@ -12,7 +12,7 @@ import Foundation
 extension Dictionary : Primitive {
     public var typeIdentifier: Byte { return 0x03 }
     public func makeBinary() -> Bytes {
-        guard Key.self == String.self && Value.self is Primitive.Type else {
+        guard Key.self == String.self && (Value.self is Primitive.Type || Value.self == Primitive.self) else {
             // `assertionFailure` only triggers a crash on debug configurations, not on release.
             let error = "Only [String : BSON.Primitive] dictionaries are BSON.Primitive. Tried to initialize a document using [\(Key.self) : \(Value.self)]. This will crash on debug and print this message on release configurations."
             assertionFailure(error)

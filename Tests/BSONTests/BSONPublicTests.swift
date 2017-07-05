@@ -582,12 +582,31 @@ final class BSONPublicTests: XCTestCase {
         ]
         
         document["foo"] = nil
-        _ = document["_id"] // crash
+        _ = document["_id"] // did crash once
     }
     
     func testBinaryEquatable() {
         XCTAssert(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
         XCTAssertFalse(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .uuid))
         XCTAssertFalse(Binary(data: [0x00, 0x00], withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
+    }
+    
+    func testUsingDictionaryAsPrimitive() {
+        let id = ObjectId()
+        let dictionary1: [String: Int] = [
+            "int": 5
+        ]
+        let dictionary2: [String: Primitive] = [
+            "objectid": id,
+            "int": 4
+        ]
+        let document: Document = [
+            "dictionary1": dictionary1,
+            "dictionary2": dictionary2
+        ]
+        
+        XCTAssertEqual(document["dictionary1", "int"] as? Int, 5)
+        XCTAssertEqual(document["dictionary2", "objectid"] as? ObjectId, id)
+        XCTAssertEqual(document["dictionary2", "int"] as? Int, 4)
     }
 }
