@@ -7,22 +7,6 @@
 
 import Foundation
 
-// MARK: - Linux fix
-
-#if os(Linux)
-    // As of now (june 23 2017) Date is not Codable on Linux
-    extension Date : Codable {
-        public init(from decoder: Decoder) throws {
-            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Date on Linux is not Codable"))
-            
-        }
-        
-        public func encode(to encoder: Encoder) throws {
-            throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Date on Linux is not Codable"))
-        }
-    }
-#endif
-
 // MARK: - Helpers
 
 fileprivate extension Optional where Wrapped == Primitive {
