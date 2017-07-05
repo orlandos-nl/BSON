@@ -37,7 +37,8 @@ final class BSONPublicTests: XCTestCase {
             ("testDocumentFlattening", testDocumentFlattening),
             ("testTypeChecking", testTypeChecking),
             ("testCacheCorruption", testCacheCorruption),
-            ("testBinaryEquatable", testBinaryEquatable)
+            ("testBinaryEquatable", testBinaryEquatable),
+            ("testUsingDictionaryAsPrimitive", testUsingDictionaryAsPrimitive)
         ]
     }
     
@@ -600,13 +601,27 @@ final class BSONPublicTests: XCTestCase {
             "objectid": id,
             "int": 4
         ]
+        let dictionary3: [String: Int?] = [
+            "int": 5,
+            "nil": nil
+        ]
+        let dictionary4: [String: Primitive?] = [
+            "objectid": id,
+            "int": 4,
+            "nil": nil
+        ]
         let document: Document = [
             "dictionary1": dictionary1,
-            "dictionary2": dictionary2
+            "dictionary2": dictionary2,
+            "dictionary3": dictionary3,
+            "dictionary4": dictionary4
         ]
         
         XCTAssertEqual(document["dictionary1", "int"] as? Int, 5)
         XCTAssertEqual(document["dictionary2", "objectid"] as? ObjectId, id)
         XCTAssertEqual(document["dictionary2", "int"] as? Int, 4)
+        XCTAssertEqual(document["dictionary3", "int"] as? Int, 5)
+        XCTAssertEqual(document["dictionary4", "objectid"] as? ObjectId, id)
+        XCTAssertEqual(document["dictionary4", "int"] as? Int, 4)
     }
 }
