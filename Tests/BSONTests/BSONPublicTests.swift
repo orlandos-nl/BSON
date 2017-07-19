@@ -54,7 +54,7 @@ final class BSONPublicTests: XCTestCase {
         "cool64bitNumber": 21312153,
         "code": JavascriptCode(code: "console.log(\"Hello there\");"),
         "codeWithScope": JavascriptCode(code: "console.log(\"Hello there\");", withScope: ["hey": "hello"]),
-        "nothing": Null(),
+        "nothing": NSNull(),
         "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
         "boolFalse": false,
         "boolTrue": true,
@@ -93,7 +93,7 @@ final class BSONPublicTests: XCTestCase {
     
     func testNullToNilInt() {
         var doc: Document = [
-            "_id": Null(),
+            "_id": NSNull(),
             "name": "Joannis",
             "email": "joannis@orlandos.nl"
         ]
@@ -109,7 +109,7 @@ final class BSONPublicTests: XCTestCase {
     
     func testNullToNilString() {
         var doc: Document = [
-            "_id": Null(),
+            "_id": NSNull(),
             "name": "Joannis",
             "email": "joannis@orlandos.nl"
         ]
@@ -203,7 +203,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(Double(document["documentTest", "documentSubDoubleTest"]), 13.37)
         XCTAssertEqual(String(document["documentTest", "subArray", 1]), "fred")
         XCTAssertEqual(Double(document["doubleTest"]), 0.04)
-        XCTAssert(document["nothing"] as? Null != nil)
+        XCTAssert(document["nothing"] as? NSNull != nil)
         XCTAssertEqual(Document(document["nonexistentkey"]), nil)
         XCTAssertEqual(String(document["stringTest"]), "foo")
     }
@@ -456,7 +456,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(Int32(kittenDocument["cool32bitNumber"]), 9001)
         XCTAssertEqual(Int(kittenDocument["cool64bitNumber"]), 21312153)
 // FIXME:         XCTAssertEqual(JavascriptCode(kittenDocument["code"])?.code, "console.log(\"Hello there\");")
-        XCTAssert(kittenDocument["nothing"] is Null)
+        XCTAssert(kittenDocument["nothing"] is NSNull)
         XCTAssertEqual(Bool(kittenDocument["boolFalse"]), false)
         XCTAssertEqual(Bool(kittenDocument["boolTrue"]), true)
         
@@ -520,7 +520,7 @@ final class BSONPublicTests: XCTestCase {
             "cool64bitNumber": 21312153,
             "code": JavascriptCode(code: "console.log(\"Hello there\");"),
             "codeWithScope": JavascriptCode(code: "console.log(\"Hello there\");", withScope: ["hey": "hello"]),
-            "nothing": Null(),
+            "nothing": NSNull(),
             "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,

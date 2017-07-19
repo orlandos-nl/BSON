@@ -164,7 +164,7 @@ final class BSONCorpusTests: XCTestCase {
     func testNull() {
         let doc = Document(data: [0x08,0x00,0x00,0x00,0x0A,0x61,0x00,0x00])
         XCTAssert(doc.validate())
-        XCTAssertNotNil(doc["a"] as? Null)
+        XCTAssertNotNil(doc["a"] as? NSNull)
     }
     
     func testMinKey() {

@@ -1,15 +1,6 @@
 import Foundation
-import KittenCore
 
-public struct Decimal128: SimplePrimitive {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        return nil
-    }
-    
+public struct Decimal128: Primitive {
     public var typeIdentifier: Byte {
         return 0x13
     }

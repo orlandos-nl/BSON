@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import KittenCore
 
 public typealias IndexIterationElement = (key: String, value: Primitive)
 

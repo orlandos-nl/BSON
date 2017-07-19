@@ -1,5 +1,3 @@
-import KittenCore
-
 struct IndexKey: Hashable {
     let key: KittenBytes
     let hashValue: Int

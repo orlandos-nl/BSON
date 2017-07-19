@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import KittenCore
 
 extension Document {
     /// The amount of key-value pairs in the `Document`
@@ -71,26 +70,6 @@ extension Document {
         }
         
         return array
-    }
-    
-    public var efficientKeyValuePairs: [(KittenBytes, Primitive)] {
-        var pairs = [(KittenBytes, Primitive)]()
-        
-        for pos in makeKeyIterator() {
-            let key = KittenBytes(Array(pos.keyData[0..<pos.keyData.endIndex]))
-            
-            if let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type, kittenString: true) {
-                pairs.append((key, value))
-            }
-        }
-        
-        return pairs
-    }
-    
-    /// The `Dictionary` representation of this `Document`
-    @available(*, deprecated, renamed: "dictionaryRepresentation")
-    public var dictionaryValue: [String: Primitive] {
-        return self.dictionaryRepresentation
     }
     
     /// The `Dictionary` representation of this `Document`

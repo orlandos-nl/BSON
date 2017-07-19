@@ -6,7 +6,6 @@
 //
 //
 
-import KittenCore
 import Foundation
 
 extension Dictionary : Primitive {

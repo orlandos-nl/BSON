@@ -6,14 +6,7 @@
 //
 //
 
-@_exported import KittenCore
 import Foundation
-
-public enum BSONData : DataType {
-    public typealias Object = Document
-    public typealias Sequence = Document
-    public typealias SupportedValue = Primitive
-}
 
 func escape(_ string: String) -> String {
     var string = string
@@ -30,13 +23,11 @@ func escape(_ string: String) -> String {
 }
 
 /// Do not extend. BSON internals
-public protocol Primitive : Convertible {
+public protocol Primitive {
     var typeIdentifier: Byte { get }
     
     func makeBinary() -> Bytes
 }
-
-public protocol SimplePrimitive : Primitive, SimpleConvertible {}
 
 func regexOptions(fromString s: String) -> NSRegularExpression.Options {
     var options: NSRegularExpression.Options = []
@@ -60,15 +51,7 @@ func regexOptions(fromString s: String) -> NSRegularExpression.Options {
     return options
 }
 
-public struct Timestamp: SimplePrimitive, Equatable {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        return nil
-    }
-    
+public struct Timestamp: Primitive, Equatable {
     public static func ==(lhs: Timestamp, rhs: Timestamp) -> Bool {
         return lhs.increment == rhs.increment && lhs.timestamp == rhs.timestamp
     }
@@ -90,7 +73,7 @@ public struct Timestamp: SimplePrimitive, Equatable {
     }
 }
 
-extension Data : SimplePrimitive {
+extension Data : Primitive {
     public var typeIdentifier: Byte {
         return 0x05
     }
@@ -100,23 +83,7 @@ extension Data : SimplePrimitive {
     }
 }
 
-public struct Binary: SimplePrimitive {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        if let data = self.data as? S {
-            return data
-        }
-        
-        if let data = NSData(data: self.data) as? S {
-            return data
-        }
-        
-        return nil
-    }
-    
+public struct Binary: Primitive {
     /// All binary subtypes
     public enum Subtype {
         /// The default subtype. Nothing special
@@ -220,7 +187,7 @@ extension Binary.Subtype : Equatable {
     }
 }
 
-extension NSNull : SimplePrimitive {
+extension NSNull : Primitive {
     public var typeIdentifier: Byte {
         return 0x0A
     }
@@ -230,19 +197,7 @@ extension NSNull : SimplePrimitive {
     }
 }
 
-public struct JavascriptCode: SimplePrimitive {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        if let string  = self.code as? S {
-            return string
-        }
-        
-        return nil
-    }
-    
+public struct JavascriptCode: Primitive {
     public var code: String
     public var scope: Document?
     
@@ -265,7 +220,7 @@ public struct JavascriptCode: SimplePrimitive {
     }
 }
 
-extension Bool : SimplePrimitive {
+extension Bool : Primitive {
     public var typeIdentifier: Byte {
         return 0x08
     }
@@ -275,7 +230,7 @@ extension Bool : SimplePrimitive {
     }
 }
 
-extension Double : SimplePrimitive {
+extension Double : Primitive {
     public var typeIdentifier: Byte {
         return 0x01
     }
@@ -285,7 +240,7 @@ extension Double : SimplePrimitive {
     }
 }
 
-extension Int32 : SimplePrimitive {
+extension Int32 : Primitive {
     public var typeIdentifier: Byte {
         return 0x10
     }
@@ -295,7 +250,7 @@ extension Int32 : SimplePrimitive {
     }
 }
 
-extension Int : SimplePrimitive {
+extension Int : Primitive {
     public var typeIdentifier: Byte {
         return 0x12
     }
@@ -312,7 +267,7 @@ internal let isoDateFormatter: DateFormatter = {
     return fmt
 }()
 
-extension Date : SimplePrimitive {
+extension Date : Primitive {
     public func makeBinary() -> Bytes {
         let integer = Int(self.timeIntervalSince1970 * 1000)
         return integer.makeBytes()
@@ -323,7 +278,7 @@ extension Date : SimplePrimitive {
     }
 }
 
-extension String : SimplePrimitive {
+extension String : Primitive {
     public func makeBinary() -> Bytes {
         var byteArray = Int32(self.utf8.count + 1).makeBytes()
         byteArray.append(contentsOf: self.utf8)
@@ -336,7 +291,7 @@ extension String : SimplePrimitive {
     }
 }
 
-extension StaticString : SimplePrimitive {
+extension StaticString : Primitive {
     public func makeBinary() -> Bytes {
         return self.withUTF8Buffer {
             var data = Bytes(repeating: 0, count: self.utf8CodeUnitCount + 1)
@@ -350,7 +305,7 @@ extension StaticString : SimplePrimitive {
     }
 }
 
-extension KittenBytes : SimplePrimitive {
+extension KittenBytes : Primitive {
     public func makeBinary() -> Bytes {
         return bytes + [0x00]
     }
@@ -360,7 +315,7 @@ extension KittenBytes : SimplePrimitive {
     }
 }
 
-extension Document : Primitive, InitializableObject, InitializableSequence {
+extension Document : Primitive {
     public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == SupportedValue {
         var doc = Document()
         
@@ -369,52 +324,6 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
         }
         
         self = doc
-    }
-    
-    public func convert<DT : DataType>(to type: DT.Type) -> DT.SupportedValue? {
-        if self.validatesAsArray() {
-            return self.convert(toArray: type) as? DT.SupportedValue
-        } else {
-            return self.convert(toObject: type) as? DT.SupportedValue
-        }
-    }
-    
-    public func convert<DT>(toArray type: DT.Type) -> DT.Sequence where DT : DataType {
-        let s: [DT.Sequence.SupportedValue] = self.arrayRepresentation.flatMap { value in
-            if let value = value as? DT.Object.ObjectValue {
-                return value as? DT.Sequence.SupportedValue
-            } else if let value: DT.SupportedValue = value.convert(to: type) {
-                return value as? DT.Sequence.SupportedValue
-            }
-            
-            return nil
-        }
-        
-        return DT.Sequence(sequence: s)
-    }
-    
-    public func convert<DT>(toObject type: DT.Type) -> DT.Object where DT : DataType {
-        return DT.Object(sequence: self.efficientKeyValuePairs.flatMap { key, value in
-            let newKey: DT.Object.ObjectKey
-            
-            if let key = key as? DT.Object.ObjectKey {
-                newKey = key
-            } else if let key = key.convert(DT.Object.ObjectKey.self) {
-                newKey = key
-            } else {
-                return nil
-            }
-            
-            let key = newKey
-            
-            if let value = value as? DT.Object.ObjectValue {
-                return (key, value) as? DT.Object.SupportedValue
-            } else if let value: DT.SupportedValue = value.convert(to: type) {
-                return (key, value) as? DT.Object.SupportedValue
-            }
-            
-            return nil
-        })
     }
     
     public typealias ObjectKey = String
@@ -431,19 +340,7 @@ extension Document : Primitive, InitializableObject, InitializableSequence {
     }
 }
 
-extension ObjectId : SimplePrimitive {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        if let s = self.hexString as? S {
-            return s
-        }
-        
-        return nil
-    }
-    
+extension ObjectId : Primitive {
     public var typeIdentifier: Byte {
         return 0x07
     }
@@ -453,15 +350,7 @@ extension ObjectId : SimplePrimitive {
     }
 }
 
-public struct MinKey: SimplePrimitive {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        return nil
-    }
-    
+public struct MinKey: Primitive {
     public init() {}
     
     public var typeIdentifier: Byte {
@@ -473,15 +362,7 @@ public struct MinKey: SimplePrimitive {
     }
 }
 
-public struct MaxKey: SimplePrimitive {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        return nil
-    }
-    
+public struct MaxKey: Primitive {
     public init() {}
     
     public var typeIdentifier: Byte {
@@ -493,19 +374,7 @@ public struct MaxKey: SimplePrimitive {
     }
 }
 
-extension RegularExpression : SimplePrimitive {
-    public func convert<S>(_ type: S.Type) -> S? {
-        if self is S {
-            return self as? S
-        }
-        
-        if let regex = try? NSRegularExpression(pattern: self.pattern, options: self.options) as? S {
-            return regex
-        }
-        
-        return nil
-    }
-    
+extension RegularExpression : Primitive {
     public var typeIdentifier: Byte {
         return 0x0B
     }

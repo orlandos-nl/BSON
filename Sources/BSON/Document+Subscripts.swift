@@ -7,10 +7,9 @@
 //
 
 import Foundation
-import KittenCore
 
 public enum SubscriptExpression {
-    case kittenBytes(KittenBytes)
+    case key(String)
     case integer(Int)
 }
 
@@ -20,19 +19,7 @@ public protocol SubscriptExpressionType {
 
 extension String : SubscriptExpressionType {
     public var subscriptExpression: SubscriptExpression {
-        return .kittenBytes(self.kittenBytes)
-    }
-}
-
-extension StaticString : SubscriptExpressionType {
-    public var subscriptExpression: SubscriptExpression {
-        return .kittenBytes(self.kittenBytes)
-    }
-}
-
-extension KittenBytes : SubscriptExpressionType {
-    public var subscriptExpression: SubscriptExpression {
-        return .kittenBytes(self)
+        return .key(self)
     }
 }
 
@@ -66,8 +53,8 @@ extension Document {
         
         indexKeyBuilder: for part in keyParts {
             switch part.subscriptExpression {
-            case .kittenBytes(let bytes):
-                parts.append(IndexKey(bytes))
+            case .key(let key):
+                parts.append(IndexKey(KittenBytes([UInt8](key.utf8))))
             case .integer(let pos):
                 guard pos > -1 else {
                     parts.append(IndexKey(KittenBytes(Bytes(pos.description.utf8))))
@@ -135,6 +122,36 @@ extension Document {
         }
         
         return parts
+    }
+    
+    /// Mutates the key-value pair like you would with a `Dictionary`
+    internal subscript(parts: [KittenBytes]) -> Primitive? {
+        get {
+            let key = parts.map(IndexKey.init)
+            
+            if let position = searchTree[position: key] {
+                guard let currentKey = getMeta(atPosition: position) else {
+                    return nil
+                }
+                
+                return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
+            } else if let metadata = index(recursive: nil, lookingFor: key) {
+                return getValue(atDataPosition: metadata.dataPosition, withType: metadata.type)
+            }
+            
+            return nil
+        }
+        
+        set {
+            let key = parts.map(IndexKey.init)
+            
+            guard let newValue = newValue else {
+                unset(key)
+                return
+            }
+            
+            self.set(value: newValue, for: key)
+        }
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
