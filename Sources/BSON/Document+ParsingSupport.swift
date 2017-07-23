@@ -374,7 +374,8 @@ extension Document {
     /// - returns: An iterator that iterates over all key-value pairs
     internal func makeKeyIterator(startingAtByte startPos: Int = 0) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
         self.index(recursive: nil, lookingFor: nil, levels: 0)
-        var iterator = searchTree.storage.sorted(by: { 
+        let storageCopy = searchTree.storage
+        var iterator = storageCopy.sorted(by: {
             $0.value.value < $1.value.value
         }).makeIterator()
         
