@@ -231,7 +231,7 @@ fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
     }
     var target: Target
     
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> {
@@ -247,7 +247,7 @@ fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
         return _BSONSingleValueEncodingContainer(encoder: self)
     }
     
-    init(codingPath: [CodingKey?] = [], target: Target = .document([:])) {
+    init(codingPath: [CodingKey] = [], target: Target = .document([:])) {
         self.codingPath = codingPath
         self.target = target
     }
@@ -290,7 +290,7 @@ fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
 
 fileprivate class _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingContainerProtocol, _BSONCodingPathContaining {
     let encoder: _BSONEncoder
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     init(encoder: _BSONEncoder) {
         self.encoder = encoder
@@ -337,8 +337,12 @@ fileprivate class _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingCont
 }
 
 fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
+    var count: Int {
+        return encoder.target.document.count
+    }
+    
     var encoder: _BSONEncoder
-    var codingPath: [CodingKey?] {
+    var codingPath: [CodingKey] {
         get {
             return encoder.codingPath
         }
@@ -397,7 +401,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
 
 fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
     let encoder: _BSONEncoder
-    let codingPath: [CodingKey?]
+    let codingPath: [CodingKey]
     
     init(encoder: _BSONEncoder) {
         self.encoder = encoder
@@ -437,7 +441,7 @@ public class BSONDecoder {
     public init() {}
 }
 
-fileprivate func unwrap<T>(_ value: T?, codingPath: [CodingKey?]) throws -> T {
+fileprivate func unwrap<T>(_ value: T?, codingPath: [CodingKey]) throws -> T {
     guard let value = value else {
         throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value of type \(T.self) was not found"))
     }
@@ -473,7 +477,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     let target: Target
     
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
@@ -490,7 +494,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
         return _BSONSingleValueDecodingContainer(codingPath: self.codingPath, decoder: self)
     }
     
-    init(codingPath: [CodingKey?] = [], target: Target) {
+    init(codingPath: [CodingKey] = [], target: Target) {
         self.target = target
         self.codingPath = codingPath
     }
@@ -499,7 +503,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     ///
     /// - parameter key: The key to push. May be nil for unkeyed containers.
     /// - parameter work: The work to perform with the key in the path.
-    func with<T>(pushedKey key: CodingKey?, _ work: () throws -> T) rethrows -> T {
+    func with<T>(pushedKey key: CodingKey, _ work: () throws -> T) rethrows -> T {
         self.codingPath.append(key)
         let ret: T = try work()
         self.codingPath.removeLast()
@@ -689,7 +693,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
 fileprivate struct _BSONKeyedDecodingContainer<Key : CodingKey> : KeyedDecodingContainerProtocol {
     let decoder: _BSONDecoder
     
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     var allKeys: [Key] {
         return decoder.target.document.keys.flatMap { Key(stringValue: $0) }
@@ -818,7 +822,7 @@ fileprivate struct _BSONKeyedDecodingContainer<Key : CodingKey> : KeyedDecodingC
 
 fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSONCodingPathContaining {
     let decoder: _BSONDecoder
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     init(decoder: _BSONDecoder) {
         self.decoder = decoder
@@ -921,7 +925,7 @@ fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSO
     }
     
     func nestedDecoder() throws -> _BSONDecoder {
-        return try decoder.with(pushedKey: nil) {
+        return try decoder.with(pushedKey: _BSONUnkeyedIndexKey(index: self.currentIndex)) {
             guard !isAtEnd else {
                 throw DecodingError.valueNotFound(Decoder.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot get nested decoder -- unkeyed container is at end."))
             }
@@ -946,7 +950,7 @@ fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSO
 }
 
 fileprivate struct _BSONSingleValueDecodingContainer : SingleValueDecodingContainer {
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     let decoder: _BSONDecoder
     
     private func unwrap<T>(_ value: T?) throws -> T {
@@ -974,7 +978,7 @@ fileprivate struct _BSONSingleValueDecodingContainer : SingleValueDecodingContai
 
 // - MARK: Supporting Protocols
 fileprivate protocol _BSONCodingPathContaining : class {
-    var codingPath: [CodingKey?] { get set }
+    var codingPath: [CodingKey] { get set }
 }
 
 extension _BSONCodingPathContaining {
@@ -983,14 +987,14 @@ extension _BSONCodingPathContaining {
     ///
     /// - parameter key: The key to push. May be nil for unkeyed containers.
     /// - parameter work: The work to perform with the key in the path.
-    func with<T>(pushedKey key: CodingKey?, _ work: () throws -> T) rethrows -> T {
+    func with<T>(pushedKey key: CodingKey, _ work: () throws -> T) rethrows -> T {
         self.codingPath.append(key)
         let ret: T = try work()
         self.codingPath.removeLast()
         return ret
     }
     
-    func with<T>(replacedPath path: [CodingKey?], _ work: () throws -> T) rethrows -> T {
+    func with<T>(replacedPath path: [CodingKey], _ work: () throws -> T) rethrows -> T {
         let originalPath = self.codingPath
         self.codingPath = path
         let ret: T = try work()
@@ -1003,4 +1007,27 @@ extension _BSONCodingPathContaining {
 
 fileprivate enum _BSONSuperKey : String, CodingKey {
     case `super`
+}
+
+fileprivate struct _BSONUnkeyedIndexKey : CodingKey {
+    var index: Int
+    init(index: Int) {
+        self.index = index
+    }
+    
+    var intValue: Int? {
+        return index
+    }
+    
+    var stringValue: String {
+        return String(describing: index)
+    }
+    
+    init?(intValue: Int) {
+        self.index = intValue
+    }
+    
+    init?(stringValue: String) {
+        return nil
+    }
 }
