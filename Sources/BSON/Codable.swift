@@ -7,23 +7,15 @@
 
 import Foundation
 
-// MARK: - Linux fix
-
-#if os(Linux)
-    // As of now (june 23 2017) Date is not Codable on Linux
-    extension Date : Codable {
-        public init(from decoder: Decoder) throws {
-            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Date on Linux is not Codable"))
-            
-        }
-        
-        public func encode(to encoder: Encoder) throws {
-            throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Date on Linux is not Codable"))
-        }
-    }
-#endif
+// MARK: - Helpers
 
 #if swift(>=3.2)
+fileprivate extension Optional where Wrapped == Primitive {
+    var isNilValue: Bool {
+        return self == nil || self is NSNull
+    }
+}
+
 // MARK: - Codable Conformance
 
 fileprivate struct DocumentCodingKey : CodingKey {
@@ -240,7 +232,7 @@ fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
     }
     var target: Target
     
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> {
@@ -256,7 +248,7 @@ fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
         return _BSONSingleValueEncodingContainer(encoder: self)
     }
     
-    init(codingPath: [CodingKey?] = [], target: Target = .document([:])) {
+    init(codingPath: [CodingKey] = [], target: Target = .document([:])) {
         self.codingPath = codingPath
         self.target = target
     }
@@ -299,7 +291,7 @@ fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
 
 fileprivate class _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingContainerProtocol, _BSONCodingPathContaining {
     let encoder: _BSONEncoder
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     init(encoder: _BSONEncoder) {
         self.encoder = encoder
@@ -309,6 +301,12 @@ fileprivate class _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingCont
     func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
         try with(pushedKey: key) {
             encoder.target.document[key.stringValue] = try encoder.encode(value)
+        }
+    }
+    
+    func encodeNil(forKey key: K) throws {
+        with(pushedKey: key) {
+            encoder.target.document[key.stringValue] = nil
         }
     }
     
@@ -340,8 +338,12 @@ fileprivate class _BSONKeyedEncodingContainer<K : CodingKey> : KeyedEncodingCont
 }
 
 fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
+    var count: Int {
+        return encoder.target.document.count
+    }
+    
     var encoder: _BSONEncoder
-    var codingPath: [CodingKey?] {
+    var codingPath: [CodingKey] {
         get {
             return encoder.codingPath
         }
@@ -395,11 +397,12 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     func encode(_ value: Float) throws { try encoder.target.document.append(encoder.convert(value)) }
     func encode(_ value: Double) throws { try encoder.target.document.append(encoder.convert(value)) }
     func encode<T : Encodable>(_ value: T) throws { try encoder.target.document.append(unwrap(encoder.encode(value), codingPath: codingPath)) }
+    mutating func encodeNil() throws { encoder.target.document.append(NSNull()) }
 }
 
 fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
     let encoder: _BSONEncoder
-    let codingPath: [CodingKey?]
+    let codingPath: [CodingKey]
     
     init(encoder: _BSONEncoder) {
         self.encoder = encoder
@@ -439,7 +442,7 @@ public class BSONDecoder {
     public init() {}
 }
 
-fileprivate func unwrap<T>(_ value: T?, codingPath: [CodingKey?]) throws -> T {
+fileprivate func unwrap<T>(_ value: T?, codingPath: [CodingKey]) throws -> T {
     guard let value = value else {
         throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value of type \(T.self) was not found"))
     }
@@ -475,7 +478,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     let target: Target
     
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
@@ -489,10 +492,10 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func singleValueContainer() throws -> SingleValueDecodingContainer {
-        return _BSONSingleValueDecodingContainer(decoder: self)
+        return _BSONSingleValueDecodingContainer(codingPath: self.codingPath, decoder: self)
     }
     
-    init(codingPath: [CodingKey?] = [], target: Target) {
+    init(codingPath: [CodingKey] = [], target: Target) {
         self.target = target
         self.codingPath = codingPath
     }
@@ -501,7 +504,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     ///
     /// - parameter key: The key to push. May be nil for unkeyed containers.
     /// - parameter work: The work to perform with the key in the path.
-    func with<T>(pushedKey key: CodingKey?, _ work: () throws -> T) rethrows -> T {
+    func with<T>(pushedKey key: CodingKey, _ work: () throws -> T) rethrows -> T {
         self.codingPath.append(key)
         let ret: T = try work()
         self.codingPath.removeLast()
@@ -509,9 +512,9 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     // MARK: - Value conversion
-    func unwrap<T : Primitive>(_ value: Primitive?) throws -> T? {
+    func unwrap<T : Primitive>(_ value: Primitive?) throws -> T {
         guard let primitiveValue = value, !(primitiveValue is NSNull) else {
-            return nil
+            throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(T.self), found null / nil"))
         }
         
         guard let tValue = primitiveValue as? T else {
@@ -521,9 +524,9 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
         return tValue
     }
     
-    func unwrap(_ value: Primitive?) throws -> Int32? {
+    func unwrap(_ value: Primitive?) throws -> Int32 {
         guard let primitiveValue = value, !(primitiveValue is NSNull) else {
-            return nil
+            throw DecodingError.valueNotFound(Int32.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Int32.self), found null / nil"))
         }
         
         switch primitiveValue {
@@ -544,9 +547,9 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
         }
     }
     
-    func unwrap(_ value: Primitive?) throws -> Int? {
+    func unwrap(_ value: Primitive?) throws -> Int {
         guard let primitiveValue = value, !(primitiveValue is NSNull) else {
-            return nil
+            throw DecodingError.valueNotFound(Int.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Int.self), found null / nil"))
         }
         
         switch primitiveValue {
@@ -564,9 +567,9 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
         }
     }
     
-    func unwrap(_ value: Primitive?) throws -> Double? {
+    func unwrap(_ value: Primitive?) throws -> Double {
         guard let primitiveValue = value, !(primitiveValue is NSNull) else {
-            return nil
+            throw DecodingError.valueNotFound(Double.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Double.self), found null / nil"))
         }
         
         switch primitiveValue {
@@ -581,9 +584,9 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
         }
     }
     
-    func unwrap(_ value: Primitive?) throws -> Bool? {
+    func unwrap(_ value: Primitive?) throws -> Bool {
         guard let primitiveValue = value, !(primitiveValue is NSNull) else {
-            return nil
+            throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Bool.self), found null / nil"))
         }
         
         guard let bool = primitiveValue as? Bool else {
@@ -593,74 +596,83 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
         return bool
     }
     
-    func unwrap(_ value: Primitive?) throws -> Int8? {
-        guard let number: Int32 = try unwrap(value) else { return nil }
+    func unwrap(_ value: Primitive?) throws -> Int8 {
+        let number: Int32 = try unwrap(value)
+        
         guard number > Int8.min && number < Int8.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(Int8.self)"))
         }
         return Int8(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> Int16? {
-        guard let number: Int32 = try unwrap(value) else { return nil }
+    func unwrap(_ value: Primitive?) throws -> Int16 {
+        let number: Int32 = try unwrap(value)
+        
         guard number > Int16.min && number < Int16.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(Int16.self)"))
         }
         return Int16(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> Int64? {
-        guard let number: Int = try unwrap(value) else { return nil }
+    func unwrap(_ value: Primitive?) throws -> Int64 {
+        let number: Int = try unwrap(value)
+        
         return Int64(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> UInt8? {
-        guard let number: Int32 = try unwrap(value) else { return nil }
+    func unwrap(_ value: Primitive?) throws -> UInt8 {
+        let number: Int32 = try unwrap(value)
+        
         guard number > UInt8.min && number < UInt8.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(UInt8.self)"))
         }
         return UInt8(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> UInt16? {
-        guard let number: Int32 = try unwrap(value) else { return nil }
+    func unwrap(_ value: Primitive?) throws -> UInt16 {
+        let number: Int32 = try unwrap(value)
+        
         guard number > UInt16.min && number < UInt16.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(UInt16.self)"))
         }
         return UInt16(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> UInt32? {
-        guard let number: Int = try unwrap(value) else { return nil }
+    func unwrap(_ value: Primitive?) throws -> UInt32 {
+        let number: Int = try unwrap(value)
+        
         guard number > UInt32.min && number < UInt32.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(UInt32.self)"))
         }
         return UInt32(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> Float? {
+    func unwrap(_ value: Primitive?) throws -> Float {
         // TODO: Check losing precision like JSONEncoder
-        guard let number: Double = try unwrap(value) else { return nil }
+        let number: Double = try unwrap(value)
+        
         return Float(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> UInt? {
-        guard let number: Int = try unwrap(value) else { return nil }
+    func unwrap(_ value: Primitive?) throws -> UInt {
+        let number: Int = try unwrap(value)
+        
         guard number > UInt.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(UInt.self)"))
         }
         return UInt(number)
     }
     
-    func unwrap(_ value: Primitive?) throws -> UInt64? {
-        guard let number: UInt = try unwrap(value) else { return nil}
+    func unwrap(_ value: Primitive?) throws -> UInt64 {
+        let number: UInt = try unwrap(value)
+        
         // BSON only supports 64 bit platforms where UInt64 is the same size as UInt
         return UInt64(number)
     }
     
-    func decode<T>(_ value: Primitive?) throws -> T? where T : Decodable {
+    func decode<T>(_ value: Primitive?) throws -> T where T : Decodable {
         guard let value = value, !(value is NSNull) else {
-            return nil
+            throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(T.self), found null / nil"))
         }
         
         if T.self == ObjectId.self {
@@ -682,102 +694,105 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
 fileprivate struct _BSONKeyedDecodingContainer<Key : CodingKey> : KeyedDecodingContainerProtocol {
     let decoder: _BSONDecoder
     
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     var allKeys: [Key] {
         return decoder.target.document.keys.flatMap { Key(stringValue: $0) }
     }
     
+    func decodeNil(forKey key: Key) throws -> Bool {
+        return decoder.target.document[key.stringValue].isNilValue
+    }
+    
     func contains(_ key: Key) -> Bool {
-        print(key, ": ", decoder.target.document[key.stringValue] as Any)
         return decoder.target.document[key.stringValue] != nil
     }
     
-    func decodeIfPresent(_ type: Bool.Type, forKey key: Key) throws -> Bool? {
+    func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: Int.Type, forKey key: Key) throws -> Int? {
+    func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: Int8.Type, forKey key: Key) throws -> Int8? {
+    func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: Int16.Type, forKey key: Key) throws -> Int16? {
+    func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: Int32.Type, forKey key: Key) throws -> Int32? {
+    func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: Int64.Type, forKey key: Key) throws -> Int64? {
+    func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: UInt.Type, forKey key: Key) throws -> UInt? {
+    func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: UInt8.Type, forKey key: Key) throws -> UInt8? {
+    func decode(_ type: UInt8.Type, forKey key: Key) throws -> UInt8 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: UInt16.Type, forKey key: Key) throws -> UInt16? {
+    func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: UInt32.Type, forKey key: Key) throws -> UInt32? {
+    func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: UInt64.Type, forKey key: Key) throws -> UInt64? {
+    func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: Float.Type, forKey key: Key) throws -> Float? {
+    func decode(_ type: Float.Type, forKey key: Key) throws -> Float {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: Double.Type, forKey key: Key) throws -> Double? {
+    func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent(_ type: String.Type, forKey key: Key) throws -> String? {
+    func decode(_ type: String.Type, forKey key: Key) throws -> String {
         return try decoder.with(pushedKey: key) {
             return try decoder.unwrap(decoder.target.document[key.stringValue])
         }
     }
     
-    func decodeIfPresent<T>(_ type: T.Type, forKey key: Key) throws -> T? where T : Decodable {
+    func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
         return try decoder.with(pushedKey: key) {
             return try decoder.decode(decoder.target.document[key.stringValue])
         }
@@ -808,7 +823,7 @@ fileprivate struct _BSONKeyedDecodingContainer<Key : CodingKey> : KeyedDecodingC
 
 fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSONCodingPathContaining {
     let decoder: _BSONDecoder
-    var codingPath: [CodingKey?]
+    var codingPath: [CodingKey]
     
     init(decoder: _BSONDecoder) {
         self.decoder = decoder
@@ -817,6 +832,7 @@ fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSO
     
     var count: Int? { return decoder.target.document.count }
     var currentIndex: Int = 0
+    
     var isAtEnd: Bool {
         return currentIndex >= self.count!
     }
@@ -827,83 +843,90 @@ fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSO
         return value
     }
     
-    func decodeIfPresent(_ type: Bool.Type) throws -> Bool? {
-        guard !isAtEnd else { return nil }
+    func assertNotAtEnd(_ type: Any.Type) throws {
+        guard !isAtEnd else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Unkeyed decoding container is at end"))
+        }
+    }
+    
+    /// Decodes a null value.
+    ///
+    /// If the value is not null, does not increment currentIndex.
+    ///
+    /// - returns: Whether the encountered value was null.
+    /// - throws: `DecodingError.valueNotFound` if there are no more values to decode.
+    func decodeNil() throws -> Bool {
+        try assertNotAtEnd(NSNull.self)
+        if decoder.target.document[currentIndex].isNilValue {
+            currentIndex += 1
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    func decode(_ type: Bool.Type) throws -> Bool {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: Int.Type) throws -> Int? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: Int.Type) throws -> Int {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: Int8.Type) throws -> Int8? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: Int8.Type) throws -> Int8 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: Int16.Type) throws -> Int16? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: Int16.Type) throws -> Int16 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: Int32.Type) throws -> Int32? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: Int32.Type) throws -> Int32 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: Int64.Type) throws -> Int64? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: Int64.Type) throws -> Int64 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: UInt.Type) throws -> UInt? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: UInt.Type) throws -> UInt {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: UInt8.Type) throws -> UInt8? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: UInt8.Type) throws -> UInt8 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: UInt16.Type) throws -> UInt16? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: UInt16.Type) throws -> UInt16 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: UInt32.Type) throws -> UInt32? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: UInt32.Type) throws -> UInt32 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: UInt64.Type) throws -> UInt64? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: UInt64.Type) throws -> UInt64 {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: Float.Type) throws -> Float? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: Float.Type) throws -> Float {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: Double.Type) throws -> Double? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: Double.Type) throws -> Double {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent(_ type: String.Type) throws -> String? {
-        guard !isAtEnd else { return nil }
+    func decode(_ type: String.Type) throws -> String {
         return try decoder.unwrap(next())
     }
     
-    func decodeIfPresent<T>(_ type: T.Type) throws -> T? where T : Decodable {
-        guard !isAtEnd else { return nil }
+    func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
         return try decoder.decode(next())
     }
     
     func nestedDecoder() throws -> _BSONDecoder {
-        return try decoder.with(pushedKey: nil) {
+        return try decoder.with(pushedKey: _BSONUnkeyedIndexKey(index: self.currentIndex)) {
             guard !isAtEnd else {
                 throw DecodingError.valueNotFound(Decoder.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot get nested decoder -- unkeyed container is at end."))
             }
@@ -928,34 +951,35 @@ fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSO
 }
 
 fileprivate struct _BSONSingleValueDecodingContainer : SingleValueDecodingContainer {
+    var codingPath: [CodingKey]
     let decoder: _BSONDecoder
     
     private func unwrap<T>(_ value: T?) throws -> T {
         return try BSON.unwrap(value, codingPath: decoder.codingPath)
     }
     
-    func decodeNil() -> Bool { return decoder.target.primitive == nil }
-    func decode(_ type: Bool.Type) throws -> Bool { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: Int.Type) throws -> Int { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: Int8.Type) throws -> Int8 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: Int16.Type) throws -> Int16 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: Int32.Type) throws -> Int32 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: Int64.Type) throws -> Int64 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: UInt.Type) throws -> UInt { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: UInt8.Type) throws -> UInt8 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: UInt16.Type) throws -> UInt16 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: UInt32.Type) throws -> UInt32 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: UInt64.Type) throws -> UInt64 { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: Float.Type) throws -> Float { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: Double.Type) throws -> Double { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode(_ type: String.Type) throws -> String { return try unwrap(decoder.unwrap(decoder.target.primitive)) }
-    func decode<T>(_ type: T.Type) throws -> T where T : Decodable { return try unwrap(decoder.decode(decoder.target.primitive)) }
+    func decodeNil() -> Bool { return decoder.target.primitive.isNilValue }
+    func decode(_ type: Bool.Type) throws -> Bool { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: Int.Type) throws -> Int { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: Int8.Type) throws -> Int8 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: Int16.Type) throws -> Int16 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: Int32.Type) throws -> Int32 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: Int64.Type) throws -> Int64 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: UInt.Type) throws -> UInt { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: UInt8.Type) throws -> UInt8 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: UInt16.Type) throws -> UInt16 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: UInt32.Type) throws -> UInt32 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: UInt64.Type) throws -> UInt64 { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: Float.Type) throws -> Float { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: Double.Type) throws -> Double { return try decoder.unwrap(decoder.target.primitive) }
+    func decode(_ type: String.Type) throws -> String { return try decoder.unwrap(decoder.target.primitive) }
+    func decode<T>(_ type: T.Type) throws -> T where T : Decodable { return try decoder.decode(decoder.target.primitive) }
     
 }
 
 // - MARK: Supporting Protocols
 fileprivate protocol _BSONCodingPathContaining : class {
-    var codingPath: [CodingKey?] { get set }
+    var codingPath: [CodingKey] { get set }
 }
 
 extension _BSONCodingPathContaining {
@@ -964,14 +988,14 @@ extension _BSONCodingPathContaining {
     ///
     /// - parameter key: The key to push. May be nil for unkeyed containers.
     /// - parameter work: The work to perform with the key in the path.
-    func with<T>(pushedKey key: CodingKey?, _ work: () throws -> T) rethrows -> T {
+    func with<T>(pushedKey key: CodingKey, _ work: () throws -> T) rethrows -> T {
         self.codingPath.append(key)
         let ret: T = try work()
         self.codingPath.removeLast()
         return ret
     }
     
-    func with<T>(replacedPath path: [CodingKey?], _ work: () throws -> T) rethrows -> T {
+    func with<T>(replacedPath path: [CodingKey], _ work: () throws -> T) rethrows -> T {
         let originalPath = self.codingPath
         self.codingPath = path
         let ret: T = try work()
@@ -985,4 +1009,28 @@ extension _BSONCodingPathContaining {
 fileprivate enum _BSONSuperKey : String, CodingKey {
     case `super`
 }
+
+fileprivate struct _BSONUnkeyedIndexKey : CodingKey {
+    var index: Int
+    init(index: Int) {
+        self.index = index
+    }
+    
+    var intValue: Int? {
+        return index
+    }
+    
+    var stringValue: String {
+        return String(describing: index)
+    }
+    
+    init?(intValue: Int) {
+        self.index = intValue
+    }
+    
+    init?(stringValue: String) {
+        return nil
+    }
+}
+
 #endif

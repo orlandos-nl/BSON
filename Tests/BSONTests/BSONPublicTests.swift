@@ -37,7 +37,8 @@ final class BSONPublicTests: XCTestCase {
             ("testDocumentFlattening", testDocumentFlattening),
             ("testTypeChecking", testTypeChecking),
             ("testCacheCorruption", testCacheCorruption),
-            ("testBinaryEquatable", testBinaryEquatable)
+            ("testBinaryEquatable", testBinaryEquatable),
+            ("testUsingDictionaryAsPrimitive", testUsingDictionaryAsPrimitive)
         ]
     }
     
@@ -323,7 +324,10 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(String(document["stringTest"]), "foo")
         XCTAssertEqual(String(document[1]), "foo")
         XCTAssertEqual(Double(document["documentTest", 0]), Double(document["documentTest", "documentSubDoubleTest"]))
-        XCTAssertEqual(Double(document["documentTest"][0]), 13.37)
+        
+        #if swift(>=3.1)
+            XCTAssertEqual(Double(document["documentTest"][0]), 13.37)
+        #endif
         
         XCTAssertEqual(ObjectId(document[3]), try ObjectId("0123456789ABCDEF01234567"))
         
@@ -334,7 +338,11 @@ final class BSONPublicTests: XCTestCase {
         document["minKey"] = "kittens"
         XCTAssertEqual(String(document["minKey"]), "kittens")
         
-        XCTAssertEqual(String(kittenDocument["documentTest", "subArray"][0]), "henk")
+        #if swift(>=3.1)
+            XCTAssertEqual(String(kittenDocument["documentTest", "subArray"][0]), "henk")
+        #else
+            XCTAssertEqual(String(Document(kittenDocument["documentTest", "subArray"])?[0]), "henk")
+        #endif
         
         var recursiveDocument: Document = [
             "henk": [
@@ -348,15 +356,17 @@ final class BSONPublicTests: XCTestCase {
             ]
         ]
         
-        XCTAssertEqual(Int(recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 3)
-        
-        recursiveDocument["henk", "fred", "bob", "piet", "klaas"] = 4
-        
-        recursiveDocument["klaas", "piet", "bob", "fred", "henk"] = true
-        
-        XCTAssertEqual(Int(recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 4)
-        
-        XCTAssert(Bool(recursiveDocument["klaas", "piet", "bob", "fred", "henk"]) ?? false)
+        #if swift(>=3.1)
+            XCTAssertEqual(Int(recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 3)
+            
+            recursiveDocument["henk", "fred", "bob", "piet", "klaas"] = 4
+            
+            recursiveDocument["klaas", "piet", "bob", "fred", "henk"] = true
+            
+            XCTAssertEqual(Int(recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 4)
+            
+            XCTAssert(Bool(recursiveDocument["klaas", "piet", "bob", "fred", "henk"]) ?? false)
+        #endif
     }
     
     func testObjectId() throws {
@@ -485,12 +495,18 @@ final class BSONPublicTests: XCTestCase {
         d["kaassapsaus", "freddelien"] = v
         d["hont", "kad", "varkun", "konein"] = v
         
-        XCTAssertEqual(String(d["kaassapsaus"]["freddelien"]), v)
+        #if swift(>=3.1)
+            XCTAssertEqual(String(d["kaassapsaus"]["freddelien"]), v)
+        #endif
+        
         XCTAssertEqual(String(d["kaassapsaus", "freddelien"]), v)
         XCTAssertEqual(Double(d["documentTest", "documentSubDoubleTest"]), 13.37)
         
         XCTAssertEqual(String(d["hont", "kad", "varkun", "konein"]), v)
-        XCTAssertEqual(String(d["hont"]["kad"]["varkun"]["konein"]), v)
+        
+        #if swift(>=3.1)
+            XCTAssertEqual(String(d["hont"]["kad"]["varkun"]["konein"]), v)
+        #endif
     }
     
     func testDocumentCombineOperators() {
@@ -582,12 +598,45 @@ final class BSONPublicTests: XCTestCase {
         ]
         
         document["foo"] = nil
-        _ = document["_id"] // crash
+        _ = document["_id"] // did crash once
     }
     
     func testBinaryEquatable() {
         XCTAssert(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
         XCTAssertFalse(Binary(data: Data(), withSubtype: .generic) == Binary(data: Data(), withSubtype: .uuid))
         XCTAssertFalse(Binary(data: [0x00, 0x00], withSubtype: .generic) == Binary(data: Data(), withSubtype: .generic))
+    }
+    
+    func testUsingDictionaryAsPrimitive() {
+        let id = ObjectId()
+        let dictionary1: [String: Int] = [
+            "int": 5
+        ]
+        let dictionary2: [String: Primitive] = [
+            "objectid": id,
+            "int": 4
+        ]
+        let dictionary3: [String: Int?] = [
+            "int": 5,
+            "nil": nil
+        ]
+        let dictionary4: [String: Primitive?] = [
+            "objectid": id,
+            "int": 4,
+            "nil": nil
+        ]
+        let document: Document = [
+            "dictionary1": dictionary1,
+            "dictionary2": dictionary2,
+            "dictionary3": dictionary3,
+            "dictionary4": dictionary4
+        ]
+        
+        XCTAssertEqual(document["dictionary1", "int"] as? Int, 5)
+        XCTAssertEqual(document["dictionary2", "objectid"] as? ObjectId, id)
+        XCTAssertEqual(document["dictionary2", "int"] as? Int, 4)
+        XCTAssertEqual(document["dictionary3", "int"] as? Int, 5)
+        XCTAssertEqual(document["dictionary4", "objectid"] as? ObjectId, id)
+        XCTAssertEqual(document["dictionary4", "int"] as? Int, 4)
     }
 }

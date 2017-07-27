@@ -48,10 +48,10 @@ class BSONCodableTests: XCTestCase {
         var value: T
     }
     
-    private func validateEncodesAsPrimitive<T : Primitive & Equatable & Codable>(_ value: T) throws -> Bool {
+    private func validateEncodesAsPrimitive<T : Primitive & Codable>(_ value: T) throws -> Bool {
         let wrapped = Wrapper(value: value)
         let encodedDocument = try BSONEncoder().encode(wrapped)
-        return encodedDocument["value"] as? T == value
+        return encodedDocument["value"] is T
     }
     
     private func validateEncodedResult<T : Equatable & Codable, R : Primitive & Equatable>(_ value: T, expected: R) throws -> Bool {
