@@ -85,10 +85,12 @@ class BSONCodableTests: XCTestCase {
             var name = "Fred"
             var sample: Float = 5.0
             
+            #if !os(Linux)
             struct Tail : Encodable {
                 var length = Measurement(value: 30, unit: UnitLength.centimeters)
             }
             var tail = Tail()
+            #endif
             
             var otherNames = ["King", "Queen"]
         }
