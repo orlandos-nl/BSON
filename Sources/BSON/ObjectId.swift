@@ -155,8 +155,8 @@ extension ObjectId: Hashable {
     
     public var hashValue: Int {
         let epoch = self.epochSeconds
-        let random = _storage[4...7].makeInt32()
-        let increment = _storage[8...11].makeInt32()
+        let random = Int32(_storage[4...7])
+        let increment = Int32(_storage[8...11])
         
         let total: Int32 = epoch &+ random &+ increment
         

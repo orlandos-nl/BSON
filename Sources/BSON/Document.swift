@@ -10,54 +10,6 @@ import Foundation
 
 public typealias IndexIterationElement = (key: String, value: Primitive)
 
-extension Array where Element == Document {
-    /// The combined data for all documents in the array
-    public var bytes: Bytes {
-        return self.map { $0.bytes }.reduce([], +)
-    }
-    
-    public init(bsonBytes data: Data, validating: Bool = false) {
-        var buffer = Bytes(repeating: 0, count:  data.count)
-        
-        data.copyBytes(to: &buffer, count: buffer.count)
-        
-        self.init(bsonBytes: buffer, validating: validating)
-    }
-    
-    public init(bsonBytes bytes: Bytes, validating: Bool = false) {
-        var array = [Element]()
-        var position = 0
-        let byteCount = bytes.count
-        
-        documentLoop: while byteCount >= position + 5 {
-            let length = Int(bytes[position..<position+4].makeInt32())
-            
-            guard length > 0 else {
-                // invalid
-                break
-            }
-            
-            guard byteCount >= position + length else {
-                break documentLoop
-            }
-            
-            let document = Element(data: Bytes(bytes[position..<position+length]))
-            
-            if validating {
-                if document.validate() {
-                    array.append(document)
-                }
-            } else {
-                array.append(document)
-            }
-            
-            position += length
-        }
-        
-        self = array
-    }
-}
-
 public enum ElementType : Byte {
     case double = 0x01
     case string = 0x02
@@ -116,7 +68,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        let length = Int(data[0...3].makeInt32())
+        let length = Int(Int32(data[0...3]))
         
         guard length > 4 else {
             invalid = true
@@ -143,7 +95,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        let length = Int(data[data.startIndex...data.startIndex.advanced(by: 3)].makeInt32())
+        let length = Int(Int32(data[data.startIndex...data.startIndex.advanced(by: 3)]))
         
         guard length > 4 else {
             invalid = true
@@ -689,17 +641,5 @@ public struct DocumentIndex : Comparable {
     
     public static func <(lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
         return lhs.byteIndex < rhs.byteIndex
-    }
-}
-
-extension Sequence where Iterator.Element == Document {
-    /// Converts a sequence of Documents to an array of documents in BSON format
-    public func makeDocument() -> Document {
-        var combination = [] as Document
-        for doc in self {
-            combination.append(doc)
-        }
-        
-        return combination
     }
 }

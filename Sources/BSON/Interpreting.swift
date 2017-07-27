@@ -190,23 +190,3 @@ extension Date {
         self = date
     }
 }
-
-extension Array where Element == Primitive {
-    public init?(_ value: Primitive?) {
-        guard let document = value as? Document else {
-            return nil
-        }
-        
-        self = document.arrayRepresentation
-    }
-}
-
-extension Dictionary where Key == String, Value == Primitive {
-    public init?(_ value: Primitive?) {
-        guard let document = value as? Document else {
-            return nil
-        }
-        
-        self = document.dictionaryRepresentation
-    }
-}

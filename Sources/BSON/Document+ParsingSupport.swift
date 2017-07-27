@@ -8,72 +8,6 @@
 
 import Foundation
 
-public func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Iterator.Element == Byte, S.IndexDistance == Int {
-    guard bytes.count >= MemoryLayout<T>.size else {
-        throw DeserializationError.invalidElementSize
-    }
-    
-    return UnsafeRawPointer(Bytes(bytes)).assumingMemoryBound(to: T.self).pointee
-}
-
-extension Collection where Self.Iterator.Element == Byte, Self.Index == Int {
-    public func makeInt32Array() -> [Int32] {
-        var array = [Int32]()
-        for idx in stride(from: self.startIndex, to: self.endIndex, by: MemoryLayout<Int32>.size) {
-            var number: Int32 = 0
-            number |= self.count > 3 ? Int32(self[idx.advanced(by: 3)]) << 24 : 0
-            number |= self.count > 2 ? Int32(self[idx.advanced(by: 2)]) << 16 : 0
-            number |= self.count > 1 ? Int32(self[idx.advanced(by: 1)]) << 8 : 0
-            number |= self.count > 0 ? Int32(self[idx]) : 0
-            array.append(number)
-        }
-        
-        return array
-    }
-    
-    func makeIntArray() -> [Int] {
-        var array = [Int]()
-        for idx in stride(from: self.startIndex, to: self.endIndex, by: MemoryLayout<Int>.size) {
-            var number: Int = 0
-            number |= self.count > 7 ? Int(self[idx.advanced(by: 7)]) << 56 : 0
-            number |= self.count > 6 ? Int(self[idx.advanced(by: 6)]) << 48 : 0
-            number |= self.count > 5 ? Int(self[idx.advanced(by: 5)]) << 40 : 0
-            number |= self.count > 4 ? Int(self[idx.advanced(by: 4)]) << 32 : 0
-            number |= self.count > 3 ? Int(self[idx.advanced(by: 3)]) << 24 : 0
-            number |= self.count > 2 ? Int(self[idx.advanced(by: 2)]) << 16 : 0
-            number |= self.count > 1 ? Int(self[idx.advanced(by: 1)]) << 8 : 0
-            number |= self.count > 0 ? Int(self[idx.advanced(by: 0)]) << 0 : 0
-            array.append(number)
-        }
-        
-        return array
-    }
-    
-    public func makeInt32() -> Int32 {
-        var val: Int32 = 0
-        val |= self.count > 3 ? Int32(self[startIndex.advanced(by: 3)]) << 24 : 0
-        val |= self.count > 2 ? Int32(self[startIndex.advanced(by: 2)]) << 16 : 0
-        val |= self.count > 1 ? Int32(self[startIndex.advanced(by: 1)]) << 8 : 0
-        val |= self.count > 0 ? Int32(self[startIndex]) : 0
-        
-        return val
-    }
-    
-    public func makeInt() -> Int {
-        var number: Int = 0
-        number |= self.count > 7 ? Int(self[startIndex.advanced(by: 7)]) << 56 : 0
-        number |= self.count > 6 ? Int(self[startIndex.advanced(by: 6)]) << 48 : 0
-        number |= self.count > 5 ? Int(self[startIndex.advanced(by: 5)]) << 40 : 0
-        number |= self.count > 4 ? Int(self[startIndex.advanced(by: 4)]) << 32 : 0
-        number |= self.count > 3 ? Int(self[startIndex.advanced(by: 3)]) << 24 : 0
-        number |= self.count > 2 ? Int(self[startIndex.advanced(by: 2)]) << 16 : 0
-        number |= self.count > 1 ? Int(self[startIndex.advanced(by: 1)]) << 8 : 0
-        number |= self.count > 0 ? Int(self[startIndex.advanced(by: 0)]) << 0 : 0
-        
-        return number
-    }
-}
-
 extension Document {
     
     // MARK: - BSON Parsing Logic
@@ -316,19 +250,19 @@ extension Document {
                 return -1
             }
             
-            return Int(storage[position...position+3].makeInt32() + 4)
+            return Int(Int32(storage[position...position+3]) + 4)
         case .binary:
             guard need(5) else {
                 return -1
             }
             
-            return Int(storage[position...position+3].makeInt32() + 5)
+            return Int(Int32(storage[position...position+3]) + 5)
         case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
             guard need(4) else {
                 return -1
             }
             
-            return Int(storage[position...position+3].makeInt32())
+            return Int(Int32(storage[position...position+3]))
         case .decimal128:
             return 16
         }
@@ -431,7 +365,7 @@ extension Document {
                 }
                 
                 // Get the length
-                let length: Int32 = storage[position...position+3].makeInt32()
+                let length: Int32 = Int32(storage[position...position+3])
                 
                 // Check if the data is at least the right size
                 guard storage.count-position >= Int(length) + 4 else {
@@ -461,7 +395,7 @@ extension Document {
                 }
                 
                 // Get the length
-                let length: Int32 = storage[position...position+3].makeInt32()
+                let length: Int32 = Int32(storage[position...position+3])
                 
                 // Check if the data is at least the right size
                 guard storage.count-position >= Int(length) + 4 else {
@@ -489,7 +423,7 @@ extension Document {
                     return nil
                 }
                 
-                let length = Int(storage[position..<position+4].makeInt32())
+                let length = Int(Int32(storage[position..<position+4]))
                 
                 guard remaining() >= length else {
                     return nil
@@ -505,7 +439,7 @@ extension Document {
                     return nil
                 }
                 
-                let length = Int(storage[position..<position+4].makeInt32())
+                let length = Int(Int32(storage[position..<position+4]))
                 let subType = storage[position+4]
                 
                 guard remaining() >= length + 5 else {
@@ -543,7 +477,7 @@ extension Document {
                     return nil
                 }
                 
-                let interval: Int = storage[position..<position+8].makeInt()
+                let interval: Int = Int(storage[position..<position+8])
                 return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             case .nullValue:
                 return NSNull()
@@ -569,7 +503,7 @@ extension Document {
                 }
                 
                 // why did they include this? it's not needed. whatever. we'll validate it.
-                let totalLength = Int(storage[position..<position+4].makeInt32())
+                let totalLength = Int(Int32(storage[position..<position+4]))
                 guard remaining() >= totalLength else {
                     return nil
                 }
@@ -589,13 +523,13 @@ extension Document {
                     return nil
                 }
                 
-                return storage[position..<position+4].makeInt32()
+                return Int32(storage[position..<position+4])
             case .timestamp:
                 guard remaining() >= 8 else {
                     return nil
                 }
                 
-                let stamp = Timestamp(increment: storage[position..<position+4].makeInt32(), timestamp: storage[position+4..<position+8].makeInt32())
+                let stamp = Timestamp(increment: Int32(storage[position..<position+4]), timestamp: Int32(storage[position+4..<position+8]))
                 
                 return stamp
             case .int64:
