@@ -5,6 +5,7 @@
 //  Created by Robbert Brandsma on 13/06/2017.
 //
 
+#if swift(>=3.2)
 import XCTest
 import BSON
 
@@ -116,3 +117,4 @@ class BSONCodableTests: XCTestCase {
     }
     
 }
+#endif

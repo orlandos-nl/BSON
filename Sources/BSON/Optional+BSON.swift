@@ -8,6 +8,7 @@
 
 import Foundation
 
+#if swift(>=3.1)
 extension Optional where Wrapped == Primitive {
     
     public subscript(parts: SubscriptExpressionType...) -> Primitive? {
@@ -36,3 +37,4 @@ extension Optional where Wrapped == Primitive {
         return lhs.makeBinary() == rhs.makeBinary()
     }
 }
+#endif

@@ -23,7 +23,7 @@ import Foundation
     }
 #endif
 
-
+#if swift(>=3.2)
 // MARK: - Codable Conformance
 
 fileprivate struct DocumentCodingKey : CodingKey {
@@ -985,3 +985,4 @@ extension _BSONCodingPathContaining {
 fileprivate enum _BSONSuperKey : String, CodingKey {
     case `super`
 }
+#endif
