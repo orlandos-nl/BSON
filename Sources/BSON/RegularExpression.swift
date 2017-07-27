@@ -9,7 +9,7 @@
 import Foundation
 
 #if !swift(>=3.1) && os(Linux)
-    public typealias NSRegularExpression = RegularExpression
+    public typealias NSRegularExpression = Foundation.RegularExpression
 #endif
 
 /// The `RegularExpression` struct represents a regular expression as part of a BSON `Document`.
