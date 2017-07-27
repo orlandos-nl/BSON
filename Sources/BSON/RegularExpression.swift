@@ -8,6 +8,10 @@
 
 import Foundation
 
+#if !swift(>=3.1) && os(Linux)
+    public typealias NSRegularExpression = RegularExpression
+#endif
+
 /// The `RegularExpression` struct represents a regular expression as part of a BSON `Document`.
 ///
 /// An extension to `NSRegularExpression` is provided for converting between `Foundation.NSRegularExpression` and `BSON.RegularExpression`.
