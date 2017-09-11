@@ -18,6 +18,7 @@ final class BSONPublicTests: XCTestCase {
     
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
         return [
+            ("testDocumentLockup", testDocumentLockup),
             ("testDictionaryLiteral", testDictionaryLiteral),
             ("testDocumentCollectionFunctionality", testDocumentCollectionFunctionality),
             ("testInitializedFromData", testInitializedFromData),
@@ -64,6 +65,34 @@ final class BSONPublicTests: XCTestCase {
         "minKey": MinKey(),
         "maxKey": MaxKey()
     ]
+    
+    func testDocumentLockup() {
+        var document = Document()
+        document.removeValue(forKey: "_id")
+        document["_id"] = "123"
+        XCTAssertEqual(String(document["_id"]), "123")
+        XCTAssertNotNil(document.dictionaryRepresentation["_id"])
+        document.removeValue(forKey: "_id")
+        XCTAssertEqual(String(document["_id"]), nil)
+        XCTAssertNil(document.dictionaryRepresentation["_id"])
+        document["_id"] = "456"
+        XCTAssertEqual(String(document["_id"]), "456")
+        XCTAssertNotNil(document.dictionaryRepresentation["_id"])
+        document["anykey"] = "anyvalue"
+        XCTAssertNotNil(document["anykey"] as? String)
+        
+        var document2 = Document()
+        document2.removeValue(forKey: "anykey")
+        document2["_id"] = "123"
+        XCTAssertNotNil(document2["_id"])
+        
+        var document3 = Document()
+        document3["_id"] = "123"
+        XCTAssertEqual(String(document3.dictionaryRepresentation["_id"]), "123")
+        document2.removeValue(forKey: "anykey")
+        XCTAssertEqual(document3.dictionaryRepresentation["_id"] as? String, "123")
+        XCTAssertNil(document3.dictionaryRepresentation["anykey"])
+    }
     
     func testRelativeLength() {
         var document: Document = [
