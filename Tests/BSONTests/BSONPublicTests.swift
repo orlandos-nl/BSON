@@ -68,7 +68,7 @@ final class BSONPublicTests: XCTestCase {
         var document = Document()
         document.removeValue(forKey: "_id")
         document.append("123", forKey: "_id")
-        XCTAssertEqual(document.dictionaryRepresentation["_id"], "123")
+        XCTAssertEqual(document.dictionaryRepresentation["_id"] as? String, "123")
     }
     
     func testRelativeLength() {
