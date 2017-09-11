@@ -64,6 +64,13 @@ final class BSONPublicTests: XCTestCase {
         "maxKey": MaxKey()
     ]
     
+    func testDocumentLockup() {
+        var document = Document()
+        document.removeValue(forKey: "_id")
+        document.append("123", forKey: "_id")
+        XCTAssertEqual(document.dictionaryRepresentation["_id"], "123")
+    }
+    
     func testRelativeLength() {
         var document: Document = [
             "_id": ObjectId(),
