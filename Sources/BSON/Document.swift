@@ -225,6 +225,13 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
     public mutating func append(_ value: Primitive, forKey key: String) {
+        let encodedValue = value.makeBinary()
+        
+        storage.reserveCapacity(storage.count + encodedValue.count + key.utf8.count + 2)
+        
+        let searchTreeKey = IndexKey(KittenBytes([UInt8](key.utf8)))
+        self.searchTree[[searchTreeKey]] = IndexTrieNode(storage.endIndex)
+        
         // Append the key-value pair
         // Type identifier
         storage.append(value.typeIdentifier)
@@ -233,7 +240,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.makeBinary())
+        storage.append(contentsOf: encodedValue)
     }
     
     internal mutating func unset(_ key: [IndexKey]) {
@@ -490,6 +497,12 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameter value: The `Value` to append
     public mutating func append(_ value: Primitive) {
         let key = self.count.description
+        let encodedValue = value.makeBinary()
+        
+        storage.reserveCapacity(storage.count + encodedValue.count + key.utf8.count + 2)
+        
+        let searchTreeKey = IndexKey(KittenBytes([UInt8](key.utf8)))
+        self.searchTree[[searchTreeKey]] = IndexTrieNode(storage.endIndex)
         
         // Append the key-value pair
         // Type identifier
@@ -499,7 +512,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.makeBinary())
+        storage.append(contentsOf: encodedValue)
     }
     
     /// Appends the convents of `otherDocument` to `self` overwriting any keys in `self` with the `otherDocument` equivalent in the case of duplicates
