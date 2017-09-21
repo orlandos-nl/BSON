@@ -681,6 +681,12 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
         } else if T.self == Date.self {
             let date = try BSON.unwrap(unwrap(value), codingPath: codingPath) as Date as! T
             return date
+        } else if T.self == Data.self {
+            let binary = try BSON.unwrap(unwrap(value), codingPath: codingPath) as Binary
+            return binary.data as! T
+        } else if T.self == Data.self {
+            let binary = try BSON.unwrap(unwrap(value), codingPath: codingPath) as Binary
+            return binary.data as! T
         } else if T.self == Document.self {
             let document = try BSON.unwrap(unwrap(value), codingPath: codingPath) as Document as! T
             return document
