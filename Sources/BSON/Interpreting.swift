@@ -56,7 +56,7 @@ extension Int {
             self = Int(val)
         case let val as Int:
             self = val
-        case let val as Double:
+        case let val as Double where val < Double(Int.max) && val > Double(Int.min):
             self = Int(val)
         case let val as String:
             if let parsed = Int(val) {
