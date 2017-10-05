@@ -173,11 +173,21 @@ extension RegularExpression {
 
 extension ObjectId {
     public init?(_ value: Primitive?) {
-        guard let objectId = value as? ObjectId else {
+        if let objectId = value as? ObjectId  {
+            self = objectId
+            return
+        }
+        
+        guard let string = value as? String else {
             return nil
         }
         
-        self = objectId
+        do {
+            self = try ObjectId(string)
+            return
+        } catch {
+            return nil
+        }
     }
 }
 
