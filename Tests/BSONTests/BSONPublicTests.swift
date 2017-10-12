@@ -181,8 +181,9 @@ final class BSONPublicTests: XCTestCase {
     
     func testObjectIdUniqueness() {
         var oids = [String]()
+        oids.reserveCapacity(10_000)
         
-        for _ in 0..<1000 {
+        for _ in 0..<10_000 {
             let oid = ObjectId().hexString
             
             XCTAssertFalse(oids.contains(oid))
