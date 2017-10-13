@@ -54,10 +54,10 @@ extension Document {
         indexKeyBuilder: for part in keyParts {
             switch part.subscriptExpression {
             case .key(let key):
-                parts.append(IndexKey(KittenBytes([UInt8](key.utf8))))
+                parts.append(IndexKey(Data(key.utf8)))
             case .integer(let pos):
                 guard pos > -1 else {
-                    parts.append(IndexKey(KittenBytes(Bytes(pos.description.utf8))))
+                    parts.append(IndexKey(Data(pos.description.utf8)))
                     continue indexKeyBuilder
                 }
                 
@@ -69,7 +69,7 @@ extension Document {
                 } else {
                     // TODO: Leave this in?
                     guard let meta = getMeta(for: parts) else {
-                        parts.append(IndexKey(KittenBytes(Bytes(pos.description.utf8))))
+                        parts.append(IndexKey(Data(pos.description.utf8)))
                         continue indexKeyBuilder
                     }
                     

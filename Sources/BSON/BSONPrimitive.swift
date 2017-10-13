@@ -26,7 +26,7 @@ func escape(_ string: String) -> String {
 public protocol Primitive {
     var typeIdentifier: Byte { get }
     
-    func makeBinary() -> Bytes
+    func makeBinary() -> Data
 }
 
 func regexOptions(fromString s: String) -> NSRegularExpression.Options {
@@ -68,7 +68,7 @@ public struct Timestamp: Primitive, Equatable {
         self.increment = increment
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return increment.makeBytes() + timestamp.makeBytes()
     }
 }
@@ -78,7 +78,7 @@ extension Data : Primitive {
         return 0x05
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return Binary(data: self, withSubtype: .generic).makeBinary()
     }
 }
@@ -152,22 +152,14 @@ public struct Binary: Primitive {
         self.subtype = subtype
     }
     
-    public func makeBytes() -> Bytes {
-        var data = Bytes(repeating: 0, count: self.data.count)
-        
-        self.data.copyBytes(to: &data, count: data.count)
-        
-        return data
-    }
-    
     public var typeIdentifier: Byte {
         return 0x05
     }
     
-    public func makeBinary() -> Bytes {
-        guard data.count < Int(Int32.max) else {
+    public func makeBinary() -> Data {
+        guard data.count <= Int(Int32.max) else {
             // 4 bytes for the length and a null terminator byte
-            return [0, 0, 0, 0, 0]
+            return Data([0, 0, 0, 0, 0])
         }
         
         let length = Int32(data.count)
@@ -192,8 +184,8 @@ extension NSNull : Primitive {
         return 0x0A
     }
     
-    public func makeBinary() -> Bytes {
-        return []
+    public func makeBinary() -> Data {
+        return Data()
     }
 }
 
@@ -205,7 +197,7 @@ public struct JavascriptCode: Primitive {
         return self.scope == nil ? 0x0D : 0x0F
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         if let scope = scope {
             let data = self.code.bytes + scope.bytes
             return Int32(data.count + 4).makeBytes() + data
@@ -225,8 +217,8 @@ extension Bool : Primitive {
         return 0x08
     }
     
-    public func makeBinary() -> Bytes {
-        return self ? [0x01] : [0x00]
+    public func makeBinary() -> Data {
+        return self ? Data([0x01]) : Data([0x00])
     }
 }
 
@@ -235,7 +227,7 @@ extension Double : Primitive {
         return 0x01
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return self.makeBytes()
     }
 }
@@ -245,7 +237,7 @@ extension Int32 : Primitive {
         return 0x10
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return self.makeBytes()
     }
 }
@@ -255,7 +247,7 @@ extension Int : Primitive {
         return 0x12
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return self.makeBytes()
     }
 }
@@ -268,7 +260,7 @@ internal let isoDateFormatter: DateFormatter = {
 }()
 
 extension Date : Primitive {
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         let integer = Int(self.timeIntervalSince1970 * 1000)
         return integer.makeBytes()
     }
@@ -279,7 +271,7 @@ extension Date : Primitive {
 }
 
 extension String : Primitive {
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         var byteArray = Int32(self.utf8.count + 1).makeBytes()
         byteArray.append(contentsOf: self.utf8)
         byteArray.append(0x00)
@@ -292,9 +284,9 @@ extension String : Primitive {
 }
 
 extension StaticString : Primitive {
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return self.withUTF8Buffer {
-            var data = Bytes(repeating: 0, count: self.utf8CodeUnitCount + 1)
+            var data = Data(repeating: 0, count: self.utf8CodeUnitCount + 1)
             memcpy(&data, $0.baseAddress!, self.utf8CodeUnitCount)
             return data
         }
@@ -305,17 +297,7 @@ extension StaticString : Primitive {
     }
 }
 
-extension KittenBytes : Primitive {
-    public func makeBinary() -> Bytes {
-        return bytes + [0x00]
-    }
-    
-    public var typeIdentifier: Byte {
-        return 0x02
-    }
-}
-
-extension Document : Primitive {
+extension Document: Primitive {
     public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == SupportedValue {
         var doc = Document()
         
@@ -335,7 +317,7 @@ extension Document : Primitive {
         return self.isArray ?? validatesAsArray() ? 0x04 : 0x03
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return self.bytes
     }
 }
@@ -345,7 +327,7 @@ extension ObjectId : Primitive {
         return 0x07
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return self._storage
     }
 }
@@ -357,8 +339,8 @@ public struct MinKey: Primitive {
         return 0xFF
     }
     
-    public func makeBinary() -> Bytes {
-        return []
+    public func makeBinary() -> Data {
+        return Data()
     }
 }
 
@@ -369,8 +351,8 @@ public struct MaxKey: Primitive {
         return 0x7F
     }
     
-    public func makeBinary() -> Bytes {
-        return []
+    public func makeBinary() -> Data {
+        return Data()
     }
 }
 
@@ -379,7 +361,7 @@ extension RegularExpression : Primitive {
         return 0x0B
     }
     
-    public func makeBinary() -> Bytes {
+    public func makeBinary() -> Data {
         return self.pattern.cStringBytes + makeOptions().cStringBytes
     }
     

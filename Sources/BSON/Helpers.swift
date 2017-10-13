@@ -13,33 +13,32 @@ public typealias Bytes = [UInt8]
 
 internal extension String {
     /// The bytes in this `String`
-    internal var bytes : Bytes {
+    internal var bytes: Data {
         return self.makeBinary()
     }
     
     /// This `String` as c-string
-    internal var cStringBytes : Bytes {
-        var byteArray = self.utf8.filter{$0 != 0x00}
-        byteArray.append(0x00)
+    internal var cStringBytes: Data {
+        var serialized = Data()
+        serialized.reserveCapacity(self.utf8.count &+ 1)
         
-        return byteArray
+        for character in self.utf8 where character != 0x00 {
+            serialized.append(character)
+        }
+        
+        serialized.append(0x00)
+        
+        return serialized
     }
     
     /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    internal static func instantiate(bytes data: Bytes) throws -> String {
-        var 🖕 = 0
-        
-        return try instantiate(bytes: data, consumedBytes: &🖕)
-    }
-    
-    /// Instantiate a string from BSON (UTF8) data, including the length of the string.
-    internal static func instantiate(bytes data: Bytes, consumedBytes: inout Int) throws -> String {
-        let res = try _instant(bytes: data)
+    internal static func instantiate(data: Data, consumedBytes: inout Int) throws -> String {
+        let res = try _instant(data: data)
         consumedBytes = res.0
         return res.1
     }
     
-    internal static func _instant(bytes data: Bytes) throws -> (Int, String) {
+    internal static func _instant(data: Data) throws -> (Int, String) {
         // Check for null-termination and at least 5 bytes (length spec + terminator)
         guard data.count >= 5 && data.last == 0x00 else {
             throw DeserializationError.invalidLastElement
@@ -62,10 +61,8 @@ internal extension String {
             throw DeserializationError.invalidElementSize
         }
         
-        let stringData = Array(data[4..<Int(length + 3)])
-        
-        guard let string = String(bytes: stringData, encoding: .utf8) else {
-            throw DeserializationError.unableToInstantiateString(fromBytes: stringData)
+        guard let string = String(data: data[4..<Int(length + 3)], encoding: .utf8) else {
+            throw DeserializationError.unableToInstantiateString
         }
         
         return (Int(length + 4), string)
@@ -109,10 +106,10 @@ internal protocol BSONMakeBytesProtocol: BSONBytesProtocol {
 }
 
 extension Int : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
+    internal func makeBytes() -> Data {
         let integer = self.littleEndian
         
-        return [
+        return Data([
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
             Byte((integer >> 16) & 0xFF),
@@ -121,42 +118,42 @@ extension Int : BSONBytesProtocol {
             Byte((integer >> 40) & 0xFF),
             Byte((integer >> 48) & 0xFF),
             Byte((integer >> 56) & 0xFF),
-        ]
+        ])
     }
 }
 
 extension Int32 : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
+    internal func makeBytes() -> Data {
         let integer = self.littleEndian
         
-        return [
+        return Data([
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
             Byte((integer >> 16) & 0xFF),
             Byte((integer >> 24) & 0xFF),
-        ]
+        ])
     }
     
-    internal func makeBigEndianBytes() -> Bytes {
+    internal func makeBigEndianBytes() -> Data {
         let integer = self.bigEndian
         
-        return [
+        return Data([
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
             Byte((integer >> 16) & 0xFF),
             Byte((integer >> 24) & 0xFF),
-        ]
+        ])
     }
 }
 
 extension Int16 : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
+    internal func makeBytes() -> Data {
         let integer = self.littleEndian
         
-        return [
+        return Data([
             Byte((integer >> 8) & 0xFF),
             Byte(integer & 0xFF)
-        ]
+        ])
     }
 }
 
@@ -167,10 +164,10 @@ extension Int8 : BSONBytesProtocol {
 }
 
 extension UInt : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
+    internal func makeBytes() -> Data {
         let integer = self.littleEndian
         
-        return [
+        return Data([
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
             Byte((integer >> 16) & 0xFF),
@@ -179,46 +176,46 @@ extension UInt : BSONBytesProtocol {
             Byte((integer >> 40) & 0xFF),
             Byte((integer >> 48) & 0xFF),
             Byte((integer >> 56) & 0xFF),
-        ]
+        ])
     }
 }
 
 extension UInt32 : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
+    internal func makeBytes() -> Data {
         let integer = self.littleEndian
         
-        return [
+        return Data([
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
             Byte((integer >> 16) & 0xFF),
             Byte((integer >> 24) & 0xFF),
-        ]
+        ])
     }
 }
 
 extension UInt16 : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
+    internal func makeBytes() -> Data {
         let integer = self.littleEndian
         
-        return [
+        return Data([
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF)
-        ]
+        ])
     }
 }
 
 extension Byte : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
-        return [self]
+    internal func makeBytes() -> Data {
+        return Data([self])
     }
 }
 
 extension Double : BSONBytesProtocol {
-    internal func makeBytes() -> Bytes {
+    internal func makeBytes() -> Data {
         var integer = self
         return withUnsafePointer(to: &integer) {
             $0.withMemoryRebound(to: Byte.self, capacity: MemoryLayout<Double>.size) {
-                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Double>.size))
+                Data(UnsafeBufferPointer(start: $0, count: MemoryLayout<Double>.size))
             }
         }
     }

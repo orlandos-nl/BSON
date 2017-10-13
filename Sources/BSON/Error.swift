@@ -27,7 +27,7 @@ public enum DeserializationError : Error {
     case InvalidObjectIdLength
     
     /// String with given bytes couldn't be instantiated
-    case unableToInstantiateString(fromBytes: Bytes)
+    case unableToInstantiateString
     
     /// -
     case missingNullTerminatorInString

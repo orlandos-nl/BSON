@@ -41,7 +41,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     public typealias Value = Primitive?
     
     internal var isArray: Bool?
-    internal var storage: Bytes
+    internal var storage: Data
     internal var invalid: Bool = false
     internal var searchTree = IndexTrieNode(0)
     internal var original = true
@@ -51,20 +51,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with binary `Foundation.Data`
     ///
     /// - parameters data: the `Foundation.Data` that's being used to initialize this`Document`
-    public init(data: Foundation.Data) {
-        var byteArray = Bytes(repeating: 0, count: data.count)
-        data.copyBytes(to: &byteArray, count: byteArray.count)
-        
-        self.init(data: byteArray)
+    public init(bytes: Bytes) {
+        self.init(data: Data(bytes))
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    public init(data: Bytes) {
+    public init(data: Data) {
         guard data.count > 4 else {
             invalid = true
-            storage = []
+            storage = Data()
             return
         }
         
@@ -72,17 +69,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         guard length > 4 else {
             invalid = true
-            storage = data
+            storage = Data(data)
             return
         }
         
         guard length <= data.count, data.last == 0x00 else {
             invalid = true
-            storage = Array(data[4..<data.count &- 1])
+            storage = Data(data[4..<data.count &- 1])
             return
         }
         
-        storage = Array(data[4..<length &- 1])
+        storage = Data(data[4..<length &- 1])
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
@@ -91,7 +88,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     public init(data: ArraySlice<Byte>) {
         guard data.count > 5 else {
             invalid = true
-            storage = []
+            storage = Data()
             return
         }
         
@@ -99,17 +96,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         guard length > 4 else {
             invalid = true
-            storage = Array(data)
+            storage = Data(data)
             return
         }
         
         guard length <= data.count, data.last == 0x00 else {
             invalid = true
-            storage = Array(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
+            storage = Data(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
             return
         }
         
-        storage = Array(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
+        storage = Data(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
@@ -117,7 +114,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     internal init(data: ArraySlice<Byte>, copying cache: IndexTrieNode) {
         guard data.count > 5 else {
-            storage = []
+            storage = Data()
             return
         }
         
@@ -128,7 +125,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes an empty `Document`
     public init() {
         // the empty document is 5 bytes long.
-        storage = []
+        storage = Data()
         self.isArray = false
     }
     
@@ -138,7 +135,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter elements: The `Dictionary`'s generics used to initialize this must be a `String` key and `Value` for the value
     public init(dictionaryElements elements: [(String, Primitive?)]) {
-        storage = []
+        storage = Data()
         self.isArray = false
         
         for (key, value) in elements {
@@ -262,7 +259,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Remove indexes for this key since the value is being removed
         self.searchTree[key] = nil
         
-        for (_, node) in self.searchTree.storage where node.value > meta.elementTypePosition {
+        for node in self.searchTree.nodeStorage where node.value > meta.elementTypePosition {
             node.value = node.value &- relativeLength
         }
         
@@ -279,8 +276,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         func makeTrie(for mutatedPosition: Int, with value: Primitive, key: [IndexKey]) {
             let node = IndexTrieNode(mutatedPosition)
             
-            if let trie = (value as? Document)?.searchTree.storage {
-                node.storage = trie
+            if let trie = (value as? Document)?.searchTree.nodeStorage {
+                node.nodeStorage = trie
             }
             
             if !isKnownUniquelyReferenced(&searchTree) {
@@ -320,7 +317,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             
             makeTrie(for: mutatedPosition, with: value, key: key)
             
-            for (_, node) in self.searchTree.storage where node.value > meta.elementTypePosition {
+            for node in self.searchTree.nodeStorage where node.value > meta.elementTypePosition {
                 node.value = node.value &+ relativeLength
             }
             
@@ -547,15 +544,15 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         let keys = self.makeKeyIterator()
         
         return AnyIterator {
-            guard let key = keys.next() else {
+            guard let metadata = keys.next() else {
                 return nil
             }
             
-            guard let string = String(bytes: key.keyData[0..<key.keyData.endIndex], encoding: String.Encoding.utf8) else {
+            guard let string = String(bytes: metadata.keyData.key.bytes, encoding: .utf8) else {
                 return nil
             }
             
-            guard let value = self.getValue(atDataPosition: key.dataPosition, withType: key.type) else {
+            guard let value = self.getValue(atDataPosition: metadata.dataPosition, withType: metadata.type) else {
                 return nil
             }
             
@@ -615,18 +612,17 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return nil
         }
         
-        guard let searchTreeIndex = searchTree.storage.index(where: { (indexKey, node) -> Bool in
-            return indexKey == key
-        }) else {
+        guard let searchTreeIndex = searchTree.keyStorage.index(of: key) else {
             return nil
         }
         
         storage.removeSubrange(meta.elementTypePosition..<meta.dataPosition + length)
         
-        searchTree.storage.remove(at: searchTreeIndex)
+        searchTree.keyStorage.remove(at: searchTreeIndex)
+        searchTree.nodeStorage.remove(at: searchTreeIndex)
         
         // Modify the searchTree efficienty, where necessary
-        for (_, node) in searchTree.storage where node.value > meta.elementTypePosition {
+        for node in searchTree.nodeStorage where node.value > meta.elementTypePosition {
             node.value = node.value &- (length &+ indexString.bytes.count &+ 2)
         }
         

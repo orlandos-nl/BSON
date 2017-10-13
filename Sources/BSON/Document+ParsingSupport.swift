@@ -306,17 +306,20 @@ extension Document {
     /// - parameter startPos: The byte to start searching from
     ///
     /// - returns: An iterator that iterates over all key-value pairs
-    internal func makeKeyIterator(startingAtByte startPos: Int = 0) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
+    internal func makeKeyIterator(startingAtByte startPos: Int = 0) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: IndexKey, startPosition: Int)> {
         self.index(recursive: nil, lookingFor: nil, levels: 0)
-        let storageCopy = searchTree.storage
-        var iterator = storageCopy.sorted(by: { lhs, rhs in
-            lhs.1.value < rhs.1.value
-        }).makeIterator()
+        
+        let tree = self.searchTree
+        
+        var index = 0
         
         return AnyIterator {
-            guard let position = iterator.next()?.1.value else {
+            guard index < tree.count else {
                 return nil
             }
+            
+            let key = tree.keyStorage[index]
+            let position = tree.nodeStorage[index].value
             
             guard self.storage.count &- position > 2 else {
                 // Invalid document condition
@@ -327,13 +330,14 @@ extension Document {
                 return nil
             }
             
-            for i in position + 1 ..< self.storage.count {
-                if self.storage[i] == 0 {
-                    return (dataPosition: i &+ 1, type: type, keyData: Array(self.storage[position + 1..<i]), startPosition: position)
-                }
-            }
+            index = index &+ 1
             
-            return nil
+            return (
+                dataPosition: position &+ 2 &+ key.key.bytes.count,
+                type: type,
+                keyData: key,
+                startPosition: position
+            )
         }
     }
     
@@ -508,14 +512,13 @@ extension Document {
                     return nil
                 }
                 
-                let stringDataAndMore = Array(storage[position+4..<position+totalLength])
+                let stringDataAndMore = Data(storage[position+4..<position+totalLength])
                 var trueCodeSize = 0
-                guard let code = try? String.instantiate(bytes: stringDataAndMore, consumedBytes: &trueCodeSize) else {
+                guard let code = try? String.instantiate(data: stringDataAndMore, consumedBytes: &trueCodeSize) else {
                     return nil
                 }
                 
-                let scopeDataAndMaybeMore = Array(stringDataAndMore[trueCodeSize..<stringDataAndMore.endIndex])
-                let scope = Document(data: scopeDataAndMaybeMore)
+                let scope = Document(data: stringDataAndMore[trueCodeSize..<stringDataAndMore.endIndex])
                 
                 return JavascriptCode(code: code, withScope: scope)
             case .int32: // int32
@@ -543,7 +546,7 @@ extension Document {
                     return nil
                 }
                 
-                return Decimal128(slice: storage[position..<position + 16])
+                return Decimal128(slice: Data(storage[position..<position + 16]))
             case .minKey: // MinKey
                 return MinKey()
             case .maxKey: // MaxKey

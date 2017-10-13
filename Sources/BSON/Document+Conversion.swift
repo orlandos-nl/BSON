@@ -23,7 +23,7 @@ extension Document {
     }
     
     /// The `Byte` `Array` (`[Byte]`) representation of this `Document`
-    public var bytes: Bytes {
+    public var bytes: Data {
         return makeDocumentLength() + storage + [0x00]
     }
     
@@ -76,10 +76,10 @@ extension Document {
     public var dictionaryRepresentation: [String: Primitive] {
         var dictionary = [String: Primitive]()
         
-        for pos in makeKeyIterator() {
-            if let key = String(bytes: pos.keyData[0..<pos.keyData.endIndex], encoding: String.Encoding.utf8) {
+        for metadata in makeKeyIterator() {
+            if let key = String(bytes: metadata.keyData.key.bytes, encoding: .utf8) {
                 
-                let value = getValue(atDataPosition: pos.dataPosition, withType: pos.type)
+                let value = getValue(atDataPosition: metadata.dataPosition, withType: metadata.type)
                 
                 dictionary[key] = value
             }
@@ -143,7 +143,7 @@ extension Document {
         }
         
         for key in self.makeKeyIterator() {
-            for byte in key.keyData {
+            for byte in key.keyData.key.bytes {
                 guard (byte >= 48 && byte <= 57) || byte == 0x00 else {
                     return false
                 }

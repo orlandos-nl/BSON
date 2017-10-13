@@ -79,7 +79,7 @@ extension Document {
                     return false
                 }
                 
-                let doc = Document(data: Array(storage[position...position + length - 1]))
+                let doc = Document(data: Data(storage[position...position + length - 1]))
                 guard doc.validate() else {
                     return false
                 }
