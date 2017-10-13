@@ -109,6 +109,7 @@ class BSONPerformanceTests: XCTestCase {
         }
         
         measure {
+            document.searchTree = IndexTrieNode(0)
             _ = document[765123]
         }
     }
@@ -121,13 +122,14 @@ class BSONPerformanceTests: XCTestCase {
         }
         
         measure {
+            document.searchTree = IndexTrieNode(0)
             _ = document["test765123"]
         }
     }
     
     func testObjectidPerformance() {
         measure {
-            for _ in 0..<10_000 {
+            for _ in 0..<100_000 {
                 _ = ObjectId()
             }
         }

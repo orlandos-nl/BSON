@@ -262,8 +262,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Remove indexes for this key since the value is being removed
         self.searchTree[key] = nil
         
-        for (key, value) in self.searchTree.storage where value.value > meta.elementTypePosition {
-            self.searchTree.storage[key]?.value = value.value &- relativeLength
+        for (_, node) in self.searchTree.storage where node.value > meta.elementTypePosition {
+            node.value = node.value &- relativeLength
         }
         
         updateCache(mutatingPosition: meta.elementTypePosition, by: -relativeLength, for: key)
@@ -320,8 +320,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             
             makeTrie(for: mutatedPosition, with: value, key: key)
             
-            for (key, value) in self.searchTree.storage where value.value > meta.elementTypePosition {
-                self.searchTree.storage[key]?.value = value.value &+ relativeLength
+            for (_, node) in self.searchTree.storage where node.value > meta.elementTypePosition {
+                node.value = node.value &+ relativeLength
             }
             
             // update element
@@ -615,12 +615,18 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return nil
         }
         
+        guard let searchTreeIndex = searchTree.storage.index(where: { (indexKey, node) -> Bool in
+            return indexKey == key
+        }) else {
+            return nil
+        }
+        
         storage.removeSubrange(meta.elementTypePosition..<meta.dataPosition + length)
         
-        searchTree.storage[key] = nil
+        searchTree.storage.remove(at: searchTreeIndex)
         
         // Modify the searchTree efficienty, where necessary
-        for node in searchTree.storage.values where node.value > meta.elementTypePosition {
+        for (_, node) in searchTree.storage where node.value > meta.elementTypePosition {
             node.value = node.value &- (length &+ indexString.bytes.count &+ 2)
         }
         

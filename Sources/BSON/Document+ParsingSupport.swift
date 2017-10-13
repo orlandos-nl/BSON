@@ -180,7 +180,7 @@ extension Document {
         if let keys = keys {
             self.searchTree[keys]?.fullyIndexed = true
         } else if levels == nil {
-            self.searchTree.fullyIndexed = self.searchTree.storage.values.reduce(true) { $0.1.fullyIndexed && $0.0 }
+            self.searchTree.checkFullyIndexed()
         }
         
         return nil
@@ -309,8 +309,8 @@ extension Document {
     internal func makeKeyIterator(startingAtByte startPos: Int = 0) -> AnyIterator<(dataPosition: Int, type: ElementType, keyData: Bytes, startPosition: Int)> {
         self.index(recursive: nil, lookingFor: nil, levels: 0)
         let storageCopy = searchTree.storage
-        var iterator = storageCopy.sorted(by: {
-            $0.value.value < $1.value.value
+        var iterator = storageCopy.sorted(by: { lhs, rhs in
+            lhs.1.value < rhs.1.value
         }).makeIterator()
         
         return AnyIterator {

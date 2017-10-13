@@ -14,7 +14,7 @@ extension Document {
         // top level scan
         index(recursive: nil, lookingFor: nil, levels: 0)
         
-        return searchTree.storage.count
+        return searchTree.count
     }
     
     /// The amount of `Byte`s in the `Document`
