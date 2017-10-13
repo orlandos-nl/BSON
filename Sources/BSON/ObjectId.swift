@@ -31,7 +31,7 @@ public final class ObjectIdGenerator {
         private var counter = arc4random_uniform(UInt32.max)
     #endif
     
-    public func generate() {
+    public func generate() -> ObjectId {
         var data = Data(repeating: 0, count: 12)
         
         var epoch = Int32(time(nil)).bigEndian
@@ -45,7 +45,7 @@ public final class ObjectIdGenerator {
             self.counter = self.counter &+ 1
         }
         
-        try! ObjectId(data: data)
+        return try! ObjectId(data: data)
     }
 }
 
@@ -55,21 +55,29 @@ public final class ObjectIdGenerator {
 public struct ObjectId {
     public typealias Raw = (Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
     
-    /// This ObjectId as 12-byte tuple
-    public var storage: Raw {
-        get {
-            return (_storage[0], _storage[1], _storage[2], _storage[3], _storage[4], _storage[5], _storage[6], _storage[7], _storage[8], _storage[9], _storage[10], _storage[11])
-        }
-    }
+    #if os(Linux)
+    private static var random: Int32 = {
+        srand(UInt32(time(nil)))
+        return rand()
+    }()
+    private static var counter: Int32 = {
+        srand(UInt32(time(nil)))
+        return rand()
+    }()
+    #else
+    private static var random = arc4random_uniform(UInt32.max)
+    private static var counter = arc4random_uniform(UInt32.max)
+    #endif
     
     internal var _storage: Data
     
+    private static let generator = ObjectIdGenerator()
     private static let generatorQueue = DispatchQueue(label: "org.mongokitten.bson.oidcounter")
     
     /// Generate a new random ObjectId.
     public init() {
         self = ObjectId.generatorQueue.sync {
-            
+            return ObjectId.generator.generate()
         }
     }
     
@@ -116,25 +124,25 @@ public struct ObjectId {
     
     /// The 12 bytes represented as 24-character hex-string
     public var hexString: String {
-        var bytes = Bytes()
-        bytes.reserveCapacity(24)
+        var data = Data()
+        data.reserveCapacity(24)
         
         for byte in _storage {
-            bytes.append(radix16table[Int(byte / 16)])
-            bytes.append(radix16table[Int(byte % 16)])
+            data.append(radix16table[Int(byte / 16)])
+            data.append(radix16table[Int(byte % 16)])
         }
         
-        return String(bytes: bytes, encoding: .utf8)!
+        return String(data: data, encoding: .utf8)!
     }
     
     public var epochSeconds: Int32 {
-        let timeData = Data(_storage[0...3])
-        return Int32(bigEndian: timeData.withUnsafeBytes { $0.pointee } )        
+        let timeData = Data(_storage[..._storage.startIndex.advanced(by: 3)])
+        return Int32(bigEndian: timeData.withUnsafeBytes { $0.pointee } )
     }
 
 
     public var epoch: Date {
-        let timeData = Data(_storage[0...3])
+        let timeData = Data(_storage[..._storage.startIndex.advanced(by: 3)])
         let epoch = UInt32(bigEndian: timeData.withUnsafeBytes { $0.pointee } )
 
         return Date(timeIntervalSince1970: Double(epoch))
@@ -156,8 +164,8 @@ extension ObjectId: Hashable {
     
     public var hashValue: Int {
         let epoch = self.epochSeconds
-        let random = Int32(_storage[4...7])
-        let increment = Int32(_storage[8...11])
+        let random = Int32(_storage[_storage.startIndex.advanced(by: 4)..._storage.startIndex.advanced(by: 7)])
+        let increment = Int32(_storage[_storage.startIndex.advanced(by: 8)..._storage.startIndex.advanced(by: 11)])
         
         let total: Int32 = epoch &+ random &+ increment
         

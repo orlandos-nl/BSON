@@ -38,23 +38,23 @@ extension Document {
                 return array
             }
             
-            guard let type = ElementType(rawValue: self.storage[position]) else {
+            guard let type = ElementType(rawValue: self.storage[offsetBy: position]) else {
                 return array
             }
             
-            var buffer = Bytes()
+            var buffer = Data()
             
             keySkipper : for i in position + 1..<storage.count {
-                guard self.storage[i] != 0 else {
+                guard self.storage[offsetBy: i] != 0 else {
                     // null terminator + length
                     position = i &+ 1
                     break keySkipper
                 }
                 
-                buffer.append(self.storage[i])
+                buffer.append(self.storage[offsetBy: i])
             }
             
-            guard let key = String(bytes: buffer, encoding: .utf8) else {
+            guard let key = String(data: buffer, encoding: .utf8) else {
                 return array
             }
             
@@ -77,8 +77,7 @@ extension Document {
         var dictionary = [String: Primitive]()
         
         for metadata in makeKeyIterator() {
-            if let key = String(bytes: metadata.keyData.data, encoding: .utf8) {
-                
+            if let key = String(data: metadata.keyData.data, encoding: .utf8) {
                 let value = getValue(atDataPosition: metadata.dataPosition, withType: metadata.type)
                 
                 dictionary[key] = value
@@ -86,12 +85,6 @@ extension Document {
         }
         
         return dictionary
-    }
-    
-    /// The `Array` representation of this `Document`
-    @available(*, deprecated, renamed: "arrayRepresentation")
-    public var arrayValue: [Primitive] {
-        return self.arrayRepresentation
     }
     
     /// The `Array` representation of this `Document`.
@@ -106,12 +99,12 @@ extension Document {
                 return array
             }
             
-            guard let type = ElementType(rawValue: self.storage[position]) else {
+            guard let type = ElementType(rawValue: self.storage[offsetBy: position]) else {
                 return array
             }
             
             keySkipper : for i in position + 1..<storage.count {
-                guard self.storage[i] != 0 else {
+                guard self.storage[offsetBy: i] != 0 else {
                     // null terminator + length
                     position = i &+ 1
                     break keySkipper

@@ -17,23 +17,10 @@ import XCTest
 final class BSONInternalTests: XCTestCase {
     static var allTests : [(String, (BSONInternalTests) -> () throws -> Void)] {
         return [
-            ("testCStringSerialization", testCStringSerialization),
             ("testInt16", testInt16),
             ("testRegexInit", testRegexInit),
             // Other tests go here
         ]
-    }
-    
-    func testCStringSerialization() {
-        // This is "ABCD"
-        let rawData: [UInt8] = [0x41, 0x42, 0x43, 0x44, 0x00]
-        let result = "ABCD"
-        
-        let string = try! String.instantiateFromCString(bytes: rawData)
-        XCTAssertEqual(string, result, "Instantiating a CString from BSON data works correctly")
-        
-        let generatedData = result.cStringBytes
-        XCTAssertEqual(generatedData, rawData, "Converting a String to CString BSON data results in the correct data")
     }
     
     func testInt16() throws {

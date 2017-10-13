@@ -3,18 +3,8 @@ import Foundation
 struct IndexKey: Hashable {
     let data: Data
     
-    public var hashValue: Int {
-        guard data.count > 0 else {
-            return 0
-        }
-        
-        var h = 0
-        
-        for i in 0..<data.count {
-            h = 31 &* h &+ numericCast(data[i])
-        }
-        
-        return h
+    var hashValue: Int {
+        return data.hashValue
     }
     
     /// Initializes it from binary
@@ -36,7 +26,7 @@ struct IndexKey: Hashable {
                 return true
             }
             
-            let bytes = lhs.data[position]
+            let byte = lhs.data[position]
             
             if byte < rhs.data[position] {
                 return true
@@ -56,7 +46,7 @@ struct IndexKey: Hashable {
                 return false
             }
             
-            let bytes = lhs.data[position]
+            let byte = lhs.data[position]
             
             if byte > rhs.data[position] {
                 return true
@@ -76,6 +66,7 @@ class IndexTrieNode {
     var nodeStorage = [IndexTrieNode]()
     var value: Int
     var fullyIndexed: Bool = false
+    var recursivelyIndexed: Bool = false
     
     init(_ value: Int) {
         self.value = value
@@ -94,30 +85,20 @@ class IndexTrieNode {
             }
             
             var position = 0
-            var pathIndex = 0
-            var key: IndexKey
-            var nodeIndex: Int
-            var node = self
             var previousKeyLength = 0
+            var node = self
             
-            repeat {
-                key = path[pathIndex]
+            for index in 0..<path.count {
+                let currentKey = path[index]
                 
-                guard let index = path.index(of: key) else {
+                guard let nodeIndex = node.keyStorage.index(of: currentKey) else {
                     return nil
                 }
                 
-                nodeIndex = index
                 node = node.nodeStorage[nodeIndex]
-                
-                position += node.value &+ 6 &+ previousKeyLength
-                previousKeyLength = key.key.bytes.count
-                
-                pathIndex = pathIndex &+ 1
-            } while pathIndex < path.count
-            
-            guard pathIndex == path.count else {
-                return nil
+                position += node.value &+ previousKeyLength
+                // + 6 for the sub document overhead (null terminators)
+                previousKeyLength = currentKey.data.count &+ 6
             }
             
             return position
@@ -130,7 +111,7 @@ class IndexTrieNode {
     
     func copy() -> IndexTrieNode {
         let copy = IndexTrieNode(self.value)
-        copy.fullyIndexed = self.fullyIndexed
+        copy.recursivelyIndexed = self.recursivelyIndexed
         
         for node in self.nodeStorage {
             copy.nodeStorage.append(node.copy())
@@ -147,26 +128,16 @@ class IndexTrieNode {
                 return nil
             }
             
-            var pathIndex = 0
-            var key: IndexKey
-            var nodeIndex: Int
             var node = self
             
-            repeat {
-                key = path[pathIndex]
+            for index in 0..<path.count {
+                let currentKey = path[index]
                 
-                guard let index = path.index(of: key) else {
+                guard let nodeIndex = node.keyStorage.index(of: currentKey) else {
                     return nil
                 }
                 
-                nodeIndex = index
                 node = node.nodeStorage[nodeIndex]
-                
-                pathIndex = pathIndex &+ 1
-            } while pathIndex < path.count
-            
-            guard pathIndex == path.count else {
-                return nil
             }
             
             return node
@@ -176,87 +147,41 @@ class IndexTrieNode {
                 return
             }
             
-            var pathIndex = 0
-            var key: IndexKey
-            var nodeIndex: Int
             var node = self
             
-            func applyToNode(key: IndexKey) {
-                guard let index = node.keyStorage.index(of: key) else {
-                    guard let newValue = newValue else {
-                        return
-                    }
+            if let newValue = newValue {
+                for index in 0..<path.count {
+                    let currentKey = path[index]
                     
-                    var key = key
-                    
-                    repeat {
-                        node.keyStorage.append(key)
+                    if let nodeIndex = node.keyStorage.index(of: currentKey) {
+                        node = node.nodeStorage[nodeIndex]
+                    } else {
+                        let newNode: IndexTrieNode
                         
-                        let newNode = IndexTrieNode(0)
+                        if index == path.count - 1 {
+                            newNode = newValue
+                        } else {
+                            newNode = IndexTrieNode(0)
+                        }
+                        
+                        node.keyStorage.append(currentKey)
                         node.nodeStorage.append(newNode)
                         
                         node = newNode
-                        
-                        pathIndex = pathIndex &+ 1
-                        
-                        if pathIndex < path.count {
-                            key = path[pathIndex]
-                        }
-                    } while pathIndex + 1 < path.count
+                    }
+                }
+            } else {
+                for index in 0..<path.count {
+                    let currentKey = path[index]
+        
+                    guard let nodeIndex = node.keyStorage.index(of: currentKey) else {
+                        return
+                    }
                     
-                    node.nodeStorage.append(newValue)
-                        
-                    return
-                }
-                
-                if let newValue = newValue {
-                    if isKnownUniquelyReferenced(&node) {
-                        node.nodeStorage[index] = newValue
-                    } else {
-                        let copy = node.copy()
-                        
-                        copy.nodeStorage[index] = newValue
-                        
-                        node = copy
+                    if index == path.count - 1 {
+                        node.keyStorage.remove(at: nodeIndex)
+                        node.nodeStorage.remove(at: nodeIndex)
                     }
-                } else {
-                    if isKnownUniquelyReferenced(&node) {
-                        node.nodeStorage.remove(at: index)
-                    } else {
-                        let copy = node.copy()
-                        
-                        copy.keyStorage.remove(at: index)
-                        copy.nodeStorage.remove(at: index)
-                        
-                        node = copy
-                    }
-                }
-            }
-            
-            guard path.count > 1, let index = node.keyStorage.index(of: path[0]) else {
-                applyToNode(key: path[0])
-                return
-            }
-            
-            pathIndex = pathIndex &+ 1
-            nodeIndex = index
-            node = node.nodeStorage[nodeIndex]
-            
-            while pathIndex < path.count {
-                key = path[pathIndex]
-                
-                if let index = path.index(of: key) {
-                    nodeIndex = index
-                    node = node.nodeStorage[nodeIndex]
-                } else {
-                    applyToNode(key: key)
-                    return
-                }
-                
-                pathIndex = pathIndex &+ 1
-                
-                if pathIndex == path.count {
-                    applyToNode(key: key)
                 }
             }
         }

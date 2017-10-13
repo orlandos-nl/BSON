@@ -48,7 +48,7 @@ class BSONCodableTests: XCTestCase {
         var value: T
     }
     
-    private func validateEncodesAsPrimitive<T : Primitive & Codable>(_ value: T) throws -> Bool {
+    private func validateEncodesAsPrimitive<T : Primitive>(_ value: T) throws -> Bool {
         let wrapped = Wrapper(value: value)
         let encodedDocument = try BSONEncoder().encode(wrapped)
         return encodedDocument["value"] is T

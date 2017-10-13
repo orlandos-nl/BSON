@@ -12,7 +12,7 @@ import Foundation
 #if swift(>=3.2)
 fileprivate extension Optional where Wrapped == Primitive {
     var isNilValue: Bool {
-        return self == nil || self is NSNull
+        return self == nil || self is Null
     }
 }
 
@@ -397,7 +397,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     func encode(_ value: Float) throws { try encoder.target.document.append(encoder.convert(value)) }
     func encode(_ value: Double) throws { try encoder.target.document.append(encoder.convert(value)) }
     func encode<T : Encodable>(_ value: T) throws { try encoder.target.document.append(unwrap(encoder.encode(value), codingPath: codingPath)) }
-    mutating func encodeNil() throws { encoder.target.document.append(NSNull()) }
+    mutating func encodeNil() throws { encoder.target.document.append(Null()) }
 }
 
 fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
@@ -513,7 +513,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     
     // MARK: - Value conversion
     func unwrap<T : Primitive>(_ value: Primitive?) throws -> T {
-        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
+        guard let primitiveValue = value, !(primitiveValue is Null) else {
             throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(T.self), found null / nil"))
         }
         
@@ -525,7 +525,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Int32 {
-        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
+        guard let primitiveValue = value, !(primitiveValue is Null) else {
             throw DecodingError.valueNotFound(Int32.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Int32.self), found null / nil"))
         }
         
@@ -548,7 +548,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Int {
-        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
+        guard let primitiveValue = value, !(primitiveValue is Null) else {
             throw DecodingError.valueNotFound(Int.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Int.self), found null / nil"))
         }
         
@@ -568,7 +568,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Double {
-        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
+        guard let primitiveValue = value, !(primitiveValue is Null) else {
             throw DecodingError.valueNotFound(Double.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Double.self), found null / nil"))
         }
         
@@ -585,7 +585,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unwrap(_ value: Primitive?) throws -> Bool {
-        guard let primitiveValue = value, !(primitiveValue is NSNull) else {
+        guard let primitiveValue = value, !(primitiveValue is Null) else {
             throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(Bool.self), found null / nil"))
         }
         
@@ -657,7 +657,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     func unwrap(_ value: Primitive?) throws -> UInt {
         let number: Int = try unwrap(value)
         
-        guard number >= UInt.max else {
+        guard number <= UInt.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(UInt.self)"))
         }
         return UInt(number)
@@ -671,7 +671,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func decode<T>(_ value: Primitive?) throws -> T where T : Decodable {
-        guard let value = value, !(value is NSNull) else {
+        guard let value = value, !(value is Null) else {
             throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Value not found - expected value of type \(T.self), found null / nil"))
         }
         
@@ -862,7 +862,7 @@ fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSO
     /// - returns: Whether the encountered value was null.
     /// - throws: `DecodingError.valueNotFound` if there are no more values to decode.
     func decodeNil() throws -> Bool {
-        try assertNotAtEnd(NSNull.self)
+        try assertNotAtEnd(Null.self)
         if decoder.target.document[currentIndex].isNilValue {
             currentIndex += 1
             return true

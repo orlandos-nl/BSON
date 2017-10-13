@@ -23,7 +23,7 @@ func escape(_ string: String) -> String {
 }
 
 /// Do not extend. BSON internals
-public protocol Primitive {
+public protocol Primitive: Codable {
     var typeIdentifier: Byte { get }
     
     func makeBinary() -> Data
@@ -69,7 +69,7 @@ public struct Timestamp: Primitive, Equatable {
     }
     
     public func makeBinary() -> Data {
-        return increment.makeBytes() + timestamp.makeBytes()
+        return increment.makeBinary() + timestamp.makeBinary()
     }
 }
 
@@ -179,7 +179,7 @@ extension Binary.Subtype : Equatable {
     }
 }
 
-extension NSNull : Primitive {
+struct Null: Primitive {
     public var typeIdentifier: Byte {
         return 0x0A
     }
@@ -187,6 +187,17 @@ extension NSNull : Primitive {
     public func makeBinary() -> Data {
         return Data()
     }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encodeNil()
+    }
+    
+    public init(from decoder: Decoder) throws {
+        _ = try decoder.singleValueContainer().decodeNil()
+    }
+    
+    public init() {}
 }
 
 public struct JavascriptCode: Primitive {
@@ -283,20 +294,6 @@ extension String : Primitive {
     }
 }
 
-extension StaticString : Primitive {
-    public func makeBinary() -> Data {
-        return self.withUTF8Buffer {
-            var data = Data(repeating: 0, count: self.utf8CodeUnitCount + 1)
-            memcpy(&data, $0.baseAddress!, self.utf8CodeUnitCount)
-            return data
-        }
-    }
-    
-    public var typeIdentifier: Byte {
-        return 0x02
-    }
-}
-
 extension Document: Primitive {
     public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == SupportedValue {
         var doc = Document()
@@ -356,9 +353,18 @@ public struct MaxKey: Primitive {
     }
 }
 
-extension RegularExpression : Primitive {
+extension RegularExpression: Primitive {
     public var typeIdentifier: Byte {
         return 0x0B
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        try self.pattern.encode(to: encoder)
+    }
+    
+    public init(from decoder: Decoder) throws {
+        self.pattern = try decoder.singleValueContainer().decode(String.self)
+        self.options = []
     }
     
     public func makeBinary() -> Data {

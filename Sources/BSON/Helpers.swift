@@ -45,7 +45,7 @@ internal extension String {
         }
         
         // Get the length
-        let length = Int32(data[0...3])
+        let length = Int32(data[...data.startIndex.advanced(by: 3)])
         
         // Check if the data is at least the right size
         guard data.count >= Int(length) + 4 else {
@@ -61,7 +61,7 @@ internal extension String {
             throw DeserializationError.invalidElementSize
         }
         
-        guard let string = String(data: data[4..<Int(length + 3)], encoding: .utf8) else {
+        guard let string = String(data: data[data.startIndex.advanced(by: 4)..<data.startIndex.advanced(by: Int(length + 3))], encoding: .utf8) else {
             throw DeserializationError.unableToInstantiateString
         }
         
@@ -69,20 +69,20 @@ internal extension String {
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    internal static func instantiateFromCString(bytes data: Bytes) throws -> String {
+    internal static func instantiateFromCString(bytes data: Data) throws -> String {
         var 🖕 = 0
         
         return try instantiateFromCString(bytes: data, consumedBytes: &🖕)
     }
     
     /// Instantiate a String from a CString (a null terminated string of UTF8 characters, not containing null)
-    internal static func instantiateFromCString(bytes data: Bytes, consumedBytes: inout Int) throws -> String {
+    internal static func instantiateFromCString(bytes data: Data, consumedBytes: inout Int) throws -> String {
         let res = try _cInstant(bytes: data)
         consumedBytes = res.0
         return res.1
     }
     
-    internal static func _cInstant(bytes data: Bytes) throws -> (Int, String) {
+    internal static func _cInstant(bytes data: Data) throws -> (Int, String) {
         guard data.contains(0x00) else {
             throw DeserializationError.missingNullTerminatorInString
         }
@@ -91,8 +91,8 @@ internal extension String {
             throw DeserializationError.noCStringFound
         }
         
-        guard let string = String(bytes: stringData, encoding: String.Encoding.utf8) else {
-            throw DeserializationError.unableToInstantiateString(fromBytes: Array(stringData))
+        guard let string = String(data: stringData, encoding: String.Encoding.utf8) else {
+            throw DeserializationError.unableToInstantiateString
         }
         
         return (stringData.count+1, string)
@@ -217,6 +217,17 @@ extension Double : BSONBytesProtocol {
             $0.withMemoryRebound(to: Byte.self, capacity: MemoryLayout<Double>.size) {
                 Data(UnsafeBufferPointer(start: $0, count: MemoryLayout<Double>.size))
             }
+        }
+    }
+}
+
+extension Data {
+    internal subscript(offsetBy offset: Int) -> UInt8 {
+        get {
+            return self[self.startIndex.advanced(by: offset)]
+        }
+        set {
+            self[self.startIndex.advanced(by: offset)] = newValue
         }
     }
 }

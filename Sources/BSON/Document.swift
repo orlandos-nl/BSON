@@ -65,7 +65,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        let length = Int(Int32(data[0...3]))
+        let length = Int(Int32(data[...data.startIndex.advanced(by: 3)]))
         
         guard length > 4 else {
             invalid = true
@@ -75,38 +75,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         guard length <= data.count, data.last == 0x00 else {
             invalid = true
-            storage = Data(data[4..<data.count &- 1])
+            storage = Data(data[data.startIndex.advanced(by: 4)...])
             return
         }
         
-        storage = Data(data[4..<length &- 1])
-    }
-    
-    /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
-    ///
-    /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    public init(data: ArraySlice<Byte>) {
-        guard data.count > 5 else {
-            invalid = true
-            storage = Data()
-            return
-        }
-        
-        let length = Int(Int32(data[data.startIndex...data.startIndex.advanced(by: 3)]))
-        
-        guard length > 4 else {
-            invalid = true
-            storage = Data(data)
-            return
-        }
-        
-        guard length <= data.count, data.last == 0x00 else {
-            invalid = true
-            storage = Data(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
-            return
-        }
-        
-        storage = Data(data[data.startIndex.advanced(by: 4)..<data.endIndex.advanced(by: -1)])
+        storage = Data(data[data.startIndex.advanced(by: 4)..<data.startIndex.advanced(by: length - 1)])
     }
     
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
@@ -226,7 +199,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         storage.reserveCapacity(storage.count + encodedValue.count + key.utf8.count + 2)
         
-        let searchTreeKey = IndexKey(KittenBytes([UInt8](key.utf8)))
+        let searchTreeKey = IndexKey(Data(key.utf8))
         self.searchTree[[searchTreeKey]] = IndexTrieNode(storage.endIndex)
         
         // Append the key-value pair
@@ -334,7 +307,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                 // Type identifier
                 self.storage.append(value.typeIdentifier)
                 // Key
-                self.storage.append(contentsOf: lastPart.key.bytes)
+                self.storage.append(contentsOf: lastPart.data)
                 // Key null terminator
                 self.storage.append(0x00)
                 // Value
@@ -347,7 +320,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                 
                 // Inserts the provided value into the document at the given position
                 // Seeks to the end of the document and inserts it at the end
-                func insert(_ value: Primitive, into position: Int, for keyName: KittenBytes) {
+                func insert(_ value: Primitive, into position: Int, for keyName: IndexKey) {
                     // If it's a Document, insert, otherwise, do nothing
                     guard let type = ElementType(rawValue: storage[position]), (type == .arrayDocument || type == .document) else {
                         return
@@ -362,10 +335,10 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                     
                     // Serialize the value
                     let serializedValue = value.makeBinary()
-                    let serializedPair = [value.typeIdentifier] + keyName.bytes + [0x00] + serializedValue
+                    let serializedPair = [value.typeIdentifier] + keyName.data + [0x00] + serializedValue
                     
                     // Set up the parameters for post-insert updates
-                    relativeLength = keyName.bytes.count &+ 2 &+ serializedValue.count
+                    relativeLength = keyName.data.count &+ 2 &+ serializedValue.count
                     mutatedPosition = position &+ dataLength &- 1
                     
                     makeTrie(for: mutatedPosition, with: value, key: fullKey)
@@ -381,19 +354,19 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                     replaceLoop: for i in position..<storage.count {
                         if storage[i] == 0x00 {
                             // Insert the value into the provided document
-                            insert(value, into: i &+ 1, for: lastPart.key)
+                            insert(value, into: i &+ 1, for: lastPart)
                             return
                         }
                     }
                 } else {
-                    var subDocuments: [KittenBytes] = [lastPart.key]
+                    var subDocuments = [lastPart]
                     
                     // Look through all keys in the path until an existing subdocument is found (or none is found)
                     // All skipped keys will be created and inserted at the best matching (sub)document
                     loop: while true {
                         // Remove the next key from the path and append it as a subdocument
                         if key.count > 0 {
-                            subDocuments.append(key.removeLast().key)
+                            subDocuments.append(key.removeLast())
                         }
                         
                         // If the current path doesn't exist
@@ -404,8 +377,8 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                                 var document = Document()
                                 
                                 document[subDocuments.reversed()] = value
-                                makeTrie(for: self.storage.endIndex, with: document, key: [IndexKey(key)])
-                                self.append(document, forKey: key.bytes)
+                                makeTrie(for: self.storage.endIndex, with: document, key: [key])
+                                self.append(document, forKey: key.data)
                                 
                                 // Update relevant document headers
                                 updateCache(mutatingPosition: mutatedPosition, by: relativeLength, for: fullKey)
@@ -422,7 +395,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                             var document = Document()
                             subDocuments.reverse()
                             
-                            document[subDocuments + [lastPart.key]] = value
+                            document[subDocuments + [lastPart]] = value
                             
                             insert(document, into: meta.dataPosition, for: firstSubDocument)
                             
@@ -432,7 +405,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                             // If there are no necessary subdocuments to be created
                             
                             // Insert the value into this subdocument
-                            insert(value, into: meta.elementTypePosition, for: lastPart.key)
+                            insert(value, into: meta.elementTypePosition, for: lastPart)
                             makeTrie(for: meta.elementTypePosition, with: value, key: [lastPart])
                         }
                     }
@@ -455,17 +428,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        guard var count = storage.withUnsafeMutableBytes({ $0 }).baseAddress?.advanced(by: dataPosition).assumingMemoryBound(to: Int32.self).pointee else {
-            return
+        storage.withUnsafeMutableBytes { (pointer: UnsafeMutablePointer<UInt8>) in
+            pointer.advanced(by: dataPosition).withMemoryRebound(to: UInt32.self, capacity: 1) { (pointer: UnsafeMutablePointer<UInt32>) in
+                pointer.pointee += numericCast(relativeLength)
+            }
         }
-        
-        count = count + Int32(relativeLength)
-        
-        guard let pointer = storage.withUnsafeMutableBytes({ $0 }).baseAddress?.advanced(by: dataPosition) else {
-            return
-        }
-        
-        memcpy(pointer, &count, 4)
     }
     
     /// Appends a Key-Value pair to this `Document` where this `Document` acts like a `Dictionary`
@@ -475,7 +442,14 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter value: The `Value` to append
     /// - parameter key: The key in the key-value pair
-    internal mutating func append(_ value: Primitive, forKey key: Bytes) {
+    internal mutating func append(_ value: Primitive, forKey key: Data) {
+        let encodedValue = value.makeBinary()
+        
+        storage.reserveCapacity(storage.count + encodedValue.count + key.count + 2)
+        
+        let searchTreeKey = IndexKey(key)
+        self.searchTree[[searchTreeKey]] = IndexTrieNode(storage.endIndex)
+        
         // Append the key-value pair
         // Type identifier
         storage.append(value.typeIdentifier)
@@ -484,7 +458,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         // Key null terminator
         storage.append(0x00)
         // Value
-        storage.append(contentsOf: value.makeBinary())
+        storage.append(contentsOf: encodedValue)
     }
     
     /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
@@ -498,7 +472,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         storage.reserveCapacity(storage.count + encodedValue.count + key.utf8.count + 2)
         
-        let searchTreeKey = IndexKey(KittenBytes([UInt8](key.utf8)))
+        let searchTreeKey = IndexKey(Data(key.utf8))
         self.searchTree[[searchTreeKey]] = IndexTrieNode(storage.endIndex)
         
         // Append the key-value pair
@@ -522,7 +496,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     }
     
     /// Updates this `Document`'s storage to contain the proper `Document` length header
-    internal func makeDocumentLength() -> Bytes {
+    internal func makeDocumentLength() -> Data {
         // One extra byte for the missing null terminator in the storage
         return Int32(storage.count + 5).makeBytes()
     }
@@ -548,7 +522,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
                 return nil
             }
             
-            guard let string = String(bytes: metadata.keyData.key.bytes, encoding: .utf8) else {
+            guard let string = String(data: metadata.keyData.data, encoding: .utf8) else {
                 return nil
             }
             
@@ -594,7 +568,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - returns: The `Value` in the pair if there was any
     @discardableResult public mutating func removeValue(forKey key: String) -> Primitive? {
-        let indexString = KittenBytes([UInt8](key.utf8))
+        let indexString = Data(key.utf8)
         let key = IndexKey(indexString)
         
         guard let meta = getMeta(for: [key]) else {
@@ -623,7 +597,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         // Modify the searchTree efficienty, where necessary
         for node in searchTree.nodeStorage where node.value > meta.elementTypePosition {
-            node.value = node.value &- (length &+ indexString.bytes.count &+ 2)
+            node.value = node.value &- (length &+ indexString.count &+ 2)
         }
         
         return val
@@ -638,7 +612,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         guard let url = URL(string: "file://" + path) else {
             throw URLError(.badURL)
         }
-        try Data(bytes: self.bytes).write(to: url)
+        try self.bytes.write(to: url)
     }
 }
 

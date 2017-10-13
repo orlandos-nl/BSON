@@ -56,7 +56,7 @@ final class BSONPublicTests: XCTestCase {
         "cool64bitNumber": 21312153,
         "code": JavascriptCode(code: "console.log(\"Hello there\");"),
         "codeWithScope": JavascriptCode(code: "console.log(\"Hello there\");", withScope: ["hey": "hello"]),
-        "nothing": NSNull(),
+        "nothing": Null(),
         "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
         "boolFalse": false,
         "boolTrue": true,
@@ -70,13 +70,13 @@ final class BSONPublicTests: XCTestCase {
         var document = Document()
         document.removeValue(forKey: "_id")
         document["_id"] = "123"
-        XCTAssertEqual(String(document["_id"]), "123")
+        XCTAssertEqual(String(lossy: document["_id"]), "123")
         XCTAssertNotNil(document.dictionaryRepresentation["_id"])
         document.removeValue(forKey: "_id")
-        XCTAssertEqual(String(document["_id"]), nil)
+        XCTAssertEqual(String(lossy: document["_id"]), nil)
         XCTAssertNil(document.dictionaryRepresentation["_id"])
         document["_id"] = "456"
-        XCTAssertEqual(String(document["_id"]), "456")
+        XCTAssertEqual(String(lossy: document["_id"]), "456")
         XCTAssertNotNil(document.dictionaryRepresentation["_id"])
         document["anykey"] = "anyvalue"
         XCTAssertNotNil(document["anykey"] as? String)
@@ -88,7 +88,7 @@ final class BSONPublicTests: XCTestCase {
         
         var document3 = Document()
         document3["_id"] = "123"
-        XCTAssertEqual(String(document3.dictionaryRepresentation["_id"]), "123")
+        XCTAssertEqual(String(lossy: document3.dictionaryRepresentation["_id"]), "123")
         document2.removeValue(forKey: "anykey")
         XCTAssertEqual(document3.dictionaryRepresentation["_id"] as? String, "123")
         XCTAssertNil(document3.dictionaryRepresentation["anykey"])
@@ -117,13 +117,13 @@ final class BSONPublicTests: XCTestCase {
         doc["_id"] = id
         doc2["_id"] = id2
         
-        XCTAssertEqual(ObjectId(doc["_id"]), id)
-        XCTAssertEqual(ObjectId(doc2["_id"]), id2)
+        XCTAssertEqual(ObjectId(lossy: doc["_id"]), id)
+        XCTAssertEqual(ObjectId(lossy: doc2["_id"]), id2)
     }
     
     func testNullToNilInt() {
         var doc: Document = [
-            "_id": NSNull(),
+            "_id": Null(),
             "name": "Joannis",
             "email": "joannis@orlandos.nl"
         ]
@@ -139,7 +139,7 @@ final class BSONPublicTests: XCTestCase {
     
     func testNullToNilString() {
         var doc: Document = [
-            "_id": NSNull(),
+            "_id": Null(),
             "name": "Joannis",
             "email": "joannis@orlandos.nl"
         ]
@@ -159,8 +159,8 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testDictionaryLiteral() {
-        XCTAssertEqual(Double(kittenDocument["doubleTest"]), 0.04)
-        XCTAssertEqual(ObjectId(kittenDocument["nonRandomObjectId"]), try! ObjectId("0123456789ABCDEF01234567"))
+        XCTAssertEqual(Double(lossy: kittenDocument["doubleTest"]), 0.04)
+        XCTAssertEqual(ObjectId(lossy: kittenDocument["nonRandomObjectId"]), try! ObjectId("0123456789ABCDEF01234567"))
     }
     
     func testDocumentCollectionFunctionality() {
@@ -169,8 +169,8 @@ final class BSONPublicTests: XCTestCase {
         XCTAssert(document.validate())
         XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, "foo")
         XCTAssert(document.validate())
-        XCTAssertEqual(String(document["stringTest"]), nil)
-        XCTAssertEqual(String(document.removeValue(forKey: "stringTest")), nil)
+        XCTAssertEqual(String(lossy: document["stringTest"]), nil)
+        XCTAssertEqual(String(lossy: document.removeValue(forKey: "stringTest")), nil)
        XCTAssert(document.validate())
         
         XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
@@ -229,14 +229,14 @@ final class BSONPublicTests: XCTestCase {
         
         // {"cool32bitNumber":9001,"cool64bitNumber":{"$numberLong":"21312153544"},"currentTime":{"$date":"1970-01-17T19:46:29.266Z"},"documentTest":{"documentSubDoubleTest":13.37,"subArray":{"0":"henk","1":"fred","2":"kaas","3":"goudvis"}},"doubleTest":0.04,"nonRandomObjectId":{"$oid":"0123456789abcdef01234567"},"nothing":null,"stringTest":"foo"}
         
-        XCTAssertEqual(Int32(document["cool32bitNumber"]), Int32(9001))
-        XCTAssertEqual(Int(document["cool64bitNumber"]), 21312153544)
-        XCTAssertEqual(Double(document["documentTest", "documentSubDoubleTest"]), 13.37)
-        XCTAssertEqual(String(document["documentTest", "subArray", 1]), "fred")
-        XCTAssertEqual(Double(document["doubleTest"]), 0.04)
-        XCTAssert(document["nothing"] as? NSNull != nil)
-        XCTAssertEqual(Document(document["nonexistentkey"]), nil)
-        XCTAssertEqual(String(document["stringTest"]), "foo")
+        XCTAssertEqual(Int32(lossy: document["cool32bitNumber"]), Int32(9001))
+        XCTAssertEqual(Int(lossy: document["cool64bitNumber"]), 21312153544)
+        XCTAssertEqual(Double(lossy: document["documentTest", "documentSubDoubleTest"]), 13.37)
+        XCTAssertEqual(String(lossy: document["documentTest", "subArray", 1]), "fred")
+        XCTAssertEqual(Double(lossy: document["doubleTest"]), 0.04)
+        XCTAssert(document["nothing"] as? Null != nil)
+        XCTAssertEqual(Document(lossy: document["nonexistentkey"]), nil)
+        XCTAssertEqual(String(lossy: document["stringTest"]), "foo")
     }
     
     func testArrayRelatedFunctions() {
@@ -270,12 +270,12 @@ final class BSONPublicTests: XCTestCase {
         var array: Document = [Int32(0), Int32(1), Int32(2), Int32(3), Int32(4)]
         array[1] = "hello"
         
-        XCTAssertEqual(Int32(array[0]), Int32(0))
-        XCTAssertNotEqual(Int32(array[1]), Int32(1))
-        XCTAssertEqual(String(array[1]), "hello")
-        XCTAssertEqual(Int32(array[2]), Int32(2))
-        XCTAssertEqual(Int32(array[3]), Int32(3))
-        XCTAssertEqual(Int32(array[4]), Int32(4))
+        XCTAssertEqual(Int32(lossy: array[0]), Int32(0))
+        XCTAssertNotEqual(Int32(lossy: array[1]), Int32(1))
+        XCTAssertEqual(String(lossy: array[1]), "hello")
+        XCTAssertEqual(Int32(lossy: array[2]), Int32(2))
+        XCTAssertEqual(Int32(lossy: array[3]), Int32(3))
+        XCTAssertEqual(Int32(lossy: array[4]), Int32(4))
     }
     
     func testMultipleDocumentsInitialization() {
@@ -298,13 +298,12 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testInitFromFoundationData() {
-        let data = Data(bytes: kittenDocument.bytes)
-        let document = Document(data: data)
+        let document = Document(data: kittenDocument.bytes)
         XCTAssertEqual(document.bytes, kittenDocument.bytes)
     }
     
     func testSerialization() {
-        let originalBinary: [UInt8] = [5,0,0,0,0,5,0,0,0,0]
+        let originalBinary: Data = Data([5,0,0,0,0,5,0,0,0,0])
         
         let documents = [Document](bsonBytes: originalBinary)
         
@@ -312,7 +311,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(documents.bytes, originalBinary)
         
         XCTAssertEqual(documents[0].byteCount, 5)
-        XCTAssertEqual(documents[0].bytes, [5,0,0,0,0])
+        XCTAssertEqual(documents[0].bytes, Data([5,0,0,0,0]))
     }
     
     func testValidation() {
@@ -345,33 +344,33 @@ final class BSONPublicTests: XCTestCase {
         var document = kittenDocument
         
         XCTAssertEqual(document[dotNotated: "documentTest.documentSubDoubleTest"] as? Double, 13.37)
-        XCTAssertEqual(Double(document[0]), 0.04)
-        XCTAssertEqual(String(document[2, 1, 2]), "kaas")
-        XCTAssertEqual(String(document["documentTest", "subArray", 2]), "kaas")
+        XCTAssertEqual(Double(lossy: document[0]), 0.04)
+        XCTAssertEqual(String(lossy: document[2, 1, 2]), "kaas")
+        XCTAssertEqual(String(lossy: document["documentTest", "subArray", 2]), "kaas")
         document["documentTest", "subArray", 2] = "hont"
-        XCTAssertEqual(String(document["documentTest", "subArray", 2]), "hont")
+        XCTAssertEqual(String(lossy: document["documentTest", "subArray", 2]), "hont")
         
-        XCTAssertEqual(String(document["stringTest"]), "foo")
-        XCTAssertEqual(String(document[1]), "foo")
-        XCTAssertEqual(Double(document["documentTest", 0]), Double(document["documentTest", "documentSubDoubleTest"]))
+        XCTAssertEqual(String(lossy: document["stringTest"]), "foo")
+        XCTAssertEqual(String(lossy: document[1]), "foo")
+        XCTAssertEqual(Double(lossy: document["documentTest", 0]), Double(lossy: document["documentTest", "documentSubDoubleTest"]))
         
         #if swift(>=3.1)
-            XCTAssertEqual(Double(document["documentTest"][0]), 13.37)
+            XCTAssertEqual(Double(lossy: document["documentTest"][0]), 13.37)
         #endif
         
-        XCTAssertEqual(ObjectId(document[3]), try ObjectId("0123456789ABCDEF01234567"))
+        XCTAssertEqual(ObjectId(lossy: document[3]), try ObjectId("0123456789ABCDEF01234567"))
         
         document[3] = try ObjectId("0123456789ABCDEF0123456A")
         
-        XCTAssertEqual(ObjectId(document[3]), try ObjectId("0123456789ABCDEF0123456A"))
+        XCTAssertEqual(ObjectId(lossy: document[3]), try ObjectId("0123456789ABCDEF0123456A"))
         
         document["minKey"] = "kittens"
-        XCTAssertEqual(String(document["minKey"]), "kittens")
+        XCTAssertEqual(String(lossy: document["minKey"]), "kittens")
         
         #if swift(>=3.1)
-            XCTAssertEqual(String(kittenDocument["documentTest", "subArray"][0]), "henk")
+            XCTAssertEqual(String(lossy: kittenDocument["documentTest", "subArray"][0]), "henk")
         #else
-            XCTAssertEqual(String(Document(kittenDocument["documentTest", "subArray"])?[0]), "henk")
+            XCTAssertEqual(String(lossy: document(kittenDocument["documentTest", "subArray"])?[0]), "henk")
         #endif
         
         var recursiveDocument: Document = [
@@ -387,15 +386,15 @@ final class BSONPublicTests: XCTestCase {
         ]
         
         #if swift(>=3.1)
-            XCTAssertEqual(Int(recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 3)
+            XCTAssertEqual(Int(lossy: recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 3)
             
             recursiveDocument["henk", "fred", "bob", "piet", "klaas"] = 4
             
             recursiveDocument["klaas", "piet", "bob", "fred", "henk"] = true
             
-            XCTAssertEqual(Int(recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 4)
+            XCTAssertEqual(Int(lossy: recursiveDocument["henk"]["fred", "bob", "piet"]["klaas"]), 4)
             
-            XCTAssert(Bool(recursiveDocument["klaas", "piet", "bob", "fred", "henk"]) ?? false)
+            XCTAssert(Bool(lossy: recursiveDocument["klaas", "piet", "bob", "fred", "henk"]) ?? false)
         #endif
     }
     
@@ -405,37 +404,34 @@ final class BSONPublicTests: XCTestCase {
         let hs = "AFAAABACADAEA0A1A2A3A4A2"
         let fromHex = try ObjectId(hs)
         
-        XCTAssertEqual(fromHex.storage.0, 0xAF)
-        XCTAssertEqual(fromHex.storage.1, 0xAA)
-        XCTAssertEqual(fromHex.storage.2, 0xAB)
-        XCTAssertEqual(fromHex.storage.3, 0xAC)
-        XCTAssertEqual(fromHex.storage.4, 0xAD)
-        XCTAssertEqual(fromHex.storage.5, 0xAE)
-        XCTAssertEqual(fromHex.storage.6, 0xA0)
-        XCTAssertEqual(fromHex.storage.7, 0xA1)
-        XCTAssertEqual(fromHex.storage.8, 0xA2)
-        XCTAssertEqual(fromHex.storage.9, 0xA3)
-        XCTAssertEqual(fromHex.storage.10, 0xA4)
-        XCTAssertEqual(fromHex.storage.11, 0xA2)
+        XCTAssertEqual(fromHex._storage[0], 0xAF)
+        XCTAssertEqual(fromHex._storage[1], 0xAA)
+        XCTAssertEqual(fromHex._storage[2], 0xAB)
+        XCTAssertEqual(fromHex._storage[3], 0xAC)
+        XCTAssertEqual(fromHex._storage[4], 0xAD)
+        XCTAssertEqual(fromHex._storage[5], 0xAE)
+        XCTAssertEqual(fromHex._storage[6], 0xA0)
+        XCTAssertEqual(fromHex._storage[7], 0xA1)
+        XCTAssertEqual(fromHex._storage[8], 0xA2)
+        XCTAssertEqual(fromHex._storage[9], 0xA3)
+        XCTAssertEqual(fromHex._storage[10], 0xA4)
+        XCTAssertEqual(fromHex._storage[11], 0xA2)
         
         XCTAssertNotEqual(random.hexString, fromHex.hexString)
         XCTAssertEqual(fromHex.hexString, hs.lowercased())
         
         var toMutate = ObjectId()
-        toMutate.storage = random.storage
+        toMutate._storage = random._storage
         XCTAssertEqual(toMutate.hexString, random.hexString)
         
         // random should not be the same
         XCTAssertNotEqual(ObjectId()._storage, ObjectId()._storage)
         
-        let other = ObjectId(raw: random.storage)
-        XCTAssertEqual(random.hexString, other.hexString)
-        
         // Wrong initialization string length:
         XCTAssertThrowsError(try ObjectId("1234567890"))
         
         // Wrong initialization data length:
-        XCTAssertThrowsError(try ObjectId(bytes: [0,1,2,3]))
+        XCTAssertThrowsError(try ObjectId(data: Data([0,1,2,3])))
         
         // Wrong initialization string:
         XCTAssertThrowsError(try ObjectId("kaaskaaskaaskaaskaaskaas"))
@@ -477,34 +473,34 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testComparison() throws {
-        XCTAssertEqual(Double(kittenDocument["doubleTest"]), 0.04)
-        XCTAssertEqual(String(kittenDocument["stringTest"]), "foo")
+        XCTAssertEqual(Double(lossy: kittenDocument["doubleTest"]), 0.04)
+        XCTAssertEqual(String(lossy: kittenDocument["stringTest"]), "foo")
         
         let documentTest = [
             "documentSubDoubleTest": 13.37,
             "subArray": ["henk", "fred", "kaas", "goudvis"]
             ] as Document
         
-        XCTAssertEqual(Document(kittenDocument["documentTest"]), documentTest)
+        XCTAssertEqual(Document(lossy: kittenDocument["documentTest"]), documentTest)
         
         let nonRandomObjectId = try ObjectId("0123456789ABCDEF01234567")
-        XCTAssertEqual(ObjectId(kittenDocument["nonRandomObjectId"]), nonRandomObjectId)
+        XCTAssertEqual(ObjectId(lossy: kittenDocument["nonRandomObjectId"]), nonRandomObjectId)
         XCTAssertEqual(try ObjectId("0123456789ABCDEF01234567"), nonRandomObjectId)
         XCTAssertEqual(nonRandomObjectId.hexString.uppercased(), "0123456789ABCDEF01234567")
         
-        XCTAssertEqual(Date(kittenDocument["currentTime"]), Date(timeIntervalSince1970: Double(1453589266)))
-        XCTAssertEqual(Int32(kittenDocument["cool32bitNumber"]), 9001)
-        XCTAssertEqual(Int(kittenDocument["cool64bitNumber"]), 21312153)
+        XCTAssertEqual(Date(lossy: kittenDocument["currentTime"]), Date(timeIntervalSince1970: Double(1453589266)))
+        XCTAssertEqual(Int32(lossy: kittenDocument["cool32bitNumber"]), 9001)
+        XCTAssertEqual(Int(lossy: kittenDocument["cool64bitNumber"]), 21312153)
 // FIXME:         XCTAssertEqual(JavascriptCode(kittenDocument["code"])?.code, "console.log(\"Hello there\");")
-        XCTAssert(kittenDocument["nothing"] is NSNull)
-        XCTAssertEqual(Bool(kittenDocument["boolFalse"]), false)
-        XCTAssertEqual(Bool(kittenDocument["boolTrue"]), true)
+        XCTAssert(kittenDocument["nothing"] is Null)
+        XCTAssertEqual(Bool(lossy: kittenDocument["boolFalse"]), false)
+        XCTAssertEqual(Bool(lossy: kittenDocument["boolTrue"]), true)
         
-        let bytes: [UInt8] = [34,34,34,34,34]
-        XCTAssertEqual(Binary(kittenDocument["data"])?.makeBytes() ?? [], bytes)
+        let bytes = Data([34,34,34,34,34])
+        XCTAssertEqual(Binary(lossy: kittenDocument["data"])?.data ?? Data(), bytes)
         
-        XCTAssertEqual(Timestamp(kittenDocument["timestamp"]), Timestamp(increment: 2000, timestamp: 8))
-        XCTAssertEqual(RegularExpression(kittenDocument["regex"])?.pattern, "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}")
+        XCTAssertEqual(Timestamp(lossy: kittenDocument["timestamp"]), Timestamp(increment: 2000, timestamp: 8))
+        XCTAssertEqual(RegularExpression(lossy: kittenDocument["regex"])?.pattern, "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}")
         XCTAssert(kittenDocument["minKey"] is MinKey)
         XCTAssert(kittenDocument["maxKey"] is MaxKey)
         
@@ -526,16 +522,16 @@ final class BSONPublicTests: XCTestCase {
         d["hont", "kad", "varkun", "konein"] = v
         
         #if swift(>=3.1)
-            XCTAssertEqual(String(d["kaassapsaus"]["freddelien"]), v)
+            XCTAssertEqual(String(lossy: d["kaassapsaus"]["freddelien"]), v)
         #endif
         
-        XCTAssertEqual(String(d["kaassapsaus", "freddelien"]), v)
-        XCTAssertEqual(Double(d["documentTest", "documentSubDoubleTest"]), 13.37)
+        XCTAssertEqual(String(lossy: d["kaassapsaus", "freddelien"]), v)
+        XCTAssertEqual(Double(lossy: d["documentTest", "documentSubDoubleTest"]), 13.37)
         
-        XCTAssertEqual(String(d["hont", "kad", "varkun", "konein"]), v)
+        XCTAssertEqual(String(lossy: d["hont", "kad", "varkun", "konein"]), v)
         
         #if swift(>=3.1)
-            XCTAssertEqual(String(d["hont"]["kad"]["varkun"]["konein"]), v)
+            XCTAssertEqual(String(lossy: d["hont"]["kad"]["varkun"]["konein"]), v)
         #endif
     }
     
@@ -566,7 +562,7 @@ final class BSONPublicTests: XCTestCase {
             "cool64bitNumber": 21312153,
             "code": JavascriptCode(code: "console.log(\"Hello there\");"),
             "codeWithScope": JavascriptCode(code: "console.log(\"Hello there\");", withScope: ["hey": "hello"]),
-            "nothing": NSNull(),
+            "nothing": Null(),
             "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
             "boolFalse": false,
             "boolTrue": true,
@@ -585,13 +581,13 @@ final class BSONPublicTests: XCTestCase {
     
     func testKeyDetection() {
         var myDoc: Document = ["balance_status": "Pending"]
-        XCTAssertEqual(String(myDoc["balance_status"]), "Pending")
+        XCTAssertEqual(String(lossy: myDoc["balance_status"]), "Pending")
         myDoc["balance"] = 50
-        XCTAssertEqual(String(myDoc["balance_status"]), "Pending")
-        XCTAssertEqual(Int32(myDoc["balance"]), 50)
+        XCTAssertEqual(String(lossy: myDoc["balance_status"]), "Pending")
+        XCTAssertEqual(Int32(lossy: myDoc["balance"]), 50)
         myDoc["balance_status"] = "Done"
-        XCTAssertEqual(String(myDoc["balance_status"]), "Done")
-        XCTAssertEqual(String(myDoc["balance"]), "50")
+        XCTAssertEqual(String(lossy: myDoc["balance_status"]), "Done")
+        XCTAssertEqual(String(lossy: myDoc["balance"]), "50")
         
         let name = "coll"
         var command: Document = ["delete": name]
@@ -599,8 +595,8 @@ final class BSONPublicTests: XCTestCase {
         
         command["deletes"] = Document(array: newDeletes)
         
-        XCTAssertEqual(String(command["delete"]), name)
-        XCTAssertEqual(Document(command["deletes"]), ["bob", 3, true])
+        XCTAssertEqual(String(lossy: command["delete"]), name)
+        XCTAssertEqual(Document(lossy: command["deletes"]), ["bob", 3, true])
     }
     
     func testTypeChecking() {

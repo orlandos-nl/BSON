@@ -2,6 +2,12 @@ import Foundation
 import XCTest
 @testable import BSON
 
+extension Data: ExpressibleByArrayLiteral {
+    public init(arrayLiteral elements: UInt8...) {
+        self = Data(elements)
+    }
+}
+
 final class BSONCorpusTests: XCTestCase {
     func testTopLevel() {
         let doc0 = Document(data: [0x0f,0x00,0x00,0x00,0x10,0x24,0x6b,0x65,0x79,0x00,0x2a,0x00,0x00,0x00,0x00])
@@ -43,7 +49,7 @@ final class BSONCorpusTests: XCTestCase {
     func testTimestamp() {
         let doc = Document(data: [0x10,0x00,0x00,0x00,0x11,0x61,0x00,0x2A,0x00,0x00,0x00,0x15,0xCD,0x5B,0x07,0x00])
         
-        guard let a = Timestamp(doc["a"]) else {
+        guard let a = Timestamp(lossy: doc["a"]) else {
             XCTFail()
             return
         }
@@ -164,7 +170,7 @@ final class BSONCorpusTests: XCTestCase {
     func testNull() {
         let doc = Document(data: [0x08,0x00,0x00,0x00,0x0A,0x61,0x00,0x00])
         XCTAssert(doc.validate())
-        XCTAssertNotNil(doc["a"] as? NSNull)
+        XCTAssertNotNil(doc["a"] as? Null)
     }
     
     func testMinKey() {
@@ -347,13 +353,13 @@ final class BSONCorpusTests: XCTestCase {
         XCTAssertEqual(doc1.count, 1)
         XCTAssertEqual(doc2.count, 1)
         
-        XCTAssertEqual(Document(doc0["x"])?.count, 0)
-        XCTAssertEqual(Document(doc1["x"])?.count, 1)
-        XCTAssertEqual(Document(doc2["x"])?.count, 1)
+        XCTAssertEqual(Document(lossy: doc0["x"])?.count, 0)
+        XCTAssertEqual(Document(lossy: doc1["x"])?.count, 1)
+        XCTAssertEqual(Document(lossy: doc2["x"])?.count, 1)
         
-        XCTAssertEqual(Document(doc0["x"])?.count, 0)
-        XCTAssertEqual(Document(doc1["x"])?[""] as? String, "b")
-        XCTAssertEqual(Document(doc2["x"])?["a"] as? String, "b")
+        XCTAssertEqual(Document(lossy: doc0["x"])?.count, 0)
+        XCTAssertEqual(Document(lossy: doc1["x"])?[""] as? String, "b")
+        XCTAssertEqual(Document(lossy: doc2["x"])?["a"] as? String, "b")
         
         XCTAssertFalse(Document(data: [0x18,0x00,0x00,0x00,0x03,0x66,0x6F,0x6F,0x00,0x0F,0x00,0x00,0x00,0x10,0x62,0x61,0x72,0x00,0xFF,0xFF,0xFF,0x7F,0x00,0x00]).validate())
         XCTAssertFalse(Document(data: [0x15,0x00,0x00,0x00,0x03,0x66,0x6F,0x6F,0x00,0x0A,0x00,0x00,0x00,0x08,0x62,0x61,0x72,0x00,0x01,0x00,0x00]).validate())
@@ -395,28 +401,28 @@ final class BSONCorpusTests: XCTestCase {
         XCTAssert(doc6.validate())
         XCTAssert(doc7.validate())
         
-        XCTAssertEqual((doc0["x"] as? Binary)?.makeBytes() ?? [], [])
+        XCTAssertEqual((doc0["x"] as? Binary)?.data, Data())
         XCTAssertEqual((doc0["x"] as? Binary)?.subtype.rawValue, 0x00)
         
-        XCTAssertEqual((doc1["x"] as? Binary)?.makeBytes() ?? [], [0xFF,0xFF])
+        XCTAssertEqual((doc1["x"] as? Binary)?.data, Data([0xFF,0xFF]))
         XCTAssertEqual((doc1["x"] as? Binary)?.subtype.rawValue, 0x00)
         
-        XCTAssertEqual((doc2["x"] as? Binary)?.makeBytes() ?? [], [0xFF,0xFF])
+        XCTAssertEqual((doc2["x"] as? Binary)?.data, Data([0xFF,0xFF]))
         XCTAssertEqual((doc2["x"] as? Binary)?.subtype.rawValue, 0x01)
         
-        XCTAssertEqual((doc3["x"] as? Binary)?.makeBytes() ?? [], [0x02,0x00,0x00,0x00,0xff,0xff])
+        XCTAssertEqual((doc3["x"] as? Binary)?.data, Data([0x02,0x00,0x00,0x00,0xff,0xff]))
         XCTAssertEqual((doc3["x"] as? Binary)?.subtype.rawValue, 0x02)
         
-        XCTAssertEqual((doc4["x"] as? Binary)?.makeBytes() ?? [], [0x73,0xFF,0xD2,0x64,0x44,0xB3,0x4C,0x69,0x90,0xE8,0xE7,0xD1,0xDF,0xC0,0x35,0xD4])
+        XCTAssertEqual((doc4["x"] as? Binary)?.data, Data([0x73,0xFF,0xD2,0x64,0x44,0xB3,0x4C,0x69,0x90,0xE8,0xE7,0xD1,0xDF,0xC0,0x35,0xD4]))
         XCTAssertEqual((doc4["x"] as? Binary)?.subtype.rawValue, 0x03)
         
-        XCTAssertEqual((doc5["x"] as? Binary)?.makeBytes() ?? [], [0x73,0xFF,0xD2,0x64,0x44,0xB3,0x4C,0x69,0x90,0xE8,0xE7,0xD1,0xDF,0xC0,0x35,0xD4])
+        XCTAssertEqual((doc5["x"] as? Binary)?.data, Data([0x73,0xFF,0xD2,0x64,0x44,0xB3,0x4C,0x69,0x90,0xE8,0xE7,0xD1,0xDF,0xC0,0x35,0xD4]))
         XCTAssertEqual((doc5["x"] as? Binary)?.subtype.rawValue, 0x04)
         
-        XCTAssertEqual((doc6["x"] as? Binary)?.makeBytes() ?? [], [0x73,0xFF,0xD2,0x64,0x44,0xB3,0x4C,0x69,0x90,0xE8,0xE7,0xD1,0xDF,0xC0,0x35,0xD4])
+        XCTAssertEqual((doc6["x"] as? Binary)?.data, Data([0x73,0xFF,0xD2,0x64,0x44,0xB3,0x4C,0x69,0x90,0xE8,0xE7,0xD1,0xDF,0xC0,0x35,0xD4]))
         XCTAssertEqual((doc6["x"] as? Binary)?.subtype.rawValue, 0x05)
         
-        XCTAssertEqual((doc7["x"] as? Binary)?.makeBytes() ?? [], [0xFF,0xFF])
+        XCTAssertEqual((doc7["x"] as? Binary)?.data, Data([0xFF,0xFF]))
         XCTAssertEqual((doc7["x"] as? Binary)?.subtype.rawValue, 0x80)
         
         XCTAssertFalse(Document(data: [0x1D,0x00,0x00,0x00,0x05,0x78,0x00,0xFF,0x00,0x00,0x00,0x05,0x73,0xFF,0xD2,0x64,0x44,0xB3,0x4C,0x69,0x90,0xE8,0xE7,0xD1,0xDF,0xC0,0x35,0xD4,0x00]).validate())

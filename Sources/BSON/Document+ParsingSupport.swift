@@ -29,21 +29,25 @@ extension Document {
     @discardableResult
     internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, levels: Int? = nil) -> ElementMetadata? {
         // If the key path is indexes, return the data about this key path
-        if searchTree.fullyIndexed {
+        if searchTree.recursivelyIndexed {
             guard let matcher = matcher, let pos = searchTree[position: matcher] else {
                 return nil
             }
             
-            guard let type = ElementType(rawValue: self.storage[pos]) else {
+            guard let type = ElementType(rawValue: self.storage[offsetBy: pos]) else {
                 return nil
             }
             
             keySkipper : for i in pos &+ 1..<storage.count {
-                guard self.storage[i] != 0 else {
+                guard self.storage[offsetBy: i] != 0 else {
                     return (pos, i &+ 1, type)
                 }
             }
             
+            return nil
+        }
+        
+        shortCut: if let levels = levels, matcher == nil, self.searchTree.fullyIndexed, levels == 0 {
             return nil
         }
         
@@ -56,7 +60,7 @@ extension Document {
             position = pos
         } else if var keys = keys {
             if let pos = searchTree[position: keys] {
-                if searchTree[keys]?.fullyIndexed == true {
+                if searchTree[keys]?.recursivelyIndexed == true {
                     return nil
                 }
                 
@@ -87,7 +91,7 @@ extension Document {
             
             // elementTypePosition + 1 (key position)
             keySkipper : for i in position &+ 1..<storage.count {
-                guard self.storage[i] != 0 else {
+                if self.storage[i] == 0 {
                     // null terminator + length
                     position = i &+ 5
                     break keySkipper
@@ -104,7 +108,7 @@ extension Document {
             }
             
             // Extract the type
-            guard let type = ElementType(rawValue: self.storage[position]) else {
+            guard let type = ElementType(rawValue: self.storage[offsetBy: position]) else {
                 return nil
             }
             
@@ -116,11 +120,11 @@ extension Document {
             
             // Iterate over the key, put it into the buffer
             keyBuilder: for i in position + 1..<storage.count {
-                guard self.storage[i] != 0 else {
+                guard self.storage[offsetBy: i] != 0 else {
                     break keyBuilder
                 }
                 
-                buffer.append(storage[i])
+                buffer.append(storage[offsetBy: i])
             }
             
             let key = thisKey + [IndexKey(buffer)]
@@ -149,12 +153,12 @@ extension Document {
                 // If there was a matcher, continue iterating if this wasn't a match, otherwise, dive in!
                 // If there was no matcher, dive in anyways
                 if let matcher = matcher {
-                    guard matcher.count > key.count else {
+                    guard matcher.count >= key.count else {
                         continue iterator
                     }
                     
-                    for (pos, key) in key.enumerated() {
-                        guard matcher[pos] == key else {
+                    for pos in 0..<key.count {
+                        guard matcher[pos] == key[pos] else {
                             continue iterator
                         }
                     }
@@ -178,10 +182,14 @@ extension Document {
         }
         
         if let keys = keys {
-            self.searchTree[keys]?.fullyIndexed = true
+            self.searchTree[keys]?.recursivelyIndexed = true
+        } else if levels == nil || levels == 0 {
+            self.searchTree.recursivelyIndexed = self.searchTree.nodeStorage.reduce(true) { $0.1.recursivelyIndexed && $0.0 }
         } else if levels == nil {
             self.searchTree.checkFullyIndexed()
         }
+        
+        self.searchTree.fullyIndexed = true
         
         return nil
     }
@@ -349,7 +357,6 @@ extension Document {
     /// - parameter type: The BSON `ElementType` that we're looking for here
     internal func getValue(atDataPosition position: Int, withType type: ElementType, forIndexKey indexKey: [IndexKey]? = nil) -> Primitive? {
         do {
-            
             func remaining() -> Int {
                 return storage.endIndex - position
             }
@@ -385,9 +392,9 @@ extension Document {
                     return nil
                 }
                 
-                let stringData = Array(storage[position+4..<position+Int(length + 3)])
+                let stringData = storage[position+4..<position+Int(length + 3)]
                 
-                guard let code = String(bytes: stringData, encoding: .utf8) else {
+                guard let code = String(data: stringData, encoding: .utf8) else {
                     return nil
                 }
                 
@@ -415,9 +422,9 @@ extension Document {
                     return nil
                 }
                 
-                let stringData = Array(storage[position+4..<position+Int(length + 3)])
-                
-                return String(bytes: stringData, encoding: .utf8)
+                let stringData = storage[position+4..<position+Int(length + 3)]
+            
+                return String(data: stringData, encoding: .utf8)
             case .document, .arrayDocument: // document / array
                 guard remaining() >= 5 else {
                     return nil
@@ -430,7 +437,8 @@ extension Document {
                 }
                 
                 if let indexKey = indexKey, let node = self.searchTree[indexKey] {
-                    return Document(data: storage[position + 4..<position+length-1], copying: node)
+                    let data = storage[position + 4 ..< position + length - 1]
+                    return Document(data: data, copying: node)
                 } else {
                     return Document(data: storage[position..<position+length])
                 }
@@ -480,18 +488,18 @@ extension Document {
                 let interval: Int = Int(storage[position..<position+8])
                 return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
             case .nullValue:
-                return NSNull()
+                return Null()
             case .regex:
                 let k = storage[position..<storage.endIndex].split(separator: 0x00, maxSplits: 2, omittingEmptySubsequences: false)
                 guard k.count >= 2 else {
                     return nil
                 }
                 
-                let patternData = Array(k[0])
-                let optionsData = Array(k[1])
+                let patternData = k[0]
+                let optionsData = k[1]
                 
-                guard let pattern = try? String.instantiateFromCString(bytes: patternData + [0x00]),
-                    let options = try? String.instantiateFromCString(bytes: optionsData + [0x00]) else {
+                guard let pattern = String(data: patternData, encoding: .utf8),
+                    let options = String(data: optionsData, encoding: .utf8) else {
                         return nil
                 }
                 

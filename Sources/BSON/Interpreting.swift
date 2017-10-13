@@ -9,7 +9,7 @@
 import Foundation
 
 extension Document {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         if let value = value as? Document {
             self = value
             return
@@ -30,7 +30,7 @@ extension Document {
 }
 
 extension Timestamp {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let value = value as? Timestamp else {
             return nil
         }
@@ -40,7 +40,7 @@ extension Timestamp {
 }
 
 extension JavascriptCode {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let value = value as? JavascriptCode else {
             return nil
         }
@@ -50,7 +50,7 @@ extension JavascriptCode {
 }
 
 extension Int {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         switch value {
         case let val as Int32:
             self = Int(val)
@@ -71,7 +71,7 @@ extension Int {
 }
 
 extension Int32 {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         switch value {
         case let val as Int32:
             self = val
@@ -92,7 +92,7 @@ extension Int32 {
 }
 
 extension Double {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         switch value {
         case let val as Double:
             self = val
@@ -113,7 +113,7 @@ extension Double {
 }
 
 extension String {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         switch value {
         case let val as String:
             self = val
@@ -132,7 +132,7 @@ extension String {
 }
 
 extension Bool {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let bool = value as? Bool else {
             return nil
         }
@@ -142,7 +142,7 @@ extension Bool {
 }
 
 extension Binary {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let binary = value as? Binary else {
             return nil
         }
@@ -152,7 +152,7 @@ extension Binary {
 }
 
 extension Data {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let data = (value as? Binary)?.data else {
             return nil
         }
@@ -162,7 +162,7 @@ extension Data {
 }
 
 extension RegularExpression {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let regex = value as? RegularExpression else {
             return nil
         }
@@ -172,7 +172,7 @@ extension RegularExpression {
 }
 
 extension ObjectId {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         if let objectId = value as? ObjectId  {
             self = objectId
             return
@@ -192,7 +192,7 @@ extension ObjectId {
 }
 
 extension Date {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let date = value as? Date else {
             return nil
         }

@@ -61,7 +61,7 @@ extension Document {
                     continue indexKeyBuilder
                 }
                 
-                var i = 0
+                var i = storage.startIndex
                 var pointer: Int
                 
                 if parts.count == 0 {
@@ -99,19 +99,19 @@ extension Document {
                     }
                 }
                 
-                var key = Bytes()
+                var key = Data()
                 
                 pointer = pointer &+ 1
                 
                 guard pointer < storage.count else {
-                    parts.append(IndexKey(Data(key)))
+                    parts.append(IndexKey(key))
                     
                     continue indexKeyBuilder
                 }
                 
                 for i in pointer..<storage.count {
                     guard self.storage[i] != 0 else {
-                        parts.append(IndexKey(Data(key)))
+                        parts.append(IndexKey(key))
                         
                         continue indexKeyBuilder
                     }
@@ -122,6 +122,31 @@ extension Document {
         }
         
         return parts
+    }
+    
+    internal subscript(key: [IndexKey]) -> Primitive? {
+        get {
+            if let position = searchTree[position: key] {
+                guard let currentKey = getMeta(atPosition: position) else {
+                    return nil
+                }
+                
+                return getValue(atDataPosition: currentKey.dataPosition, withType: currentKey.type)
+            } else if let metadata = index(recursive: nil, lookingFor: key) {
+                return getValue(atDataPosition: metadata.dataPosition, withType: metadata.type)
+            }
+            
+            return nil
+        }
+        
+        set {
+            guard let newValue = newValue else {
+                unset(key)
+                return
+            }
+            
+            self.set(value: newValue, for: key)
+        }
     }
     
     /// Mutates the key-value pair like you would with a `Dictionary`
@@ -164,7 +189,7 @@ extension Document {
             }
             
             position += 1
-            var keyData = Bytes()
+            var keyData = Data()
             
             while storage[position] != 0 {
                 defer {
@@ -177,7 +202,7 @@ extension Document {
             // Skip beyond the null-terminator
             position += 1
             
-            guard let key = String(bytes: keyData, encoding: .utf8) else {
+            guard let key = String(data: keyData, encoding: .utf8) else {
                 fatalError("Unable to construct the key bytes into a String")
             }
             

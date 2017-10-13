@@ -18,15 +18,7 @@ extension Array where Element == Document {
         return fullBuffer
     }
     
-    public init(bsonBytes data: Data, validating: Bool = false) {
-        var buffer = Bytes(repeating: 0, count:  data.count)
-        
-        data.copyBytes(to: &buffer, count: buffer.count)
-        
-        self.init(bsonBytes: buffer, validating: validating)
-    }
-    
-    public init(bsonBytes bytes: Bytes, validating: Bool = false) {
+    public init(bsonBytes bytes: Data, validating: Bool = false) {
         var array = [Element]()
         var position = 0
         let byteCount = bytes.count
@@ -73,7 +65,7 @@ extension Sequence where Iterator.Element == Document {
 }
 
 extension Array where Element == Primitive {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let document = value as? Document else {
             return nil
         }
@@ -83,7 +75,7 @@ extension Array where Element == Primitive {
 }
 
 extension Dictionary where Key == String, Value == Primitive {
-    public init?(lazy value: Primitive?) {
+    public init?(lossy value: Primitive?) {
         guard let document = value as? Document else {
             return nil
         }
