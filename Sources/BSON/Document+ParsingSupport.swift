@@ -112,10 +112,10 @@ extension Document {
                 return nil
             }
             
-            var buffer = Bytes()
+            var buffer = Data()
             
             // Iterate over the key, put it into the buffer
-            keyBuilder : for i in position + 1..<storage.count {
+            keyBuilder: for i in position + 1..<storage.count {
                 guard self.storage[i] != 0 else {
                     break keyBuilder
                 }
@@ -123,7 +123,7 @@ extension Document {
                 buffer.append(storage[i])
             }
             
-            let key = thisKey + [IndexKey(KittenBytes(buffer))]
+            let key = thisKey + [IndexKey(buffer)]
             
             // Create an index for this entry
             searchTree[key] = IndexTrieNode(position &- basePosition)
@@ -192,7 +192,7 @@ extension Document {
     ///
     /// - returns: A tuple containing the position of the elementType and the position of the first byte of data
     internal func getMeta(for indexKey: [IndexKey]) -> ElementMetadata? {
-        guard let keyByteCount = indexKey.last?.key.bytes.count, let position = searchTree[position: indexKey], position < storage.count else {
+        guard let keyByteCount = indexKey.last?.data.count, let position = searchTree[position: indexKey], position < storage.count else {
             return index(recursive: nil, lookingFor: indexKey)
         }
         
@@ -333,7 +333,7 @@ extension Document {
             index = index &+ 1
             
             return (
-                dataPosition: position &+ 2 &+ key.key.bytes.count,
+                dataPosition: position &+ 2 &+ key.data.count,
                 type: type,
                 keyData: key,
                 startPosition: position
@@ -347,7 +347,7 @@ extension Document {
     ///
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
-    internal func getValue(atDataPosition position: Int, withType type: ElementType, kittenString: Bool = false, forIndexKey indexKey: [IndexKey]? = nil) -> Primitive? {
+    internal func getValue(atDataPosition position: Int, withType type: ElementType, forIndexKey indexKey: [IndexKey]? = nil) -> Primitive? {
         do {
             
             func remaining() -> Int {
@@ -417,11 +417,7 @@ extension Document {
                 
                 let stringData = Array(storage[position+4..<position+Int(length + 3)])
                 
-                if kittenString {
-                    return KittenBytes(stringData)
-                } else {
-                    return String(bytes: stringData, encoding: .utf8)
-                }
+                return String(bytes: stringData, encoding: .utf8)
             case .document, .arrayDocument: // document / array
                 guard remaining() >= 5 else {
                     return nil
@@ -458,7 +454,7 @@ extension Document {
                     return nil
                 }
                 
-                if let id = try? ObjectId(bytes: Array(storage[position..<position+12])) {
+                if let id = try? ObjectId(data: storage[position..<position+12]) {
                     return id
                 } else {
                     return nil

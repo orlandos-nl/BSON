@@ -13,58 +13,64 @@ import Dispatch
     import Glibc
 #endif
 
+public final class ObjectIdGenerator {
+    public init() {}
+    
+    #if os(Linux)
+        private var random: Int32 = {
+            srand(UInt32(time(nil)))
+            return rand()
+        }()
+    
+        private var counter: Int32 = {
+            srand(UInt32(time(nil)))
+            return rand()
+        }()
+    #else
+        private var random = arc4random_uniform(UInt32.max)
+        private var counter = arc4random_uniform(UInt32.max)
+    #endif
+    
+    public func generate() {
+        var data = Data(repeating: 0, count: 12)
+        
+        var epoch = Int32(time(nil)).bigEndian
+        
+        data.withUnsafeMutableBytes { (pointer: UnsafeMutablePointer<UInt8>) in
+            memcpy(pointer, &epoch, 4)
+            memcpy(pointer.advanced(by: 4), &self.random, 4)
+            
+            // And add a counter as 2 bytes and increment it
+            memcpy(pointer.advanced(by: 8), &self.counter, 4)
+            self.counter = self.counter &+ 1
+        }
+        
+        try! ObjectId(data: data)
+    }
+}
+
 /// 12-byte unique ID
 ///
 /// Defined as: `UNIX epoch time` + `machine identifier` + `process ID` + `random increment`
 public struct ObjectId {
     public typealias Raw = (Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
-    t
-    #if os(Linux)
-    private static var random: Int32 = {
-        srand(UInt32(time(nil)))
-        return rand()
-    }()
-    private static var counter: Int32 = {
-        srand(UInt32(time(nil)))
-        return rand()
-    }()
-    #else
-    private static var random = arc4random_uniform(UInt32.max)
-    private static var counter = arc4random_uniform(UInt32.max)
-    #endif
     
     /// This ObjectId as 12-byte tuple
     public var storage: Raw {
         get {
             return (_storage[0], _storage[1], _storage[2], _storage[3], _storage[4], _storage[5], _storage[6], _storage[7], _storage[8], _storage[9], _storage[10], _storage[11])
         }
-        set {
-            self._storage = [newValue.0, newValue.1, newValue.2, newValue.3, newValue.4, newValue.5, newValue.6, newValue.7, newValue.8, newValue.9, newValue.10, newValue.11]
-        }
     }
     
-    internal var _storage: Bytes
+    internal var _storage: Data
     
-    private static let counterQueue = DispatchQueue(label: "org.mongokitten.bson.oidcounter")
+    private static let generatorQueue = DispatchQueue(label: "org.mongokitten.bson.oidcounter")
     
     /// Generate a new random ObjectId.
     public init() {
-        var data = Bytes(repeating: 0, count: 12)
-        
-        var epoch = Int32(time(nil)).bigEndian
-        
-        data.withUnsafeMutableBufferPointer { ptr in
-            memcpy(ptr.baseAddress!, &epoch, 4)
-            memcpy(ptr.baseAddress!.advanced(by: 4), &ObjectId.random, 4)
+        self = ObjectId.generatorQueue.sync {
             
-            // And add a counter as 2 bytes and increment it
-            ObjectId.counterQueue.sync {
-                memcpy(ptr.baseAddress!.advanced(by: 8), &ObjectId.counter, 4)
-                ObjectId.counter = ObjectId.counter &+ 1
-            }
         }
-        
-        self._storage = data
     }
     
     /// Initialize a new ObjectId from given Hexadecimal string, such as "0123456789abcdef01234567".
@@ -77,7 +83,7 @@ public struct ObjectId {
             throw DeserializationError.InvalidObjectIdLength
         }
         
-        var data = Bytes()
+        var data = Data()
         
         var gen = hexString.characters.makeIterator()
         while let c1 = gen.next(), let c2 = gen.next() {
@@ -97,15 +103,10 @@ public struct ObjectId {
         self._storage = data
     }
     
-    /// Initializes this ObjectId with a tuple of 12 bytes
-    public init(raw storage: Raw) {
-        self._storage = [storage.0, storage.1, storage.2, storage.3, storage.4, storage.5, storage.6, storage.7, storage.8, storage.9, storage.10, storage.11]
-    }
-    
     /// Initializes ObjectId with an array of bytes
     ///
     /// Throws when there are not exactly 12 bytes provided
-    public init(bytes data: Bytes) throws {
+    public init(data: Data) throws {
         guard data.count == 12 else {
             throw DeserializationError.invalidElementSize
         }
@@ -127,13 +128,13 @@ public struct ObjectId {
     }
     
     public var epochSeconds: Int32 {
-        let timeData = Data(bytes: _storage[0...3])
-        return Int32(bigEndian:timeData.withUnsafeBytes { $0.pointee } )        
+        let timeData = Data(_storage[0...3])
+        return Int32(bigEndian: timeData.withUnsafeBytes { $0.pointee } )        
     }
 
 
     public var epoch: Date {
-        let timeData = Data(bytes: _storage[0...3])
+        let timeData = Data(_storage[0...3])
         let epoch = UInt32(bigEndian: timeData.withUnsafeBytes { $0.pointee } )
 
         return Date(timeIntervalSince1970: Double(epoch))

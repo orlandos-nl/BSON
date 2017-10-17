@@ -77,7 +77,7 @@ extension Document {
         var dictionary = [String: Primitive]()
         
         for metadata in makeKeyIterator() {
-            if let key = String(bytes: metadata.keyData.key.bytes, encoding: .utf8) {
+            if let key = String(bytes: metadata.keyData.data, encoding: .utf8) {
                 
                 let value = getValue(atDataPosition: metadata.dataPosition, withType: metadata.type)
                 
@@ -143,7 +143,7 @@ extension Document {
         }
         
         for key in self.makeKeyIterator() {
-            for byte in key.keyData.key.bytes {
+            for byte in key.keyData.data {
                 guard (byte >= 48 && byte <= 57) || byte == 0x00 else {
                     return false
                 }

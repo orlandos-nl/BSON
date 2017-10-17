@@ -112,13 +112,13 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
     ///
     /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
-    internal init(data: ArraySlice<Byte>, copying cache: IndexTrieNode) {
+    internal init(data: Data, copying cache: IndexTrieNode) {
         guard data.count > 5 else {
             storage = Data()
             return
         }
         
-        storage = Array(data)
+        storage = data
         self.searchTree = cache
     }
     
@@ -175,19 +175,19 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     ///
     /// - parameter elements: The `Array` used to initialize the `Document` must be a `[Value]`
     public init(array elements: [Primitive?]) {
-        storage = []
+        storage = Data()
         self.isArray = true
         
         var reserved = 0
         var counter = 0
         
-        let elements: [(UInt8, [UInt8], [UInt8])] = elements.flatMap { element in
+        let elements: [(UInt8, Data, Data)] = elements.flatMap { element in
             defer { counter = counter &+ 1 }
             guard let element = element else {
                 return nil
             }
             
-            let key = [UInt8](counter.description.utf8)
+            let key = Data(counter.description.utf8)
             let data = element.makeBinary()
             reserved = reserved &+ data.count &+ key.count &+ 2
             

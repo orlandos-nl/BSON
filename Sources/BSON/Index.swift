@@ -2,16 +2,16 @@ import Foundation
 
 struct IndexKey: Hashable {
     let data: Data
-    let hashValue: Int
+    
     public var hashValue: Int {
-        guard bytes.count > 0 else {
+        guard data.count > 0 else {
             return 0
         }
         
         var h = 0
         
-        for i in 0..<bytes.count {
-            h = 31 &* h &+ numericCast(bytes[i])
+        for i in 0..<data.count {
+            h = 31 &* h &+ numericCast(data[i])
         }
         
         return h
@@ -27,43 +27,47 @@ struct IndexKey: Hashable {
     }
     
     var s: String {
-        return String(bytes: key.bytes, encoding: .utf8)!
+        return String(data: data, encoding: .utf8)!
     }
     
-    public static func <(lhs: KittenBytes, rhs: KittenBytes) -> Bool {
-        for (position, byte) in lhs.bytes.enumerated() {
-            guard position < rhs.bytes.count else {
+    public static func <(lhs: IndexKey, rhs: IndexKey) -> Bool {
+        for position in 0..<lhs.data.count {
+            guard position < rhs.data.count else {
                 return true
             }
             
-            if byte < rhs.bytes[position] {
+            let bytes = lhs.data[position]
+            
+            if byte < rhs.data[position] {
                 return true
             }
             
-            if byte > rhs.bytes[position] {
+            if byte > rhs.data[position] {
                 return false
             }
         }
         
-        return String(bytes: lhs.bytes, encoding: .utf8)! > String(bytes: rhs.bytes, encoding: .utf8)!
+        return false
     }
     
-    public static func >(lhs: KittenBytes, rhs: KittenBytes) -> Bool {
-        for (position, byte) in lhs.bytes.enumerated() {
-            guard position < rhs.bytes.count else {
+    public static func >(lhs: IndexKey, rhs: IndexKey) -> Bool {
+        for position in 0..<lhs.data.count {
+            guard position < rhs.data.count else {
                 return false
             }
             
-            if byte > rhs.bytes[position] {
+            let bytes = lhs.data[position]
+            
+            if byte > rhs.data[position] {
                 return true
             }
             
-            if byte < rhs.bytes[position] {
+            if byte < rhs.data[position] {
                 return false
             }
         }
         
-        return String(bytes: lhs.bytes, encoding: .utf8)! > String(bytes: rhs.bytes, encoding: .utf8)!
+        return false
     }
 }
 

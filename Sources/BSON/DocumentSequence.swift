@@ -73,7 +73,7 @@ extension Sequence where Iterator.Element == Document {
 }
 
 extension Array where Element == Primitive {
-    public init?(_ value: Primitive?) {
+    public init?(lazy value: Primitive?) {
         guard let document = value as? Document else {
             return nil
         }
@@ -83,7 +83,7 @@ extension Array where Element == Primitive {
 }
 
 extension Dictionary where Key == String, Value == Primitive {
-    public init?(_ value: Primitive?) {
+    public init?(lazy value: Primitive?) {
         guard let document = value as? Document else {
             return nil
         }

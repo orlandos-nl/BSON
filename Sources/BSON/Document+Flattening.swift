@@ -35,7 +35,7 @@ extension Document {
         }
         
         /// Flattens the document at the given position. Returns the (new) position past the document.
-        func flatten(start: Int, keyPrefixBytes: ArraySlice<Byte>, isRootDocument: Bool) throws -> Int {
+        func flatten(start: Int, keyPrefixBytes: Data, isRootDocument: Bool) throws -> Int {
             var index = start
             
             // We're now at the start of this document, where the 4-byte length resides. We'll delete that.
@@ -87,7 +87,7 @@ extension Document {
             return index
         }
         
-        _ = try? flatten(start: 0, keyPrefixBytes: ArraySlice<Byte>(), isRootDocument: true)
+        _ = try? flatten(start: 0, keyPrefixBytes: Data(), isRootDocument: true)
         self.searchTree = IndexTrieNode(0)
     }
     
