@@ -179,7 +179,7 @@ extension Document {
         
         if let keys = keys {
             self.searchTree[keys]?.fullyIndexed = true
-        } else if levels == nil {
+        } else if levels == nil || levels == 0 {
             self.searchTree.fullyIndexed = self.searchTree.storage.values.reduce(true) { $0.1.fullyIndexed && $0.0 }
         }
         
