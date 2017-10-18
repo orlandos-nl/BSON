@@ -29,7 +29,7 @@ extension Document {
     @discardableResult
     internal func index(recursive keys: [IndexKey]? = nil, lookingFor matcher: [IndexKey]?, levels: Int? = nil) -> ElementMetadata? {
         // If the key path is indexes, return the data about this key path
-        if searchTree.fullyIndexed {
+        if searchTree.recursivelyIndexed {
             guard let matcher = matcher, let pos = searchTree[position: matcher] else {
                 return nil
             }
@@ -60,7 +60,7 @@ extension Document {
             position = pos
         } else if var keys = keys {
             if let pos = searchTree[position: keys] {
-                if searchTree[keys]?.fullyIndexed == true {
+                if searchTree[keys]?.recursivelyIndexed == true {
                     return nil
                 }
                 
@@ -182,10 +182,12 @@ extension Document {
         }
         
         if let keys = keys {
-            self.searchTree[keys]?.fullyIndexed = true
+            self.searchTree[keys]?.recursivelyIndexed = true
         } else if levels == nil || levels == 0 {
-            self.searchTree.fullyIndexed = self.searchTree.storage.values.reduce(true) { $0.1.fullyIndexed && $0.0 }
+            self.searchTree.recursivelyIndexed = self.searchTree.storage.values.reduce(true) { $0.1.recursivelyIndexed && $0.0 }
         }
+        
+        self.searchTree.fullyIndexed = true
         
         return nil
     }

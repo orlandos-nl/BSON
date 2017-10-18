@@ -20,6 +20,7 @@ class IndexTrieNode {
     var storage = Dictionary<IndexKey, IndexTrieNode>()
     var value: Int
     var fullyIndexed: Bool = false
+    var recursivelyIndexed: Bool = false
     
     init(_ value: Int) {
         self.value = value
@@ -59,7 +60,7 @@ class IndexTrieNode {
     
     func copy() -> IndexTrieNode {
         let copy = IndexTrieNode(self.value)
-        copy.fullyIndexed = self.fullyIndexed
+        copy.recursivelyIndexed = self.recursivelyIndexed
         
         for (key, value) in self.storage {
             copy.storage[key] = value.copy()
