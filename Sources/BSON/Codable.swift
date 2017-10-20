@@ -657,7 +657,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     func unwrap(_ value: Primitive?) throws -> UInt {
         let number: Int = try unwrap(value)
         
-        guard number >= UInt.max else {
+        guard number <= UInt.max else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "BSON number <\(number)> does not fit in \(UInt.self)"))
         }
         return UInt(number)
