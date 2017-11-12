@@ -233,7 +233,7 @@ extension Document {
             
             storage.removeSubrange(stringPosition..<position)
             
-            storage.insert(contentsOf: Bytes(newValue.key.utf8), at: stringPosition)
+            storage.insert(contentsOf: newValue.key.utf8, at: stringPosition)
             position = stringPosition + newValue.key.characters.count + 1
             
             let length = getLengthOfElement(withDataPosition: position, type: type)

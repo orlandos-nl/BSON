@@ -258,19 +258,32 @@ extension Document {
                 return -1
             }
             
-            return Int(Int32(storage[position...position+3]) + 4)
+            // Get the length
+            return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee) + 4
+                }
+            } as Int
         case .binary:
             guard need(5) else {
                 return -1
             }
             
-            return Int(Int32(storage[position...position+3]) + 5)
+            return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee) + 5
+                }
+            } as Int
         case .document, .arrayDocument, .javascriptCodeWithScope: // Types with their entire length in the first 4 bytes
             guard need(4) else {
                 return -1
             }
             
-            return Int(Int32(storage[position...position+3]))
+            return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
         case .decimal128:
             return 16
         }
@@ -356,208 +369,258 @@ extension Document {
     /// - parameter startPosition: The position of this `Value`'s data in the binary `storage`
     /// - parameter type: The BSON `ElementType` that we're looking for here
     internal func getValue(atDataPosition position: Int, withType type: ElementType, forIndexKey indexKey: [IndexKey]? = nil) -> Primitive? {
-        do {
-            func remaining() -> Int {
-                return storage.endIndex - position
+        func remaining() -> Int {
+            return storage.endIndex - position
+        }
+        
+        switch type {
+        case .double: // double
+            guard remaining() >= 8 else {
+                return nil
             }
             
-            switch type {
-            case .double: // double
-                guard remaining() >= 8 else {
-                    return nil
+            return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Double.self, capacity: 1) { pointer in
+                    return pointer.pointee
                 }
-                
-                let double: Double = try fromBytes(storage[position..<position+8])
-                return double
-            case .javascriptCode:
-                // Check for null-termination and at least 5 bytes (length spec + terminator)
-                guard remaining() >= 5 else {
-                    return nil
-                }
-                
-                // Get the length
-                let length: Int32 = Int32(storage[position...position+3])
-                
-                // Check if the data is at least the right size
-                guard storage.count-position >= Int(length) + 4 else {
-                    return nil
-                }
-                
-                // Empty string
-                if length == 1 {
-                    return JavascriptCode(code: "")
-                }
-                
-                guard length > 0 else {
-                    return nil
-                }
-                
-                let stringData = storage[position+4..<position+Int(length + 3)]
-                
-                guard let code = String(data: stringData, encoding: .utf8) else {
-                    return nil
-                }
-                
-                return JavascriptCode(code: code)
-            case .string: // string
-                // Check for null-termination and at least 5 bytes (length spec + terminator)
-                guard remaining() >= 5 else {
-                    return nil
-                }
-                
-                // Get the length
-                let length: Int32 = Int32(storage[position...position+3])
-                
-                // Check if the data is at least the right size
-                guard storage.count-position >= Int(length) + 4 else {
-                    return nil
-                }
-                
-                // Empty string
-                if length == 1 {
-                    return ""
-                }
-                
-                guard length > 0 else {
-                    return nil
-                }
-                
-                let stringData = storage[position+4..<position+Int(length + 3)]
-            
-                return String(data: stringData, encoding: .utf8)
-            case .document, .arrayDocument: // document / array
-                guard remaining() >= 5 else {
-                    return nil
-                }
-                
-                let length = Int(Int32(storage[position..<position+4]))
-                
-                guard remaining() >= length else {
-                    return nil
-                }
-                
-                if let indexKey = indexKey, let node = self.searchTree[indexKey] {
-                    let data = storage[position + 4 ..< position + length - 1]
-                    return Document(data: data, copying: node)
-                } else {
-                    return Document(data: storage[position..<position+length])
-                }
-            case .binary: // binary
-                guard remaining() >= 5 else {
-                    return nil
-                }
-                
-                let length = Int(Int32(storage[position..<position+4]))
-                let subType = storage[position+4]
-                
-                guard remaining() >= length + 5 else {
-                    return nil
-                }
-                
-                let realData = length > 0 ? Array(storage[position+5...position+4+length]) : []
-                
-                return Binary(data: realData, withSubtype: Binary.Subtype(rawValue: subType))
-            case .objectId: // objectid
-                guard remaining() >= 12 else {
-                    return nil
-                }
-                
-                if let id = try? ObjectId(data: storage[position..<position+12]) {
-                    return id
-                } else {
-                    return nil
-                }
-            case .boolean:
-                guard remaining() >= 1 else {
-                    return nil
-                }
-                
-                switch storage[position] {
-                case 0x00:
-                    return false
-                case 0x01:
-                    return true
-                default:
-                    return nil
-                }
-            case .utcDateTime:
-                guard remaining() >= 8 else {
-                    return nil
-                }
-                
-                let interval: Int = Int(storage[position..<position+8])
-                return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
-            case .nullValue:
-                return Null()
-            case .regex:
-                let k = storage[position..<storage.endIndex].split(separator: 0x00, maxSplits: 2, omittingEmptySubsequences: false)
-                guard k.count >= 2 else {
-                    return nil
-                }
-                
-                let patternData = k[0]
-                let optionsData = k[1]
-                
-                guard let pattern = String(data: patternData, encoding: .utf8),
-                    let options = String(data: optionsData, encoding: .utf8) else {
-                        return nil
-                }
-                
-                return RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
-            case .javascriptCodeWithScope:
-                // min length is 14 bytes: 4 for the int32, 5 for the string and 5 for the document
-                guard remaining() >= 14 else {
-                    return nil
-                }
-                
-                // why did they include this? it's not needed. whatever. we'll validate it.
-                let totalLength = Int(Int32(storage[position..<position+4]))
-                guard remaining() >= totalLength else {
-                    return nil
-                }
-                
-                let stringDataAndMore = Data(storage[position+4..<position+totalLength])
-                var trueCodeSize = 0
-                guard let code = try? String.instantiate(data: stringDataAndMore, consumedBytes: &trueCodeSize) else {
-                    return nil
-                }
-                
-                let scope = Document(data: stringDataAndMore[trueCodeSize..<stringDataAndMore.endIndex])
-                
-                return JavascriptCode(code: code, withScope: scope)
-            case .int32: // int32
-                guard remaining() >= 4 else {
-                    return nil
-                }
-                
-                return Int32(storage[position..<position+4])
-            case .timestamp:
-                guard remaining() >= 8 else {
-                    return nil
-                }
-                
-                let stamp = Timestamp(increment: Int32(storage[position..<position+4]), timestamp: Int32(storage[position+4..<position+8]))
-                
-                return stamp
-            case .int64:
-                guard remaining() >= 8 else {
-                    return nil
-                }
-                
-                return try fromBytes(storage[position..<position+8]) as Int
-            case .decimal128:
-                guard remaining() >= 16 else {
-                    return nil
-                }
-                
-                return Decimal128(slice: Data(storage[position..<position + 16]))
-            case .minKey: // MinKey
-                return MinKey()
-            case .maxKey: // MaxKey
-                return MaxKey()
             }
-        } catch {
-            return nil
+        case .javascriptCode:
+            // Check for null-termination and at least 5 bytes (length spec + terminator)
+            guard remaining() >= 5 else {
+                return nil
+            }
+            
+            // Get the length
+            let length = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
+            
+            // Check if the data is at least the right size
+            guard storage.count-position >= Int(length) + 4 else {
+                return nil
+            }
+            
+            // Empty string
+            if length == 1 {
+                return JavascriptCode(code: "")
+            }
+            
+            guard length > 0 else {
+                return nil
+            }
+            
+            let stringData = storage[position+4..<position+Int(length + 3)]
+            
+            guard let code = String(data: stringData, encoding: .utf8) else {
+                return nil
+            }
+            
+            return JavascriptCode(code: code)
+        case .string: // string
+            // Check for null-termination and at least 5 bytes (length spec + terminator)
+            guard remaining() >= 5 else {
+                return nil
+            }
+            
+            // Get the length
+            let length = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
+            
+            // Check if the data is at least the right size
+            guard storage.count-position >= Int(length) + 4 else {
+                return nil
+            }
+            
+            // Empty string
+            if length == 1 {
+                return ""
+            }
+            
+            guard length > 0 else {
+                return nil
+            }
+            
+            let stringData = storage[position+4..<position+Int(length + 3)]
+        
+            return String(data: stringData, encoding: .utf8)
+        case .document, .arrayDocument: // document / array
+            guard remaining() >= 5 else {
+                return nil
+            }
+            
+            let length = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
+            
+            guard remaining() >= length else {
+                return nil
+            }
+            
+            if let indexKey = indexKey, let node = self.searchTree[indexKey] {
+                let data = storage[position + 4 ..< position + length - 1]
+                return Document(data: data, copying: node)
+            } else {
+                return Document(data: storage[position..<position+length])
+            }
+        case .binary: // binary
+            guard remaining() >= 5 else {
+                return nil
+            }
+            
+            let length = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
+            
+            let subType = storage[position+4]
+            
+            guard remaining() >= length + 5 else {
+                return nil
+            }
+            
+            let realData = length > 0 ? storage[position+5...position+4+length] : Data()
+            
+            return Binary(data: realData, withSubtype: Binary.Subtype(rawValue: subType))
+        case .objectId: // objectid
+            guard remaining() >= 12 else {
+                return nil
+            }
+            
+            if let id = try? ObjectId(data: storage[position..<position+12]) {
+                return id
+            } else {
+                return nil
+            }
+        case .boolean:
+            guard remaining() >= 1 else {
+                return nil
+            }
+            
+            switch storage[position] {
+            case 0x00:
+                return false
+            case 0x01:
+                return true
+            default:
+                return nil
+            }
+        case .utcDateTime:
+            guard remaining() >= 8 else {
+                return nil
+            }
+            
+            let interval = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int64.self, capacity: 1) { pointer in
+                    return pointer.pointee
+                }
+            }
+            
+            return Date(timeIntervalSince1970: Double(interval) / 1000) // BSON time is in ms
+        case .nullValue:
+            return Null()
+        case .regex:
+            let k = storage[position..<storage.endIndex].split(separator: 0x00, maxSplits: 2, omittingEmptySubsequences: false)
+            guard k.count >= 2 else {
+                return nil
+            }
+            
+            let patternData = k[0]
+            let optionsData = k[1]
+            
+            guard let pattern = String(data: patternData, encoding: .utf8),
+                let options = String(data: optionsData, encoding: .utf8) else {
+                    return nil
+            }
+            
+            return RegularExpression(pattern: pattern, options: regexOptions(fromString: options))
+        case .javascriptCodeWithScope:
+            // min length is 14 bytes: 4 for the int32, 5 for the string and 5 for the document
+            guard remaining() >= 14 else {
+                return nil
+            }
+            
+            // why did they include this? it's not needed. whatever. we'll validate it.
+            let totalLength = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
+            
+            guard remaining() >= totalLength else {
+                return nil
+            }
+            
+            let stringStart = storage.startIndex.advanced(by: position + 4)
+            let dataEnd = storage.startIndex.advanced(by: position + totalLength)
+            
+            var nullIndex: Int? = nil
+            
+            nullFinder: for index in stringStart..<dataEnd {
+                if storage[index] == 0x00 {
+                    nullIndex = index + 1
+                    break nullFinder
+                }
+            }
+            
+            guard let index = nullIndex else {
+                return nil
+            }
+            
+            guard let code = String(data: storage[stringStart..<index], encoding: .utf8) else {
+                return nil
+            }
+            
+            let scope = Document(data: storage[index + 1..<dataEnd])
+            
+            return JavascriptCode(code: code, withScope: scope)
+        case .int32: // int32
+            guard remaining() >= 4 else {
+                return nil
+            }
+            
+            return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return pointer.pointee
+                }
+            }
+        case .timestamp:
+            guard remaining() >= 8 else {
+                return nil
+            }
+            
+            return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 2) { pointer in
+                    return Timestamp(increment: pointer[0], timestamp: pointer[1])
+                }
+            }
+        case .int64:
+            guard remaining() >= 8 else {
+                return nil
+            }
+            
+            return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int64.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
+        case .decimal128:
+            guard remaining() >= 16 else {
+                return nil
+            }
+            
+            return Decimal128(slice: storage[position..<position + 16])
+        case .minKey: // MinKey
+            return MinKey()
+        case .maxKey: // MaxKey
+            return MaxKey()
         }
     }
     

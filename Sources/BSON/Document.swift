@@ -10,7 +10,7 @@ import Foundation
 
 public typealias IndexIterationElement = (key: String, value: Primitive)
 
-public enum ElementType : Byte {
+public enum ElementType : UInt8 {
     case double = 0x01
     case string = 0x02
     case document = 0x03
@@ -51,13 +51,6 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
     /// Initializes this Doucment with binary `Foundation.Data`
     ///
     /// - parameters data: the `Foundation.Data` that's being used to initialize this`Document`
-    public init(bytes: Bytes) {
-        self.init(data: Data(bytes))
-    }
-    
-    /// Initializes this Doucment with an `Array` of `Byte`s - I.E: `[Byte]`
-    ///
-    /// - parameters data: the `[Byte]` that's being used to initialize this `Document`
     public init(data: Data) {
         guard data.count > 4 else {
             invalid = true
@@ -65,7 +58,11 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return
         }
         
-        let length = Int(Int32(data[...data.startIndex.advanced(by: 3)]))
+        let length = data.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+            return pointer.withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                return numericCast(pointer.pointee)
+            }
+        } as Int
         
         guard length > 4 else {
             invalid = true

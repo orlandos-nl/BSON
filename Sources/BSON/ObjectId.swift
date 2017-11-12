@@ -53,8 +53,6 @@ public final class ObjectIdGenerator {
 ///
 /// Defined as: `UNIX epoch time` + `machine identifier` + `process ID` + `random increment`
 public struct ObjectId {
-    public typealias Raw = (Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)
-    
     #if os(Linux)
     private static var random: Int32 = {
         srand(UInt32(time(nil)))
@@ -97,7 +95,7 @@ public struct ObjectId {
         while let c1 = gen.next(), let c2 = gen.next() {
             let s = String([c1, c2])
             
-            guard let d = Byte(s, radix: 16) else {
+            guard let d = UInt8(s, radix: 16) else {
                 break
             }
             
@@ -163,13 +161,11 @@ extension ObjectId: Hashable {
     }
     
     public var hashValue: Int {
-        let epoch = self.epochSeconds
-        let random = Int32(_storage[_storage.startIndex.advanced(by: 4)..._storage.startIndex.advanced(by: 7)])
-        let increment = Int32(_storage[_storage.startIndex.advanced(by: 8)..._storage.startIndex.advanced(by: 11)])
-        
-        let total: Int32 = epoch &+ random &+ increment
-        
-        return Int(total)
+        return _storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+            return pointer.withMemoryRebound(to: Int32.self, capacity: 3) { pointer in
+                return numericCast(self.epochSeconds &+ (pointer[1] &* 3) &+ (pointer[2] &* 8))
+            }
+        }
     }
 }
 
@@ -179,4 +175,4 @@ extension ObjectId : CustomStringConvertible {
     }
 }
 
-private let radix16table: Bytes = [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66]
+private let radix16table = Data([0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66])

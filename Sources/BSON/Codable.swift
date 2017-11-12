@@ -133,7 +133,7 @@ extension Binary.Subtype : Codable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        self = Binary.Subtype(rawValue: try container.decode(Byte.self))
+        self = Binary.Subtype(rawValue: try container.decode(UInt8.self))
     }
 }
 

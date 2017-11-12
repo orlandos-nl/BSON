@@ -24,7 +24,11 @@ extension Array where Element == Document {
         let byteCount = bytes.count
         
         documentLoop: while byteCount >= position + 5 {
-            let length = Int(Int32(bytes[position..<position+4]))
+            let length = bytes.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                    return numericCast(pointer.pointee)
+                }
+            } as Int
             
             guard length > 0 else {
                 // invalid

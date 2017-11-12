@@ -24,7 +24,7 @@ func escape(_ string: String) -> String {
 
 /// Do not extend. BSON internals
 public protocol Primitive: Codable {
-    var typeIdentifier: Byte { get }
+    var typeIdentifier: UInt8 { get }
     
     func makeBinary() -> Data
 }
@@ -59,7 +59,7 @@ public struct Timestamp: Primitive, Equatable {
     public var timestamp: Int32
     public var increment: Int32
     
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x11
     }
     
@@ -74,7 +74,7 @@ public struct Timestamp: Primitive, Equatable {
 }
 
 extension Data : Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x05
     }
     
@@ -105,13 +105,13 @@ public struct Binary: Primitive {
         case md5
         
         /// Custom
-        case userDefined(Byte)
+        case userDefined(UInt8)
         
         /// System reserved
-        case systemReserved(Byte)
+        case systemReserved(UInt8)
         
         /// The raw Byte value
-        public var rawValue : Byte {
+        public var rawValue : UInt8 {
             switch self {
             case .generic: return 0x00
             case .function: return 0x01
@@ -125,7 +125,7 @@ public struct Binary: Primitive {
         }
         
         /// Creates a `BinarySubtype` from an `Byte`
-        public init(rawValue: Byte) {
+        public init(rawValue: UInt8) {
             switch rawValue {
             case 0x00: self = .generic
             case 0x01: self = .function
@@ -147,12 +147,7 @@ public struct Binary: Primitive {
         self.subtype = subtype
     }
     
-    public init(data: Bytes, withSubtype subtype: Subtype) {
-        self.data = Data(bytes: data)
-        self.subtype = subtype
-    }
-    
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x05
     }
     
@@ -163,6 +158,7 @@ public struct Binary: Primitive {
         }
         
         let length = Int32(data.count)
+        
         return length.makeBytes() + [subtype.rawValue] + data
     }
 }
@@ -180,7 +176,7 @@ extension Binary.Subtype : Equatable {
 }
 
 struct Null: Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x0A
     }
     
@@ -204,16 +200,16 @@ public struct JavascriptCode: Primitive {
     public var code: String
     public var scope: Document?
     
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return self.scope == nil ? 0x0D : 0x0F
     }
     
     public func makeBinary() -> Data {
         if let scope = scope {
-            let data = self.code.bytes + scope.bytes
+            let data = self.code.makeBinary() + Data(scope.bytes)
             return Int32(data.count + 4).makeBytes() + data
         } else {
-            return self.code.bytes
+            return self.code.makeBinary()
         }
     }
     
@@ -224,7 +220,7 @@ public struct JavascriptCode: Primitive {
 }
 
 extension Bool : Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x08
     }
     
@@ -234,7 +230,7 @@ extension Bool : Primitive {
 }
 
 extension Double : Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x01
     }
     
@@ -244,7 +240,7 @@ extension Double : Primitive {
 }
 
 extension Int32 : Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x10
     }
     
@@ -254,7 +250,7 @@ extension Int32 : Primitive {
 }
 
 extension Int : Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x12
     }
     
@@ -276,7 +272,7 @@ extension Date : Primitive {
         return integer.makeBytes()
     }
     
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x09
     }
 }
@@ -289,7 +285,7 @@ extension String : Primitive {
         return byteArray
     }
     
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x02
     }
 }
@@ -310,7 +306,7 @@ extension Document: Primitive {
     public typealias SupportedValue = (String, Primitive)
     public typealias SequenceType = Document
     
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return self.isArray ?? validatesAsArray() ? 0x04 : 0x03
     }
     
@@ -320,7 +316,7 @@ extension Document: Primitive {
 }
 
 extension ObjectId : Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x07
     }
     
@@ -332,7 +328,7 @@ extension ObjectId : Primitive {
 public struct MinKey: Primitive {
     public init() {}
     
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0xFF
     }
     
@@ -344,7 +340,7 @@ public struct MinKey: Primitive {
 public struct MaxKey: Primitive {
     public init() {}
     
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x7F
     }
     
@@ -354,7 +350,7 @@ public struct MaxKey: Primitive {
 }
 
 extension RegularExpression: Primitive {
-    public var typeIdentifier: Byte {
+    public var typeIdentifier: UInt8 {
         return 0x0B
     }
     
@@ -368,7 +364,7 @@ extension RegularExpression: Primitive {
     }
     
     public func makeBinary() -> Data {
-        return self.pattern.cStringBytes + makeOptions().cStringBytes
+        return Data(self.pattern.utf8 + [0x00] + makeOptions().utf8 + [0x00])
     }
     
     func makeOptions() -> String {

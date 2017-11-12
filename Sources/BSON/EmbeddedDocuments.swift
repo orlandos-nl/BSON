@@ -24,7 +24,7 @@ extension Dictionary : Primitive {
         print(error)
     }
     
-    public var typeIdentifier: Byte { return 0x03 }
+    public var typeIdentifier: UInt8 { return 0x03 }
     public func makeBinary() -> Data {
         let doc = Document(dictionaryElements: self.flatMap {
             guard let key = $0.0 as? String else {
@@ -48,7 +48,7 @@ extension Dictionary : Primitive {
 }
 
 extension Array : Primitive {
-    public var typeIdentifier: Byte { return 0x04 }
+    public var typeIdentifier: UInt8 { return 0x04 }
     public func makeBinary() -> Data {
         guard let `self` = self as? [Primitive] else {
             // `assertionFailure` only triggers a crash on debug configurations, not on release.
