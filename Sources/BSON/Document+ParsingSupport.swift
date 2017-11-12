@@ -548,37 +548,25 @@ extension Document {
             }
             
             // why did they include this? it's not needed. whatever. we'll validate it.
-            let totalLength = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
-                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
-                    return numericCast(pointer.pointee)
+            let (totalLength, stringLength) = storage.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+                return pointer.advanced(by: position).withMemoryRebound(to: Int32.self, capacity: 2) { pointer in
+                    return (numericCast(pointer[0]), numericCast(pointer[1]))
                 }
-            } as Int
+            } as (Int, Int)
             
             guard remaining() >= totalLength else {
                 return nil
             }
             
-            let stringStart = storage.startIndex.advanced(by: position + 4)
+            let stringStart = storage.startIndex.advanced(by: position + 8)
+            let dataStart = stringStart.advanced(by: stringLength)
             let dataEnd = storage.startIndex.advanced(by: position + totalLength)
             
-            var nullIndex: Int? = nil
-            
-            nullFinder: for index in stringStart..<dataEnd {
-                if storage[index] == 0x00 {
-                    nullIndex = index + 1
-                    break nullFinder
-                }
-            }
-            
-            guard let index = nullIndex else {
+            guard let code = String(data: storage[stringStart..<dataStart - 1], encoding: .utf8) else {
                 return nil
             }
             
-            guard let code = String(data: storage[stringStart..<index], encoding: .utf8) else {
-                return nil
-            }
-            
-            let scope = Document(data: storage[index + 1..<dataEnd])
+            let scope = Document(data: storage[dataStart..<dataEnd])
             
             return JavascriptCode(code: code, withScope: scope)
         case .int32: // int32

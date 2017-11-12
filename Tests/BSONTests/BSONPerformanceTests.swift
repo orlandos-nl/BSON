@@ -129,7 +129,7 @@ class BSONPerformanceTests: XCTestCase {
     
     func testObjectidPerformance() {
         measure {
-            for _ in 0..<100_000 {
+            for _ in 0..<10_000 {
                 _ = ObjectId()
             }
         }
