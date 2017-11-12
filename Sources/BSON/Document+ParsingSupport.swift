@@ -47,7 +47,7 @@ extension Document {
             return nil
         }
         
-        shortCut: if let levels = levels, matcher == nil, self.searchTree.fullyIndexed, levels == 0 {
+        if let levels = levels, matcher == nil, self.searchTree.fullyIndexed, levels == 0 {
             return nil
         }
         

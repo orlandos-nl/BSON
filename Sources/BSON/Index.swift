@@ -13,7 +13,15 @@ struct IndexKey: Hashable {
     }
     
     static func ==(lhs: IndexKey, rhs: IndexKey) -> Bool {
-        return lhs.data == rhs.data
+        guard lhs.data.count == rhs.data.count else {
+            return false
+        }
+        
+        return lhs.data.withUnsafeBytes { (lhsPointer: UnsafePointer<UInt8>) in
+            return rhs.data.withUnsafeBytes { (rhsPointer: UnsafePointer<UInt8>) in
+                return memcmp(lhsPointer, rhsPointer, lhs.data.count) == 0
+            }
+        }
     }
     
     var s: String {
@@ -62,6 +70,7 @@ struct IndexKey: Hashable {
 }
 
 class IndexTrieNode {
+    var hashes = [Int]()
     var keyStorage = [IndexKey]()
     var nodeStorage = [IndexTrieNode]()
     var value: Int
@@ -88,17 +97,22 @@ class IndexTrieNode {
             var previousKeyLength = 0
             var node = self
             
-            for index in 0..<path.count {
+            nextKey: for index in 0..<path.count {
                 let currentKey = path[index]
+                let currentHash = currentKey.hashValue
                 
-                guard let nodeIndex = node.keyStorage.index(of: currentKey) else {
-                    return nil
+                keyScan: for hashIndex in 0..<node.hashes.count where node.hashes[hashIndex] == currentHash {
+                    if node.keyStorage[hashIndex] == currentKey {
+                        node = node.nodeStorage[hashIndex]
+                        position += node.value &+ previousKeyLength
+                        // + 6 for the sub document overhead (null terminators)
+                        previousKeyLength = currentKey.data.count &+ 6
+                        
+                        continue nextKey
+                    }
                 }
                 
-                node = node.nodeStorage[nodeIndex]
-                position += node.value &+ previousKeyLength
-                // + 6 for the sub document overhead (null terminators)
-                previousKeyLength = currentKey.data.count &+ 6
+                return nil
             }
             
             return position
@@ -118,6 +132,7 @@ class IndexTrieNode {
         }
         
         copy.keyStorage = self.keyStorage
+        copy.hashes = self.hashes
         
         return copy
     }
@@ -130,14 +145,17 @@ class IndexTrieNode {
             
             var node = self
             
-            for index in 0..<path.count {
+            nextKey: for index in 0..<path.count {
                 let currentKey = path[index]
+                let currentHash = currentKey.hashValue
                 
-                guard let nodeIndex = node.keyStorage.index(of: currentKey) else {
-                    return nil
+                keyScan: for hashIndex in 0..<node.hashes.count where node.hashes[hashIndex] == currentHash {
+                    if node.keyStorage[hashIndex] == currentKey {
+                        node = node.nodeStorage[hashIndex]
+                        
+                        continue nextKey
+                    }
                 }
-                
-                node = node.nodeStorage[nodeIndex]
             }
             
             return node
@@ -150,12 +168,19 @@ class IndexTrieNode {
             var node = self
             
             if let newValue = newValue {
-                for index in 0..<path.count {
+                pathLoop: for index in 0..<path.count {
                     let currentKey = path[index]
+                    let currentHash = currentKey.hashValue
+                    var nodeIndex: Int? = nil
                     
-                    if let nodeIndex = node.keyStorage.index(of: currentKey) {
-                        node = node.nodeStorage[nodeIndex]
-                    } else {
+                    keyScan: for hashIndex in 0..<node.hashes.count where node.hashes[hashIndex] == currentHash {
+                        if node.keyStorage[hashIndex] == currentKey {
+                            nodeIndex = hashIndex
+                            break keyScan
+                        }
+                    }
+                    
+                    guard let additionIndex = nodeIndex else {
                         let newNode: IndexTrieNode
                         
                         if index == path.count - 1 {
@@ -166,21 +191,35 @@ class IndexTrieNode {
                         
                         node.keyStorage.append(currentKey)
                         node.nodeStorage.append(newNode)
+                        node.hashes.append(currentHash)
                         
                         node = newNode
+                        continue pathLoop
                     }
+                    
+                    node = node.nodeStorage[additionIndex]
                 }
             } else {
                 for index in 0..<path.count {
                     let currentKey = path[index]
-        
-                    guard let nodeIndex = node.keyStorage.index(of: currentKey) else {
+                    let currentHash = currentKey.hashValue
+                    var nodeIndex: Int? = nil
+                    
+                    keyScan: for hashIndex in 0..<node.hashes.count where node.hashes[hashIndex] == currentHash {
+                        if node.keyStorage[hashIndex] == currentKey {
+                            nodeIndex = hashIndex
+                            break keyScan
+                        }
+                    }
+                    
+                    guard let removalIndex = nodeIndex else {
                         return
                     }
                     
                     if index == path.count - 1 {
-                        node.keyStorage.remove(at: nodeIndex)
-                        node.nodeStorage.remove(at: nodeIndex)
+                        node.keyStorage.remove(at: removalIndex)
+                        node.nodeStorage.remove(at: removalIndex)
+                        node.hashes.remove(at: removalIndex)
                     }
                 }
             }

@@ -583,7 +583,16 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
             return nil
         }
         
-        guard let searchTreeIndex = searchTree.keyStorage.index(of: key) else {
+        var idx: Int? = nil
+        
+        keyLookup: for hashIndex in 0..<searchTree.hashes.count where searchTree.hashes[hashIndex] == key.hashValue {
+            if searchTree.keyStorage[hashIndex] == key {
+                idx = hashIndex
+                break keyLookup
+            }
+        }
+        
+        guard let searchTreeIndex = idx else {
             return nil
         }
         
@@ -591,6 +600,7 @@ public struct Document : Collection, ExpressibleByDictionaryLiteral, Expressible
         
         searchTree.keyStorage.remove(at: searchTreeIndex)
         searchTree.nodeStorage.remove(at: searchTreeIndex)
+        searchTree.hashes.remove(at: searchTreeIndex)
         
         // Modify the searchTree efficienty, where necessary
         for node in searchTree.nodeStorage where node.value > meta.elementTypePosition {
