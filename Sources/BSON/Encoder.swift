@@ -2,15 +2,26 @@ public final class BSONEncoder {
     public init() {}
     
     public func encode<E: Encodable>(_ e: E) throws -> Document {
-        try e.encode(to: _BSONEncoder())
+        let encoder = _BSONEncoder()
+        try e.encode(to: encoder)
+        
+        guard let doc = encoder.wrapper.primitive as? Document else {
+            throw BSONEncoderError()
+        }
+        
+        return doc
     }
     
-    public func encodePrimitive<E: Encodable>(_ e: E) throws -> Document {
-        try e.encode(to: _BSONEncoder())
+    public func encodePrimitive<E: Encodable>(_ e: E) throws -> Primitive {
+        let encoder = _BSONEncoder()
+        
+        try e.encode(to: encoder)
+        
+        return encoder.wrapper.primitive
     }
 }
 
-final class PrimitiveWrapper {
+fileprivate final class PrimitiveWrapper {
     var primitive: Primitive
     var doc: Document {
         get {
@@ -26,37 +37,98 @@ final class PrimitiveWrapper {
         }
     }
     
-    init() {
-        self.primitive = Document()
+    typealias Dealloc = (Primitive)->()
+    
+    var subEncoder: _BSONEncoder {
+        var encoder = _BSONEncoder()
+        encoder.wrapper = PrimitiveWrapper { primitive in
+            self.primitive = primitive
+        }
+        
+        return encoder
     }
     
-    func encode<BI: BinaryInteger & SignedInteger>(_ value: BI) throws {
+    func keyedSubEncoder(for key: String) -> _BSONEncoder {
+        var encoder = _BSONEncoder()
+        encoder.wrapper = PrimitiveWrapper { primitive in
+            self.doc[key] = primitive
+        }
+        
+        return encoder
+    }
+    
+    var dealloc: Dealloc
+    
+    init(_ dealloc: @escaping Dealloc) {
+        self.primitive = Document()
+        self.dealloc = dealloc
+    }
+    
+    func append<BI: BinaryInteger & SignedInteger>(_ value: BI) {
         if value.bitWidth > 32 {
-            self.primitive = Int(value)
+            self.doc.append(Int(value))
         } else {
-            self.primitive = Int32(value)
+            self.doc.append(Int32(value))
         }
     }
     
-    func encode<BI: BinaryInteger & UnsignedInteger>(_ value: BI) throws {
+    func append<BI: BinaryInteger & UnsignedInteger>(_ value: BI) {
+        if value.bitWidth >= 32 {
+            self.doc.append(Int(value))
+        } else {
+            self.doc.append(Int32(value))
+        }
+    }
+    
+    func append<BI: BinaryInteger & SignedInteger>(_ value: BI, for key: String) {
+        if value.bitWidth > 32 {
+            self.doc[key] = Int(value)
+        } else {
+            self.doc[key] = Int32(value)
+        }
+    }
+    
+    func append<BI: BinaryInteger & UnsignedInteger>(_ value: BI, for key: String) {
+        if value.bitWidth >= 32 {
+            self.doc[key] = Int(value)
+        } else {
+            self.doc[key] = Int32(value)
+        }
+    }
+    
+    func encode<BI: BinaryInteger & SignedInteger>(_ value: BI) {
+        if value.bitWidth > 32 {
+            self.doc.append(Int(value))
+        } else {
+            self.doc.append(Int32(value))
+        }
+    }
+    
+    func encode<BI: BinaryInteger & UnsignedInteger>(_ value: BI) {
         if value.bitWidth >= 32 {
             self.primitive = Int(value)
         } else {
             self.primitive = Int32(value)
         }
     }
+    
+    deinit {
+        dealloc(self.primitive)
+    }
 }
 
-struct _BSONEncoder: Encoder {
+fileprivate struct _BSONEncoder: Encoder {
     var codingPath: [CodingKey] = []
     var userInfo: [CodingUserInfoKey : Any] = [:]
     
-    var wrapper = PrimitiveWrapper()
+    var primitive: Primitive = Document()
+    
+    var wrapper = PrimitiveWrapper { _ in }
     
     init() {}
     
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key : CodingKey {
-        <#code#>
+        return KeyedEncodingContainer(BSONKeyedEncodingContainer<Key>(encoder: self))
     }
     
     func unkeyedContainer() -> UnkeyedEncodingContainer {
@@ -65,6 +137,101 @@ struct _BSONEncoder: Encoder {
     
     func singleValueContainer() -> SingleValueEncodingContainer {
         return BSONSingleValueContainer(wrapper: wrapper)
+    }
+}
+
+fileprivate struct BSONKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProtocol {
+    typealias Key = K
+    var codingPath: [CodingKey] = []
+    
+    let encoder: _BSONEncoder
+    
+    var wrapper: PrimitiveWrapper {
+        return encoder.wrapper
+    }
+    
+    init(encoder: _BSONEncoder) {
+        self.encoder = encoder
+    }
+    
+    mutating func encodeNil(forKey key: K) throws {
+        wrapper.doc[key.stringValue] = Null()
+    }
+    
+    mutating func encode(_ value: Bool, forKey key: K) throws {
+        wrapper.doc[key.stringValue] = value
+    }
+    
+    mutating func encode(_ value: Int, forKey key: K) throws {
+        wrapper.doc[key.stringValue] = value
+    }
+    
+    mutating func encode(_ value: Int8, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: Int16, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: Int32, forKey key: K) throws {
+        wrapper.doc[key.stringValue] = value
+    }
+    
+    mutating func encode(_ value: Int64, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: UInt, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: UInt8, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: UInt16, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: UInt32, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: UInt64, forKey key: K) throws {
+        wrapper.append(value, for: key.stringValue)
+    }
+    
+    mutating func encode(_ value: Float, forKey key: K) throws {
+        wrapper.doc[key.stringValue] = Double(value)
+    }
+    
+    mutating func encode(_ value: Double, forKey key: K) throws {
+        wrapper.doc[key.stringValue] = value
+    }
+    
+    mutating func encode(_ value: String, forKey key: K) throws {
+        wrapper.doc[key.stringValue] = value
+    }
+    
+    mutating func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
+        wrapper.doc[key.stringValue] = try BSONEncoder().encodePrimitive(value)
+    }
+    
+    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+        return KeyedEncodingContainer(BSONKeyedEncodingContainer<NestedKey>(encoder: self.wrapper.keyedSubEncoder(for: key.stringValue)))
+    }
+    
+    mutating func nestedUnkeyedContainer(forKey key: K) -> UnkeyedEncodingContainer {
+        return BSONUnkeyedEncodingContainer(encoder: self.wrapper.keyedSubEncoder(for: key.stringValue))
+    }
+    
+    mutating func superEncoder() -> Encoder {
+        return encoder
+    }
+    
+    mutating func superEncoder(forKey key: K) -> Encoder {
+        return encoder
     }
 }
 
@@ -86,14 +253,11 @@ fileprivate struct BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
     
     mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
-        <#code#>
+        return KeyedEncodingContainer(BSONKeyedEncodingContainer<NestedKey>(encoder: self.wrapper.subEncoder))
     }
     
     mutating func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
-        var encoder = _BSONEncoder()
-        encoder.wrapper = self.wrapper
-        
-        return BSONUnkeyedEncodingContainer(encoder: encoder)
+        return BSONUnkeyedEncodingContainer(encoder: self.wrapper.subEncoder)
     }
     
     mutating func superEncoder() -> Encoder {
@@ -187,11 +351,11 @@ fileprivate struct BSONSingleValueContainer: SingleValueEncodingContainer {
     }
     
     mutating func encode(_ value: Int8) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: Int16) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: Int32) throws {
@@ -199,27 +363,27 @@ fileprivate struct BSONSingleValueContainer: SingleValueEncodingContainer {
     }
     
     mutating func encode(_ value: Int64) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: UInt) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: UInt8) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: UInt16) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: UInt32) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: UInt64) throws {
-        try wrapper.encode(value)
+        wrapper.encode(value)
     }
     
     mutating func encode(_ value: Float) throws {
