@@ -70,6 +70,7 @@ struct DecoderConfig {
         }
         
         guard let result = p.init(lossy: primitive) else {
+            print("\(p.self)")
             throw BSONDecoderError()
         }
         

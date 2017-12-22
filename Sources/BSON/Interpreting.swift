@@ -133,11 +133,11 @@ extension String: LossyPrimitive {
 
 extension Bool: LossyPrimitive {
     public init?(lossy value: Primitive?) {
-        guard let bool = value as? Bool else {
-            return nil
+        if let bool = value as? Bool {
+            self = bool
+        } else {
+            self = Int(lossy: value) == 1
         }
-        
-        self = bool
     }
 }
 

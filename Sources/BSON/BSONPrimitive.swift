@@ -328,7 +328,42 @@ extension Document: Primitive {
     }
     
     public func encode(to encoder: Encoder) throws {
-        try self.dictionaryRepresentation.encode(to: encoder)
+        struct BSONValue: Encodable {
+            var primitive: Primitive
+            
+            init(_ primitive: Primitive) {
+                self.primitive = primitive
+            }
+            
+            func encode(to encoder: Encoder) throws {
+                try primitive.encode(to: encoder)
+            }
+        }
+        
+        struct BSONKey: CodingKey {
+            var stringValue: String
+            
+            init(_ string: String) {
+                self.stringValue = string
+            }
+            
+            init?(stringValue: String) {
+                self.stringValue = stringValue
+            }
+            
+            var intValue: Int?
+            
+            init?(intValue: Int) {
+                self.intValue = intValue
+                self.stringValue = intValue.description
+            }
+        }
+        
+        var container = encoder.container(keyedBy: BSONKey.self)
+        
+        for (key, value) in self {
+            try container.encode(BSONValue(value), forKey: BSONKey(key))
+        }
     }
     
     public init(from decoder: Decoder) throws {

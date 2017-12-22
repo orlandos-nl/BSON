@@ -85,13 +85,13 @@ public struct ObjectId {
     ///
     /// Throws errors in case of an invalid string (e.g. wrong length)
     public init(_ hexString: String) throws {
-        guard hexString.characters.count == 24 else {
+        guard hexString.utf8.count == 24 else {
             throw DeserializationError.InvalidObjectIdLength
         }
         
         var data = Data()
         
-        var gen = hexString.characters.makeIterator()
+        var gen = hexString.makeIterator()
         while let c1 = gen.next(), let c2 = gen.next() {
             let s = String([c1, c2])
             

@@ -13,6 +13,10 @@ public final class BSONEncoder {
     }
     
     public func encodePrimitive(_ e: Encodable) throws -> Primitive {
+        if let e = e as? Primitive {
+            return e
+        }
+        
         let encoder = _BSONEncoder()
         
         try e.encode(to: encoder)
