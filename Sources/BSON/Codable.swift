@@ -193,6 +193,12 @@ public class BSONEncoder {
         return encoder.target.document
     }
     
+    public func encode(primitive value: Encodable) throws -> Primitive {
+        let encoder = _BSONEncoder()
+        try value.encode(to: encoder)
+        
+        return encoder.target.primitive ?? Null()
+    }
 }
 
 fileprivate class _BSONEncoder : Encoder, _BSONCodingPathContaining {
