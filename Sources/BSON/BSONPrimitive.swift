@@ -27,6 +27,23 @@ public protocol Primitive: Codable {
     var typeIdentifier: UInt8 { get }
     
     func makeBinary() -> Data
+    
+    init?(_ primitive: Primitive?)
+}
+
+extension Primitive {
+    public init?(_ primitive: Primitive?) {
+        if let me = primitive as? Self {
+            self = me
+        } else {
+            return nil
+        }
+    }
+}
+
+/// Do not extend. BSON internals
+public protocol LossyPrimitive: Primitive {
+    init?(lossy: Primitive?)
 }
 
 func regexOptions(fromString s: String) -> NSRegularExpression.Options {
@@ -149,6 +166,15 @@ public struct Binary: Primitive {
     
     public var typeIdentifier: UInt8 {
         return 0x05
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let data = try Data(from: decoder)
+        self.init(data: data, withSubtype: .generic)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        try self.data.encode(to: encoder)
     }
     
     public func makeBinary() -> Data {
@@ -301,6 +327,20 @@ extension Document: Primitive {
         self = doc
     }
     
+    public func encode(to encoder: Encoder) throws {
+        try self.dictionaryRepresentation.encode(to: encoder)
+    }
+    
+    public init(from decoder: Decoder) throws {
+        var doc = Document()
+        
+        for (key, value) in try [String: Primitive](from: decoder) {
+            doc[key] = value
+        }
+        
+        self = doc
+    }
+    
     public typealias ObjectKey = String
     public typealias ObjectValue = Primitive
     public typealias SupportedValue = (String, Primitive)
@@ -322,6 +362,15 @@ extension ObjectId : Primitive {
     
     public func makeBinary() -> Data {
         return self._storage
+    }
+    
+    public init(from decoder: Decoder) throws {
+        try self.init(decoder.singleValueContainer().decode(String.self))
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.hexString)
     }
 }
 

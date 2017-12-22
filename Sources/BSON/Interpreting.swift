@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Document {
+extension Document: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         if let value = value as? Document {
             self = value
@@ -29,7 +29,7 @@ extension Document {
     }
 }
 
-extension Timestamp {
+extension Timestamp: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         guard let value = value as? Timestamp else {
             return nil
@@ -39,7 +39,7 @@ extension Timestamp {
     }
 }
 
-extension JavascriptCode {
+extension JavascriptCode: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         guard let value = value as? JavascriptCode else {
             return nil
@@ -49,7 +49,7 @@ extension JavascriptCode {
     }
 }
 
-extension Int {
+extension Int: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         switch value {
         case let val as Int32:
@@ -70,7 +70,7 @@ extension Int {
     }
 }
 
-extension Int32 {
+extension Int32: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         switch value {
         case let val as Int32:
@@ -91,7 +91,7 @@ extension Int32 {
     }
 }
 
-extension Double {
+extension Double: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         switch value {
         case let val as Double:
@@ -112,7 +112,7 @@ extension Double {
     }
 }
 
-extension String {
+extension String: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         switch value {
         case let val as String:
@@ -131,7 +131,7 @@ extension String {
     }
 }
 
-extension Bool {
+extension Bool: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         guard let bool = value as? Bool else {
             return nil
@@ -141,7 +141,7 @@ extension Bool {
     }
 }
 
-extension Binary {
+extension Binary: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         guard let binary = value as? Binary else {
             return nil
@@ -151,7 +151,7 @@ extension Binary {
     }
 }
 
-extension Data {
+extension Data: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         guard let data = (value as? Binary)?.data else {
             return nil
@@ -161,7 +161,7 @@ extension Data {
     }
 }
 
-extension RegularExpression {
+extension RegularExpression: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         guard let regex = value as? RegularExpression else {
             return nil
@@ -171,7 +171,7 @@ extension RegularExpression {
     }
 }
 
-extension ObjectId {
+extension ObjectId: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         if let objectId = value as? ObjectId  {
             self = objectId
@@ -191,7 +191,7 @@ extension ObjectId {
     }
 }
 
-extension Date {
+extension Date: LossyPrimitive {
     public init?(lossy value: Primitive?) {
         guard let date = value as? Date else {
             return nil

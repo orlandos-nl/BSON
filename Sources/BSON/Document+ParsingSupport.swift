@@ -604,7 +604,8 @@ extension Document {
                 return nil
             }
             
-            return Decimal128(slice: storage[position..<position + 16])
+            return nil
+//            return Decimal128(slice: storage[position..<position + 16])
         case .minKey: // MinKey
             return MinKey()
         case .maxKey: // MaxKey
