@@ -54,18 +54,26 @@ extension Document {
 }
 
 struct DecoderConfig {
-    var lossy: Bool = false
+    var lossy: Bool = true
     
     func extract<P: Primitive>(_ p: P.Type = P.self, for primitive: Primitive?) throws -> P {
         guard let primitive = primitive else {
             throw BSONDecoderError()
         }
         
-        guard let p = P(primitive) else {
+        if let p = P(primitive) {
+            return p
+        }
+        
+        guard lossy, let p = p as? LossyPrimitive.Type else {
             throw BSONDecoderError()
         }
         
-        return p
+        guard let result = p.init(lossy: primitive) else {
+            throw BSONDecoderError()
+        }
+        
+        return result as! P
     }
     
     func lossyExtract<P: Primitive>(_ p: P.Type = P.self, for primitive: Primitive?) throws -> P {
@@ -154,7 +162,7 @@ fileprivate struct BSONUnkeyedDecodingContainer: UnkeyedDecodingContainer {
     var decoder: _BSONDecoder
     
     init(decoder: _BSONDecoder) throws {
-        guard let doc = decoder.primitive as? Document else {
+        guard let doc = decoder.input as? Document else {
             throw BSONDecoderError()
         }
         
@@ -255,11 +263,7 @@ fileprivate struct BSONPrimitiveDecodingContainer: SingleValueDecodingContainer 
     }
     
     func decodeNil() -> Bool {
-        guard let primitive = decoder.primitive else {
-            return true
-        }
-        
-        return primitive is Null
+        return decoder.input is Null
     }
     
     func decode(_ type: Bool.Type) throws -> Bool {
@@ -336,7 +340,7 @@ fileprivate struct BSONKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContai
     }
     
     init(decoder: _BSONDecoder) throws {
-        guard let doc = decoder.primitive as? Document else {
+        guard let doc = decoder.input as? Document else {
             throw BSONDecoderError()
         }
         

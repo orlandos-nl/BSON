@@ -1,7 +1,7 @@
 public final class BSONEncoder {
     public init() {}
     
-    public func encode<E: Encodable>(_ e: E) throws -> Document {
+    public func encode(_ e: Encodable) throws -> Document {
         let encoder = _BSONEncoder()
         try e.encode(to: encoder)
         
@@ -12,7 +12,7 @@ public final class BSONEncoder {
         return doc
     }
     
-    public func encodePrimitive<E: Encodable>(_ e: E) throws -> Primitive {
+    public func encodePrimitive(_ e: Encodable) throws -> Primitive {
         let encoder = _BSONEncoder()
         
         try e.encode(to: encoder)
