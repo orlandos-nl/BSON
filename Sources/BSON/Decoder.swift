@@ -20,16 +20,6 @@ struct BSONEncoderError: Error {}
 struct BSONDecoderError: Error {}
 
 extension Document: Primitive {
-    public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == SupportedValue {
-        var doc = Document()
-        
-        for (key, value) in sequence {
-            doc[key] = value
-        }
-        
-        self = doc
-    }
-    
     public func encode(to encoder: Encoder) throws {
         struct BSONValue: Encodable {
             var primitive: Primitive
