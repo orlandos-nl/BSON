@@ -1,13 +1,90 @@
+import Foundation
+
 public final class BSONDecoder {
     public init() {}
     
     public func decode<D: Decodable>(_ d: D.Type, from value: Primitive) throws -> D {
+        if D.self is Document.Type {
+            guard value is Document else {
+                throw BSONDecoderError()
+            }
+            
+            return value as! D
+        }
+        
         return try D(from: _BSONDecoder(input: value))
     }
 }
 
 struct BSONEncoderError: Error {}
 struct BSONDecoderError: Error {}
+
+extension Document: Primitive {
+    public init<S>(sequence: S) where S : Sequence, S.Iterator.Element == SupportedValue {
+        var doc = Document()
+        
+        for (key, value) in sequence {
+            doc[key] = value
+        }
+        
+        self = doc
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        struct BSONValue: Encodable {
+            var primitive: Primitive
+            
+            init(_ primitive: Primitive) {
+                self.primitive = primitive
+            }
+            
+            func encode(to encoder: Encoder) throws {
+                try primitive.encode(to: encoder)
+            }
+        }
+        
+        struct BSONKey: CodingKey {
+            var stringValue: String
+            
+            init(_ string: String) {
+                self.stringValue = string
+            }
+            
+            init?(stringValue: String) {
+                self.stringValue = stringValue
+            }
+            
+            var intValue: Int?
+            
+            init?(intValue: Int) {
+                self.intValue = intValue
+                self.stringValue = intValue.description
+            }
+        }
+        
+        var container = encoder.container(keyedBy: BSONKey.self)
+        
+        for (key, value) in self {
+            try container.encode(BSONValue(value), forKey: BSONKey(key))
+        }
+    }
+    
+    public init(from decoder: Decoder) throws {
+        guard let decoder = decoder as? _BSONDecoder, let doc = decoder.input as? Document else {
+            throw BSONDecoderError()
+        }
+        
+        self = doc
+    }
+    
+    public var typeIdentifier: UInt8 {
+        return self.isArray ?? validatesAsArray() ? 0x04 : 0x03
+    }
+    
+    public func makeBinary() -> Data {
+        return self.bytes
+    }
+}
 
 fileprivate struct _BSONDecoder: Decoder {
     var codingPath: [CodingKey] = []
@@ -49,7 +126,8 @@ extension Document {
     }
     
     func nextNull(index: inout Int) throws -> Bool {
-        return try next(index: &index) is Null
+        let value = try? next(index: &index)
+        return value == nil || value is Null
     }
 }
 
@@ -70,7 +148,6 @@ struct DecoderConfig {
         }
         
         guard let result = p.init(lossy: primitive) else {
-            print("\(p.self)")
             throw BSONDecoderError()
         }
         
@@ -124,11 +201,11 @@ struct DecoderConfig {
     }
     
     func lossyExtract<I: BinaryInteger>(_ p: I.Type = I.self, index: inout Int, for doc: Document) throws -> I {
-//        if let int = Int(doc["doc"]) {
-//            if I.isSigned, int >= 0 {
-//                I
-//            }
-//        }
+        //        if let int = Int(doc["doc"]) {
+        //            if I.isSigned, int >= 0 {
+        //                I
+        //            }
+        //        }
         fatalError()
     }
     
@@ -354,7 +431,7 @@ fileprivate struct BSONKeyedDecodingContainer<K: CodingKey>: KeyedDecodingContai
     }
     
     func decodeNil(forKey key: K) throws -> Bool {
-        return try config.extract(for: doc[key.stringValue])
+        return doc[key.stringValue] == nil || doc[key.stringValue] is Null
     }
     
     func decode(_ type: Bool.Type, forKey key: K) throws -> Bool {
