@@ -1,5 +1,6 @@
 final class Storage {
     enum _Storage {
+        case subStorage(Storage, range: Range<Int>)
         case readOnly(UnsafeBufferPointer<UInt8>)
         case readWrite(UnsafeMutableBufferPointer<UInt8>)
     }
@@ -12,6 +13,8 @@ final class Storage {
     
     var count: Int {
         switch storage {
+        case .subStorage(_, let range):
+            return range.count
         case .readOnly(let buffer):
             return buffer.count
         case .readWrite(let buffer):
@@ -21,6 +24,12 @@ final class Storage {
     
     var readBuffer: UnsafeBufferPointer<UInt8> {
         switch storage {
+        case .subStorage(let storage, let range):
+            let buffer = storage.readBuffer
+            
+            let pointer = buffer.baseAddress!.advanced(by: range.lowerBound)
+            
+            return UnsafeBufferPointer(start: pointer, count: range.count)
         case .readOnly(let buffer):
             return buffer
         case .readWrite(let buffer):
@@ -33,6 +42,19 @@ final class Storage {
             return buffer
         }
         
+        if
+            case .subStorage(let storage, let range) = storage,
+            let buffer = storage.writeBuffer
+        {
+            let pointer = buffer.baseAddress!.advanced(by: range.lowerBound)
+            
+            return UnsafeMutableBufferPointer(start: pointer, count: range.count)
+        }
+        
         return nil
+    }
+    
+    subscript(range: Range<Int>) -> Storage {
+        return Storage(storage: .subStorage(self, range: range))
     }
 }
