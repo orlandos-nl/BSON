@@ -7,8 +7,8 @@ internal extension UInt8 {
     static let objectId: UInt8 = 0x07
     static let boolean: UInt8 = 0x08
     static let datetime: UInt8 = 0x09
-    static let regex: UInt8 = 0x0a
-    static let dbPointer: UInt8 = 0x0b
+    static let null: UInt8 = 0x0a
+    static let regex: UInt8 = 0x0b
 //    static let dbPointer = 0x0c
     static let javascript: UInt8 = 0x0d
 //    static let double = 0x0e
