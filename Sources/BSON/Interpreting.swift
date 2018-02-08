@@ -15,13 +15,13 @@ extension Document: LossyPrimitive {
             return
         }
         
-        if let dict = value as? [String: Primitive] {
-            self = Document(data: dict.makeBinary())
+        if value is [String: Primitive] {
+            self = Document(data: value!.makeBinary())
             return
         }
         
-        if let array = value as? [Primitive] {
-            self = Document(data: array.makeBinary())
+        if value is [Primitive] {
+            self = Document(data: value!.makeBinary())
             return
         }
         

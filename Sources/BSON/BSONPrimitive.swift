@@ -22,14 +22,16 @@ func escape(_ string: String) -> String {
     return string
 }
 
-/// Do not extend. BSON internals
-public protocol Primitive: Codable {
+public protocol AnyPrimitive {
     var typeIdentifier: UInt8 { get }
     
     func makeBinary() -> Data
     
-    init?(_ primitive: Primitive?)
+    init?(_ primitive: AnyPrimitive?)
 }
+
+/// Do not extend. BSON internals
+public protocol Primitive: AnyPrimitive, Encodable {}
 
 extension Primitive {
     public init?(_ primitive: Primitive?) {
