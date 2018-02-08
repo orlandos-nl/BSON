@@ -1,3 +1,5 @@
+import Foundation
+
 final class Storage {
     enum _Storage {
         case subStorage(Storage, range: Range<Int>)
@@ -9,6 +11,35 @@ final class Storage {
     
     init(storage: _Storage) {
         self.storage = storage
+    }
+    
+    init(size: Int) {
+        let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
+        let buffer = UnsafeMutableBufferPointer(start: pointer, count: size)
+        
+        self.storage = .readWrite(buffer)
+    }
+    
+    convenience init(data: Data) {
+        let size = data.count
+        self.init(size: size)
+        
+        data.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
+            _ = memcpy(self.writeBuffer!.baseAddress!, pointer, size)
+        }
+    }
+    
+    convenience init(bytes: [UInt8]) {
+        let size = bytes.count
+        self.init(size: size)
+        
+        bytes.withUnsafeBytes { buffer in
+            _ = memcpy(self.writeBuffer!.baseAddress!, buffer.baseAddress!, size)
+        }
+    }
+    
+    init(buffer: UnsafeBufferPointer<UInt8>) {
+        self.storage = .readOnly(buffer)
     }
     
     var count: Int {

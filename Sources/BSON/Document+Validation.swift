@@ -1,9 +1,9 @@
 extension Document {
     public var isValid: Bool {
-        return validate(recursively: true)
+        return validate()
     }
     
-    public func validate(recursively: Bool) -> Bool {
+    public func validate(recursively: Bool = true) -> Bool {
         let count = self.storage.count
         var offset = 0
         
@@ -32,10 +32,14 @@ extension Document {
                     break cStringLoop
                 }
             }
+            
+            return cStringLength
         }
         
         func document() -> Bool {
-            guard has(4) else { return false }
+            guard has(4) else {
+                return false
+            }
             
             if recursively {
                 let length = numericCast(pointer.int32) as Int
@@ -81,14 +85,22 @@ extension Document {
             
             // Value
             switch type {
+            case 0x00:
+                return offset == count
             case .double:
                 advance(8)
             case .string:
-                guard string() else { return false }
+                guard string() else {
+                    return false
+                }
             case .document, .array:
-                guard document() else { return false }
+                guard document() else {
+                    return false
+                }
             case .binary:
-                guard has(4) else { return false }
+                guard has(4) else {
+                    return false
+                }
                 
                 // int32 + subtype + bytes
                 advance(numericCast(5 &+ pointer.int32))
@@ -106,10 +118,16 @@ extension Document {
                 advance(cString())
                 advance(cString())
             case .javascript:
-                guard string() else { return false }
+                guard string() else {
+                    return false
+                }
             case .javascriptWithScope:
-                guard string() else { return false }
-                guard document() else { return false }
+                guard string() else {
+                    return false
+                }
+                guard document() else {
+                    return false
+                }
             case .int32:
                 advance(4)
             case .decimal128:
