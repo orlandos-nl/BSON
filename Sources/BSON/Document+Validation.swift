@@ -93,6 +93,10 @@ extension Document {
             case .objectId:
                 advance(12)
             case .boolean:
+                guard pointer.pointee == 0x00 || pointer.pointee == 0x01 else {
+                    return false
+                }
+                
                 advance(1)
             case .datetime, .timestamp, .int64:
                 advance(8)
