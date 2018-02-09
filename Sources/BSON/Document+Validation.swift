@@ -47,8 +47,15 @@ extension Document {
                 return false
             }
             
+            let stringLength = pointer.int32
+            
+            // Minimum a null terminator
+            guard stringLength >= 1, pointer[numericCast(stringLength &- 1 &+ 4)] == 0x00 else {
+                return false
+            }
+            
             // int32 contains the entire length, including null terminator
-            advance(numericCast(4 &+ pointer.int32))
+            advance(numericCast(4 &+ stringLength))
             
             return true
         }
@@ -66,13 +73,15 @@ extension Document {
             let type = pointer.pointee
             advance(1)
             
+            if type == 0x00 {
+                return offset == count
+            }
+            
             // Key
             advance(storage.cString(at: offset))
             
             // Value
             switch type {
-            case 0x00:
-                return offset == count
             case .double:
                 advance(8)
             case .string:
@@ -133,6 +142,6 @@ extension Document {
             }
         }
         
-        return true
+        return offset == count
     }
 }
