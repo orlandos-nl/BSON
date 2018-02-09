@@ -1,8 +1,53 @@
 import Foundation
 
+#if os(Linux)
+import Glibc
+#endif
+
+public final class ObjectIdGenerator {
+    public init() {}
+    
+    #if os(Linux)
+        private var random: Int32 = {
+            srand(UInt32(time(nil)))
+            return rand()
+        }()
+    
+        private var counter: Int32 = {
+            srand(UInt32(time(nil)))
+            return rand()
+        }()
+    #else
+        private var random = arc4random_uniform(UInt32.max)
+        private var counter = arc4random_uniform(UInt32.max)
+    #endif
+    
+    public func generate() -> ObjectId {
+        var bytes = [UInt8](repeating: 0, count: 12)
+        
+        var epoch = Int32(time(nil)).bigEndian
+        
+        bytes.withUnsafeMutableBufferPointer { buffer in
+            let pointer = buffer.baseAddress!
+            
+            memcpy(pointer, &epoch, 4)
+            memcpy(pointer.advanced(by: 4), &self.random, 4)
+            
+            // And add a counter as 2 bytes and increment it
+            memcpy(pointer.advanced(by: 8), &self.counter, 4)
+            self.counter = self.counter &+ 1
+        }
+        
+        return ObjectId(Storage(bytes: bytes))
+    }
+}
+
 private struct InvalidObjectIdString: Error {
     var hex: String
 }
+
+private let generator = ObjectIdGenerator()
+private let lock = NSRecursiveLock()
 
 public struct ObjectId {
     let storage: Storage
@@ -11,6 +56,12 @@ public struct ObjectId {
         assert(storage.count == 12)
         
         self.storage = storage
+    }
+    
+    init() {
+        lock.lock()
+        self = generator.generate()
+        lock.unlock()
     }
     
     public init(_ hex: String) throws {
@@ -50,6 +101,19 @@ public struct ObjectId {
         }
         
         return String(data: data, encoding: .utf8)!
+    }
+    
+    public var epochSeconds: Int32 {
+        let basePointer = storage.readBuffer.baseAddress!
+        
+        return basePointer.withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+            return pointer.pointee.bigEndian
+        }
+    }
+    
+    
+    public var epoch: Date {
+        return Date(timeIntervalSince1970: Double(epochSeconds))
     }
 }
 
