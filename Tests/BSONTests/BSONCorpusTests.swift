@@ -18,17 +18,17 @@ final class BSONCorpusTests: XCTestCase {
         XCTAssert(doc1.validate())
         XCTAssert(doc2.validate())
         
-//        XCTAssertEqual(doc0.keys, ["$key"])
-//        XCTAssertEqual(doc0["$key"] as? Int32, 42)
-//
-//        XCTAssertEqual(doc1.keys, ["$regex", "$options", "$banana"])
-//        XCTAssertEqual(doc1["$regex"] as? String, "not-a-regex")
-//        XCTAssertEqual(doc1["$options"] as? String, "i")
-//        XCTAssertEqual(doc1["$banana"] as? String, "peel")
-//
-//
-//        XCTAssertEqual(doc2.keys, ["$binary"])
-//        XCTAssertEqual(doc2["$binary"] as? String, "abcdefg")
+        XCTAssertEqual(doc0.keys, ["$key"])
+        XCTAssertEqual(doc0["$key"] as? Int32, 42)
+
+        XCTAssertEqual(doc1.keys, ["$regex", "$options", "$banana"])
+        XCTAssertEqual(doc1["$regex"] as? String, "not-a-regex")
+        XCTAssertEqual(doc1["$options"] as? String, "i")
+        XCTAssertEqual(doc1["$banana"] as? String, "peel")
+
+
+        XCTAssertEqual(doc2.keys, ["$binary"])
+        XCTAssertEqual(doc2["$binary"] as? String, "abcdefg")
         
         XCTAssertFalse(Document(bytes: [0x01,0x00,0x00,0x00,0x00]).validate())
         XCTAssertFalse(Document(bytes: [0x04,0x00,0x00,0x00,0x00]).validate())

@@ -20,22 +20,6 @@ extension Document {
             return offset &+ n < count
         }
         
-        @discardableResult
-        func cString() -> Int {
-            var cStringLength = 0
-            
-            cStringLoop: while offset < count {
-                defer { cStringLength = cStringLength &+ 1 }
-                
-                if pointer[cStringLength] == 0x00 {
-                    // End of cString
-                    break cStringLoop
-                }
-            }
-            
-            return cStringLength
-        }
-        
         func document() -> Bool {
             guard has(4) else {
                 return false
@@ -59,7 +43,9 @@ extension Document {
         }
         
         func string() -> Bool {
-            guard has(4) else { return false }
+            guard has(4) else {
+                return false
+            }
             
             // int32 contains the entire length, including null terminator
             advance(numericCast(4 &+ pointer.int32))
@@ -81,7 +67,7 @@ extension Document {
             advance(1)
             
             // Key
-            advance(cString())
+            advance(storage.cString(at: offset))
             
             // Value
             switch type {
@@ -115,8 +101,8 @@ extension Document {
                 // Still need to check the key's size
                 break
             case .regex:
-                advance(cString())
-                advance(cString())
+                advance(storage.cString(at: offset))
+                advance(storage.cString(at: offset))
             case .javascript:
                 guard string() else {
                     return false
