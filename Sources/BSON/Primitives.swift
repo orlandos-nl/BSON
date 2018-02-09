@@ -10,7 +10,7 @@ public struct Document: Primitive {
         _ = self.scanValue(forKey: nil, startingAt: lastScannedPosition)
         let pointer = self.storage.readBuffer.baseAddress!
         
-        return self.cache.storage.values.map { dimension in
+        return self.cache.storage.map { (_, dimension) in
             // + 1 for the type identifier
             let pointer = pointer.advanced(by: dimension.from &+ 1)
             return String(cString: pointer)

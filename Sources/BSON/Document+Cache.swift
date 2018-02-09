@@ -12,7 +12,7 @@ final class DocumentCache {
         }
     }
     
-    var storage = [String: Dimensions]()
+    var storage = [(String, Dimensions)]()
     
     init() {}
 }
@@ -21,7 +21,7 @@ extension Document {
     var lastScannedPosition: Int {
         var lastDimensions: Int?
         
-        for dimensions in self.cache.storage.values {
+        for (_, dimensions) in self.cache.storage {
             if let existingDimensions = lastDimensions, existingDimensions < dimensions.end {
                 lastDimensions = dimensions.end
             } else if lastDimensions == nil {
@@ -32,8 +32,16 @@ extension Document {
         return lastDimensions ?? 4
     }
     
+    func dimension(forKey key: String) -> DocumentCache.Dimensions? {
+        for (dimensionKey, dimension) in cache.storage where dimensionKey == key {
+            return dimension
+        }
+        
+        return nil
+    }
+    
     func getCached(byKey key: String) -> Primitive? {
-        if let dimensions = self.cache.storage[key] {
+        if let dimensions = dimension(forKey: key) {
             return readPrimitive(
                 type: dimensions.type,
                 offset: dimensions.from &+ 1 &+ dimensions.keyCString,
@@ -132,17 +140,19 @@ extension Document {
                 return nil
             }
             
-            let dimensions = DocumentCache.Dimensions(
+            position = position &+ valueLength
+            
+            let dimension = DocumentCache.Dimensions(
                 type: type,
                 from: basePosition,
                 keyCString: keyLength,
                 valueLength: valueLength
             )
             
-            self.cache.storage[readKey] = dimensions
+            self.cache.storage.append((readKey, dimension))
             
             if readKey == key {
-                return dimensions
+                return dimension
             }
         }
         
@@ -167,7 +177,10 @@ extension Document {
             
             let stringData = Data(buffer: stringBuffer)
             
-            return String(data: stringData, encoding: .utf8)
+            return String(
+                data: stringData[..<stringData.endIndex.advanced(by: -1)],
+                encoding: .utf8
+            )
         case .document, .array:
             return Document(storage: storage[offset..<offset &+ 12])
         case .binary:
