@@ -1,26 +1,72 @@
 import Foundation
 
-final class Storage {
+struct Storage {
     enum _Storage {
         case subStorage(Storage, range: Range<Int>)
         case readOnly(UnsafeBufferPointer<UInt8>)
         case readWrite(UnsafeMutableBufferPointer<UInt8>)
+        
+        var count: Int {
+            switch self {
+            case .subStorage(_, let range):
+                return range.count
+            case .readOnly(let buffer):
+                return buffer.count
+            case .readWrite(let buffer):
+                return buffer.count
+            }
+        }
     }
     
-    private let storage: _Storage
+    final class AutoDeallocatingStorage {
+        var storage: _Storage
+        
+        init(storage: _Storage) {
+            self.storage = storage
+        }
+        
+        deinit {
+            if case .readWrite(let buffer) = self.storage {
+                buffer.baseAddress?.deallocate()
+            }
+        }
+    }
+        
+    private var storage: AutoDeallocatingStorage
+    let count: Int
     
     init(storage: _Storage) {
-        self.storage = storage
+        self.storage = .init(storage: storage)
+        self.count = storage.count
+    }
+    
+    func expand(minimum: Int) -> Storage {
+        // Double size
+        let storage = Storage(size: self.count &+ min(minimum, 4_096))
+        memcpy(storage.writeBuffer?.baseAddress!, self.readBuffer.baseAddress!, self.count)
+        
+        return storage
+    }
+    
+    mutating func insert(at position: Int, from pointer: UnsafePointer<UInt8>, length: Int) {
+        if self.count &+ length < storage.storage.count {
+            self.storage = expand(minimum: length).storage
+        }
+        
+        let writePointer = self.writeBuffer!.baseAddress!
+        
+        memmove(writePointer + (position + length), writePointer + position, length)
     }
     
     init(size: Int) {
         let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
         let buffer = UnsafeMutableBufferPointer(start: pointer, count: size)
         
-        self.storage = .readWrite(buffer)
+        self.storage = .init(storage: .readWrite(buffer))
+        self.count = self.storage.storage.count
     }
     
-    convenience init(data: Data) {
+    init(data: Data) {
         let size = data.count
         self.init(size: size)
         
@@ -29,7 +75,7 @@ final class Storage {
         }
     }
     
-    convenience init(bytes: [UInt8]) {
+    init(bytes: [UInt8]) {
         let size = bytes.count
         self.init(size: size)
         
@@ -39,22 +85,12 @@ final class Storage {
     }
     
     init(buffer: UnsafeBufferPointer<UInt8>) {
-        self.storage = .readOnly(buffer)
-    }
-    
-    var count: Int {
-        switch storage {
-        case .subStorage(_, let range):
-            return range.count
-        case .readOnly(let buffer):
-            return buffer.count
-        case .readWrite(let buffer):
-            return buffer.count
-        }
+        self.storage = .init(storage: .readOnly(buffer))
+        self.count = self.storage.storage.count
     }
     
     var readBuffer: UnsafeBufferPointer<UInt8> {
-        switch storage {
+        switch storage.storage {
         case .subStorage(let storage, let range):
             let buffer = storage.readBuffer
             
@@ -69,12 +105,12 @@ final class Storage {
     }
     
     var writeBuffer: UnsafeMutableBufferPointer<UInt8>? {
-        if case .readWrite(let buffer) = storage {
+        if case .readWrite(let buffer) = storage.storage {
             return buffer
         }
         
         if
-            case .subStorage(let storage, let range) = storage,
+            case .subStorage(let storage, let range) = storage.storage,
             let buffer = storage.writeBuffer
         {
             let pointer = buffer.baseAddress!.advanced(by: range.lowerBound)
@@ -87,11 +123,5 @@ final class Storage {
     
     subscript(range: Range<Int>) -> Storage {
         return Storage(storage: .subStorage(self, range: range))
-    }
-    
-    deinit {
-        if case .readWrite(let buffer) = self.storage {
-            buffer.baseAddress?.deallocate()
-        }
     }
 }
