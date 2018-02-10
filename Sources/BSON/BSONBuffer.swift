@@ -33,7 +33,7 @@ struct Storage {
     }
         
     private var storage: AutoDeallocatingStorage
-    let count: Int
+    var count: Int
     
     init(storage: _Storage) {
         self.storage = .init(storage: storage)
@@ -48,14 +48,66 @@ struct Storage {
         return storage
     }
     
+    func makeCopy() -> Storage {
+        // Double size
+        let storage = Storage(size: self.count)
+        memcpy(storage.writeBuffer?.baseAddress!, self.readBuffer.baseAddress!, self.count)
+        
+        return storage
+    }
+    
     mutating func insert(at position: Int, from pointer: UnsafePointer<UInt8>, length: Int) {
-        if self.count &+ length < storage.storage.count {
-            self.storage = expand(minimum: length).storage
-        }
+        ensureExtraCapacityForMutation(length)
         
         let writePointer = self.writeBuffer!.baseAddress!
+        let insertPointer = writePointer + position
         
-        memmove(writePointer + (position + length), writePointer + position, length)
+        memmove(writePointer + (position + length), insertPointer, length)
+        memcpy(insertPointer, pointer, length)
+        self.count = self.count &+ length
+    }
+    
+    mutating func replace(offset: Int, replacing: Int, with pointer: UnsafePointer<UInt8>, length: Int) {
+        let diff = replacing &- length
+        
+        ensureExtraCapacityForMutation(length)
+        
+        let writePointer = self.writeBuffer!.baseAddress!
+        let insertPointer = writePointer + offset
+        
+        if diff > 0 {
+            memmove(writePointer + replacing + diff, writePointer + replacing, self.count &- offset &- diff)
+        }
+        
+        memcpy(insertPointer, pointer, length)
+        self.count = self.count &+ diff
+    }
+    
+    private mutating func ensureExtraCapacityForMutation(_ n: Int) {
+        if self.count &+ n < storage.storage.count {
+            self.storage = expand(minimum: n).storage
+        } else if !isKnownUniquelyReferenced(&self.storage) {
+            self.storage = makeCopy().storage
+        }
+    }
+    
+    mutating func append(from pointer: UnsafePointer<UInt8>, length: Int) {
+        ensureExtraCapacityForMutation(length)
+        
+        memcpy(self.writeBuffer!.baseAddress! + self.count, pointer, length)
+        self.count = self.count &+ length
+    }
+    
+    mutating func remove(from offset: Int, length: Int) {
+        ensureExtraCapacityForMutation(-length)
+        
+        memmove(
+            self.writeBuffer!.baseAddress! + (offset - length),
+            self.writeBuffer!.baseAddress! + offset,
+            self.count &- offset
+        )
+        
+        self.count = self.count &- length
     }
     
     init(size: Int) {

@@ -8,7 +8,12 @@ final class DocumentCache {
         var valueLength: Int
         
         var end: Int {
-            return from &+ keyCString &+ valueLength
+            // Type Identifier, CString, value
+            return from &+ 1 &+ keyCString &+ valueLength
+        }
+        
+        var fullLength: Int {
+            return keyCString &+ valueLength
         }
     }
     
