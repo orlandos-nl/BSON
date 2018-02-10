@@ -11,7 +11,7 @@ internal extension UInt8 {
     static let regex: UInt8 = 0x0b
 //    static let dbPointer = 0x0c
     static let javascript: UInt8 = 0x0d
-//    static let double = 0x0e
+//    static let something = 0x0e
     static let javascriptWithScope: UInt8 = 0x0f
     static let int32: UInt8 = 0x10
     static let timestamp: UInt8 = 0x11

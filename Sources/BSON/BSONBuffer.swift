@@ -88,4 +88,10 @@ final class Storage {
     subscript(range: Range<Int>) -> Storage {
         return Storage(storage: .subStorage(self, range: range))
     }
+    
+    deinit {
+        if case .readWrite(let buffer) = self.storage {
+            buffer.baseAddress?.deallocate()
+        }
+    }
 }
