@@ -5,9 +5,15 @@ internal func fromBytes<T, S : Collection>(_ bytes: S) throws -> T where S.Itera
         throw DeserializationError.invalidElementSize
     }
     
-    return Data(bytes).withUnsafeBytes { (pointer: UnsafePointer<T>) in
-        return pointer.pointee
-    }
+    #if arch(s390x)
+        return Data(bytes.reversed()).withUnsafeBytes { (pointer: UnsafePointer<T>) in
+            return pointer.pointee
+        }
+    #else
+        return Data(bytes).withUnsafeBytes { (pointer: UnsafePointer<T>) in
+            return pointer.pointee
+        }
+    #endif
 }
 
 extension Int32 {

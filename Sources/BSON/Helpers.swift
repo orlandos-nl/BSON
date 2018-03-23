@@ -110,7 +110,11 @@ internal protocol BSONMakeBytesProtocol: BSONBytesProtocol {
 
 extension Int : BSONBytesProtocol {
     internal func makeBytes() -> Bytes {
-        let integer = self.littleEndian
+        #if arch(s390x)
+            let integer = self.bigEndian
+        #else
+            let integer = self.littleEndian
+        #endif
         
         return [
             Byte(integer & 0xFF),
@@ -127,8 +131,12 @@ extension Int : BSONBytesProtocol {
 
 extension Int32 : BSONBytesProtocol {
     internal func makeBytes() -> Bytes {
-        let integer = self.littleEndian
-        
+        #if arch(s390x)
+            let integer = self.bigEndian
+        #else
+            let integer = self.littleEndian
+        #endif
+
         return [
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
@@ -151,7 +159,11 @@ extension Int32 : BSONBytesProtocol {
 
 extension Int16 : BSONBytesProtocol {
     internal func makeBytes() -> Bytes {
-        let integer = self.littleEndian
+        #if arch(s390x)
+            let integer = self.bigEndian
+        #else
+            let integer = self.littleEndian
+        #endif
         
         return [
             Byte((integer >> 8) & 0xFF),
@@ -168,8 +180,12 @@ extension Int8 : BSONBytesProtocol {
 
 extension UInt : BSONBytesProtocol {
     internal func makeBytes() -> Bytes {
-        let integer = self.littleEndian
-        
+        #if arch(s390x)
+            let integer = self.bigEndian
+        #else
+            let integer = self.littleEndian
+        #endif
+
         return [
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
@@ -185,8 +201,12 @@ extension UInt : BSONBytesProtocol {
 
 extension UInt32 : BSONBytesProtocol {
     internal func makeBytes() -> Bytes {
-        let integer = self.littleEndian
-        
+        #if arch(s390x)
+            let integer = self.bigEndian
+        #else
+            let integer = self.littleEndian
+        #endif
+
         return [
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF),
@@ -198,8 +218,12 @@ extension UInt32 : BSONBytesProtocol {
 
 extension UInt16 : BSONBytesProtocol {
     internal func makeBytes() -> Bytes {
-        let integer = self.littleEndian
-        
+        #if arch(s390x)
+            let integer = self.bigEndian
+        #else
+            let integer = self.littleEndian
+        #endif
+
         return [
             Byte(integer & 0xFF),
             Byte((integer >> 8) & 0xFF)
@@ -216,10 +240,18 @@ extension Byte : BSONBytesProtocol {
 extension Double : BSONBytesProtocol {
     internal func makeBytes() -> Bytes {
         var integer = self
-        return withUnsafePointer(to: &integer) {
-            $0.withMemoryRebound(to: Byte.self, capacity: MemoryLayout<Double>.size) {
-                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Double>.size))
+        #if arch(s390x)
+            return withUnsafePointer(to: &integer) {
+                $0.withMemoryRebound(to: Byte.self, capacity: MemoryLayout<Double>.size) {
+                    Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Double>.size))
+                }
+            }.reversed()
+        #else
+            return withUnsafePointer(to: &integer) {
+                $0.withMemoryRebound(to: Byte.self, capacity: MemoryLayout<Double>.size) {
+                    Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Double>.size))
+                }
             }
-        }
+        #endif
     }
 }
