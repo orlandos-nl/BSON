@@ -65,7 +65,16 @@ final class BSONPublicTests: XCTestCase {
 //        "minKey": MinKey(),
 //        "maxKey": MaxKey()
 //    ]
-//
+
+    func testBasicUsage() {
+        var doc = Document()
+        
+        XCTAssertEqual(doc.keys.count, 0)
+        
+        doc["int32"] = 4 as Int32
+        XCTAssertEqual(doc.keys, ["int32"])
+    }
+    
 //    func testDocumentLockup() {
 //        var document = Document()
 //        document.removeValue(forKey: "_id")

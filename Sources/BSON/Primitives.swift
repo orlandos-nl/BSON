@@ -17,6 +17,10 @@ public struct Document: Primitive {
         }
     }
     
+    init() {
+        self.init(bytes: [5, 0, 0, 0, 0])
+    }
+    
     init(storage: Storage) {
         self.storage = storage
     }
