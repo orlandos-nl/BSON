@@ -79,8 +79,43 @@ public struct BSONDecoderSettings {
     
     public enum DoubleDecodingStrategy {
         case double
-        case stringAndDouble
+        case numerical
+        case textual
+        case numericAndTextual
+        
         case custom(DecodingStrategy<Double>)
+        
+        fileprivate func decode(from decoder: _BSONDecoder, path: [String]) throws -> Double {
+            let double: Double?
+            
+            switch self {
+            case .custom(let strategy):
+                double = try strategy(decoder.primitive)
+            default:
+                guard let identifier = decoder.identifier else {
+                    throw BSONValueNotFound(type: Double.self, path: path)
+                }
+                
+                switch (identifier, self) {
+                case (.string, .textual), (.string, .numericAndTextual):
+                    double = try Double(decoder.wrapped.decode(asType: String.self, path: path))
+                case (.double, _):
+                    double = try decoder.wrapped.decode(asType: Double.self, path: path)
+                case (.int32, .numerical), (.int32, .numericAndTextual):
+                    double = try Double(decoder.wrapped.decode(asType: Int32.self, path: path))
+                case (.int64, .numerical), (.int64, .numericAndTextual):
+                    double = try Double(decoder.wrapped.decode(asType: Int64.self, path: path))
+                default:
+                    throw BSONTypeConversionError(from: decoder.primitive, to: Double.self)
+                }
+            }
+            
+            if let double = double {
+                return double
+            }
+            
+            throw BSONValueNotFound(type: Double.self, path: path)
+        }
     }
     
     public var decodeNullAsNil: Bool = true
@@ -165,6 +200,14 @@ fileprivate struct _BSONDecoder: Decoder {
     var document: Document? {
         if case .document(let doc) = wrapped {
             return doc
+        }
+        
+        return nil
+    }
+    
+    var identifier: UInt8? {
+        if case .primitive(let identifer, _) = wrapped {
+            return identifer
         }
         
         return nil
@@ -293,7 +336,7 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
     }
     
     func decode(_ type: Double.Type, forKey key: K) throws -> Double {
-        return try self.document.assertPrimitive(typeOf: type, forKey: key.stringValue)
+        return try self.decoder.settings.doubleDecodingStrategy.decode(from: decoder, atKey: key)
     }
     
     func decode(_ type: Float.Type, forKey key: K) throws -> Float {
@@ -446,14 +489,14 @@ fileprivate struct SingleValueBSONContainer: SingleValueDecodingContainer {
     
     func decode(_ type: String.Type) throws -> String {
         if self.decoder.settings.lossyDecodeIntoString {
-            return try self.decoder.lossyDecodeString(atKey: nil, path: self.path)
+            return try self.decoder.lossyDecodeString(path: self.path)
         } else {
-            return try self.document.assertPrimitive(typeOf: type, forKey: key.stringValue)
+            return try self.decoder.wrapped.decode(asType: String.self, path: self.path)
         }
     }
     
     func decode(_ type: Double.Type) throws -> Double {
-        return try self.decoder.wrapped.decode(asType: Double.self, path: <#T##[String]#>)
+        return try self.decoder.settings.doubleDecodingStrategy.decode(from: decoder)
     }
     
     func decode(_ type: Float.Type) throws -> Float {
