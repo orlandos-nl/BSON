@@ -13,6 +13,11 @@ extension Document {
 }
 
 struct BSONValueNotFound: Error {
-    let type: Primitive.Type
+    let type: Any.Type
     let key: String
+}
+
+struct BSONTypeConversionError<A>: Error {
+    let from: A
+    let to: Any.Type
 }

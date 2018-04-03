@@ -44,3 +44,6 @@ extension Int64: Primitive {}
 extension Double: Primitive {}
 extension Bool: Primitive {}
 extension String: Primitive {}
+
+extension Optional: Primitive where Wrapped : Primitive {}
+extension Optional: Primitive where Wrapped == Primitive {}
