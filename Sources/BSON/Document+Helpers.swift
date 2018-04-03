@@ -3,7 +3,7 @@ extension Document {
         return self.dimension(forKey: key)?.type
     }
     
-    internal func assertPrimitive<P: Primitive>(_ type: P.Type, forKey key: String) throws -> P {
+    internal func assertPrimitive<P: Primitive>(typeOf type: P.Type, forKey key: String) throws -> P {
         if let value =  self.getCached(byKey: key) as? P {
             return value
         }
@@ -14,7 +14,7 @@ extension Document {
 
 struct BSONValueNotFound: Error {
     let type: Any.Type
-    let key: String
+    let path: [String]
 }
 
 struct BSONTypeConversionError<A>: Error {
