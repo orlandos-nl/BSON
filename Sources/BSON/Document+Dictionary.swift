@@ -1,4 +1,4 @@
-extension Document {
+extension Document: ExpressibleByDictionaryLiteral {
     public var keys: [String] {
         _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
         let pointer = self.storage.readBuffer.baseAddress!
@@ -26,6 +26,13 @@ extension Document {
                 
                 self.storage.remove(from: dimensions.from, length: dimensions.fullLength)
             }
+        }
+    }
+    
+    public init(dictionaryLiteral elements: (String, Primitive)...) {
+        self.init()
+        for (key, value) in elements {
+            self[key] = value
         }
     }
 }

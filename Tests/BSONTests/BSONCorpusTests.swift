@@ -2,12 +2,18 @@ import Foundation
 import XCTest
 @testable import BSON
 
-//extension Data: ExpressibleByArrayLiteral {
-//    public init(arrayLiteral elements: UInt8...) {
-//        self = Data(elements)
-//    }
-//}
-//
+struct HugeDocument: Codable {
+    var _id: ObjectId
+    var age: UInt8
+    var year: Int16
+    var epoch: Int32
+    var bigNum: Int64
+    var biggerNum: UInt64
+    var awesome: Bool
+    var pi: Float
+    var morePi: Double
+}
+
 final class BSONCorpusTests: XCTestCase {
     func testTopLevel() {
         let doc0 = Document(bytes: [0x0f,0x00,0x00,0x00,0x10,0x24,0x6b,0x65,0x79,0x00,0x2a,0x00,0x00,0x00,0x00])
@@ -295,6 +301,10 @@ final class BSONCorpusTests: XCTestCase {
         
         XCTAssertFalse(Document(bytes: [0x09,0x00,0x00,0x00,0x08,0x62,0x00,0x02,0x00]).validate())
         XCTAssertFalse(Document(bytes: [0x09,0x00,0x00,0x00,0x08,0x62,0x00,0xFF,0x00]).validate())
+    }
+    
+    func testDecoder() throws {
+        
     }
 
     func testDouble() {

@@ -70,6 +70,9 @@ extension Document {
             var bool: UInt8 = bool ? 0x01 : 0x00
             
             flush(from: &bool, length: 1)
+        case let objectId as ObjectId:
+            type = .objectId
+            flush(from: objectId.storage.readBuffer.baseAddress!, length: 12)
         default:
             fatalError()
         }

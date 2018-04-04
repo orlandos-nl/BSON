@@ -75,6 +75,27 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(doc.keys, ["int32"])
     }
     
+    func testDecoding() throws {
+        let id = ObjectId()
+        
+        let doc: Document = [
+            "_id": id,
+            "age": 244,
+            "year": 1774,
+            "epoch": 1522809334,
+            "bigNum": Int64.max,
+            "biggerNum": 1,
+            "awesome": true,
+            "pi": 3.14,
+            "morePi": 3.14
+        ]
+        
+        var decoder = BSONDecoder()
+        
+        let huge = try! decoder.decode(HugeDocument.self, from: doc)
+        print(huge)
+    }
+    
 //    func testDocumentLockup() {
 //        var document = Document()
 //        document.removeValue(forKey: "_id")

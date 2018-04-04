@@ -18,6 +18,10 @@ public struct DocumentPair {
     fileprivate let document: Document
     fileprivate let dimensions: DocumentCache.Dimensions
     
+    internal var identifier: UInt8 {
+        return dimensions.type
+    }
+    
     public let index: Int
     
     public var key: String {
@@ -31,21 +35,32 @@ public struct DocumentPair {
 
 public struct DocumentIterator: IteratorProtocol {
     fileprivate let document: Document
-    fileprivate var index = 0
+    public private(set) var currentIndex = 0
+    public var isDrained: Bool {
+        return self.document.count > currentIndex
+    }
+    
+    public var count: Int {
+        return self.document.count
+    }
     
     public init(document: Document) {
         self.document = document
     }
     
     public mutating func next() -> DocumentPair? {
-        guard index < self.document.count else {
+        guard currentIndex < self.document.count else {
             return nil
         }
         
         defer {
-            index = index &+ 1
+            currentIndex = currentIndex &+ 1
         }
         
-        return DocumentPair(document: self.document, dimensions: document[dimensionsAt: index], index: index)
+        return DocumentPair(
+            document: self.document,
+            dimensions: document[dimensionsAt: currentIndex],
+            index: currentIndex
+        )
     }
 }
