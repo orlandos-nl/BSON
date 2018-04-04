@@ -1,4 +1,5 @@
 extension Document: ExpressibleByDictionaryLiteral {
+    /// Gets all top level keys in this Document
     public var keys: [String] {
         _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
         let pointer = self.storage.readBuffer.baseAddress!
@@ -10,10 +11,12 @@ extension Document: ExpressibleByDictionaryLiteral {
         }
     }
     
+    /// Tries to extract a value of type `P` from the value at key `key`
     public subscript<P: Primitive>(key: String, as type: P.Type) -> P? {
         return self[key] as? P
     }
     
+    /// Extracts any `Primitive` fom the value at key `key`
     public subscript(key: String) -> Primitive? {
         get {
             return self.getCached(byKey: key)
@@ -29,6 +32,7 @@ extension Document: ExpressibleByDictionaryLiteral {
         }
     }
     
+    /// Creates a new Document from a Dictionary literal
     public init(dictionaryLiteral elements: (String, Primitive)...) {
         self.init()
         for (key, value) in elements {

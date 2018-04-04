@@ -1,4 +1,7 @@
 extension Document {
+    /// Prepates the document before mutations such as addition or removal of keys
+    ///
+    /// - Removes the null terminator if it's present
     mutating func prepareForMutation() {
         if self.nullTerminated {
             self.storage.remove(from: self.storage.usedCapacity &- 1, length: 1)
@@ -6,12 +9,14 @@ extension Document {
         }
     }
     
+    /// Writes the `primitive` to this Document keyed by `key`
     mutating func write(_ primitive: Primitive, forKey key: String) {
         prepareForMutation()
         
         let dimensions = self.dimension(forKey: key)
         var type: UInt8!
         
+        /// Accesses the pointer as `UInt8`
         func withPointer<I>(
             pointer: UnsafePointer<I>,
             length: Int,
@@ -22,6 +27,10 @@ extension Document {
             }
         }
         
+        /// Flushes the value at the pointer with the given length to the document
+        ///
+        /// - Writes the identifier, key and value
+        /// - Updates the DocumentCache
         func flush(from pointer: UnsafePointer<UInt8>, length: Int) {
             if let dimensions = dimensions {
                 self.storage.replace(
@@ -49,6 +58,7 @@ extension Document {
             }
         }
         
+        // Try to find the appropriate behaviour for a given type
         switch primitive {
         case let int as Int:
             var int = (numericCast(int) as Int64)
@@ -73,7 +83,7 @@ extension Document {
             type = .objectId
             flush(from: objectId.storage.readBuffer.baseAddress!, length: 12)
         default:
-            fatalError()
+            fatalError("Currently unsupported type \(primitive)")
         }
     }
 }
