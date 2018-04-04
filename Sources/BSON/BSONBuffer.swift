@@ -31,27 +31,29 @@ struct Storage {
             }
         }
     }
-        
+    
+    var usedCapacity: Int
+    var maxCapacity: Int
     private var storage: AutoDeallocatingStorage
-    var count: Int
     
     init(storage: _Storage) {
         self.storage = .init(storage: storage)
-        self.count = storage.count
+        self.usedCapacity = storage.count
+        self.maxCapacity = storage.count
     }
     
     func expanding(minimum: Int) -> Storage {
         // Double size
-        let storage = Storage(size: self.count &+ min(minimum, 4_096))
-        storage.writeBuffer?.baseAddress?.assign(from: self.readBuffer.baseAddress!, count: self.count)
+        var storage = Storage(size: self.usedCapacity &+ min(minimum, 4_096))
+        storage.writeBuffer?.baseAddress?.assign(from: self.readBuffer.baseAddress!, count: self.usedCapacity)
+        storage.usedCapacity = self.usedCapacity
         
         return storage
     }
     
     func makeCopy() -> Storage {
-        // Double size
-        let storage = Storage(size: self.count)
-        memcpy(storage.writeBuffer?.baseAddress!, self.readBuffer.baseAddress!, self.count)
+        let storage = Storage(size: self.usedCapacity)
+        storage.writeBuffer!.baseAddress!.assign(from: self.readBuffer.baseAddress!, count: self.usedCapacity)
         
         return storage
     }
@@ -64,7 +66,7 @@ struct Storage {
         
         memmove(writePointer + (position + length), insertPointer, length)
         memcpy(insertPointer, pointer, length)
-        self.count = self.count &+ length
+        self.usedCapacity = self.usedCapacity &+ length
     }
     
     mutating func replace(offset: Int, replacing: Int, with pointer: UnsafePointer<UInt8>, length: Int) {
@@ -76,15 +78,15 @@ struct Storage {
         let insertPointer = writePointer + offset
         
         if diff > 0 {
-            memmove(writePointer + replacing + diff, writePointer + replacing, self.count &- offset &- diff)
+            memmove(writePointer + replacing + diff, writePointer + replacing, self.usedCapacity &- offset &- diff)
         }
         
         memcpy(insertPointer, pointer, length)
-        self.count = self.count &+ diff
+        self.usedCapacity = self.usedCapacity &+ diff
     }
     
     private mutating func ensureExtraCapacityForMutation(_ n: Int) {
-        if self.count &+ n < storage.storage.count {
+        if self.usedCapacity &+ n > maxCapacity {
             self.storage = self.expanding(minimum: n).storage
         } else if !isKnownUniquelyReferenced(&self.storage) {
             self.storage = makeCopy().storage
@@ -94,35 +96,33 @@ struct Storage {
     mutating func append(from pointer: UnsafePointer<UInt8>, length: Int) {
         ensureExtraCapacityForMutation(length)
         
-        memcpy(self.writeBuffer!.baseAddress! + self.count, pointer, length)
-        self.count = self.count &+ length
+        self.writeBuffer?.baseAddress?.advanced(by: self.usedCapacity).assign(from: pointer, count: length)
+        self.usedCapacity = self.usedCapacity &+ length
     }
     
     mutating func append(_ byte: UInt8) {
         ensureExtraCapacityForMutation(1)
         
-        (self.writeBuffer!.baseAddress! + self.count).pointee = byte
-        self.count = self.count &+ 1
+        (self.writeBuffer!.baseAddress! + self.usedCapacity).pointee = byte
+        self.usedCapacity = self.usedCapacity &+ 1
     }
     
     mutating func append(_ bytes: [UInt8]) {
         let size = bytes.count
         ensureExtraCapacityForMutation(size)
         
-        (self.writeBuffer!.baseAddress! + self.count).assign(from: bytes, count: size)
-        self.count = self.count &+ size
+        (self.writeBuffer!.baseAddress! + self.usedCapacity).assign(from: bytes, count: size)
+        self.usedCapacity = self.usedCapacity &+ size
     }
     
     mutating func remove(from offset: Int, length: Int) {
-        ensureExtraCapacityForMutation(-length)
-        
         memmove(
             self.writeBuffer!.baseAddress! + (offset - length),
             self.writeBuffer!.baseAddress! + offset,
-            self.count &- offset
+            self.usedCapacity &- offset
         )
         
-        self.count = self.count &- length
+        self.usedCapacity = self.usedCapacity &- length
     }
     
     init(size: Int) {
@@ -130,7 +130,8 @@ struct Storage {
         let buffer = UnsafeMutableBufferPointer(start: pointer, count: size)
         
         self.storage = .init(storage: .readWrite(buffer))
-        self.count = self.storage.storage.count
+        self.usedCapacity = 0
+        self.maxCapacity = size
     }
     
     init(data: Data) {
@@ -145,13 +146,15 @@ struct Storage {
     init(bytes: [UInt8]) {
         let size = bytes.count
         self.init(size: size)
+        self.usedCapacity = size
         
         self.writeBuffer!.baseAddress!.assign(from: bytes, count: size)
     }
     
     init(buffer: UnsafeBufferPointer<UInt8>) {
         self.storage = .init(storage: .readOnly(buffer))
-        self.count = self.storage.storage.count
+        self.usedCapacity = buffer.count
+        self.maxCapacity = buffer.count
     }
     
     var readBuffer: UnsafeBufferPointer<UInt8> {

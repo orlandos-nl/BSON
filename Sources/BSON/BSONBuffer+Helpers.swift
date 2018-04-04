@@ -3,7 +3,7 @@ extension Storage {
         var cStringLength = 0
         let pointer = readBuffer.baseAddress! + offset
         
-        cStringLoop: while offset < count {
+        cStringLoop: while offset < self.usedCapacity {
             defer { cStringLength = cStringLength &+ 1 }
             
             if pointer[cStringLength] == 0x00 {

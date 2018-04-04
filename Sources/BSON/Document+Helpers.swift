@@ -8,7 +8,7 @@ extension Document {
             return value
         }
         
-        throw BSONValueNotFound(type: P.self, key: key)
+        throw BSONValueNotFound(type: P.self, path: [key])
     }
 }
 

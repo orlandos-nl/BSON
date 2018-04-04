@@ -4,8 +4,8 @@ extension Document {
     }
     
     public func validate(recursively: Bool = true) -> Bool {
-        let count = self.storage.count
         var offset = 0
+        let count = self.storage.usedCapacity
         
         guard count >= 4, var pointer = self.storage.readBuffer.baseAddress else {
             return false
@@ -30,7 +30,7 @@ extension Document {
                 
                 guard has(length) else { return false }
                 
-                let document = Document(storage: self.storage[offset ..< offset &+ length])
+                let document = Document(storage: self.storage[offset ..< offset &+ length &- 1], nullTerminated: false)
                 
                 guard document.validate(recursively: true) else {
                     return false

@@ -66,7 +66,7 @@ extension Document {
     func valueLength(forType type: UInt8, at offset: Int) -> Int? {
         switch type {
         case .string, .javascript:
-            guard offset &+ 4 < self.storage.count else {
+            guard offset &+ 4 < self.storage.usedCapacity else {
                 return nil
             }
             
@@ -74,7 +74,7 @@ extension Document {
             
             return 4 &+ numericCast(stringLength)
         case .document, .array:
-            guard offset &+ 4 < self.storage.count else {
+            guard offset &+ 4 < self.storage.usedCapacity else {
                 return nil
             }
             
@@ -82,7 +82,7 @@ extension Document {
             
             return numericCast(documentLength)
         case .binary:
-            guard offset &+ 5 < self.storage.count else {
+            guard offset &+ 5 < self.storage.usedCapacity else {
                 return nil
             }
             
@@ -132,9 +132,8 @@ extension Document {
     
     func scanValue(startingAt position: Int, mode: ScanMode) -> DocumentCache.Dimensions? {
         var position = position
-        let size = self.storage.count
         
-        while position < size {
+        while position < self.storage.usedCapacity {
             let basePosition = position
             let type = self.storage.readBuffer[position]
             position = position &+ 1
@@ -206,7 +205,7 @@ extension Document {
                 encoding: .utf8
             )
         case .document, .array:
-            return Document(storage: storage[offset..<offset &+ 12])
+            fatalError()
         case .binary:
             return nil
         case .objectId:

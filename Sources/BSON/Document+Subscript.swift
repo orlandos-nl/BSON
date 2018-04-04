@@ -1,5 +1,14 @@
 extension Document {
+    mutating func prepareForMutation() {
+        if self.nullTerminated {
+            self.storage.remove(from: self.storage.usedCapacity &- 1, length: 1)
+            self.nullTerminated = false
+        }
+    }
+    
     mutating func write(_ primitive: Primitive, forKey key: String) {
+        prepareForMutation()
+        
         let dimensions = self.dimension(forKey: key)
         var type: UInt8!
         
@@ -22,12 +31,13 @@ extension Document {
                     length: length
                 )
             } else {
-                let start = self.count &- 1
+                let start = self.storage.usedCapacity
                 let keyData = [UInt8](key.utf8)
                 
                 self.storage.append(type)
                 self.storage.append(keyData)
                 self.storage.append(0)
+                self.storage.append(from: pointer, length: length)
                 
                 let dimensions = DocumentCache.Dimensions(
                     type: type,
@@ -37,13 +47,12 @@ extension Document {
                 )
                 
                 self.cache.storage.append((key, dimensions))
-                self.storage.insert(at: start, from: pointer, length: length)
             }
         }
         
         switch primitive {
         case let int as Int:
-            var int = numericCast(int) as Int64
+            var int = (numericCast(int) as Int64)
             type = .int64
             
             withPointer(pointer: &int, length: 8, run: flush)
