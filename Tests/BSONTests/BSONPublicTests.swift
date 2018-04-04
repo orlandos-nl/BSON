@@ -88,7 +88,7 @@ final class BSONPublicTests: XCTestCase {
             var morePi: Double
         }
         
-        let id = ObjectId()
+        let id = ObjectIdGenerator().generate()
         
         let doc: Document = [
             "_id": id,
@@ -224,9 +224,10 @@ final class BSONPublicTests: XCTestCase {
     func testObjectIdUniqueness() {
         var oids = [String]()
         oids.reserveCapacity(10_000)
+        let generator = ObjectIdGenerator()
 
         for _ in 0..<10_000 {
-            let oid = ObjectId().hexString
+            let oid = generator.generate().hexString
 
             XCTAssertFalse(oids.contains(oid))
             oids.append(oid)

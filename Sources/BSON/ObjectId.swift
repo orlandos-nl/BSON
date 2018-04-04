@@ -2,68 +2,112 @@ import Foundation
 
 #if os(Linux)
 import Glibc
+
+fileprivate var machineIdentifier: UInt32 = numericCast(srand(UInt32(time(nil))))
+#else
+fileprivate var machineIdentifier: UInt32 = arc4random_uniform(UInt32.max)
 #endif
 
+
+fileprivate var currentIdentifier: UInt16 = 0
+let lock = NSRecursiveLock()
+
+fileprivate var nextIdentifer: UInt16 {
+    defer {
+        lock.lock()
+        currentIdentifier = currentIdentifier &+ 1
+        lock.unlock()
+    }
+    
+    return currentIdentifier
+}
+
 public final class ObjectIdGenerator {
-    public init() {}
-    
-    #if os(Linux)
-        private var random: Int32 = {
-            srand(UInt32(time(nil)))
-            return rand()
-        }()
-    
-        private var counter: Int32 = {
-            srand(UInt32(time(nil)))
-            return rand()
-        }()
-    #else
-        private var random = arc4random_uniform(UInt32.max)
-        private var counter = arc4random_uniform(UInt32.max)
-    #endif
-    
-    public func generate() -> ObjectId {
-        var bytes = [UInt8](repeating: 0, count: 12)
+    public init() {
+        var template = [UInt8](repeating: 0, count: 12)
         
-        var epoch = Int32(time(nil)).bigEndian
-        
-        bytes.withUnsafeMutableBufferPointer { buffer in
+        template.withUnsafeMutableBufferPointer { buffer in
             let pointer = buffer.baseAddress!
             
-            memcpy(pointer, &epoch, 4)
-            memcpy(pointer.advanced(by: 4), &self.random, 4)
+            // 4 bytes of epoch
+            memcpy(pointer.advanced(by: 4), &machineIdentifier, 3)
             
-            // And add a counter as 2 bytes and increment it
-            memcpy(pointer.advanced(by: 8), &self.counter, 4)
-            self.counter = self.counter &+ 1
+            pointer.advanced(by: 4).withMemoryRebound(to: UInt32.self, capacity: 1) { pointer in
+                pointer.pointee = machineIdentifier
+            }
+            
+            pointer.advanced(by: 7).withMemoryRebound(to: UInt16.self, capacity: 1) { pointer in
+                pointer.pointee = nextIdentifer
+            }
+            
+            #if os(Linux)
+            var random: UInt32 = numericCast(srand(UInt32(time(nil))))
+            #else
+            var random: UInt32 = arc4random_uniform(UInt32.max)
+            #endif
+            
+            withUnsafePointer(to: &random) { randomPointer in
+                randomPointer.withMemoryRebound(to: UInt8.self, capacity: 3) { randomPointer in
+                    pointer.advanced(by: 9).assign(from: randomPointer, count: 3)
+                }
+            }
         }
         
-        return ObjectId(Storage(bytes: bytes))
+        self.template = template
+    }
+    
+    func incrementTemplateCounter() {
+        self.template.withUnsafeMutableBytes { buffer in
+            let pointer = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
+            
+            // Need to simulate an (U)Int24
+            pointer[11] = pointer[11] &+ 1
+            
+            if pointer[11] == 0 {
+                pointer[10] = pointer[10] &+ 1
+                
+                if pointer[10] == 0 {
+                    pointer[9] = pointer[9] &+ 1
+                }
+            }
+        }
+    }
+    
+    private var template: [UInt8]
+    
+    /// Generates a new ObjectId
+    public func generate() -> ObjectId {
+        var template = self.template
+        
+        template.withUnsafeMutableBufferPointer { buffer in
+            buffer.baseAddress!.withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
+                pointer.pointee = Int32(time(nil)).bigEndian
+            }
+        }
+        
+        self.incrementTemplateCounter()
+        
+        return ObjectId(Storage(bytes: template))
     }
 }
 
+/// An error that occurs if the ObjectId was initialized with an invalid HexString
 private struct InvalidObjectIdString: Error {
     var hex: String
 }
 
-private let generator = ObjectIdGenerator()
-private let lock = NSRecursiveLock()
-
 public struct ObjectId {
+    /// The internal Storage Buffer
     let storage: Storage
     
+    /// Creates a new ObjectId using an existing (Sub-)Storage buffer
     init(_ storage: Storage) {
         assert(storage.usedCapacity == 12)
         
         self.storage = storage
     }
     
-    init() {
-        lock.lock()
-        self = generator.generate()
-        lock.unlock()
-    }
-    
+    /// Decodes the ObjectID from the provided (24 character) hexString
     public init(_ hex: String) throws {
         guard hex.count == 24 else {
             throw InvalidObjectIdString(hex: hex)
@@ -103,6 +147,7 @@ public struct ObjectId {
         return String(data: data, encoding: .utf8)!
     }
     
+    /// Returns the ObjectId's creation date in UNIX epoch seconds
     public var epochSeconds: Int32 {
         let basePointer = storage.readBuffer.baseAddress!
         
@@ -111,7 +156,7 @@ public struct ObjectId {
         }
     }
     
-    
+    /// The creation date of this ObjectId
     public var epoch: Date {
         return Date(timeIntervalSince1970: Double(epochSeconds))
     }

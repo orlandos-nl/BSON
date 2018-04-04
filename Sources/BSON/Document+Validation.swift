@@ -1,8 +1,12 @@
 extension Document {
+    /// If `true`, this document is completely and recursively valid
     public var isValid: Bool {
         return validate()
     }
     
+    /// Validates this document's technical correctness
+    ///
+    /// If `recursively` is `true` the subdocuments will be traversed, too
     public func validate(recursively: Bool = true) -> Bool {
         var offset = 0
         let count = self.storage.usedCapacity
