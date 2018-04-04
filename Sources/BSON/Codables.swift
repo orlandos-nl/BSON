@@ -106,24 +106,45 @@ public struct BSONDecoderSettings {
     /// If `true`, BSON Null values will be regarded as `nil`
     public var decodeNullAsNil: Bool = true
     
-    /// If `true`, supported values will be decoded into a String
-    ///
-    /// ObjectId will be decoded as it's hexValue
-    /// Integers and doubles
+    /// A strategy that is applied when encountering a request to decode a `String`
     public var stringDecodingStrategy: StringDecodingStrategy = .string
+    
+    /// If `true`, allows decoding ObjectIds from Strings if they're formatted as a 24-character hexString
     public var decodeObjectIdFromString: Bool = false
     
+    /// A strategy that is applied when encountering a request to decode a `Float`
     public var floatDecodingStrategy: FloatDecodingStrategy = .double
+    
+    /// A strategy that is applied when encountering a request to decode a `Double`
     public var doubleDecodingStrategy: DoubleDecodingStrategy = .double
     
+    /// A strategy that is applied when encountering a request to decode a `Int8`
     public var int8DecodingStrategy: IntegerDecodingStrategy<Int8> = .anyInteger
+    
+    /// A strategy that is applied when encountering a request to decode a `Int16`
     public var int16DecodingStrategy: IntegerDecodingStrategy<Int16> = .anyInteger
+    
+    /// A strategy that is applied when encountering a request to decode a `Int32`
     public var int32DecodingStrategy: IntegerDecodingStrategy<Int32> = .int32
+    
+    /// A strategy that is applied when encountering a request to decode a `Int64`
     public var int64DecodingStrategy: IntegerDecodingStrategy<Int64> = .int64
+    
+    /// A strategy that is applied when encountering a request to decode a `Int`
     public var intDecodingStrategy: IntegerDecodingStrategy<Int> = .anyInteger
+    
+    /// A strategy that is applied when encountering a request to decode a `UInt8`
     public var uint8DecodingStrategy: IntegerDecodingStrategy<UInt8> = .anyInteger
+    
+    /// A strategy that is applied when encountering a request to decode a `UInt16`
     public var uint16DecodingStrategy: IntegerDecodingStrategy<UInt16> = .anyInteger
+    
+    /// A strategy that is applied when encountering a request to decode a `UInt32`
     public var uint32DecodingStrategy: IntegerDecodingStrategy<UInt32> = .anyInteger
+    
+    /// A strategy that is applied when encountering a request to decode a `UInt64`
     public var uint64DecodingStrategy: IntegerDecodingStrategy<UInt64> = .anyInteger
+    
+    /// A strategy that is applied when encountering a request to decode a `UInt`
     public var uintDecodingStrategy: IntegerDecodingStrategy<UInt> = .anyInteger
 }
