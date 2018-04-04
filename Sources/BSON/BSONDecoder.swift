@@ -1,6 +1,9 @@
 import Foundation
 
+/// MARK: Strategies
+
 extension BSONDecoderSettings.FloatDecodingStrategy {
+    /// Decodes the `value` with a key of `key` to a `Float` using the current strategy
     fileprivate func decode<K: CodingKey>(fromKey key: K, in value: DecoderValue, path: [String]) throws -> Float {
         switch self {
         case .double:
@@ -25,6 +28,7 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
         }
     }
     
+    /// Decodes the `value` without key to a `Float` using the current strategy
     fileprivate func decode(from value: DecoderValue, path: [String]) throws -> Float {
         switch self {
         case .double:
@@ -49,6 +53,7 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
 }
 
 extension BSONDecoderSettings.IntegerDecodingStrategy {
+    /// A helper that converts a String to an integer of type `I`
     fileprivate func convert(from string: String) throws -> I {
         if I.isSigned {
             guard let int = Int64(string) else {
@@ -65,6 +70,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         }
     }
     
+    /// Decodes the `value` without key to an integer of type `I` using the current strategy
     fileprivate func decode(
         from decoder: _BSONDecoder,
         path: @autoclosure () -> [String]
@@ -94,7 +100,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
                 let int = try decoder.wrapped.unwrap(asType: Int32.self, path: path())
                 return try int.convert(to: I.self)
             case (.int64, _):
-                // Necessary also for custom integer types
+                // Necessary also for custom integer types with different widths
                 let int = try decoder.wrapped.unwrap(asType: Int64.self, path: path())
                 return try int.convert(to: I.self)
             case (.double, .roundingAnyNumber):
@@ -112,6 +118,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         }
     }
     
+    /// Decodes the `value` with a key of `key` to an integer of type `I` using the current strategy
     fileprivate func decode<K: CodingKey>(
         from decoder: _BSONDecoder,
         forKey key: K,
@@ -419,6 +426,44 @@ extension BSONDecoderSettings.StringDecodingStrategy {
     }
 }
 
+extension FixedWidthInteger {
+    /// Converts the current FixedWidthInteger to another FixedWithInteger type `I`
+    ///
+    /// Throws a `BSONTypeConversionError` if the range of `I` does not contain `self`
+    fileprivate func convert<I: FixedWidthInteger>(to int: I.Type) throws -> I {
+        // If I is smaller in width we need to see if the current integer fits inside of I
+        if I.bitWidth < Self.bitWidth {
+            if numericCast(I.max) < self {
+                throw BSONTypeConversionError(from: self, to: I.self)
+            } else if numericCast(I.min) > self  {
+                throw BSONTypeConversionError(from: self, to: I.self)
+            }
+        } else if !I.isSigned {
+            // BSON doesn't store unsigned ints and unsigned ints can't be negative
+            guard self >= 0 else {
+                throw BSONTypeConversionError(from: self, to: I.self)
+            }
+        }
+        
+        return numericCast(self)
+    }
+}
+
+extension Primitive {
+    /// Asserts that the primitive is of type `P`
+    ///
+    /// Throws a `BSONTypeConversionError` otherwise
+    fileprivate func assert<P: Primitive>(asType type: P.Type) throws -> P {
+        guard let value = self as? P else {
+            throw BSONTypeConversionError(from: self, to: P.self)
+        }
+        
+        return value
+    }
+}
+
+/// MARK: Decoding types
+
 fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProtocol {
     typealias Key = K
     
@@ -563,8 +608,8 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
             guard
                 let typeIdentifer = self.document.typeIdentifier(of: key.stringValue),
                 let value = self.document[key.stringValue]
-            else {
-                throw BSONValueNotFound(type: T.self, path: path(forKey: key))
+                else {
+                    throw BSONValueNotFound(type: T.self, path: path(forKey: key))
             }
             
             let decoder = _BSONDecoder(
@@ -862,35 +907,5 @@ fileprivate struct UnkeyedBSONContainer: UnkeyedDecodingContainer {
 fileprivate extension Array where Element == CodingKey {
     var path: [String] {
         return self.map { $0.stringValue }
-    }
-}
-
-fileprivate extension FixedWidthInteger {
-    func convert<I: FixedWidthInteger>(to int: I.Type) throws -> I {
-        // If I is smaller in width we need to see if the current integer fits inside of I
-        if I.bitWidth < Self.bitWidth {
-            if numericCast(I.max) < self {
-                throw BSONTypeConversionError(from: self, to: I.self)
-            } else if numericCast(I.min) > self  {
-                throw BSONTypeConversionError(from: self, to: I.self)
-            }
-        } else if !I.isSigned {
-            // BSON doesn't store unsigned ints and unsigned ints can't be negative
-            guard self >= 0 else {
-                throw BSONTypeConversionError(from: self, to: I.self)
-            }
-        }
-        
-        return numericCast(self)
-    }
-}
-
-fileprivate extension Primitive {
-    func assert<P: Primitive>(asType type: P.Type) throws -> P {
-        guard let value = self as? P else {
-            throw BSONTypeConversionError(from: self, to: P.self)
-        }
-        
-        return value
     }
 }

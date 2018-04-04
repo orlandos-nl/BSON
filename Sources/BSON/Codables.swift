@@ -40,12 +40,25 @@ public struct BSONDecoderSettings {
     ///
     /// WARNING: This API may have cases added to it, do *not* manually switch over them
     public enum IntegerDecodingStrategy<I: FixedWidthInteger> {
+        /// Decodes this integer type only from Strings
         case string
+        
+        /// Decodes this integer type only from BSON Int32
         case int32
+        
+        /// Decodes this integer type only from BSON Int64
         case int64
+        
+        /// Decodes this integer from either BSON Int32 or Int64
         case anyInteger
+        
+        /// Decodes this integer from any number (Int32, Int64 or Double), rouding Doubles
         case roundingAnyNumber
+        
+        /// Decodes this integer from either a String or a number (rounding Doubles)
         case stringOrNumber
+        
+        /// Applies a custom decoding strategy
         case custom(DecodingStrategy<I>)
     }
     
