@@ -41,12 +41,15 @@ extension Document {
                     length: length
                 )
             } else {
-                let start = self.storage.count &- 1
-                let characters = key.utf8.count &+ 1
+                let characters = key.utf8.count
+                
+                self.storage.append(type)
                 
                 key.withCString { pointer in
-                    
+                    self.storage.append(from: pointer, length: characters)
                 }
+                
+                self.storage.append(0)
                 
                 let dimensions = DocumentCache.Dimensions(
                     type: type,

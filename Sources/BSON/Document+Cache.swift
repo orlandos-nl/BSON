@@ -46,23 +46,17 @@ extension Document {
     }
     
     func getCached(byKey key: String) -> Primitive? {
-        if let dimensions = dimension(forKey: key) {
-            return readPrimitive(
-                type: dimensions.type,
-                offset: dimensions.from &+ 1 &+ dimensions.keyCString,
-                length: dimensions.valueLength
-            )
-        }
+        let dimensions: DocumentCache.Dimensions
         
-        guard let dimensions = scanValue(forKey: key, startingAt: lastScannedPosition) else {
+        if let d = dimension(forKey: key) {
+            dimensions = d
+        } else if let d = scanValue(forKey: key, startingAt: lastScannedPosition) {
+            dimensions = d
+        } else {
             return nil
         }
         
-        return readPrimitive(
-            type: dimensions.type,
-            offset: dimensions.from &+ 1 &+ dimensions.keyCString,
-            length: dimensions.valueLength
-        )
+        return readPrimitive(atDimensions: dimensions)
     }
     
     func valueLength(forType type: UInt8, at offset: Int) -> Int? {
@@ -126,6 +120,10 @@ extension Document {
         }
     }
     
+    func completeTopLevelCache() {
+        _ = self.scanValue(forKey: nil, startingAt: self.lastScannedPosition)
+    }
+    
     func scanValue(forKey key: String?, startingAt position: Int) -> DocumentCache.Dimensions? {
         var position = position
         let size = self.storage.count
@@ -162,6 +160,14 @@ extension Document {
         }
         
         return nil
+    }
+    
+    func readPrimitive(atDimensions dimensions: DocumentCache.Dimensions) -> Primitive? {
+        return self.readPrimitive(type: dimensions.type, offset: dimensions.from &+ 1 &+ dimensions.keyCString, length: dimensions.valueLength)
+    }
+    
+    func readKey(atDimensions dimensions: DocumentCache.Dimensions) -> String {
+        return String(cString: self.storage.readBuffer.baseAddress!.advanced(by: dimensions.from &+ 1))
     }
     
     func readPrimitive(type: UInt8, offset: Int, length: Int) -> Primitive? {

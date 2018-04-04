@@ -98,6 +98,13 @@ struct Storage {
         self.count = self.count &+ length
     }
     
+    mutating func append(_ byte: UInt8) {
+        ensureExtraCapacityForMutation(1)
+        
+        (self.writeBuffer!.baseAddress! + self.count).pointee = byte
+        self.count = self.count &+ 1
+    }
+    
     mutating func remove(from offset: Int, length: Int) {
         ensureExtraCapacityForMutation(-length)
         
