@@ -1,25 +1,44 @@
+/// A helper that is able to decode BSON data types into a `Decodable` type
 public struct BSONDecoder {
+    /// The configuration used for decoding
     public var settings: BSONDecoderSettings
     
-    /// The globally default BSONDecoder
+    /// The globally default BSONDecoder which can be overridden
+    ///
+    /// If you do not want a globally customizable `default` you'll need to create a new BSONDecoder using the initializer
     public static var `default`: () -> (BSONDecoder) = {
         return BSONDecoder()
     }
     
+    /// Creates a new decoder using fresh settings
     public init() {
         self.settings = BSONDecoderSettings()
     }
 }
 
+/// A configuration structs that contains all strategies for (lossy) decoding values
 public struct BSONDecoderSettings {
-    public typealias DecodingStrategy<P> = (Primitive?) throws -> P?
+    /// A strategy used to decode `P` from a BSON `Primitive?` value
+    ///
+    /// If the key (`String`) is nil the value was not associated with a Dictionary Document.
+    ///
+    /// If the value (`Primitive`) is nil, the value was not found at all but can be overwritten with a default
+    public typealias DecodingStrategy<P> = (String?, Primitive?) throws -> P?
     
+    /// A strategy used to decode float values
+    /// Floats are not a native BSON type
+    ///
+    /// WARNING: This API may have cases added to it, do *not* manually switch over them
     public enum FloatDecodingStrategy {
         case string
         case double
         case custom(DecodingStrategy<Float>)
     }
     
+    /// A strategy used to decode float values
+    /// Floats are not a native BSON type
+    ///
+    /// WARNING: This API may have cases added to it, do *not* manually switch over them
     public enum IntegerDecodingStrategy<I: FixedWidthInteger> {
         case string
         case int32
@@ -30,18 +49,68 @@ public struct BSONDecoderSettings {
         case custom(DecodingStrategy<I>)
     }
     
-    
+    /// A strategy used to decode double values
+    /// Although Doubles are a native BSON type, lossy conversion may be favourable in certain circumstances
+    ///
+    /// WARNING: This API may have cases added to it, do *not* manually switch over them
     public enum DoubleDecodingStrategy {
+        /// Decodes only the correct type. No lossy decoding.
         case double
+        
+        /// Decodes from any numerical type, meaning `Int32` and `Int64` will be converted
+        ///
+        /// Some data loss may occur for Int64
         case numerical
+        
+        /// Allows lossy decoding from `String` as well as `Double`
+        ///
+        /// If the String is formatted as a Double as permitted by the currently used Swift standard library
         case textual
+        
+        /// Allows both lossy conversions from both numerical and strings in addition to the regular `Double`.
         case numericAndTextual
         
+        /// Used for specifying a custom decoding strategy
+        ///
+        /// This may be used for applying fallback values or other custom behaviour
         case custom(DecodingStrategy<Double>)
     }
     
+    /// A strategy used to influence decoding Strings
+    ///
+    /// WARNING: This API may have cases added to it, do *not* manually switch over them
+    public enum StringDecodingStrategy {
+        /// Decode only strings themselves
+        case string
+        
+        /// Decode strings from integers' textual representations
+        case integers
+        
+        /// Decode strings from any numerical's textual representations
+        case numerical
+        
+        /// Try to decode from any type
+        ///
+        /// - ObjectId.hexString
+        /// - Int32.desciption
+        /// - Int64.description
+        /// - Bool ? "true" : "false"
+        case all
+        
+        /// Used for specifying a custom decoding strategy
+        ///
+        /// This may be used for applying fallback values or other custom behaviour
+        case custom(DecodingStrategy<String>)
+    }
+    
+    /// If `true`, BSON Null values will be regarded as `nil`
     public var decodeNullAsNil: Bool = true
-    public var lossyDecodeIntoString: Bool = false
+    
+    /// If `true`, supported values will be decoded into a String
+    ///
+    /// ObjectId will be decoded as it's hexValue
+    /// Integers and doubles
+    public var stringDecodingStrategy: StringDecodingStrategy = .string
     public var decodeObjectIdFromString: Bool = false
     
     public var floatDecodingStrategy: FloatDecodingStrategy = .double
