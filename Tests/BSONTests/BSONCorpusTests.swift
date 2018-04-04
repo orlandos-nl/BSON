@@ -2,18 +2,6 @@ import Foundation
 import XCTest
 @testable import BSON
 
-struct HugeDocument: Codable {
-    var _id: ObjectId
-    var age: UInt8
-    var year: Int16
-    var epoch: Int32
-    var bigNum: Int64
-    var biggerNum: UInt64
-    var awesome: Bool
-    var pi: Float
-    var morePi: Double
-}
-
 final class BSONCorpusTests: XCTestCase {
     func testTopLevel() {
         let doc0 = Document(bytes: [0x0f,0x00,0x00,0x00,0x10,0x24,0x6b,0x65,0x79,0x00,0x2a,0x00,0x00,0x00,0x00])

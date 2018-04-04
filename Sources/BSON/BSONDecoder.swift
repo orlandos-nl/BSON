@@ -202,36 +202,63 @@ public struct BSONDecoderSettings {
         
         case custom(DecodingStrategy<Double>)
         
-        fileprivate func decode(from decoder: _BSONDecoder, path: [String]) throws -> Double {
-            let double: Double?
-            
-            switch self {
-            case .custom(let strategy):
-                double = try strategy(decoder.primitive)
-            default:
-                guard let identifier = decoder.identifier else {
-                    throw BSONValueNotFound(type: Double.self, path: path)
+        fileprivate func decode(primitive: Primitive, identifier: UInt8, path: @autoclosure () -> [String]) throws -> Double {
+            switch (identifier, self) {
+            case (.string, .textual), (.string, .numericAndTextual):
+                guard let double = try Double(primitive.assert(asType: String.self)) else {
+                    throw BSONValueNotFound(type: Double.self, path: path())
                 }
                 
-                switch (identifier, self) {
-                case (.string, .textual), (.string, .numericAndTextual):
-                    double = try Double(decoder.wrapped.unwrap(asType: String.self, path: path))
-                case (.double, _):
-                    double = try decoder.wrapped.unwrap(asType: Double.self, path: path)
-                case (.int32, .numerical), (.int32, .numericAndTextual):
-                    double = try Double(decoder.wrapped.unwrap(asType: Int32.self, path: path))
-                case (.int64, .numerical), (.int64, .numericAndTextual):
-                    double = try Double(decoder.wrapped.unwrap(asType: Int64.self, path: path))
-                default:
-                    throw BSONTypeConversionError(from: decoder.primitive, to: Double.self)
-                }
-            }
-            
-            if let double = double {
                 return double
+            case (.double, _):
+                return try primitive.assert(asType: Double.self)
+            case (.int32, .numerical), (.int32, .numericAndTextual):
+                return try Double(primitive.assert(asType: Int32.self))
+            case (.int64, .numerical), (.int64, .numericAndTextual):
+                return try Double(primitive.assert(asType: Int64.self))
+            default:
+                throw BSONTypeConversionError(from: primitive, to: Double.self)
             }
-            
-            throw BSONValueNotFound(type: Double.self, path: path)
+        }
+        
+        fileprivate func decode(from decoder: _BSONDecoder, path: @autoclosure () -> [String]) throws -> Double {
+            switch self {
+            case .custom(let strategy):
+                guard let double = try strategy(decoder.primitive) else {
+                    throw BSONValueNotFound(type: Double.self, path: path())
+                }
+                
+                return double
+            default:
+                guard
+                    let primitive = decoder.primitive,
+                    let identifier = decoder.identifier
+                else {
+                    throw BSONValueNotFound(type: Double.self, path: path())
+                }
+                
+                return try decode(primitive: primitive, identifier: identifier, path: path)
+            }
+        }
+        
+        fileprivate func decode<K: CodingKey>(from decoder: _BSONDecoder, forKey key: K, path: @autoclosure () -> [String]) throws -> Double {
+            switch self {
+            case .custom(let strategy):
+                guard let double = try strategy(decoder.document?[key.stringValue]) else {
+                    throw BSONValueNotFound(type: Double.self, path: path())
+                }
+                
+                return double
+            default:
+                guard
+                    let primitive = decoder.document?[key.stringValue],
+                    let identifier = decoder.document?.typeIdentifier(of: key.stringValue)
+                else {
+                    throw BSONValueNotFound(type: Double.self, path: path())
+                }
+                
+                return try decode(primitive: primitive, identifier: identifier, path: path)
+            }
         }
     }
     
@@ -448,6 +475,7 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
     func decode(_ type: Double.Type, forKey key: K) throws -> Double {
         return try self.decoder.settings.doubleDecodingStrategy.decode(
             from: decoder,
+            forKey: key,
             path: path(forKey: key)
         )
     }
@@ -861,9 +889,9 @@ fileprivate extension FixedWidthInteger {
     func convert<I: FixedWidthInteger>(to int: I.Type) throws -> I {
         // If I is smaller in width we need to see if the current integer fits inside of I
         if I.bitWidth < Self.bitWidth {
-            if numericCast(self) > I.max {
+            if numericCast(I.max) < self {
                 throw BSONTypeConversionError(from: self, to: I.self)
-            } else if self < numericCast(I.min) {
+            } else if numericCast(I.min) > self  {
                 throw BSONTypeConversionError(from: self, to: I.self)
             }
         } else if !I.isSigned {

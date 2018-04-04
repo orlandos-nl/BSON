@@ -76,13 +76,25 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testDecoding() throws {
+        struct HugeDocument: Codable {
+            var _id: ObjectId
+            var age: UInt8
+            var year: Int16
+            var epoch: Int32
+            var bigNum: Int64
+            var biggerNum: UInt64
+            var awesome: Bool
+            var pi: Float
+            var morePi: Double
+        }
+        
         let id = ObjectId()
         
         let doc: Document = [
             "_id": id,
             "age": 244,
             "year": 1774,
-            "epoch": 1522809334,
+            "epoch": 1522809334 as Int32,
             "bigNum": Int64.max,
             "biggerNum": 1,
             "awesome": true,

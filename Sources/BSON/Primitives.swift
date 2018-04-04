@@ -134,6 +134,7 @@ extension ObjectId: Primitive {
 }
 extension Int32: Primitive {}
 extension Int64: Primitive {}
+extension Int: Primitive {}
 extension Double: Primitive {}
 extension Bool: Primitive {}
 extension String: Primitive {}

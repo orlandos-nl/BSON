@@ -32,11 +32,10 @@ extension Document {
                 )
             } else {
                 let start = self.storage.usedCapacity
-                let keyData = [UInt8](key.utf8)
+                let keyData = [UInt8](key.utf8) + [0]
                 
                 self.storage.append(type)
                 self.storage.append(keyData)
-                self.storage.append(0)
                 self.storage.append(from: pointer, length: length)
                 
                 let dimensions = DocumentCache.Dimensions(
