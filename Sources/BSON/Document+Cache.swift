@@ -23,6 +23,10 @@ final class DocumentCache {
 }
 
 extension Document {
+    var fullyCached: Bool {
+        return self.lastScannedPosition >= self.count &- 1
+    }
+    
     var lastScannedPosition: Int {
         var lastDimensions: Int?
         
@@ -50,7 +54,7 @@ extension Document {
         
         if let d = dimension(forKey: key) {
             dimensions = d
-        } else if let d = scanValue(forKey: key, startingAt: lastScannedPosition) {
+        } else if let d = scanValue(startingAt: lastScannedPosition, mode: .key(key)) {
             dimensions = d
         } else {
             return nil
@@ -120,11 +124,13 @@ extension Document {
         }
     }
     
-    func completeTopLevelCache() {
-        _ = self.scanValue(forKey: nil, startingAt: self.lastScannedPosition)
+    enum ScanMode {
+        case key(String)
+        case single
+        case all
     }
     
-    func scanValue(forKey key: String?, startingAt position: Int) -> DocumentCache.Dimensions? {
+    func scanValue(startingAt position: Int, mode: ScanMode) -> DocumentCache.Dimensions? {
         var position = position
         let size = self.storage.count
         
@@ -154,8 +160,15 @@ extension Document {
             
             self.cache.storage.append((readKey, dimension))
             
-            if readKey == key {
-                return dimension
+            switch mode {
+            case .key(let key):
+                if readKey == key {
+                    return dimension
+                }
+            case .single:
+                return nil
+            case .all:
+                continue
             }
         }
         
@@ -227,5 +240,17 @@ extension Document {
         default:
             return nil
         }
+    }
+    
+    subscript(keyFor dimensions: DocumentCache.Dimensions) -> String {
+        return self.readKey(atDimensions: dimensions)
+    }
+    
+    subscript(valueFor dimensions: DocumentCache.Dimensions) -> Primitive {
+        return self.readPrimitive(atDimensions: dimensions)!
+    }
+    
+    subscript(dimensionsAt index: Int) -> DocumentCache.Dimensions {
+        return self.cache.storage[index].1
     }
 }

@@ -1,24 +1,12 @@
 extension Document: Sequence {
     public var count: Int {
-        self.completeTopLevelCache()
+        _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
         
         return self.cache.storage.count
     }
     
     public func makeIterator() -> DocumentIterator {
         return DocumentIterator(document: self)
-    }
-    
-    subscript(keyFor dimensions: DocumentCache.Dimensions) -> String {
-        return self.readKey(atDimensions: dimensions)
-    }
-    
-    subscript(valueFor dimensions: DocumentCache.Dimensions) -> Primitive {
-        return self.readPrimitive(atDimensions: dimensions)!
-    }
-    
-    subscript(dimensionsAt index: Int) -> DocumentCache.Dimensions {
-        return self.cache.storage[index].1
     }
     
     subscript(keyAt index: Int) -> String {

@@ -1,23 +1,4 @@
 extension Document {
-    public subscript<P: Primitive>(key: String, as type: P.Type) -> P? {
-        return self[key] as? P
-    }
-    
-    public subscript(key: String) -> Primitive? {
-        get {
-            return self.getCached(byKey: key)
-        }
-        set {
-            if let newValue = newValue {
-                self.write(newValue, forKey: key)
-            } else {
-                guard let dimensions = self.dimension(forKey: key) else { return }
-                
-                self.storage.remove(from: dimensions.from, length: dimensions.fullLength)
-            }
-        }
-    }
-    
     mutating func write(_ primitive: Primitive, forKey key: String) {
         let dimensions = self.dimension(forKey: key)
         var type: UInt8!
@@ -41,20 +22,17 @@ extension Document {
                     length: length
                 )
             } else {
-                let characters = key.utf8.count
+                let start = self.count &- 1
+                let keyData = [UInt8](key.utf8)
                 
                 self.storage.append(type)
-                
-                key.withCString { pointer in
-                    self.storage.append(from: pointer, length: characters)
-                }
-                
+                self.storage.append(keyData)
                 self.storage.append(0)
                 
                 let dimensions = DocumentCache.Dimensions(
                     type: type,
                     from: start,
-                    keyCString: characters,
+                    keyCString: keyData.count,
                     valueLength: length
                 )
                 

@@ -40,10 +40,10 @@ struct Storage {
         self.count = storage.count
     }
     
-    func expand(minimum: Int) -> Storage {
+    func expanding(minimum: Int) -> Storage {
         // Double size
         let storage = Storage(size: self.count &+ min(minimum, 4_096))
-        memcpy(storage.writeBuffer?.baseAddress!, self.readBuffer.baseAddress!, self.count)
+        storage.writeBuffer?.baseAddress?.assign(from: self.readBuffer.baseAddress!, count: self.count)
         
         return storage
     }
@@ -85,7 +85,7 @@ struct Storage {
     
     private mutating func ensureExtraCapacityForMutation(_ n: Int) {
         if self.count &+ n < storage.storage.count {
-            self.storage = expand(minimum: n).storage
+            self.storage = self.expanding(minimum: n).storage
         } else if !isKnownUniquelyReferenced(&self.storage) {
             self.storage = makeCopy().storage
         }
@@ -103,6 +103,14 @@ struct Storage {
         
         (self.writeBuffer!.baseAddress! + self.count).pointee = byte
         self.count = self.count &+ 1
+    }
+    
+    mutating func append(_ bytes: [UInt8]) {
+        let size = bytes.count
+        ensureExtraCapacityForMutation(size)
+        
+        (self.writeBuffer!.baseAddress! + self.count).assign(from: bytes, count: size)
+        self.count = self.count &+ size
     }
     
     mutating func remove(from offset: Int, length: Int) {
@@ -130,7 +138,7 @@ struct Storage {
         self.init(size: size)
         
         data.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
-            _ = memcpy(self.writeBuffer!.baseAddress!, pointer, size)
+            self.writeBuffer!.baseAddress!.assign(from: pointer, count: size)
         }
     }
     
@@ -138,9 +146,7 @@ struct Storage {
         let size = bytes.count
         self.init(size: size)
         
-        bytes.withUnsafeBytes { buffer in
-            _ = memcpy(self.writeBuffer!.baseAddress!, buffer.baseAddress!, size)
-        }
+        self.writeBuffer!.baseAddress!.assign(from: bytes, count: size)
     }
     
     init(buffer: UnsafeBufferPointer<UInt8>) {
