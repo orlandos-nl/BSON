@@ -11,10 +11,13 @@ extension Document {
     
     /// Writes the `primitive` to this Document keyed by `key`
     mutating func write(_ primitive: Primitive, forKey key: String) {
+        assert(!key.contains("\0"))
+        
         prepareForMutation()
         
         let dimensions = self.dimension(forKey: key)
         var type: UInt8!
+        var writeLength = false
         
         /// Accesses the pointer as `UInt8`
         func withPointer<I>(
@@ -33,9 +36,23 @@ extension Document {
         /// - Updates the DocumentCache
         func flush(from pointer: UnsafePointer<UInt8>, length: Int) {
             if let dimensions = dimensions {
+                var offset = dimensions.from &+ 1 &+ dimensions.keyCString
+                var valueLength = dimensions.valueLength
+                
+                if writeLength {
+                    var writtenLength = Int32(length)
+                    
+                    withPointer(pointer: &writtenLength, length: 4) { pointer, length in
+                        self.storage.replace(offset: offset, replacing: 4, with: pointer, length: length)
+                    }
+                    
+                    offset = offset &+ 4
+                    valueLength = valueLength &- 4
+                }
+                
                 self.storage.replace(
-                    offset: dimensions.from &+ 1 &+ dimensions.keyCString,
-                    replacing: dimensions.valueLength,
+                    offset: offset,
+                    replacing: valueLength,
                     with: pointer,
                     length: length
                 )
@@ -45,13 +62,26 @@ extension Document {
                 
                 self.storage.append(type)
                 self.storage.append(keyData)
+                let totalLength: Int
+                
+                if writeLength {
+                    var dataLength = Int32(length)
+                    totalLength = length &+ 4
+                    
+                    withPointer(pointer: &dataLength, length: 4) { pointer, length in
+                        self.storage.append(from: pointer, length: length)
+                    }
+                } else {
+                    totalLength = length
+                }
+                
                 self.storage.append(from: pointer, length: length)
                 
                 let dimensions = DocumentCache.Dimensions(
                     type: type,
                     from: start,
                     keyCString: keyData.count,
-                    valueLength: length
+                    valueLength: totalLength
                 )
                 
                 self.cache.storage.append((key, dimensions))
@@ -82,6 +112,11 @@ extension Document {
         case let objectId as ObjectId:
             type = .objectId
             flush(from: objectId.storage.readBuffer.baseAddress!, length: 12)
+        case let string as String:
+            type = .string
+            writeLength = true
+            let string = [UInt8](string.utf8) + [0x00]
+            flush(from: string, length: string.count)
         default:
             fatalError("Currently unsupported type \(primitive)")
         }

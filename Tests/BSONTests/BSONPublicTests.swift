@@ -102,40 +102,42 @@ final class BSONPublicTests: XCTestCase {
             "morePi": 3.14
         ]
         
-        var decoder = BSONDecoder()
+        let decoder = BSONDecoder()
         
-        let huge = try! decoder.decode(HugeDocument.self, from: doc)
-        print(huge)
+        for _ in 0..<10_000 {
+            let huge = try! decoder.decode(HugeDocument.self, from: doc)
+            print(huge)
+        }
     }
     
-//    func testDocumentLockup() {
-//        var document = Document()
-//        document.removeValue(forKey: "_id")
-//        document["_id"] = "123"
-//        XCTAssertEqual(String(lossy: document["_id"]), "123")
-//        XCTAssertNotNil(document.dictionaryRepresentation["_id"])
-//        document.removeValue(forKey: "_id")
-//        XCTAssertEqual(String(lossy: document["_id"]), nil)
-//        XCTAssertNil(document.dictionaryRepresentation["_id"])
-//        document["_id"] = "456"
-//        XCTAssertEqual(String(lossy: document["_id"]), "456")
-//        XCTAssertNotNil(document.dictionaryRepresentation["_id"])
-//        document["anykey"] = "anyvalue"
-//        XCTAssertNotNil(document["anykey"] as? String)
-//
-//        var document2 = Document()
-//        document2.removeValue(forKey: "anykey")
-//        document2["_id"] = "123"
-//        XCTAssertNotNil(document2["_id"])
-//
-//        var document3 = Document()
-//        document3["_id"] = "123"
-//        XCTAssertEqual(String(lossy: document3.dictionaryRepresentation["_id"]), "123")
-//        document2.removeValue(forKey: "anykey")
-//        XCTAssertEqual(document3.dictionaryRepresentation["_id"] as? String, "123")
-//        XCTAssertNil(document3.dictionaryRepresentation["anykey"])
-//    }
-//
+    func testDocumentLockup() {
+        var document = Document()
+        document["_id"] = nil
+        document["_id"] = "123"
+        XCTAssertEqual(document["_id", as: String.self], "123")
+        XCTAssert(document.keys.contains("_id"))
+        document["_id"] = nil
+        XCTAssertEqual(document["_id", as: String.self], nil)
+        XCTAssertFalse(document.keys.contains("_id"))
+        document["_id"] = "456"
+        XCTAssertEqual(document["_id", as: String.self], "456")
+        XCTAssert(document.keys.contains("_id"))
+        document["anykey"] = "anyvalue"
+        XCTAssertNotNil(document["anykey"] as? String)
+
+        var document2 = Document()
+        document2["anykey"] = nil
+        document2["_id"] = "123"
+        XCTAssertNotNil(document2["_id"])
+
+        var document3 = Document()
+        document3["_id"] = "123"
+        XCTAssertEqual(document3["_id", as: String.self], "123")
+        document2["anykey"] = nil
+        XCTAssertEqual(document3["_id", as: String.self], "123")
+        XCTAssert(document.keys.contains("anykey"))
+    }
+
 //    func testRelativeLength() {
 //        var document: Document = [
 //            "_id": ObjectId(),

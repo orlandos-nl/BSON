@@ -166,9 +166,9 @@ struct Storage {
             
             return UnsafeBufferPointer(start: pointer, count: range.count)
         case .readOnly(let buffer):
-            return buffer
+            return UnsafeBufferPointer(start: buffer.baseAddress, count: self.usedCapacity)
         case .readWrite(let buffer):
-            return UnsafeBufferPointer(start: buffer.baseAddress, count: buffer.count)
+            return UnsafeBufferPointer(start: buffer.baseAddress, count: self.usedCapacity)
         }
     }
     

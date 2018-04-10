@@ -196,6 +196,11 @@ extension Document {
             let length = numericCast(basePointer.int32) as Int
             basePointer += 4
             
+            if offset &+ 4 &+ length > self.storage.usedCapacity {
+                // Corrupt data
+                return nil
+            }
+            
             let stringBuffer = UnsafeBufferPointer(start: basePointer, count: length)
             
             let stringData = Data(buffer: stringBuffer)
