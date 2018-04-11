@@ -1,21 +1,3 @@
-/// A helper that is able to decode BSON data types into a `Decodable` type
-public struct BSONDecoder {
-    /// The configuration used for decoding
-    public var settings: BSONDecoderSettings
-    
-    /// The globally default BSONDecoder which can be overridden
-    ///
-    /// If you do not want a globally customizable `default` you'll need to create a new BSONDecoder using the initializer
-    public static var `default`: () -> (BSONDecoder) = {
-        return BSONDecoder()
-    }
-    
-    /// Creates a new decoder using fresh settings
-    public init() {
-        self.settings = BSONDecoderSettings()
-    }
-}
-
 /// A configuration structs that contains all strategies for (lossy) decoding values
 public struct BSONDecoderSettings {
     /// A strategy used to decode `P` from a BSON `Primitive?` value

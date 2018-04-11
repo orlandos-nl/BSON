@@ -1,5 +1,16 @@
 import Foundation
 
+/// A helper that is able to decode BSON data types into a `Decodable` type
+public struct BSONDecoder {
+    /// The configuration used for decoding
+    public var settings: BSONDecoderSettings
+    
+    /// Creates a new decoder using fresh settings
+    public init() {
+        self.settings = BSONDecoderSettings()
+    }
+}
+
 /// MARK: Strategies
 
 extension BSONDecoderSettings.FloatDecodingStrategy {
