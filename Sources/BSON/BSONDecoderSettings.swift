@@ -1,5 +1,52 @@
 /// A configuration structs that contains all strategies for (lossy) decoding values
 public struct BSONDecoderSettings {
+    /// Decodes values only if they are exactly matching the expectation.
+    ///
+    /// For non-BSON types, the following mapping applies:
+    ///
+    /// - Float: Decode from Double
+    /// - Non-native Integer types: .anyInteger
+    public static var strict: BSONDecoderSettings {
+        return .init(
+            decodeNullAsNil: false,
+            stringDecodingStrategy: .string,
+            decodeObjectIdFromString: false,
+            floatDecodingStrategy: .double,
+            doubleDecodingStrategy: .double,
+            int8DecodingStrategy: .anyInteger,
+            int16DecodingStrategy: .anyInteger,
+            int32DecodingStrategy: .int32,
+            int64DecodingStrategy: .int64,
+            intDecodingStrategy: .anyInteger,
+            uint8DecodingStrategy: .anyInteger,
+            uint16DecodingStrategy: .anyInteger,
+            uint32DecodingStrategy: .anyInteger,
+            uint64DecodingStrategy: .anyInteger,
+            uintDecodingStrategy: .anyInteger
+        )
+    }
+    
+    /// Tries to decode values, even if the types do not match. Some precision loss is possible.
+    public static var adaptive: BSONDecoderSettings {
+        return .init(
+            decodeNullAsNil: true,
+            stringDecodingStrategy: .adaptive,
+            decodeObjectIdFromString: true,
+            floatDecodingStrategy: .adaptive,
+            doubleDecodingStrategy: .adaptive,
+            int8DecodingStrategy: .adaptive,
+            int16DecodingStrategy: .adaptive,
+            int32DecodingStrategy: .adaptive,
+            int64DecodingStrategy: .adaptive,
+            intDecodingStrategy: .adaptive,
+            uint8DecodingStrategy: .adaptive,
+            uint16DecodingStrategy: .adaptive,
+            uint32DecodingStrategy: .adaptive,
+            uint64DecodingStrategy: .adaptive,
+            uintDecodingStrategy: .adaptive
+        )
+    }
+    
     /// A strategy used to decode `P` from a BSON `Primitive?` value
     ///
     /// If the key (`String`) is nil the value was not associated with a Dictionary Document.
@@ -14,6 +61,7 @@ public struct BSONDecoderSettings {
     public enum FloatDecodingStrategy {
         case string
         case double
+        case adaptive
         case custom(DecodingStrategy<Float>)
     }
     
@@ -38,7 +86,7 @@ public struct BSONDecoderSettings {
         case roundingAnyNumber
         
         /// Decodes this integer from either a String or a number (rounding Doubles)
-        case stringOrNumber
+        case adaptive
         
         /// Applies a custom decoding strategy
         case custom(DecodingStrategy<I>)
@@ -63,7 +111,7 @@ public struct BSONDecoderSettings {
         case textual
         
         /// Allows both lossy conversions from both numerical and strings in addition to the regular `Double`.
-        case numericAndTextual
+        case adaptive
         
         /// Used for specifying a custom decoding strategy
         ///
@@ -90,7 +138,7 @@ public struct BSONDecoderSettings {
         /// - Int32.desciption
         /// - Int64.description
         /// - Bool ? "true" : "false"
-        case all
+        case adaptive
         
         /// Used for specifying a custom decoding strategy
         ///
@@ -102,44 +150,44 @@ public struct BSONDecoderSettings {
     public var decodeNullAsNil: Bool = true
     
     /// A strategy that is applied when encountering a request to decode a `String`
-    public var stringDecodingStrategy: StringDecodingStrategy = .string
+    public var stringDecodingStrategy: StringDecodingStrategy
     
     /// If `true`, allows decoding ObjectIds from Strings if they're formatted as a 24-character hexString
     public var decodeObjectIdFromString: Bool = false
     
     /// A strategy that is applied when encountering a request to decode a `Float`
-    public var floatDecodingStrategy: FloatDecodingStrategy = .double
+    public var floatDecodingStrategy: FloatDecodingStrategy
     
     /// A strategy that is applied when encountering a request to decode a `Double`
-    public var doubleDecodingStrategy: DoubleDecodingStrategy = .double
+    public var doubleDecodingStrategy: DoubleDecodingStrategy
     
     /// A strategy that is applied when encountering a request to decode a `Int8`
-    public var int8DecodingStrategy: IntegerDecodingStrategy<Int8> = .anyInteger
+    public var int8DecodingStrategy: IntegerDecodingStrategy<Int8>
     
     /// A strategy that is applied when encountering a request to decode a `Int16`
-    public var int16DecodingStrategy: IntegerDecodingStrategy<Int16> = .anyInteger
+    public var int16DecodingStrategy: IntegerDecodingStrategy<Int16>
     
     /// A strategy that is applied when encountering a request to decode a `Int32`
-    public var int32DecodingStrategy: IntegerDecodingStrategy<Int32> = .int32
+    public var int32DecodingStrategy: IntegerDecodingStrategy<Int32>
     
     /// A strategy that is applied when encountering a request to decode a `Int64`
-    public var int64DecodingStrategy: IntegerDecodingStrategy<Int64> = .int64
+    public var int64DecodingStrategy: IntegerDecodingStrategy<Int64>
     
     /// A strategy that is applied when encountering a request to decode a `Int`
-    public var intDecodingStrategy: IntegerDecodingStrategy<Int> = .anyInteger
+    public var intDecodingStrategy: IntegerDecodingStrategy<Int>
     
     /// A strategy that is applied when encountering a request to decode a `UInt8`
-    public var uint8DecodingStrategy: IntegerDecodingStrategy<UInt8> = .anyInteger
+    public var uint8DecodingStrategy: IntegerDecodingStrategy<UInt8>
     
     /// A strategy that is applied when encountering a request to decode a `UInt16`
-    public var uint16DecodingStrategy: IntegerDecodingStrategy<UInt16> = .anyInteger
+    public var uint16DecodingStrategy: IntegerDecodingStrategy<UInt16>
     
     /// A strategy that is applied when encountering a request to decode a `UInt32`
-    public var uint32DecodingStrategy: IntegerDecodingStrategy<UInt32> = .anyInteger
+    public var uint32DecodingStrategy: IntegerDecodingStrategy<UInt32>
     
     /// A strategy that is applied when encountering a request to decode a `UInt64`
-    public var uint64DecodingStrategy: IntegerDecodingStrategy<UInt64> = .anyInteger
+    public var uint64DecodingStrategy: IntegerDecodingStrategy<UInt64>
     
     /// A strategy that is applied when encountering a request to decode a `UInt`
-    public var uintDecodingStrategy: IntegerDecodingStrategy<UInt> = .anyInteger
+    public var uintDecodingStrategy: IntegerDecodingStrategy<UInt>
 }

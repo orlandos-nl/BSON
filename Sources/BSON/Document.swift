@@ -1,5 +1,10 @@
 import Foundation
 
+// TODO: Remove when unused
+func unimplemented() -> Never {
+    fatalError("Unimplemented")
+}
+
 public struct Document: Primitive {
     var storage: Storage
     var nullTerminated: Bool

@@ -6,8 +6,8 @@ public struct BSONDecoder {
     public var settings: BSONDecoderSettings
     
     /// Creates a new decoder using fresh settings
-    public init() {
-        self.settings = BSONDecoderSettings()
+    public init(settings: BSONDecoderSettings = .adaptive) {
+        self.settings = settings
     }
 }
 
@@ -27,6 +27,8 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
             }
             
             return float
+        case .adaptive:
+            unimplemented()
         case .custom(let strategy):
             guard
                 case .document(let document) = value,
@@ -53,6 +55,8 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
             }
             
             return float
+        case .adaptive:
+            unimplemented()
         case .custom(let strategy):
             guard let float = try strategy(nil, value.primitive) else {
                 throw BSONValueNotFound(type: Float.self, path: path)
@@ -87,8 +91,8 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         path: @autoclosure () -> [String]
     ) throws -> I {
         switch self {
-        case .string, .stringOrNumber:
-            if case .stringOrNumber = self {
+        case .string, .adaptive:
+            if case .adaptive = self {
                 guard decoder.identifier == .string else {
                     throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
                 }
@@ -136,8 +140,8 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         path: @autoclosure () -> [String]
     ) throws -> I {
         switch self {
-        case .string, .stringOrNumber:
-            if case .stringOrNumber = self {
+        case .string, .adaptive:
+            if case .adaptive = self {
                 guard decoder.identifier == .string else {
                     throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
                 }
@@ -183,7 +187,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
 extension BSONDecoderSettings.DoubleDecodingStrategy {
     fileprivate func decode(primitive: Primitive, identifier: UInt8, path: @autoclosure () -> [String]) throws -> Double {
         switch (identifier, self) {
-        case (.string, .textual), (.string, .numericAndTextual):
+        case (.string, .textual), (.string, .adaptive):
             guard let double = try Double(primitive.assert(asType: String.self)) else {
                 throw BSONValueNotFound(type: Double.self, path: path())
             }
@@ -191,9 +195,9 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
             return double
         case (.double, _):
             return try primitive.assert(asType: Double.self)
-        case (.int32, .numerical), (.int32, .numericAndTextual):
+        case (.int32, .numerical), (.int32, .adaptive):
             return try Double(primitive.assert(asType: Int32.self))
-        case (.int64, .numerical), (.int64, .numericAndTextual):
+        case (.int64, .numerical), (.int64, .adaptive):
             return try Double(primitive.assert(asType: Int64.self))
         default:
             throw BSONTypeConversionError(from: primitive, to: Double.self)
@@ -423,7 +427,7 @@ extension BSONDecoderSettings.StringDecodingStrategy {
             return try primitive.assert(asType: Int64.self).description
         case (.double, .numerical):
             return try primitive.assert(asType: Double.self).description
-        case (_, .all):
+        case (_, .adaptive):
             return try decoder.lossyDecodeString(identifier: identifier, value: primitive)
         case (_, .custom(let strategy)):
             guard let string = try strategy(nil, decoder.primitive) else {
