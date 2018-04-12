@@ -47,3 +47,13 @@ extension Document: ExpressibleByDictionaryLiteral {
         }
     }
 }
+
+extension Dictionary where Key == String, Value == Primitive {
+    public init(document: Document) {
+        self.init()
+        
+        for pair in document {
+            self[pair.key] = pair.value
+        }
+    }
+}
