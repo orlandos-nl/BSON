@@ -16,7 +16,7 @@ extension Document {
         prepareForMutation()
         
         let dimensions = self.dimension(forKey: key)
-        var type: UInt8!
+        var type: TypeIdentifier!
         var writeLength = false
         
         /// Accesses the pointer as `UInt8`
@@ -60,7 +60,7 @@ extension Document {
                 let start = self.storage.usedCapacity
                 let keyData = [UInt8](key.utf8) + [0]
                 
-                self.storage.append(type)
+                self.storage.append(type.rawValue)
                 self.storage.append(keyData)
                 let totalLength: Int
                 

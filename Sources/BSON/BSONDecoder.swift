@@ -185,7 +185,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
 }
 
 extension BSONDecoderSettings.DoubleDecodingStrategy {
-    fileprivate func decode(primitive: Primitive, identifier: UInt8, path: @autoclosure () -> [String]) throws -> Double {
+    fileprivate func decode(primitive: Primitive, identifier: TypeIdentifier, path: @autoclosure () -> [String]) throws -> Double {
         switch (identifier, self) {
         case (.string, .textual), (.string, .adaptive):
             guard let double = try Double(primitive.assert(asType: String.self)) else {
@@ -253,7 +253,7 @@ extension BSONDecoder {
 }
 
 fileprivate enum DecoderValue {
-    case primitive(UInt8, Primitive)
+    case primitive(TypeIdentifier, Primitive)
     case nothing
     case document(Document)
     
@@ -309,7 +309,7 @@ fileprivate struct _BSONDecoder: Decoder {
         return nil
     }
     
-    var identifier: UInt8? {
+    var identifier: TypeIdentifier? {
         if case .primitive(let identifer, _) = wrapped {
             return identifer
         }
@@ -352,7 +352,7 @@ fileprivate struct _BSONDecoder: Decoder {
         return try self.lossyDecodeString(identifier: identifier, value: value)
     }
     
-    func lossyDecodeString(identifier: UInt8, value: Primitive) throws -> String {
+    func lossyDecodeString(identifier: TypeIdentifier, value: Primitive) throws -> String {
         switch identifier {
         case .string:
             return try value.assert(asType: String.self)

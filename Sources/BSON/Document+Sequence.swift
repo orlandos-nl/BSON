@@ -28,7 +28,7 @@ public struct DocumentPair {
     fileprivate let dimensions: DocumentCache.Dimensions
     
     /// The type identifer of the value
-    internal var identifier: UInt8 {
+    internal var identifier: TypeIdentifier {
         return dimensions.type
     }
     

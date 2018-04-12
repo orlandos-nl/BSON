@@ -222,7 +222,7 @@ final class BSONPublicTests: XCTestCase {
 //
 //        XCTAssertEqual(document.dictionaryRepresentation.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
 //    }
-//
+
     func testObjectIdUniqueness() {
         var oids = [String]()
         oids.reserveCapacity(10_000)

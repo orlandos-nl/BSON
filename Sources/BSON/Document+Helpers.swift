@@ -1,5 +1,5 @@
 extension Document {
-    public func typeIdentifier(of key: String) -> UInt8? {
+    internal func typeIdentifier(of key: String) -> TypeIdentifier? {
         return self.dimension(forKey: key)?.type
     }
     

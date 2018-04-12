@@ -2,7 +2,7 @@ import Foundation
 
 final class DocumentCache {
     struct Dimensions {
-        var type: UInt8
+        var type: TypeIdentifier
         var from: Int
         var keyCString: Int
         var valueLength: Int
@@ -63,7 +63,7 @@ extension Document {
         return readPrimitive(atDimensions: dimensions)
     }
     
-    func valueLength(forType type: UInt8, at offset: Int) -> Int? {
+    func valueLength(forType type: TypeIdentifier, at offset: Int) -> Int? {
         switch type {
         case .string, .javascript:
             guard offset &+ 4 < self.storage.usedCapacity else {
@@ -135,7 +135,7 @@ extension Document {
         
         while position < self.storage.usedCapacity {
             let basePosition = position
-            let type = self.storage.readBuffer[position]
+            let typeId = self.storage.readBuffer[position]
             position = position &+ 1
             
             let cStringStart = storage.readBuffer.baseAddress!.advanced(by: position)
@@ -144,7 +144,10 @@ extension Document {
             
             let readKey = String(cString: cStringStart)
             
-            guard let valueLength = self.valueLength(forType: type, at: position) else {
+            guard
+                let type = TypeIdentifier(rawValue: typeId),
+                let valueLength = self.valueLength(forType: type, at: position)
+            else {
                 return nil
             }
             
@@ -182,7 +185,7 @@ extension Document {
         return String(cString: self.storage.readBuffer.baseAddress!.advanced(by: dimensions.from &+ 1))
     }
     
-    func readPrimitive(type: UInt8, offset: Int, length: Int) -> Primitive? {
+    func readPrimitive(type: TypeIdentifier, offset: Int, length: Int) -> Primitive? {
         let pointer = self.storage.readBuffer.baseAddress!.advanced(by: offset)
         
         switch type {

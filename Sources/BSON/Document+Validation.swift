@@ -74,12 +74,11 @@ extension Document {
         // Key is null terminated
         nextPair: while offset < count {
             // Type
-            let type = pointer.pointee
-            advance(1)
-            
-            if type == 0x00 {
-                return offset == count
+            guard let type = TypeIdentifier(rawValue: pointer.pointee) else {
+                return pointer.pointee == 0x00 && offset == count
             }
+            
+            advance(1)
             
             // Key
             advance(storage.cString(at: offset))
