@@ -36,6 +36,7 @@ extension Document {
                 
                 let document = Document(
                     storage: self.storage[offset ..< offset &+ length &- 1],
+                    cache: DocumentCache(), // FIXME: Try to share sub-caches
                     nullTerminated: false,
                     isArray: array
                 )

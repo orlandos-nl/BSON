@@ -29,18 +29,18 @@ public struct Binary: Primitive {
         }
     }
     
-    let storage: Storage
+    let storage: BSONBuffer
     
     public init() {
         self.storage = .init(bytes: [SubType.generic.identifier])
     }
     
-    internal init(storage: Storage) {
+    internal init(storage: BSONBuffer) {
         self.storage = storage
     }
     
     public init(pointer: UnsafePointer<UInt8>, count: Int) {
-        var storage = Storage(size: count &+ 1)
+        var storage = BSONBuffer(size: count &+ 1)
         storage.append(SubType.generic.identifier)
         storage.append(from: pointer, length: count)
         

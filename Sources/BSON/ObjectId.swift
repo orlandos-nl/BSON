@@ -87,7 +87,7 @@ public final class ObjectIdGenerator {
         
         self.incrementTemplateCounter()
         
-        return ObjectId(Storage(bytes: template))
+        return ObjectId(BSONBuffer(bytes: template))
     }
 }
 
@@ -98,10 +98,10 @@ private struct InvalidObjectIdString: Error {
 
 public struct ObjectId {
     /// The internal Storage Buffer
-    let storage: Storage
+    let storage: BSONBuffer
     
     /// Creates a new ObjectId using an existing (Sub-)Storage buffer
-    init(_ storage: Storage) {
+    init(_ storage: BSONBuffer) {
         assert(storage.usedCapacity == 12)
         
         self.storage = storage
@@ -131,7 +131,7 @@ public struct ObjectId {
             throw InvalidObjectIdString(hex: hex)
         }
         
-        self.storage = Storage(bytes: data)
+        self.storage = BSONBuffer(bytes: data)
     }
     
     /// The 12 bytes represented as 24-character hex-string

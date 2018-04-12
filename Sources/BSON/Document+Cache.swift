@@ -216,6 +216,7 @@ extension Document {
             } else if type == .document, type == .array {
                 return Document(
                     storage: storage[offset..<offset &+ length &- 1],
+                    cache: DocumentCache(),
                     nullTerminated: false,
                     isArray: type == .array
                 )

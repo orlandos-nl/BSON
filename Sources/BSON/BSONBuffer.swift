@@ -1,13 +1,43 @@
 import Foundation
 
+/// A wrapper around a `_Storage` engine enum
+///
+/// Automatically deallocates writable buffers
+final class AutoDeallocatingStorage {
+    var buffer: UnsafeMutableBufferPointer<UInt8>
+    let method: DeallocationMethod
+    
+    enum DeallocationMethod {
+        case `return`(BSONArenaAllocatorSlice)
+        case deallocate
+    }
+    
+    init(
+        buffer: UnsafeMutableBufferPointer<UInt8>,
+        method: DeallocationMethod = .deallocate
+        ) {
+        self.buffer = buffer
+        self.method = method
+    }
+    
+    deinit {
+        switch method {
+        case .deallocate:
+            buffer.baseAddress?.deallocate()
+        case .return(let allocatorMetadata):
+            allocatorMetadata.return()
+        }
+    }
+}
+
 /// A high performance, auto-deallocating, slicable and CoW binary data store
-struct Storage {
+struct BSONBuffer {
     /// The internal storage type
-    private indirect enum _Storage {
+    private indirect enum Storage {
         /// SubStorages are a slice of a super storage, slicing it's contents
         ///
         /// Sub-Storages are copied on write
-        case subStorage(_Storage, range: Range<Int>)
+        case subStorage(Storage, range: Range<Int>)
         
         /// Read-only buffers will be copied when a mutation occurs
         case readOnly(UnsafeBufferPointer<UInt8>)
@@ -74,8 +104,7 @@ struct Storage {
         }
         
         fileprivate init(size: Int) {
-            let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
-            let buffer = UnsafeMutableBufferPointer(start: pointer, count: size)
+            let buffer = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: size)
             
             self = .readWrite(.init(buffer: buffer))
         }
@@ -83,7 +112,7 @@ struct Storage {
         /// Ensures buffer mutability as well as the availability of a minimum amount of bytes of `capacity`
         mutating func ensureMutableCapacity(of capacity: Int) {
             func makeCopy(withCapacity capacity: Int) {
-                let storage = _Storage(size: capacity)
+                let storage = Storage(size: capacity)
                 storage.writeBuffer!.baseAddress!.assign(from: self.readBuffer.baseAddress!, count: self.count)
                 self = storage
             }
@@ -112,21 +141,6 @@ struct Storage {
         }
     }
     
-    /// A wrapper around a `_Storage` engine enum
-    ///
-    /// Automatically deallocates writable buffers
-    final class AutoDeallocatingStorage {
-        var buffer: UnsafeMutableBufferPointer<UInt8>
-        
-        init(buffer: UnsafeMutableBufferPointer<UInt8>) {
-            self.buffer = buffer
-        }
-        
-        deinit {
-            buffer.baseAddress?.deallocate()
-        }
-    }
-    
     /// Provides a read-only view into the current data
     ///
     /// Only reflects the used capacity
@@ -152,10 +166,10 @@ struct Storage {
     }
     
     /// The underlying automatically deallocating storage engine
-    private var storage: _Storage
+    private var storage: Storage
     
     /// Wraps an `_Storage` assuming the entire storage is used capacity
-    private init(storage: _Storage) {
+    private init(storage: Storage) {
         self.storage = storage
         self.usedCapacity = storage.count
     }
@@ -169,7 +183,7 @@ struct Storage {
     /// Creates a new storage buffer, copying the provided `Data` buffer
     init(data: Data) {
         let size = data.count
-        let storage = _Storage(size: size)
+        let storage = Storage(size: size)
         
         data.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
             storage.writeBuffer!.baseAddress!.assign(from: pointer, count: size)
@@ -181,7 +195,7 @@ struct Storage {
     /// Creates a new storage buffer, copying the provided `[UInt8]` buffer
     init(bytes: [UInt8]) {
         let size = bytes.count
-        let storage = _Storage(size: size)
+        let storage = Storage(size: size)
         
         storage.writeBuffer!.baseAddress!.assign(from: bytes, count: size)
         
@@ -293,7 +307,7 @@ struct Storage {
     }
     
     /// Creates a sliced substorage with the given range
-    subscript(range: Range<Int>) -> Storage {
-        return Storage(storage: .subStorage(self.storage, range: range))
+    subscript(range: Range<Int>) -> BSONBuffer {
+        return BSONBuffer(storage: .subStorage(self.storage, range: range))
     }
 }
