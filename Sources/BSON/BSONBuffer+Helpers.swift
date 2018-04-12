@@ -1,4 +1,5 @@
 extension Storage {
+    /// Scans a cString at the given offset, returns the length of the cString
     func cString(at offset: Int) -> Int {
         var cStringLength = 0
         let pointer = readBuffer.baseAddress! + offset
