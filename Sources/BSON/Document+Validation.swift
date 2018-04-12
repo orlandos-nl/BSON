@@ -58,7 +58,7 @@ extension Document {
             let stringLength = pointer.int32
             
             // Minimum a null terminator
-            guard stringLength >= 1, pointer[numericCast(stringLength &- 1 &+ 4)] == 0x00 else {
+            guard stringLength >= 1, pointer[numericCast(stringLength &+ 4 &- 1)] == 0x00 else {
                 return false
             }
             

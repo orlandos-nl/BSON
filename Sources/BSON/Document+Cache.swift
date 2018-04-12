@@ -235,7 +235,9 @@ extension Document {
         case .boolean:
             return pointer.pointee == 0x01
         case .datetime:
-            unimplemented()
+            return pointer.withMemoryRebound(to: Int64.self, capacity: 1) {
+                return Date(timeIntervalSince1970: Double($0.pointee) / 1000)
+            }
         case .timestamp:
             unimplemented()
         case .int64:
