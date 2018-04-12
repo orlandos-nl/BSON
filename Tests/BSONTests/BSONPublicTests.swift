@@ -14,11 +14,27 @@ import XCTest
     import Glibc
 #endif
 
+let testAllocator = BSONArenaAllocator(blocks: 64, blockSize: 64)
+var arena: Bool = false
+
+extension Document {
+    static func new() -> Document {
+        if arena {
+            return Document(allocator: testAllocator)
+        } else {
+            return Document()
+        }
+    }
+}
+
 final class BSONPublicTests: XCTestCase {
 
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
         return [
-//            ("testDocumentLockup", testDocumentLockup),
+            ("testDocumentLockup", testDocumentLockup),
+            ("testBasicUsage", testBasicUsage),
+//            ("testObjectIdUniqueness", testObjectIdUniqueness),
+            ("testDecoding", testDecoding),
 //            ("testDictionaryLiteral", testDictionaryLiteral),
 //            ("testDocumentCollectionFunctionality", testDocumentCollectionFunctionality),
 //            ("testInitializedFromData", testInitializedFromData),
@@ -41,6 +57,16 @@ final class BSONPublicTests: XCTestCase {
 //            ("testBinaryEquatable", testBinaryEquatable),
 //            ("testUsingDictionaryAsPrimitive", testUsingDictionaryAsPrimitive)
         ]
+    }
+    
+    func testArenaAllocator() throws {
+        arena = true
+        
+        for _ in 0..<100 {
+            for test in BSONPublicTests.allTests {
+                try test.1(self)()
+            }
+        }
     }
 //
 //    let kittenDocument: Document = [
@@ -67,7 +93,7 @@ final class BSONPublicTests: XCTestCase {
 //    ]
 
     func testBasicUsage() {
-        var doc = Document()
+        var doc = Document.new()
         
         XCTAssertEqual(doc.keys.count, 0)
         
@@ -111,7 +137,7 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testDocumentLockup() {
-        var document = Document()
+        var document = Document.new()
         document["_id"] = nil
         document["_id"] = "123"
         XCTAssertEqual(document["_id", as: String.self], "123")
@@ -125,12 +151,12 @@ final class BSONPublicTests: XCTestCase {
         document["anykey"] = "anyvalue"
         XCTAssertNotNil(document["anykey"] as? String)
 
-        var document2 = Document()
+        var document2 = Document.new()
         document2["anykey"] = nil
         document2["_id"] = "123"
         XCTAssertNotNil(document2["_id"])
 
-        var document3 = Document()
+        var document3 = Document.new()
         document3["_id"] = "123"
         XCTAssertEqual(document3["_id", as: String.self], "123")
         document2["anykey"] = nil
@@ -149,7 +175,7 @@ final class BSONPublicTests: XCTestCase {
 //    }
 //
 //    func testTrieCopy() {
-//        var doc = Document()
+//        var doc = Document.new()
 //        doc["username"] = "bob"
 //        doc["password"] = "Secrat"
 //
@@ -549,7 +575,7 @@ final class BSONPublicTests: XCTestCase {
 //        XCTAssert(kittenDocument["minKey"] is MinKey)
 //        XCTAssert(kittenDocument["maxKey"] is MaxKey)
 //
-//        let emptyDocument = Document()
+//        let emptyDocument = Document.new()
 //
 //        XCTAssertNotEqual(emptyDocument, [])
 //        XCTAssertEqual(emptyDocument, [:])

@@ -70,7 +70,10 @@ public struct Document: Primitive {
     ///
     /// `isArray` dictates what kind of `Document`
     public init(allocator: BSONArenaAllocator, isArray: Bool = false) {
-        unimplemented()
+        self.storage = BSONBuffer(allocating: 4, allocator: allocator)
+        self.nullTerminated = true
+        self.cache = DocumentCache()
+        self.isArray = isArray
     }
     
     /// Assumes the buffer to not be deallocated for the duration of this Document

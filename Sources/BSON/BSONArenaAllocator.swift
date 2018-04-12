@@ -116,13 +116,19 @@ public final class BSONArenaAllocator {
     let blockCount: Int
     fileprivate var arenas = [BSONArena]()
     
-    init(blocks: Int, blockSize: Int) {
+    public init(blocks: Int, blockSize: Int) {
         self.blockSize = blockSize
         self.blockCount = blocks
     }
     
-    func reserve(size: Int) -> AutoDeallocatingStorage {
-        assert(size <= blockCount, "Incorrect block size requested")
+    internal func reserve(minimumCapacity: Int) -> AutoDeallocatingStorage {
+        return self.reserve(size: (minimumCapacity / blockSize) &+ 1)
+    }
+    
+    fileprivate func reserve(size: Int) -> AutoDeallocatingStorage {
+        guard size <= blockCount else {
+            return AutoDeallocatingStorage(size: size * blockSize)
+        }
         
         // Try all arenas
         nextArena: for arena in 0..<arenas.count {
@@ -145,7 +151,9 @@ public final class BSONArenaAllocator {
         arenas.append(arena)
         
         // If this fails it's a big user error
-        let range = arena.reserveBlocks(count: size)!
+        guard let range = arena.reserveBlocks(count: size) else {
+            return AutoDeallocatingStorage(size: size * blockSize)
+        }
         
         return arena.storage(
             in: range,

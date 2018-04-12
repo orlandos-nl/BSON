@@ -15,9 +15,14 @@ final class AutoDeallocatingStorage {
     init(
         buffer: UnsafeMutableBufferPointer<UInt8>,
         method: DeallocationMethod = .deallocate
-        ) {
+    ) {
         self.buffer = buffer
         self.method = method
+    }
+    
+    init(size: Int) {
+        self.buffer = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: size)
+        self.method = .deallocate
     }
     
     deinit {
@@ -95,6 +100,7 @@ struct BSONBuffer {
         var requiresCopyForMutation: Bool {
             switch self {
             case .readWrite(var storage):
+                // FIXME: Always `true` thanks to `var storage`
                 return isKnownUniquelyReferenced(&storage)
             case .readOnly(_):
                 return true
@@ -104,9 +110,7 @@ struct BSONBuffer {
         }
         
         fileprivate init(size: Int) {
-            let buffer = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: size)
-            
-            self = .readWrite(.init(buffer: buffer))
+            self = .readWrite(.init(size: size))
         }
         
         /// Ensures buffer mutability as well as the availability of a minimum amount of bytes of `capacity`
@@ -130,6 +134,7 @@ struct BSONBuffer {
             
             switch self {
             case .readWrite(let storage):
+                // FIXME: Crashes on release?
                 let pointer = realloc(storage.buffer.baseAddress!, newCapacity)!.assumingMemoryBound(to: UInt8.self)
                 self = .readWrite(.init(buffer: .init(start: pointer, count: newCapacity)))
             case .subStorage(let storage, let range):
@@ -168,10 +173,16 @@ struct BSONBuffer {
     /// The underlying automatically deallocating storage engine
     private var storage: Storage
     
-    /// Wraps an `_Storage` assuming the entire storage is used capacity
+    /// Wraps a `Storage` assuming the entire storage is used capacity
     private init(storage: Storage) {
         self.storage = storage
         self.usedCapacity = storage.count
+    }
+    
+    /// Wraps a `AutoDeallocatingStorage` assuming the entire storage is unused capacity
+    public init(allocating: Int, allocator: BSONArenaAllocator) {
+        self.storage = .readWrite(allocator.reserve(minimumCapacity: allocating))
+        self.usedCapacity = 0
     }
     
     /// Creates a new storage buffer of the given size
