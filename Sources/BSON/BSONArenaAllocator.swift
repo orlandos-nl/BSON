@@ -165,9 +165,6 @@ public final class BSONArenaAllocator {
     }
     
     deinit {
-        // HELP?
-        unimplemented()
-        
         for arena in arenas {
             arena.buffer.deallocate()
         }
