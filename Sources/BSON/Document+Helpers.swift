@@ -10,6 +10,14 @@ extension Document {
         
         throw BSONValueNotFound(type: P.self, path: [key])
     }
+    
+    /// Ensures the minimum writable capacity of this BSON Document is `n` bytes
+    ///
+    /// Useful when you know in advance a Document will contain a large(r) amount of values
+    /// Prevents unnecessary reallocations
+    public mutating func ensureBinaryCapacity(_ n: Int) {
+        self.storage.ensureCapacity(n)
+    }
 }
 
 struct BSONValueNotFound: Error {

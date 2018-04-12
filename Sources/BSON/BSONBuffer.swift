@@ -80,6 +80,7 @@ struct Storage {
             self = .readWrite(.init(buffer: buffer))
         }
         
+        /// Ensures buffer mutability as well as the availability of a minimum amount of bytes of `capacity`
         mutating func ensureMutableCapacity(of capacity: Int) {
             func makeCopy(withCapacity capacity: Int) {
                 let storage = _Storage(size: capacity)
@@ -126,10 +127,16 @@ struct Storage {
         }
     }
     
+    /// Provides a read-only view into the current data
+    ///
+    /// Only reflects the used capacity
     var readBuffer: UnsafeBufferPointer<UInt8> {
         return UnsafeBufferPointer(start: self.storage.readBuffer.baseAddress, count: usedCapacity)
     }
     
+    /// Provides a read-write view into the current data buffer
+    ///
+    /// Reflects both used and unused capacity and should be used together with the `usedCapacity` property
     var writeBuffer: UnsafeMutableBufferPointer<UInt8>? {
         return self.storage.writeBuffer
     }
@@ -147,16 +154,19 @@ struct Storage {
     /// The underlying automatically deallocating storage engine
     private var storage: _Storage
     
+    /// Wraps an `_Storage` assuming the entire storage is used capacity
     private init(storage: _Storage) {
         self.storage = storage
         self.usedCapacity = storage.count
     }
     
+    /// Creates a new storage buffer of the given size
     init(size: Int) {
         self.storage = .init(size: size)
         self.usedCapacity = 0
     }
     
+    /// Creates a new storage buffer, copying the provided `Data` buffer
     init(data: Data) {
         let size = data.count
         let storage = _Storage(size: size)
@@ -168,6 +178,7 @@ struct Storage {
         self.init(storage: storage)
     }
     
+    /// Creates a new storage buffer, copying the provided `[UInt8]` buffer
     init(bytes: [UInt8]) {
         let size = bytes.count
         let storage = _Storage(size: size)
@@ -177,14 +188,21 @@ struct Storage {
         self.init(storage: storage)
     }
     
+    /// Wraps the provided buffer pointer as a read-only view
+    ///
+    /// This view must NOT be deallocated for the duration of this buffer's lifetime
     init(buffer: UnsafeBufferPointer<UInt8>) {
         self.init(storage: .readOnly(buffer))
     }
     
+    /// Wraps the provided buffer pointer as a read-write view
+    ///
+    /// This view must NOT be deallocated for the duration of this buffer's lifetime
     init(buffer: UnsafeMutableBufferPointer<UInt8>) {
         self.init(storage: .readWrite(.init(buffer: buffer)))
     }
     
+    /// Inserts the contents of `pointer` with the `length` in bytes at offset `position`
     mutating func insert(at position: Int, from pointer: UnsafePointer<UInt8>, length: Int) {
         self.storage.ensureMutableCapacity(of: self.usedCapacity &+ length)
         
@@ -196,6 +214,18 @@ struct Storage {
         self.usedCapacity = self.usedCapacity &+ length
     }
     
+    /// Ensures a total of `n` bytes are available for writing
+    public mutating func ensureCapacity(_ n: Int) {
+        self.storage.ensureMutableCapacity(of: n)
+    }
+    
+    /// Replaces `replacing` bytes at the `offset`
+    ///
+    /// The replacement will be read from `pointer` and the provided `length`
+    ///
+    /// Attempts to do a drop-in replacement with as little effort possible.
+    ///
+    /// Automatically reallocs for the new data to fit if necessary
     mutating func replace(offset: Int, replacing: Int, with pointer: UnsafePointer<UInt8>, length: Int) {
         let diff = replacing &- length
         
@@ -209,9 +239,18 @@ struct Storage {
         }
         
         memcpy(insertPointer, pointer, length)
+        
+        // TODO: Move back into empty space
+        if diff < 0 {
+            unimplemented()
+        }
+        
         self.usedCapacity = self.usedCapacity &+ diff
     }
     
+    /// Appends the pointer's data to the end of the buffer.
+    ///
+    /// Automatically reallocs for the new data to fit if necessary
     mutating func append(from pointer: UnsafePointer<UInt8>, length: Int) {
         self.storage.ensureMutableCapacity(of: self.usedCapacity &+ length)
         
@@ -219,6 +258,9 @@ struct Storage {
         self.usedCapacity = self.usedCapacity &+ length
     }
     
+    /// Appends the byte
+    ///
+    /// Automatically reallocs for the new data to fit if necessary
     mutating func append(_ byte: UInt8) {
         self.storage.ensureMutableCapacity(of: self.usedCapacity &+ 1)
         
@@ -226,6 +268,9 @@ struct Storage {
         self.usedCapacity = self.usedCapacity &+ 1
     }
     
+    /// Appends the bytes to the end of the buffer.
+    ///
+    /// Automatically reallocs for the new data to fit if necessary
     mutating func append(_ bytes: [UInt8]) {
         let size = bytes.count
         self.storage.ensureMutableCapacity(of: self.usedCapacity &+ size)
@@ -234,6 +279,9 @@ struct Storage {
         self.usedCapacity = self.usedCapacity &+ size
     }
     
+    /// Removes `length` bytes from the offset position
+    ///
+    /// The bytes may not be wiped out of memory and can simply become 'unused' capacity
     mutating func remove(from offset: Int, length: Int) {
         memmove(
             self.writeBuffer!.baseAddress! + (offset - length),
@@ -244,6 +292,7 @@ struct Storage {
         self.usedCapacity = self.usedCapacity &- length
     }
     
+    /// Creates a sliced substorage with the given range
     subscript(range: Range<Int>) -> Storage {
         return Storage(storage: .subStorage(self.storage, range: range))
     }

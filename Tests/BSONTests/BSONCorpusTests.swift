@@ -94,7 +94,7 @@ final class BSONCorpusTests: XCTestCase {
     func testTest() {
         var doc = Document()
         doc["a"] = "b"
-        print(doc.serializeData().map {
+        print(doc.makeData().map {
             return "0x" + String($0, radix: 16, uppercase: true)
         }.joined(separator: ", "))
     }

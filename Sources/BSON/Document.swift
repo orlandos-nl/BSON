@@ -6,8 +6,15 @@ func unimplemented() -> Never {
 }
 
 public struct Document: Primitive {
+    /// The internal storage engine that stores BSON in it's original binary fomr
     var storage: Storage
+    
+    /// Indicates that the `Document` holds the final null terminator
+    ///
+    /// If omitted, the performance for appends will increase until serialization
     var nullTerminated: Bool
+    
+    /// 
     var isArray: Bool
     var cache = DocumentCache()
     
@@ -35,6 +42,11 @@ public struct Document: Primitive {
         self.isArray = isArray
     }
     
+    /// Assumes the buffer to not be deallocated for the duration of this Document
+    ///
+    /// Provides a zero-copy interface with this data, including `Codable`
+    ///
+    /// The buffer will only be copied on mutations of this Document
     public init(buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
         self.storage = Storage(buffer: buffer)
         self.nullTerminated = true

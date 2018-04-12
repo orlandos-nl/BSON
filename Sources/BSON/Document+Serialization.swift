@@ -1,19 +1,18 @@
 import Foundation
 
 extension Document {
-    func serializeData() -> Data {
-        self.storage.writeBuffer?.baseAddress?.withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
-            if self.nullTerminated {
-                pointer.pointee = Int32(self.storage.readBuffer.count)
-            } else {
-                pointer.pointee = Int32(self.storage.readBuffer.count &+ 1)
-            }
+    public mutating func withUnsafeBufferPointer<T>(_ run: (UnsafeBufferPointer<UInt8>) throws -> T) rethrows -> T {
+        if !nullTerminated {
+            self.storage.append(0x00)
+            self.nullTerminated = true
         }
         
-        if self.nullTerminated {
-            return Data(buffer: self.storage.readBuffer)
-        } else {
-            return Data(buffer: self.storage.readBuffer) + [0]
+        return try run(self.storage.readBuffer)
+    }
+    
+    public mutating func makeData() -> Data {
+        return self.withUnsafeBufferPointer { buffer in
+            return Data(buffer: buffer)
         }
     }
 }
