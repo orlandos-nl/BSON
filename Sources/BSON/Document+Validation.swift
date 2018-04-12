@@ -140,8 +140,6 @@ extension Document {
                 advance(4)
             case .decimal128:
                 advance(16)
-            default:
-                return false
             }
             
             // Check parsed data size

@@ -678,6 +678,14 @@ fileprivate struct SingleValueBSONContainer: SingleValueDecodingContainer, AnySi
         return doc
     }
     
+    func decodeBinary() throws -> Binary {
+        guard let binary = self.decoder.primitive as? Binary else {
+            throw BSONValueNotFound(type: Binary.self, path: self.codingPath.path)
+        }
+        
+        return binary
+    }
+    
     func decodeObjectId() throws -> ObjectId {
         guard let objectId = self.decoder.primitive as? ObjectId else {
             throw BSONValueNotFound(type: ObjectId.self, path: self.codingPath.path)

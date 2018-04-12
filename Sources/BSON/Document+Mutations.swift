@@ -1,3 +1,5 @@
+import Foundation
+
 extension Document {
     /// Prepates the document before mutations such as addition or removal of keys
     ///
@@ -34,7 +36,7 @@ extension Document {
         ///
         /// - Writes the identifier, key and value
         /// - Updates the DocumentCache
-        func flush(from pointer: UnsafePointer<UInt8>, length: Int) {
+        func flush(from pointer: UnsafePointer<UInt8>?, length: Int) {
             if let dimensions = dimensions {
                 var offset = dimensions.from &+ 1 &+ dimensions.keyCString
                 var valueLength = dimensions.valueLength
@@ -50,12 +52,14 @@ extension Document {
                     valueLength = valueLength &- 4
                 }
                 
-                self.storage.replace(
-                    offset: offset,
-                    replacing: valueLength,
-                    with: pointer,
-                    length: length
-                )
+                if let pointer = pointer {
+                    self.storage.replace(
+                        offset: offset,
+                        replacing: valueLength,
+                        with: pointer,
+                        length: length
+                    )
+                }
             } else {
                 let start = self.storage.usedCapacity
                 let keyData = [UInt8](key.utf8) + [0]
@@ -75,7 +79,9 @@ extension Document {
                     totalLength = length
                 }
                 
-                self.storage.append(from: pointer, length: length)
+                if let pointer = pointer {
+                    self.storage.append(from: pointer, length: length)
+                }
                 
                 let dimensions = DocumentCache.Dimensions(
                     type: type,
@@ -117,6 +123,13 @@ extension Document {
             writeLength = true
             let string = [UInt8](string.utf8) + [0x00]
             flush(from: string, length: string.count)
+        case let binary as Binary:
+            type = .binary
+            writeLength = true
+            flush(from: binary.storage.readBuffer.baseAddress!, length: binary.storage.readBuffer.count)
+        case is NSNull:
+            type = .null
+            flush(from: nil, length: 0)
         default:
             fatalError("Currently unsupported type \(primitive)")
         }

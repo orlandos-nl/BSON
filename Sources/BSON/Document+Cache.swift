@@ -119,8 +119,6 @@ extension Document {
             return 4
         case .decimal128:
             return 16
-        default:
-            return nil
         }
     }
     
@@ -243,8 +241,6 @@ extension Document {
         case .int32:
             return pointer.withMemoryRebound(to: Int32.self, capacity: 1) { $0.pointee }
         case .decimal128:
-            return nil
-        default:
             return nil
         }
     }
