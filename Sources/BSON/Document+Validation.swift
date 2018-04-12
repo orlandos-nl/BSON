@@ -24,7 +24,7 @@ extension Document {
             return offset &+ n < count
         }
         
-        func document() -> Bool {
+        func document(array: Bool) -> Bool {
             guard has(4) else {
                 return false
             }
@@ -34,7 +34,11 @@ extension Document {
                 
                 guard has(length) else { return false }
                 
-                let document = Document(storage: self.storage[offset ..< offset &+ length &- 1], nullTerminated: false)
+                let document = Document(
+                    storage: self.storage[offset ..< offset &+ length &- 1],
+                    nullTerminated: false,
+                    isArray: array
+                )
                 
                 guard document.validate(recursively: true) else {
                     return false
@@ -98,7 +102,7 @@ extension Document {
                     return false
                 }
             case .document, .array:
-                guard document() else {
+                guard document(array: type == .array) else {
                     return false
                 }
             case .binary:
@@ -133,7 +137,7 @@ extension Document {
                 guard string() else {
                     return false
                 }
-                guard document() else {
+                guard document(array: false) else {
                     return false
                 }
             case .int32:

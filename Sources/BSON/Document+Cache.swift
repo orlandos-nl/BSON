@@ -189,59 +189,75 @@ extension Document {
         switch type {
         case .double:
             return pointer.withMemoryRebound(to: Double.self, capacity: 1) { $0.pointee }
-        case .string:
+        case .string, .binary, .document, .array:
             let buffer = self.storage.readBuffer
             
             var basePointer = buffer.baseAddress!.advanced(by: offset)
             
             let length = numericCast(basePointer.int32) as Int
-            basePointer += 4
             
-            if offset &+ 4 &+ length > self.storage.usedCapacity {
-                // Corrupt data
-                return nil
+            if type == .string {
+                basePointer += 4
+                
+                // Offset + Size + Data
+                if offset &+ 4 &+ length > self.storage.usedCapacity {
+                    // Corrupt data
+                    return nil
+                }
+                
+                let stringBuffer = UnsafeBufferPointer(start: basePointer, count: length)
+                
+                let stringData = Data(buffer: stringBuffer)
+                
+                return String(
+                    data: stringData[..<stringData.endIndex.advanced(by: -1)],
+                    encoding: .utf8
+                )
+            } else if type == .document, type == .array {
+                return Document(
+                    storage: storage[offset..<offset &+ length &- 1],
+                    nullTerminated: false,
+                    isArray: type == .array
+                )
+            } else {
+                basePointer += 5
+                
+                // Offset + Size + SubType + Data
+                if offset &+ 5 &+ length > self.storage.usedCapacity {
+                    // Corrupt data
+                    return nil
+                }
+                
+                return Binary(storage: storage[offset..<offset &+ length])
             }
-            
-            let stringBuffer = UnsafeBufferPointer(start: basePointer, count: length)
-            
-            let stringData = Data(buffer: stringBuffer)
-            
-            return String(
-                data: stringData[..<stringData.endIndex.advanced(by: -1)],
-                encoding: .utf8
-            )
-        case .document, .array:
-            fatalError()
-        case .binary:
-            return nil
         case .objectId:
             return ObjectId(storage[offset..<offset &+ 12])
         case .boolean:
             return pointer.pointee == 0x01
         case .datetime:
-            return nil
+            unimplemented()
         case .timestamp:
-            return nil
+            unimplemented()
         case .int64:
             return pointer.withMemoryRebound(to: Int64.self, capacity: 1) { $0.pointee }
         case .null:
-            return nil
+            unimplemented()
         case .minKey:
-            return nil
+            return MinKey()
         case .maxKey:
             // no data
             // Still need to check the key's size
-            return nil
+            return MaxKey()
         case .regex:
-            return nil
+            unimplemented()
         case .javascript:
-            return nil
+            unimplemented()
         case .javascriptWithScope:
-            return nil
+            unimplemented()
         case .int32:
             return pointer.withMemoryRebound(to: Int32.self, capacity: 1) { $0.pointee }
         case .decimal128:
-            return nil
+            unimplemented()
         }
     }
     
