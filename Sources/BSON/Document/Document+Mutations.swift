@@ -127,7 +127,7 @@ extension Document {
             type = .binary
             writeLength = true
             flush(from: binary.storage.readBuffer.baseAddress!, length: binary.storage.readBuffer.count)
-        case is NSNull:
+        case is Null:
             type = .null
             flush(from: nil, length: 0)
         case let decimal128 as Decimal128:

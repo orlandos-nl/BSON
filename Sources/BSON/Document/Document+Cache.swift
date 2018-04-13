@@ -244,7 +244,7 @@ extension Document {
         case .int64:
             return pointer.withMemoryRebound(to: Int64.self, capacity: 1) { $0.pointee }
         case .null:
-            unimplemented()
+            return Null()
         case .minKey:
             return MinKey()
         case .maxKey:
