@@ -45,8 +45,8 @@ extension Document: ExpressibleByDictionaryLiteral {
     }
     
     /// Creates a new Document with the given elements
-    public init<S : Sequence>(elements: S) where S.Element == (String, Primitive) {
-        self.init()
+    public init<S : Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, Primitive) {
+        self.init(isArray: isArray)
         for (key, value) in elements {
             self[key] = value
         }

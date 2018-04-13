@@ -13,7 +13,7 @@ extension Primitive {
 
 fileprivate extension Sequence where Element : PrimitiveConvertible {
     func makeDocument() -> Document {
-        return Document(elements: self.enumerated().map { ("\($0)", $1.makePrimitive()) })
+        return Document(elements: self.enumerated().map { ("\($0)", $1.makePrimitive()) }, isArray: true)
     }
 }
 
