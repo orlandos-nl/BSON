@@ -260,7 +260,7 @@ extension Document {
         case .int32:
             return pointer.withMemoryRebound(to: Int32.self, capacity: 1) { $0.pointee }
         case .decimal128:
-            unimplemented()
+            return Decimal128(storage[offset..<offset &+ 16])
         }
     }
     

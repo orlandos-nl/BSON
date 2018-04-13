@@ -130,6 +130,9 @@ extension Document {
         case is NSNull:
             type = .null
             flush(from: nil, length: 0)
+        case let decimal128 as Decimal128:
+            type = .decimal128
+            flush(from: decimal128.storage.readBuffer.baseAddress!, length: 16)
         case var document as Document:
             type = document.isArray ? .array : .document
             document.withUnsafeBufferPointer { buffer in
