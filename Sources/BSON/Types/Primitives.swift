@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol Primitive: Codable {}
+public protocol Primitive: Codable, PrimitiveConvertible {}
 internal protocol BSONDataType: Primitive {
     var primitive: Primitive { get }
     init(primitive: Primitive?) throws

@@ -130,6 +130,11 @@ extension Document {
         case is NSNull:
             type = .null
             flush(from: nil, length: 0)
+        case var document as Document:
+            type = .document
+            document.withUnsafeBufferPointer { buffer in
+                flush(from: buffer.baseAddress!, length: buffer.count)
+            }
         default:
             fatalError("Currently unsupported type \(primitive)")
         }

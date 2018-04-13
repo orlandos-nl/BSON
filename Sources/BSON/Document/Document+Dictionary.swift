@@ -12,7 +12,7 @@ extension Document: ExpressibleByDictionaryLiteral {
     }
     
     /// Tries to extract a value of type `P` from the value at key `key`
-    public subscript<P: Primitive>(key: String, as type: P.Type) -> P? {
+    internal subscript<P: Primitive>(key: String, as type: P.Type) -> P? {
         return self[key] as? P
     }
     
@@ -40,7 +40,12 @@ extension Document: ExpressibleByDictionaryLiteral {
     }
     
     /// Creates a new Document from a Dictionary literal
-    public init(dictionaryLiteral elements: (String, Primitive)...) {
+    public init(dictionaryLiteral elements: (String, PrimitiveConvertible)...) {
+        self.init(elements: elements.lazy.map { ($0, $1.makePrimitive()) })
+    }
+    
+    /// Creates a new Document with the given elements
+    public init<S : Sequence>(elements: S) where S.Element == (String, Primitive) {
         self.init()
         for (key, value) in elements {
             self[key] = value

@@ -106,6 +106,11 @@ public struct ObjectId {
         
         self.storage = storage
     }
+ 
+    // TODO: Implement this another way!
+    public init() {
+        self = ObjectIdGenerator().generate()
+    }
     
     /// Decodes the ObjectID from the provided (24 character) hexString
     public init(_ hex: String) throws {

@@ -1,8 +1,8 @@
 import Foundation
 
 // TODO: Remove when unused
-func unimplemented() -> Never {
-    fatalError("Unimplemented")
+func unimplemented(_ function: String = #function) -> Never {
+    fatalError("\(function) is unimplemented")
 }
 
 public struct Document: Primitive {
