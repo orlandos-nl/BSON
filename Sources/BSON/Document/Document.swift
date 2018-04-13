@@ -6,7 +6,7 @@ func unimplemented(_ function: String = #function) -> Never {
 }
 
 public struct Document: Primitive {
-    /// The internal storage engine that stores BSON in it's original binary fomr
+    /// The internal storage engine that stores BSON in it's original binary form
     var storage: BSONBuffer
     
     /// Indicates that the `Document` holds the final null terminator

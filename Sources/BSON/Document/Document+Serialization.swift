@@ -7,6 +7,13 @@ extension Document {
             self.nullTerminated = true
         }
         
+        var length = Int32(self.storage.usedCapacity)
+        withUnsafePointer(to: &length) { pointer in
+            pointer.withMemoryRebound(to: UInt8.self, capacity: 4) { pointer in
+                self.storage.replace(offset: 0, replacing: 4, with: pointer, length: 4)
+            }
+        }
+        
         return try run(self.storage.readBuffer)
     }
     
