@@ -138,7 +138,9 @@ extension Document {
         case var int as Int32: // 0x10
             type = .int32
             withPointer(pointer: &int, length: 4, run: flush)
-        // TODO: Timestamp (0x11)
+        case var stamp as Timestamp:
+            type = .timestamp
+            withPointer(pointer: &stamp, length: 8, run: flush)
         case let int as Int: // 0x12
             var int = (numericCast(int) as Int64)
             type = .int64

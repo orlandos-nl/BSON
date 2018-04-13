@@ -23,4 +23,11 @@ class BSONBasicTests: XCTestCase {
         document["foo"]["bar"] = "c"
         XCTAssertFalse((document["foo"] as! Document).isArray)
     }
+    
+    func testTimestampSerialization() {
+        let stamp = Timestamp(increment: 2117261592, timestamp: -2127433148)
+        let document: Document = ["a": stamp]
+        let stamp2 = document["a"] as! Timestamp
+        XCTAssertEqual(stamp, stamp2)
+    }
 }

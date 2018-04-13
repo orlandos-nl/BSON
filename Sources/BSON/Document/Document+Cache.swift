@@ -240,7 +240,7 @@ extension Document {
                 return Date(timeIntervalSince1970: Double($0.pointee) / 1000)
             }
         case .timestamp:
-            unimplemented()
+            return pointer.withMemoryRebound(to: Timestamp.self, capacity: 1) { $0.pointee }
         case .int64:
             return pointer.withMemoryRebound(to: Int64.self, capacity: 1) { $0.pointee }
         case .null:
