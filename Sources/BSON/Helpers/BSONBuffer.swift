@@ -251,7 +251,7 @@ struct BSONBuffer {
     ///
     /// Automatically reallocs for the new data to fit if necessary
     mutating func replace(offset: Int, replacing: Int, with pointer: UnsafePointer<UInt8>, length: Int) {
-        let diff = replacing &- length
+        let diff = length &- replacing
         
         self.storage.ensureMutableCapacity(of: self.usedCapacity &+ diff)
         
@@ -259,7 +259,7 @@ struct BSONBuffer {
         let insertPointer = writePointer + offset
         
         // More data is written than removed
-        if diff < 0, usedCapacity > offset &+ replacing {
+        if diff > 0, usedCapacity > offset &+ replacing {
             let trailingCapacityOffset = offset &+ replacing
             memmove(insertPointer + replacing, insertPointer + length, self.usedCapacity &- trailingCapacityOffset)
         }
@@ -267,7 +267,7 @@ struct BSONBuffer {
         memcpy(insertPointer, pointer, length)
         
         // More data is removed than written
-        if diff > 0 {
+        if diff < 0 {
             let replacingPointer = writePointer + replacing
             memmove(replacingPointer + diff, replacingPointer, self.usedCapacity &- offset &- diff)
         }
