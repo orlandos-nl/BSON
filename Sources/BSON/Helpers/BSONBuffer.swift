@@ -114,21 +114,20 @@ struct BSONBuffer {
         }
         
         /// Ensures buffer mutability as well as the availability of a minimum amount of bytes of `capacity`
-        mutating func ensureMutableCapacity(of capacity: Int) {
+        mutating func ensureMutableCapacity(of newCapacity: Int) {
             func makeCopy(withCapacity capacity: Int) {
                 let storage = Storage(size: capacity)
                 storage.writeBuffer!.baseAddress!.assign(from: self.readBuffer.baseAddress!, count: self.count)
                 self = storage
             }
             
-            let newCapacity = self.count &+ capacity
-            
             guard requiresCopyForMutation else {
                 makeCopy(withCapacity: newCapacity)
                 return
             }
             
-            if self.count >= capacity {
+            // Don't shrink
+            if newCapacity <= self.count {
                 return
             }
             
@@ -254,20 +253,23 @@ struct BSONBuffer {
     mutating func replace(offset: Int, replacing: Int, with pointer: UnsafePointer<UInt8>, length: Int) {
         let diff = replacing &- length
         
-        self.storage.ensureMutableCapacity(of: self.usedCapacity &+ length)
+        self.storage.ensureMutableCapacity(of: self.usedCapacity &+ diff)
         
         let writePointer = self.writeBuffer!.baseAddress!
         let insertPointer = writePointer + offset
         
-        if diff > 0 {
-            memmove(writePointer + replacing + diff, writePointer + replacing, self.usedCapacity &- offset &- diff)
+        // More data is written than removed
+        if diff < 0, usedCapacity > offset &+ replacing {
+            let trailingCapacityOffset = offset &+ replacing
+            memmove(insertPointer + replacing, insertPointer + length, self.usedCapacity &- trailingCapacityOffset)
         }
         
         memcpy(insertPointer, pointer, length)
         
-        // TODO: Move back into empty space
-        if diff < 0 {
-            unimplemented()
+        // More data is removed than written
+        if diff > 0 {
+            let replacingPointer = writePointer + replacing
+            memmove(replacingPointer + diff, replacingPointer, self.usedCapacity &- offset &- diff)
         }
         
         self.usedCapacity = self.usedCapacity &+ diff
