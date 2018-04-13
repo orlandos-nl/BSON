@@ -71,7 +71,7 @@ public struct Document: Primitive {
     /// `isArray` dictates what kind of `Document`
     public init(allocator: BSONArenaAllocator, isArray: Bool = false) {
         self.storage = BSONBuffer(allocating: 4, allocator: allocator)
-        self.nullTerminated = true
+        self.nullTerminated = false
         self.cache = DocumentCache()
         self.isArray = isArray
     }
