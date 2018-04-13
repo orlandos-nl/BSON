@@ -135,6 +135,10 @@ extension Document {
             document.withUnsafeBufferPointer { buffer in
                 flush(from: buffer.baseAddress!, length: buffer.count)
             }
+        case let date as Date:
+            type = .datetime
+            var milliseconds = Int(date.timeIntervalSince1970 * 1000)
+            withPointer(pointer: &milliseconds, length: 8, run: flush)
         default:
             fatalError("Currently unsupported type \(primitive)")
         }
