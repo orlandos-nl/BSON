@@ -213,7 +213,7 @@ extension Document {
                     data: stringData[..<stringData.endIndex.advanced(by: -1)],
                     encoding: .utf8
                 )
-            } else if type == .document, type == .array {
+            } else if type == .document || type == .array {
                 return Document(
                     storage: storage[offset..<offset &+ length &- 1],
                     cache: DocumentCache(),

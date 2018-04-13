@@ -14,17 +14,17 @@ public struct Document: Primitive {
     /// If omitted, the performance for appends will increase until serialization
     var nullTerminated: Bool
     
-    /// Dictates whether this `Document` is an `Array` or `Dictionary-like` type
+    /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
     var isArray: Bool
     
     /// A cache of all elements in this BSON Document
     ///
-    /// Allows high performance access with lazy parsing and low-memory footprint
+    /// Allows high performance access with lazy parsing and low memory footprint
     let cache: DocumentCache
     
     /// Creates a new empty BSONDocument
     ///
-    /// `isArray` dictates what kind of `Document` and is `false` by default
+    /// `isArray` dictates what kind of subdocument the `Document` is, and is `false` by default
     public init(isArray: Bool = false) {
         self.init(bytes: [5, 0, 0, 0])
         self.nullTerminated = false

@@ -131,7 +131,7 @@ extension Document {
             type = .null
             flush(from: nil, length: 0)
         case var document as Document:
-            type = .document
+            type = document.isArray ? .array : .document
             document.withUnsafeBufferPointer { buffer in
                 flush(from: buffer.baseAddress!, length: buffer.count)
             }
