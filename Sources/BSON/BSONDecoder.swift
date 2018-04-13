@@ -43,11 +43,11 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
     
     /// Decodes the `value` without key to a `Float` using the current strategy
     fileprivate func decode(from value: DecoderValue, path: [String]) throws -> Float {
-        switch self {
-        case .double:
+        switch (value., self) {
+        case (.double, .double), (.numerical, .double), (.adaptive, .double):
             let double = try value.unwrap(asType: Double.self, path: path)
             return Float(double)
-        case .string:
+        case (.textual, .string), (.adaptive, .string):
             let string = try value.unwrap(asType: String.self, path: path)
             
             guard let float = Float(string) else {
@@ -55,8 +55,6 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
             }
             
             return float
-        case .adaptive:
-            unimplemented()
         case .custom(let strategy):
             guard let float = try strategy(nil, value.primitive) else {
                 throw BSONValueNotFound(type: Float.self, path: path)
