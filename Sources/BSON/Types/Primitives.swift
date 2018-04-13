@@ -112,5 +112,3 @@ extension Bool: Primitive {}
 extension String: Primitive {}
 public struct MinKey: Primitive {}
 public struct MaxKey: Primitive {}
-
-extension Optional: Primitive where Wrapped: Primitive {}
