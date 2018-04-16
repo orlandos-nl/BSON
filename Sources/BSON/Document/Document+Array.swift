@@ -19,6 +19,17 @@ extension Document {
         
         return nil
     }
+    
+    /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
+    ///
+    /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
+    ///
+    /// - parameter value: The `Value` to append
+    public mutating func append(_ value: Primitive) {
+        let key = String(self.count)
+        
+        self.write(value, forKey: key)
+    }
 }
 
 extension Array where Element == Primitive {
