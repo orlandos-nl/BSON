@@ -107,7 +107,10 @@ fileprivate class _BSONEncoder : Encoder {
     }
     
     func singleValueContainer() -> SingleValueEncodingContainer {
-        unimplemented()
+        return _BSONSingleValueEncodingContainer(
+            encoder: self,
+            codingPath: codingPath
+        )
     }
     
     // MARK: Encoding
@@ -282,7 +285,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
         self.codingPath = codingPath
     }
     
-    // MARK: KeyedEncodingContainerProtocol
+    // MARK: UnkeyedEncodingContainerProtocol
     
     mutating func encodeNil() throws {
         encoder.target.document.append(BSON.Null())
@@ -349,7 +352,8 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
         case let primitive as Primitive:
             encoder.target.document.append(primitive)
         default:
-            unimplemented()
+            let nestedEncoder = makeNestedEncoder()
+            try value.encode(to: nestedEncoder)
         }
     }
     
@@ -380,4 +384,117 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     mutating func superEncoder() -> Encoder {
         return makeNestedEncoder()
     }
+}
+
+fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
+    
+    var codingPath: [CodingKey]
+    var encoder: _BSONEncoder
+    
+    init(encoder: _BSONEncoder, codingPath: [CodingKey]) {
+        self.encoder = encoder
+        self.codingPath = codingPath
+    }
+    
+    func encodingPrecheck(_ value: Any) throws {
+        switch encoder.target {
+        case .primitive: return
+        case .document:
+            throw EncodingError.invalidValue(
+                value,
+                EncodingError.Context(
+                    codingPath: codingPath,
+                    debugDescription: "Attempted to encode on the top level through a single value container"
+                )
+            )
+        }
+    }
+    
+    mutating func encodeNil() throws {
+        try encodingPrecheck(nil as Primitive? as Any)
+        encoder.target.primitive = nil
+    }
+    
+    mutating func encode(_ value: Bool) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = value
+    }
+    
+    mutating func encode(_ value: String) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = value
+    }
+    
+    mutating func encode(_ value: Double) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = value
+    }
+    
+    mutating func encode(_ value: Float) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = Double(value)
+    }
+    
+    mutating func encode(_ value: Int) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = value
+    }
+    
+    mutating func encode(_ value: Int8) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = Int32(value)
+    }
+    
+    mutating func encode(_ value: Int16) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = Int32(value)
+    }
+    
+    mutating func encode(_ value: Int32) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = value
+    }
+    
+    mutating func encode(_ value: Int64) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = value
+    }
+    
+    mutating func encode(_ value: UInt) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+    }
+    
+    mutating func encode(_ value: UInt8) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+    }
+    
+    mutating func encode(_ value: UInt16) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+    }
+    
+    mutating func encode(_ value: UInt32) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+    }
+    
+    mutating func encode(_ value: UInt64) throws {
+        try encodingPrecheck(value)
+        encoder.target.primitive = try encoder.makePrimitive(value)
+    }
+    
+    mutating func encode<T>(_ value: T) throws where T : Encodable {
+        try encodingPrecheck(value)
+        
+        switch value {
+        case let primitive as Primitive:
+            encoder.target.primitive = primitive
+        default:
+            try value.encode(to: encoder)
+        }
+    }
+    
+    
 }
