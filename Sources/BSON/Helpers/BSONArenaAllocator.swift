@@ -111,7 +111,7 @@ fileprivate struct BSONArena {
     }
 }
 
-public final class BSONArenaAllocator {
+internal final class BSONArenaAllocator {
     let blockSize: Int
     let blockCount: Int
     fileprivate var arenas = [BSONArena]()

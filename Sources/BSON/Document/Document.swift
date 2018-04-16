@@ -69,7 +69,7 @@ public struct Document: Primitive {
     /// Creates a thread unsafe Document using a predefined `BSONArenaAllocator` allowing extremely cheap BSON operations
     ///
     /// `isArray` dictates what kind of `Document`
-    public init(allocator: BSONArenaAllocator, isArray: Bool = false) {
+    internal init(allocator: BSONArenaAllocator, isArray: Bool = false) {
         self.storage = BSONBuffer(allocating: 4, allocator: allocator)
         self.nullTerminated = false
         self.cache = DocumentCache()
@@ -83,8 +83,24 @@ public struct Document: Primitive {
     /// Provides a zero-copy interface with this data, including `Codable`
     ///
     /// The buffer will only be copied on mutations of this Document
-    public init(buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
+    public init(withoutCopying buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
         self.storage = BSONBuffer(buffer: buffer)
+        self.nullTerminated = true
+        self.cache = DocumentCache()
+        self.isArray = isArray
+    }
+    
+    /// Creates a new document by copying the contents of the referenced buffer
+    ///
+    /// `isArray` dictates what kind of `Document`
+    ///
+    /// Provides a zero-copy interface with this data, including `Codable`
+    ///
+    /// The buffer will only be copied on mutations of this Document
+    public init(copying buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
+        self.storage = BSONBuffer(size: buffer.count)
+        self.storage.writeBuffer!.baseAddress?.assign(from: buffer.baseAddress!, count: buffer.count)
+        
         self.nullTerminated = true
         self.cache = DocumentCache()
         self.isArray = isArray
