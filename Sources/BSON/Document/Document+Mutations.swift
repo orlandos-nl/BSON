@@ -15,14 +15,14 @@ extension Document {
         prepareForMutation()
         
         var type: TypeIdentifier!
-        var writeLength = false
+        var writeLengthPrefix = false
         
         /// Accesses the pointer as `UInt8`
         func withPointer<I>(
             pointer: UnsafePointer<I>,
             length: Int,
             run: (UnsafePointer<UInt8>, Int) -> ()
-            ) {
+        ) {
             return pointer.withMemoryRebound(to: UInt8.self, capacity: 1) { pointer in
                 return run(pointer, length)
             }
@@ -37,31 +37,46 @@ extension Document {
                 self.storage.writeBuffer![dimensions.from] = type.rawValue
                 
                 var offset = dimensions.from &+ 1 &+ dimensions.keyCString
-                var valueLength = dimensions.valueLength
+                var replaceLength = dimensions.valueLength
                 
                 dimensions.type = type
                 dimensions.valueLength = length
                 
-                if writeLength {
+                if writeLengthPrefix {
                     var writtenLength = Int32(length)
                     
                     withPointer(pointer: &writtenLength, length: 4) { pointer, length in
                         self.storage.replace(offset: offset, replacing: 4, with: pointer, length: length)
                     }
                     
+                    // Update for length prefix
                     offset = offset &+ 4
+                    
+                    // The value's length needs to be 4 longer since it's prefixed
                     dimensions.valueLength = dimensions.valueLength &+ 4
-                    valueLength = valueLength &- 4
+                    
+                    // We already advanced 4 bytes, so the amount of replacable bytes is reduced
+                    replaceLength = replaceLength &- 4
                 }
                 
                 if let pointer = pointer {
                     self.storage.replace(
                         offset: offset,
-                        replacing: valueLength,
+                        replacing: replaceLength,
                         with: pointer,
                         length: length
                     )
                 }
+                
+                for index in 0..<self.cache.storage.count {
+                    if self.cache.storage[index].1.from == dimensions.from {
+                        // Found the old dimensions
+                        self.cache.storage[index].1 = dimensions
+                        return
+                    }
+                }
+                
+                fatalError("Internal Document error: updated with incorrect dimensions")
             } else {
                 let start = self.storage.usedCapacity
                 let keyData = [UInt8](key.utf8) + [0]
@@ -70,7 +85,7 @@ extension Document {
                 self.storage.append(keyData)
                 let totalLength: Int
                 
-                if writeLength {
+                if writeLengthPrefix {
                     var dataLength = Int32(length)
                     totalLength = length &+ 4
                     
@@ -104,7 +119,7 @@ extension Document {
             withPointer(pointer: &double, length: 8, run: flush)
         case let string as String: // 0x02
             type = .string
-            writeLength = true
+            writeLengthPrefix = true
             let string = [UInt8](string.utf8) + [0x00]
             flush(from: string, length: string.count)
         case var document as Document: // 0x03 (embedded document) or 0x04 (array)
@@ -114,7 +129,7 @@ extension Document {
             }
         case let binary as Binary: // 0x05
             type = .binary
-            writeLength = true
+            writeLengthPrefix = true
             flush(from: binary.storage.readBuffer.baseAddress!, length: binary.storage.readBuffer.count)
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
