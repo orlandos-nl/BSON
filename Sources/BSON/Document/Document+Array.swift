@@ -1,4 +1,4 @@
-extension Document {
+extension Document : ExpressibleByArrayLiteral {
     /// Gets all top level values in this Document
     public var values: [Primitive] {
         _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
@@ -29,6 +29,10 @@ extension Document {
         let key = String(self.count)
         
         self.write(value, forKey: key)
+    }
+    
+    public init(arrayLiteral elements: PrimitiveConvertible...) {
+        self.init(elements: elements.lazy.enumerated().map { ("\($0.offset)", $0.element.makePrimitive()) })
     }
 }
 
