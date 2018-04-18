@@ -180,7 +180,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key : CodingKey> : KeyedEncodingC
         switch encoder.strategies.keyedNilEncodingStrategy {
         case .null:
             encoder.target.document[encoder.converted(key.stringValue)] = BSON.Null()
-        case .noValue:
+        case .omitted:
             return
         }
     }

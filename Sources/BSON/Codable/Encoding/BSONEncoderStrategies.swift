@@ -1,5 +1,5 @@
 /// A configuration structs that contains all strategies for encoding BSON values
-public struct BSONEncoderStrategies {
+public struct BSONEncoderStrategies { // TODO: EncoderStrategies or EncodingStrategies? Also for Extended JSON
     
     /// Defines how optionals that are `nil` are encoded in keyed containers
     ///
@@ -8,8 +8,8 @@ public struct BSONEncoderStrategies {
         /// A value of `nil` is encoded as BSON `Null`
         case null
         
-        /// A value of `nil` is not encoded – the key is
-        case noValue
+        /// A value of `nil` is not encoded at all
+        case omitted
     }
     
     /// Defines how unsigned integers are encoded
@@ -26,7 +26,7 @@ public struct BSONEncoderStrategies {
     }
     
     /// Defines how optionals that are `nil` are encoded in keyed containers
-    var keyedNilEncodingStrategy: KeyedNilEncodingStrategy = .noValue
+    var keyedNilEncodingStrategy: KeyedNilEncodingStrategy = .omitted
     
     /// Defines how unsigned integers are encoded
     var unsignedIntegerEncodingStrategy: UnsignedIntegerEncodingStrategy = .int64
