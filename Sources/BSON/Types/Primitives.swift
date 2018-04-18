@@ -103,6 +103,37 @@ extension ObjectId: Primitive {
     }
 }
 
+public func ==(lhs: Primitive?, rhs: Primitive?) -> Bool {
+    guard let lhs = lhs else {
+        if case .none = rhs {
+            return true
+        }
+        return false
+    }
+    
+    guard let rhs = rhs else {
+        return false
+    }
+    
+    return [lhs] as Document == [rhs] as Document
+}
+
+extension Collection where Element == Primitive {
+    public static func ==(lhs: Self, rhs: Self) -> Bool {
+        guard lhs.count == rhs.count else {
+            return false
+        }
+        
+        for set in zip(lhs, rhs) {
+            guard set.0 == set.1 else {
+                return false
+            }
+        }
+        
+        return true
+    }
+}
+
 extension Int32: Primitive {}
 extension Date: Primitive {}
 extension Int64: Primitive {}
