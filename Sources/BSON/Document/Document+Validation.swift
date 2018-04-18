@@ -56,15 +56,18 @@ extension Document {
                 return false
             }
             
-            let stringLength = pointer.int32
+            let stringLength: Int = numericCast(pointer.int32) &+ 4
             
-            // Minimum a null terminator
-            guard stringLength >= 1, pointer[numericCast(stringLength &+ 4 &- 1)] == 0x00 else {
+            guard
+                stringLength >= 5,
+                offset &+ stringLength < self.storage.usedCapacity,
+                pointer[stringLength &- 1] == 0x00
+            else {
                 return false
             }
             
             // int32 contains the entire length, including null terminator
-            advance(numericCast(4 &+ stringLength))
+            advance(stringLength)
             
             return true
         }
