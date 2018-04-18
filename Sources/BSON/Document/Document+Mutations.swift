@@ -11,13 +11,9 @@ extension Document {
         }
     }
     
-    /// Writes the `primitive` to this Document keyed by `key`
-    mutating func write(_ primitive: Primitive, forKey key: String) {
-        assert(!key.contains("\0"))
-        
+    mutating func write(_ primitive: Primitive, forDimensions dimensions: DocumentCache.Dimensions?, key: String) {
         prepareForMutation()
         
-        let dimensions = self.dimension(forKey: key)
         var type: TypeIdentifier!
         var writeLength = false
         
@@ -37,9 +33,14 @@ extension Document {
         /// - Writes the identifier, key and value
         /// - Updates the DocumentCache
         func flush(from pointer: UnsafePointer<UInt8>?, length: Int) {
-            if let dimensions = dimensions {
+            if var dimensions = dimensions {
+                self.storage.writeBuffer![dimensions.from] = type.rawValue
+                
                 var offset = dimensions.from &+ 1 &+ dimensions.keyCString
                 var valueLength = dimensions.valueLength
+                
+                dimensions.type = type
+                dimensions.valueLength = length
                 
                 if writeLength {
                     var writtenLength = Int32(length)
@@ -49,6 +50,7 @@ extension Document {
                     }
                     
                     offset = offset &+ 4
+                    dimensions.valueLength = dimensions.valueLength &+ 4
                     valueLength = valueLength &- 4
                 }
                 
@@ -130,9 +132,9 @@ extension Document {
         case is Null: // 0x0A
             type = .null
             flush(from: nil, length: 0)
-        // TODO: RegularExpression (0x0B)
-        // 0x0C is deprecated (DBPointer)
-        // TODO: JavascriptCode (0x0D)
+            // TODO: RegularExpression (0x0B)
+            // 0x0C is deprecated (DBPointer)
+            // TODO: JavascriptCode (0x0D)
             // 0x0E is deprecated (Symbol)
         // TODO: JavascriptCode With Scope (0x0F)
         case var int as Int32: // 0x10
@@ -161,5 +163,13 @@ extension Document {
         default:
             fatalError("Currently unsupported type \(primitive)")
         }
+    }
+    
+    /// Writes the `primitive` to this Document keyed by `key`
+    mutating func write(_ primitive: Primitive, forKey key: String) {
+        assert(!key.contains("\0"))
+        
+        let dimensions = self.dimension(forKey: key)
+        self.write(primitive, forDimensions: dimensions, key: key)
     }
 }

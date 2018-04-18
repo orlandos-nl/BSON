@@ -8,16 +8,30 @@ extension Document : ExpressibleByArrayLiteral {
         }
     }
     
-    subscript(index: Int) -> Primitive? {
-        repeat {
-            if self.cache.storage.count > index {
-                return self[valueFor: self[dimensionsAt: index]]
-            }
+    subscript(index: Int) -> Primitive {
+        get {
+            repeat {
+                if self.cache.storage.count > index {
+                    return self[valueFor: self[dimensionsAt: index]]
+                }
+                
+                _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .single)
+            } while !self.fullyCached
             
-            _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .single)
-        } while !self.fullyCached
-        
-        return nil
+            fatalError("Index \(index) out of range")
+        }
+        set {
+            repeat {
+                if self.cache.storage.count > index {
+                    self.write(newValue, forDimensions: self[dimensionsAt: index], key: "\(index)")
+                }
+                
+                _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .single)
+            } while !self.fullyCached
+            
+            // TODO: Investigate other options than fatalError()
+            fatalError("Index \(index) out of range")
+        }
     }
     
     /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`

@@ -20,7 +20,9 @@ class BSONBasicTests: XCTestCase {
         ]
         
         XCTAssert((document["foo"] as! Document).isArray)
-        document["foo"]["bar"] = "c"
+        var henk = document["foo"] as! Document
+        henk["bar"] = "c"
+        document["foo"] = henk
         XCTAssertFalse((document["foo"] as! Document).isArray)
     }
     

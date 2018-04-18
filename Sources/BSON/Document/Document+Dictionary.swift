@@ -25,7 +25,7 @@ extension Document: ExpressibleByDictionaryLiteral {
     public init<S : Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, Primitive) {
         self.init(isArray: isArray)
         for (key, value) in elements {
-            self[key] = value
+            self.write(value, forKey: key)
         }
     }
 }
