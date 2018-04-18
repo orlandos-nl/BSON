@@ -16,7 +16,7 @@ public class BSONEncoder {
     ///
     /// - The value fails to encode, or contains a nested value that fails to encode—this method throws the corresponding error.
     /// - The value can't be encoded as a BSON array or BSON object—this method throws the invalidValue error.
-    public func encode<T : Encodable>(_ value: T) throws -> Document {
+    public func encode(_ value: Encodable) throws -> Document {
         let encoder = _BSONEncoder(strategies: self.strategies, userInfo: self.userInfo)
         
         try value.encode(to: encoder)
