@@ -435,11 +435,15 @@ fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContai
 
 public class BSONDecoder {
     public func decode<T : Decodable>(_ type: T.Type, from document: Document) throws -> T {
-        let decoder = _BSONDecoder(target: .document(document))
+        let decoder = _BSONDecoder(userInfo: userInfo, target: .document(document))
         return try T(from: decoder)
     }
     
-    public init() {}
+    public init(userInfo: [CodingUserInfoKey : Any]? = nil) {
+        self.userInfo = userInfo
+    }
+    
+    var userInfo: [CodingUserInfoKey : Any]?
 }
 
 fileprivate func unwrap<T>(_ value: T?, codingPath: [CodingKey]) throws -> T {
@@ -480,7 +484,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     
     var codingPath: [CodingKey]
     
-    var userInfo: [CodingUserInfoKey : Any] = [:]
+    var userInfo: [CodingUserInfoKey : Any]
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
         let container = _BSONKeyedDecodingContainer<Key>(decoder: self, codingPath: self.codingPath)
@@ -488,14 +492,19 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     }
     
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        return _BSONUnkeyedDecodingContainer(decoder: self)
+        return _BSONUnkeyedDecodingContainer(userInfo: userInfo, decoder: self)
     }
     
     func singleValueContainer() throws -> SingleValueDecodingContainer {
         return _BSONSingleValueDecodingContainer(codingPath: self.codingPath, decoder: self)
     }
     
-    init(codingPath: [CodingKey] = [], target: Target) {
+    init(userInfo: [CodingUserInfoKey : Any]?, codingPath: [CodingKey] = [], target: Target) {
+        if let userInfo = userInfo {
+            self.userInfo = userInfo
+        } else {
+            self.userInfo = [:]
+        }
         self.target = target
         self.codingPath = codingPath
     }
@@ -692,7 +701,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
             return document
         }
         
-        let decoder = _BSONDecoder(target: .storedPrimitive(value))
+        let decoder = _BSONDecoder(userInfo: userInfo, target: .storedPrimitive(value))
         return try T(from: decoder)
     }
 }
@@ -806,7 +815,7 @@ fileprivate struct _BSONKeyedDecodingContainer<Key : CodingKey> : KeyedDecodingC
     
     private func nestedDecoder(forKey key: CodingKey) -> _BSONDecoder {
         return decoder.with(pushedKey: key) {
-            return _BSONDecoder(codingPath: self.decoder.codingPath, target: .primitive(get: { self.decoder.target.document[key.stringValue] }))
+            return _BSONDecoder(userInfo: decoder.userInfo, codingPath: self.decoder.codingPath, target: .primitive(get: { self.decoder.target.document[key.stringValue] }))
         }
     }
     
@@ -830,8 +839,10 @@ fileprivate struct _BSONKeyedDecodingContainer<Key : CodingKey> : KeyedDecodingC
 fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSONCodingPathContaining {
     let decoder: _BSONDecoder
     var codingPath: [CodingKey]
-    
-    init(decoder: _BSONDecoder) {
+    var userInfo: [CodingUserInfoKey : Any]?
+
+    init(userInfo: [CodingUserInfoKey : Any]?, decoder: _BSONDecoder) {
+        self.userInfo = userInfo
         self.decoder = decoder
         self.codingPath = decoder.codingPath
     }
@@ -938,7 +949,7 @@ fileprivate class _BSONUnkeyedDecodingContainer : UnkeyedDecodingContainer, _BSO
             }
             
             let value = next()
-            return _BSONDecoder(target: .storedPrimitive(value))
+            return _BSONDecoder(userInfo: userInfo, target: .storedPrimitive(value))
         }
     }
     
