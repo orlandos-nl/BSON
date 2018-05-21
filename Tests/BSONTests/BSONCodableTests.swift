@@ -291,6 +291,47 @@ class BSONCodableTests: XCTestCase {
         }
     }
     
+    // Does BSONEncoder pass userInfo back up the encoding tree
+    public func testUserInfoRoundTrip() throws {
+        
+        struct CodableStruct : Codable {
+            
+            let s1 = "1"
+            let s2 = "2"
+        }
+        
+        class ThreeAttributeContainer : Codable {
+            
+            init (a1: NonCodableContainer, a2: CodableStruct, a3: NonCodableContainer) {
+                self.a1 = a1
+                self.a2 = a2
+                self.a3 = a3
+            }
+            
+            let a1: NonCodableContainer
+            let a2: CodableStruct
+            let a3: NonCodableContainer
+            
+        }
+        
+        let nonCodable = NonCodable()
+        let nc1 = NonCodableContainer (label: "1", nonCodable: nonCodable)
+        let c1 = CodableStruct()
+        let nc2 = NonCodableContainer (label: "2", nonCodable: nonCodable)
+        let userInfo: [CodingUserInfoKey : Any] = [NonCodableContainer.nonCodableKey : nonCodable]
+        let tripleContainer = ThreeAttributeContainer (a1: nc1, a2: c1, a3: nc2)
+        let encoder = BSONEncoder()
+        let document = try encoder.encode(tripleContainer)
+        let decoder = BSONDecoder (userInfo: userInfo)
+        let decodedTripleContainer = try decoder.decode(ThreeAttributeContainer.self, from: document)
+        XCTAssertEqual ("1", decodedTripleContainer.a1.label)
+        XCTAssertTrue (decodedTripleContainer.a1.nonCodable === nonCodable)
+        XCTAssertEqual ("1", decodedTripleContainer.a2.s1)
+        XCTAssertEqual ("2", decodedTripleContainer.a2.s2)
+        XCTAssertEqual ("2", decodedTripleContainer.a3.label)
+        XCTAssertTrue (decodedTripleContainer.a3.nonCodable === nonCodable)
+    }
+    
 // See https://github.com/OpenKitten/BSON/issues/43
 //    func testEmptyCodable() {
 //
