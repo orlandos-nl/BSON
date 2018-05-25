@@ -348,7 +348,6 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     }
     
     mutating func encode<T>(_ value: T) throws where T : Encodable {
-        print(encoder.target.document.isArray, value)
         switch value {
         case let primitive as Primitive:
             encoder.target.document.append(primitive)
