@@ -98,8 +98,6 @@ fileprivate final class _BSONEncoder : Encoder {
     }
     
     func unkeyedContainer() -> UnkeyedEncodingContainer {
-        target.document = Document(isArray: true)
-        
         return _BSONUnkeyedEncodingContainer(
             encoder: self,
             codingPath: codingPath
@@ -283,6 +281,8 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     init(encoder: _BSONEncoder, codingPath: [CodingKey]) {
         self.encoder = encoder
         self.codingPath = codingPath
+        
+        encoder.target.document = Document(isArray: true)
     }
     
     // MARK: UnkeyedEncodingContainerProtocol
@@ -348,6 +348,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     }
     
     mutating func encode<T>(_ value: T) throws where T : Encodable {
+        print(encoder.target.document.isArray, value)
         switch value {
         case let primitive as Primitive:
             encoder.target.document.append(primitive)
@@ -360,7 +361,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     func makeNestedEncoder() -> _BSONEncoder {
         let index = encoder.target.document.count
         let key = BSONKey(stringValue: "\(index)", intValue: index)
-        encoder.target.document.append(Document())
+        encoder.target.document.append(Null())
         
         return _BSONEncoder(
             strategies: encoder.strategies,
@@ -368,7 +369,9 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
             userInfo: encoder.userInfo,
             target: .primitive(
                 get: { self.encoder[key] },
-                set: { self.encoder[key] = $0 }
+                set: {
+                    self.encoder[key] = $0
+                }
             )
         )
     }
@@ -387,7 +390,6 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
 }
 
 fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
-    
     var codingPath: [CodingKey]
     var encoder: _BSONEncoder
     

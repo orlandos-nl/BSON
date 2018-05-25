@@ -5,7 +5,10 @@ extension Document {
             return self.getCached(byKey: key)
         }
         set {
-            self.isArray = false
+            if !keys.contains(key) {
+                self.isArray = false
+            }
+            
             if let newValue = newValue {
                 self.write(newValue, forKey: key)
             } else {
