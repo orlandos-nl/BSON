@@ -38,7 +38,7 @@ extension Dictionary : PrimitiveConvertible where Key == String, Value : Primiti
 
 // - MARK: Optional
 
-fileprivate enum BSONInternalUnknwonTypeForPrimitiveConvertibleConversion : Primitive {
+fileprivate enum BSONInternalUnknownTypeForPrimitiveConvertibleConversion : Primitive {
     case invalid // if we don't include a case, Swift generates a warning "Will never be executed"
     
     init(from decoder: Decoder) throws {
@@ -53,7 +53,7 @@ fileprivate enum BSONInternalUnknwonTypeForPrimitiveConvertibleConversion : Prim
 extension Optional: PrimitiveConvertible where Wrapped : PrimitiveConvertible {
     public func makePrimitive() -> Primitive {
         switch self {
-        case .none: return Optional<BSONInternalUnknwonTypeForPrimitiveConvertibleConversion>.none as Primitive // TODO: Discuss: Is this adequate?
+        case .none: return Optional<BSONInternalUnknownTypeForPrimitiveConvertibleConversion>.none as Primitive // TODO: Discuss: Is this adequate?
         case .some(let wrapped): return wrapped.makePrimitive()
         }
     }
