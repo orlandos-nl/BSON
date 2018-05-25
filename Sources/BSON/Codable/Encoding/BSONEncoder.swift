@@ -1,7 +1,7 @@
 import Foundation
 
 /// An object that encodes instances of `Encodable` types as BSON Documents.
-public class BSONEncoder {
+public final class BSONEncoder {
     
     // MARK: Encoding
     
@@ -34,7 +34,7 @@ public class BSONEncoder {
     
 }
 
-fileprivate class _BSONEncoder : Encoder {
+fileprivate final class _BSONEncoder : Encoder {
     enum Target {
         case document(Document)
         case primitive(get: () -> Primitive?, set: (Primitive?) -> ())

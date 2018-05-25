@@ -100,6 +100,7 @@ public struct Document: Primitive {
     public init(copying buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
         self.storage = BSONBuffer(size: buffer.count)
         self.storage.writeBuffer!.baseAddress?.assign(from: buffer.baseAddress!, count: buffer.count)
+        self.storage.usedCapacity = buffer.count
         
         self.nullTerminated = true
         self.cache = DocumentCache()

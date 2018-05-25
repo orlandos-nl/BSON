@@ -1,18 +1,41 @@
+public struct ValidationResult {
+    public let valid: Bool
+    public internal(set) var errorPosition: Int?
+    public let reason: StaticString?
+    
+    static func valid() -> ValidationResult {
+        return ValidationResult(valid: true, errorPosition: nil, reason: nil)
+    }
+}
+
+fileprivate extension StaticString {
+    static let notEnoughBytesForValue = "A value was correctly identifier, but the associated value could not be parsed" as StaticString
+    static let notEnoughBytesForDocumentHeader = "Not enough bytes were remaining to parse a Document header" as StaticString
+    static let notEnoughBytesForDocument = "There were not enough bytes left to match the Document header" as StaticString
+    static let trailingBytes = "After parsing the Document, trailing bytes were found" as StaticString
+    static let invalidBoolean = "A value other than 0x00 or 0x01 was used to represent a boolean" as StaticString
+    static let incorrectDocumentTermination = "The 0x00 byte was not found where it should have been terminating a Document" as StaticString
+}
+
 extension Document {
     /// If `true`, this document is completely and recursively valid
     public var isValid: Bool {
-        return validate()
+        return validate().valid
     }
     
     /// Validates this document's technical correctness
     ///
-    /// If `recursively` is `true` the subdocuments will be traversed, too
-    public func validate(recursively: Bool = true) -> Bool {
+    /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
+    public func validate(recursively validatingRecursively: Bool = true) -> ValidationResult {
         var offset = 0
         let count = self.storage.usedCapacity
         
+        func errorFound(reason: StaticString) -> ValidationResult {
+            return ValidationResult(valid: false, errorPosition: offset, reason: reason)
+        }
+        
         guard count >= 4, var pointer = self.storage.readBuffer.baseAddress else {
-            return false
+            return errorFound(reason: .notEnoughBytesForDocument)
         }
         
         func advance(_ n: Int) {
@@ -24,15 +47,17 @@ extension Document {
             return offset &+ n < count
         }
         
-        func document(array: Bool) -> Bool {
+        func document(array: Bool) -> ValidationResult {
             guard has(4) else {
-                return false
+                return errorFound(reason: .notEnoughBytesForDocumentHeader)
             }
             
-            if recursively {
+            if validatingRecursively {
                 let length = numericCast(pointer.int32) as Int
                 
-                guard has(length) else { return false }
+                guard has(length) else {
+                    return errorFound(reason: .notEnoughBytesForDocument)
+                }
                 
                 let document = Document(
                     storage: self.storage[offset ..< offset &+ length &- 1],
@@ -41,14 +66,20 @@ extension Document {
                     isArray: array
                 )
                 
-                guard document.validate(recursively: true) else {
-                    return false
+                var recursiveValidation = document.validate(recursively: true)
+                
+                guard recursiveValidation.valid else {
+                    if let errorPosition = recursiveValidation.errorPosition {
+                        recursiveValidation.errorPosition = errorPosition + offset
+                    }
+                    
+                    return recursiveValidation
                 }
             } else {
                 advance(numericCast(pointer.int32))
             }
             
-            return true
+            return .valid()
         }
         
         func string() -> Bool {
@@ -73,7 +104,7 @@ extension Document {
         }
         
         guard numericCast(pointer.int32) == count else {
-            return false
+            return errorFound(reason: .notEnoughBytesForDocument)
         }
         
         advance(4)
@@ -86,12 +117,12 @@ extension Document {
             advance(1)
             
             if typeId == 0x00 {
-                return offset == count
+                return offset == count ? .valid() : errorFound(reason: .incorrectDocumentTermination)
             }
             
             // Type
             guard let type = TypeIdentifier(rawValue: typeId) else {
-                return false
+                return errorFound(reason: "The type identifier found was unknown or unsupported")
             }
             
             // Key
@@ -103,15 +134,17 @@ extension Document {
                 advance(8)
             case .string:
                 guard string() else {
-                    return false
+                    return errorFound(reason: .notEnoughBytesForValue)
                 }
             case .document, .array:
-                guard document(array: type == .array) else {
-                    return false
+                let result = document(array: type == .array)
+                
+                guard result.valid else {
+                    return result
                 }
             case .binary:
                 guard has(4) else {
-                    return false
+                    return errorFound(reason: .notEnoughBytesForValue)
                 }
                 
                 // int32 + subtype + bytes
@@ -119,12 +152,20 @@ extension Document {
             case .objectId:
                 advance(12)
             case .boolean:
+                guard has(1) else {
+                    return errorFound(reason: .notEnoughBytesForValue)
+                }
+                
                 guard pointer.pointee == 0x00 || pointer.pointee == 0x01 else {
-                    return false
+                    return errorFound(reason: .invalidBoolean)
                 }
                 
                 advance(1)
             case .datetime, .timestamp, .int64:
+                guard has(8) else {
+                    return errorFound(reason: .notEnoughBytesForValue)
+                }
+                
                 advance(8)
             case .null, .minKey, .maxKey:
                 // no data
@@ -133,18 +174,23 @@ extension Document {
             case .regex:
                 advance(storage.cString(at: offset))
                 advance(storage.cString(at: offset))
-            case .javascript:
+            case .javascript, .javascriptWithScope:
                 guard string() else {
-                    return false
+                    return errorFound(reason: "Javascript code was found but the associated code could not be parsed")
                 }
-            case .javascriptWithScope:
-                guard string() else {
-                    return false
-                }
-                guard document(array: false) else {
-                    return false
+                
+                if type == .javascriptWithScope {
+                    let result = document(array: false)
+                    
+                    guard result.valid else {
+                        return result
+                    }
                 }
             case .int32:
+                guard has(4) else {
+                    return errorFound(reason: "An int32 was found but not enough")
+                }
+                
                 advance(4)
             case .decimal128:
                 advance(16)
@@ -153,10 +199,10 @@ extension Document {
             // Check parsed data size
             guard offset < count else {
                 // Scrolled past the end
-                return false
+                return errorFound(reason: .incorrectDocumentTermination)
             }
         }
         
-        return offset == count
+        return offset == count ? .valid() : errorFound(reason: .trailingBytes)
     }
 }

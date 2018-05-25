@@ -139,47 +139,33 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         forKey key: K,
         path: @autoclosure () -> [String]
     ) throws -> I {
-        switch self {
-        case .string, .adaptive:
-            if case .adaptive = self {
-                guard decoder.identifier == .string else {
-                    throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
-                }
-            }
-            
+        guard let identifier = decoder.document?.typeIdentifier(of: key.stringValue) else {
+            throw BSONValueNotFound(type: I.self, path: path())
+        }
+        
+        switch (self, identifier) {
+        case (.string, .string), (.adaptive, .string):
             return try convert(from: decoder.wrapped.unwrap(asType: String.self, atKey: key, path: path()))
-        case .int32:
+        case (.int32, .int32), (.adaptive, .int32), (.anyInteger, .int32), (.roundingAnyNumber, .int32):
             let int = try decoder.wrapped.unwrap(asType: Int32.self, atKey: key, path: path())
             return try int.convert(to: I.self)
-        case .int64:
+        case (.int64, .int64), (.adaptive, .int64), (.anyInteger, .int64), (.roundingAnyNumber, .int64):
             let int = try decoder.wrapped.unwrap(asType: Int64.self, atKey: key, path: path())
             return try int.convert(to: I.self)
-        case .anyInteger, .roundingAnyNumber:
-            guard let type = decoder.document?.typeIdentifier(of: key.stringValue) else {
-                throw BSONValueNotFound(type: I.self, path: path())
-            }
-            
-            switch (type, self) {
-            case (.int32, _):
-                let int = try decoder.wrapped.unwrap(asType: Int32.self, atKey: key, path: path())
-                return try int.convert(to: I.self)
-            case (.int64, _):
-                // Necessary also for custom integer types
-                let int = try decoder.wrapped.unwrap(asType: Int64.self, atKey: key, path: path())
-                return try int.convert(to: I.self)
-            case (.double, .roundingAnyNumber):
-                let double = try decoder.wrapped.unwrap(asType: Double.self, atKey: key, path: path())
-                return I(double)
-            default:
-                throw BSONTypeConversionError(from: decoder.document?[key.stringValue], to: I.self)
-            }
-        case .custom(let strategy):
-            guard let value: I = try strategy(key.stringValue,
-                                              decoder.document?[key.stringValue]) else {
+        case (.roundingAnyNumber, .double), (.adaptive, .double):
+            let double = try decoder.wrapped.unwrap(asType: Double.self, atKey: key, path: path())
+            return I(double)
+        case (.custom(let strategy), _):
+            guard let value: I = try strategy(
+                key.stringValue,
+                decoder.document?[key.stringValue]
+            ) else {
                 throw BSONValueNotFound(type: I.self, path: path())
             }
             
             return value
+        default:
+            throw BSONTypeConversionError(from: decoder.document?[key.stringValue], to: I.self)
         }
     }
 }
