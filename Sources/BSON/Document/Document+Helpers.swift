@@ -1,5 +1,7 @@
 extension Document {
     internal func typeIdentifier(of key: String) -> TypeIdentifier? {
+        _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
+        
         return self.dimension(forKey: key)?.type
     }
     
