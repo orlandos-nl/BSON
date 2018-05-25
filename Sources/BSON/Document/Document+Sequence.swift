@@ -7,7 +7,20 @@ extension Document: Sequence {
     }
     
     /// Creates an iterator that iterates over each element in the Document until the end
-    public func makeIterator() -> DocumentIterator {
+    public func makeIterator() -> AnyIterator<(String, Primitive)> {
+        var pairs = self.pairs
+        
+        return AnyIterator {
+            guard let pair = pairs.next() else {
+                return nil
+            }
+            
+            return (pair.key, pair.value)
+        }
+    }
+    
+    /// A more detailed view into the pairs contained in this Document
+    public var pairs: DocumentIterator {
         return DocumentIterator(document: self)
     }
     
@@ -46,7 +59,7 @@ public struct DocumentPair {
     }
 }
 
-public struct DocumentIterator: IteratorProtocol {
+public struct DocumentIterator: IteratorProtocol, Sequence {
     /// The Document that is being iterated over
     fileprivate let document: Document
     

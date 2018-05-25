@@ -41,7 +41,7 @@ extension Document: BSONDataType {
         } else {
             var container = encoder.container(keyedBy: CustomKey.self)
             
-            for pair in self {
+            for pair in self.pairs {
                 try container.encode(AnyEncodable(encodable: pair.value), forKey: CustomKey(stringValue: pair.key)!)
             }
         }

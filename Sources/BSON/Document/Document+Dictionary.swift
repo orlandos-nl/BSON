@@ -34,8 +34,8 @@ extension Dictionary where Key == String, Value == Primitive {
     public init(document: Document) {
         self.init()
         
-        for pair in document {
-            self[pair.key] = pair.value
+        for (key, value) in document {
+            self[key] = value
         }
     }
 }

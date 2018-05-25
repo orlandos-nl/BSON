@@ -90,6 +90,15 @@ public struct Document: Primitive {
         self.isArray = isArray
     }
     
+    /// Converts an array of Primitives to a BSON ArrayDocument
+    public init(array: [Primitive]) {
+        self.init(isArray: true)
+        
+        for element in array {
+            self.append(element)
+        }
+    }
+    
     /// Creates a new document by copying the contents of the referenced buffer
     ///
     /// `isArray` dictates what kind of `Document`

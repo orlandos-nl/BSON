@@ -820,7 +820,7 @@ fileprivate struct UnkeyedBSONContainer: UnkeyedDecodingContainer {
     init(decoder: _BSONDecoder) {
         self.decoder = decoder
         self.codingPath = []
-        self.iterator = decoder.document!.makeIterator()
+        self.iterator = decoder.document!.pairs
     }
     
     func decodeNil() -> Bool {
