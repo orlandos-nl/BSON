@@ -366,7 +366,6 @@ fileprivate struct _BSONDecoder: Decoder {
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
         guard case .document = wrapped else {
-            print(wrapped)
             throw BSONValueNotFound(type: Document.self, path: self.keyPath)
         }
         
@@ -898,7 +897,6 @@ fileprivate struct UnkeyedBSONContainer: UnkeyedDecodingContainer {
     }
     
     mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
-        print(T.self)
         if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.nextElement().primitive) as! T
         } else {
