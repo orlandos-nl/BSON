@@ -366,6 +366,7 @@ fileprivate struct _BSONDecoder: Decoder {
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
         guard case .document = wrapped else {
+            print(wrapped)
             throw BSONValueNotFound(type: Document.self, path: self.keyPath)
         }
         
@@ -609,14 +610,23 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
             guard
                 let typeIdentifer = self.document.typeIdentifier(of: key.stringValue),
                 let value = self.document[key.stringValue]
-                else {
-                    throw BSONValueNotFound(type: T.self, path: path(forKey: key))
+            else {
+                throw BSONValueNotFound(type: T.self, path: path(forKey: key))
             }
             
-            let decoder = _BSONDecoder(
-                wrapped: .primitive(typeIdentifer, value),
-                settings: self.decoder.settings
-            )
+            let decoder: _BSONDecoder
+                
+            if typeIdentifer == .document || typeIdentifer == .array {
+                decoder = _BSONDecoder(
+                    wrapped: .document(value as! Document),
+                    settings: self.decoder.settings
+                )
+            } else {
+                decoder = _BSONDecoder(
+                    wrapped: .primitive(typeIdentifer, value),
+                    settings: self.decoder.settings
+                )
+            }
             return try T.init(from: decoder)
         }
     }
