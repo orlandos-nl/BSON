@@ -68,7 +68,7 @@ public struct DocumentIterator: IteratorProtocol, Sequence {
     
     /// If `true`, the end of this iterator has been reached
     public var isDrained: Bool {
-        return self.document.count > currentIndex
+        return self.document.count <= currentIndex
     }
     
     /// The total amount of elements in this iterator (previous, current and upcoming elements)
