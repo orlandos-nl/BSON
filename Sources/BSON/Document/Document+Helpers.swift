@@ -22,9 +22,13 @@ extension Document {
     }
 }
 
-struct BSONValueNotFound: Error {
+struct BSONValueNotFound: Error, CustomStringConvertible {
     let type: Any.Type
     let path: [String]
+    
+    var description: String {
+        return "Couldn't find type \(type) at path \"\(path)\""
+    }
 }
 
 struct BSONTypeConversionError<A>: Error {

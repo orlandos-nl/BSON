@@ -34,7 +34,7 @@ public final class BSONEncoder {
     
 }
 
-fileprivate final class _BSONEncoder : Encoder {
+fileprivate final class _BSONEncoder : Encoder, AnyBSONEncoder {
     enum Target {
         case document(Document)
         case primitive(get: () -> Primitive?, set: (Primitive?) -> ())
@@ -112,6 +112,9 @@ fileprivate final class _BSONEncoder : Encoder {
     }
     
     // MARK: Encoding
+    func encode(document: Document) throws {
+        self.target.document = document
+    }
     
     subscript(key: CodingKey) -> Primitive? {
         get {
