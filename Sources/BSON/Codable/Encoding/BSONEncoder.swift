@@ -247,6 +247,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key : CodingKey> : KeyedEncodingC
         case let primitive as Primitive:
             encoder[key] = primitive
         default:
+            encoder.target.document[key.stringValue] = Document()
             let nestedEncoder = encoder.nestedEncoder(forKey: key)
             try value.encode(to: nestedEncoder)
         }
