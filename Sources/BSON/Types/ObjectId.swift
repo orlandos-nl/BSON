@@ -3,7 +3,10 @@ import Foundation
 #if os(Linux)
 import Glibc
 
-fileprivate var machineIdentifier: UInt32 = numericCast(srand(UInt32(time(nil))))
+fileprivate var machineIdentifier: UInt32 = {
+    srand(UInt32(time(nil)))
+    return numericCast(rand())
+}()
 #else
 fileprivate var machineIdentifier: UInt32 = arc4random_uniform(UInt32.max)
 #endif
