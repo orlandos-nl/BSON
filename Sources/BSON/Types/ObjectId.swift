@@ -41,7 +41,10 @@ public final class ObjectIdGenerator {
             }
             
             #if os(Linux)
-            var random: UInt32 = numericCast(srand(UInt32(time(nil))))
+            var random: UInt32 = {
+                srand(UInt32(time(nil)))
+                return numericCast(rand())
+            }()
             #else
             var random: UInt32 = arc4random_uniform(UInt32.max)
             #endif
