@@ -613,6 +613,11 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
                 throw BSONValueNotFound(type: T.self, path: path(forKey: key))
             }
             
+            // Decoding strategy for Primitives, like Date
+            if let value = value as? T {
+                return value
+            }
+            
             let decoder: _BSONDecoder
                 
             if typeIdentifer == .document || typeIdentifer == .array {
@@ -626,6 +631,7 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
                     settings: self.decoder.settings
                 )
             }
+            
             return try T.init(from: decoder)
         }
     }
