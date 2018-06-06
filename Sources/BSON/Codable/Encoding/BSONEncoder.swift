@@ -392,7 +392,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     }
 }
 
-fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer {
+fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer, AnySingleValueBSONEncodingContainer {
     var codingPath: [CodingKey]
     var encoder: _BSONEncoder
     
@@ -488,6 +488,11 @@ fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContai
     mutating func encode(_ value: UInt64) throws {
         try encodingPrecheck(value)
         encoder.target.primitive = try encoder.makePrimitive(value)
+    }
+    
+    mutating func encode(primitive: Primitive) throws {
+        try encodingPrecheck(primitive)
+        encoder.target.primitive = primitive
     }
     
     mutating func encode<T>(_ value: T) throws where T : Encodable {

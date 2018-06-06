@@ -21,7 +21,7 @@ internal protocol AnySingleValueBSONDecodingContainer {
 }
 
 internal protocol AnySingleValueBSONEncodingContainer {
-    func encode(primitive: Primitive) throws
+    mutating func encode(primitive: Primitive) throws
 }
 
 fileprivate struct UnsupportedDocumentDecoding: Error {}
@@ -84,7 +84,7 @@ extension ObjectId: Primitive {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
-        if let container = container as? AnySingleValueBSONEncodingContainer {
+        if var container = container as? AnySingleValueBSONEncodingContainer {
             try container.encode(primitive: self)
         } else {
             try container.encode(self.hexString)
