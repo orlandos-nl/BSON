@@ -31,6 +31,7 @@ struct BSONValueNotFound: Error, CustomStringConvertible {
     }
 }
 
+// TODO: Include more context. These errors are thrown in BSONDecoder but provide no information at all about the KeyPath, and are therefore useless.
 struct BSONTypeConversionError<A>: Error {
     let from: A
     let to: Any.Type
