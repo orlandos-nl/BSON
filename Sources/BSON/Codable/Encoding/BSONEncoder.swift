@@ -63,7 +63,13 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             }
             set {
                 switch self {
-                case .document: self = .document(newValue as! Document)
+                case .document:
+                    guard let newValue = newValue as? Document else {
+                        assertionFailure("This should not happen. Please file a bug.")
+                        return
+                    }
+                    
+                    self = .document(newValue)
                 case .primitive(_, let set): set(newValue)
                 }
             }
