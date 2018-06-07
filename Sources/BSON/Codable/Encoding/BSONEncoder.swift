@@ -30,14 +30,14 @@ public final class BSONEncoder {
     public var strategies: BSONEncoderStrategies
     
     /// Contextual user-provided information for use during encoding.
-    public var userInfo: [CodingUserInfoKey : Any] = [:]
+    public var userInfo: [CodingUserInfoKey: Any] = [:]
     
 }
 
-fileprivate final class _BSONEncoder : Encoder, AnyBSONEncoder {
+fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     enum Target {
         case document(Document)
-        case primitive(get: () -> Primitive?, set: (Primitive?) -> ())
+        case primitive(get: () -> Primitive?, set: (Primitive?) -> Void)
         
         var document: Document {
             get {
@@ -77,18 +77,18 @@ fileprivate final class _BSONEncoder : Encoder, AnyBSONEncoder {
     
     var codingPath: [CodingKey]
     
-    var userInfo: [CodingUserInfoKey : Any]
+    var userInfo: [CodingUserInfoKey: Any]
     
     // MARK: Initialization
     
-    init(strategies: BSONEncoderStrategies, codingPath: [CodingKey] = [], userInfo: [CodingUserInfoKey : Any], target: Target = .document([:])) {
+    init(strategies: BSONEncoderStrategies, codingPath: [CodingKey] = [], userInfo: [CodingUserInfoKey: Any], target: Target = .document([:])) {
         self.strategies = strategies
         self.codingPath = codingPath
         self.userInfo = userInfo
         self.target = target
     }
     
-    func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key : CodingKey {
+    func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey {
         let container = _BSONKeyedEncodingContainer<Key>(
             encoder: self,
             codingPath: codingPath
@@ -164,7 +164,7 @@ fileprivate final class _BSONEncoder : Encoder, AnyBSONEncoder {
     }
 }
 
-fileprivate struct _BSONKeyedEncodingContainer<Key : CodingKey> : KeyedEncodingContainerProtocol {
+fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingContainerProtocol {
     
     var encoder: _BSONEncoder
     
@@ -242,7 +242,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key : CodingKey> : KeyedEncodingC
         encoder[key] = try encoder.makePrimitive(value)
     }
     
-    mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
+    mutating func encode<T>(_ value: T, forKey key: Key) throws where T: Encodable {
         switch value {
         case let primitive as Primitive:
             encoder[key] = primitive
@@ -253,7 +253,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key : CodingKey> : KeyedEncodingC
         }
     }
     
-    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
         let nestedEncoder = encoder.nestedEncoder(forKey: key)
         return nestedEncoder.container(keyedBy: NestedKey.self)
     }
@@ -272,7 +272,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key : CodingKey> : KeyedEncodingC
     }
 }
 
-fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
+fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     
     var count: Int {
         return encoder.target.document.count
@@ -351,7 +351,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
         encoder.target.document.append(try encoder.makePrimitive(value))
     }
     
-    mutating func encode<T>(_ value: T) throws where T : Encodable {
+    mutating func encode<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let primitive as Primitive:
             encoder.target.document.append(primitive)
@@ -379,7 +379,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
         )
     }
     
-    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
         return makeNestedEncoder().container(keyedBy: NestedKey.self)
     }
     
@@ -392,7 +392,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer : UnkeyedEncodingContainer {
     }
 }
 
-fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContainer, AnySingleValueBSONEncodingContainer {
+fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContainer, AnySingleValueBSONEncodingContainer {
     var codingPath: [CodingKey]
     var encoder: _BSONEncoder
     
@@ -495,7 +495,7 @@ fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContai
         encoder.target.primitive = primitive
     }
     
-    mutating func encode<T>(_ value: T) throws where T : Encodable {
+    mutating func encode<T>(_ value: T) throws where T: Encodable {
         try encodingPrecheck(value)
         
         switch value {
@@ -505,6 +505,5 @@ fileprivate struct _BSONSingleValueEncodingContainer : SingleValueEncodingContai
             try value.encode(to: encoder)
         }
     }
-    
     
 }

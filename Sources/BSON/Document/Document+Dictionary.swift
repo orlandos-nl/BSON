@@ -18,11 +18,17 @@ extension Document: ExpressibleByDictionaryLiteral {
     
     /// Creates a new Document from a Dictionary literal
     public init(dictionaryLiteral elements: (String, PrimitiveConvertible)...) {
-        self.init(elements: elements.lazy.map { ($0, $1.makePrimitive()) })
+        self.init(elements: elements.lazy.flatMap { key, value in
+            guard let primitive = value.makePrimitive() else {
+                return nil // continue
+            }
+            
+            return (key, primitive)
+        })
     }
     
     /// Creates a new Document with the given elements
-    public init<S : Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, Primitive) {
+    public init<S: Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, Primitive) {
         self.init(isArray: isArray)
         for (key, value) in elements {
             self.write(value, forKey: key)

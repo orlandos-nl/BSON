@@ -11,7 +11,6 @@ fileprivate var machineIdentifier: UInt32 = {
 fileprivate var machineIdentifier: UInt32 = arc4random_uniform(UInt32.max)
 #endif
 
-
 fileprivate var currentIdentifier: UInt16 = 0
 let lock = NSRecursiveLock()
 

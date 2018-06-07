@@ -1,5 +1,3 @@
-extension Optional: Primitive where Wrapped: Primitive {}
-
 extension Optional where Wrapped == Primitive {
     
     public subscript(key: String) -> Primitive? {
@@ -13,4 +11,3 @@ extension Optional where Wrapped == Primitive {
         }
     }
 }
-

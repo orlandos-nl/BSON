@@ -102,7 +102,7 @@ struct BSONBuffer {
             case .readWrite(var storage):
                 // FIXME: Always `true` thanks to `var storage`
                 return isKnownUniquelyReferenced(&storage)
-            case .readOnly(_):
+            case .readOnly:
                 return true
             case .subStorage(let storage, _):
                 return storage.requiresCopyForMutation
@@ -139,7 +139,7 @@ struct BSONBuffer {
             case .subStorage(let storage, let range):
                 makeCopy(withCapacity: range.count)
                 self.writeBuffer!.baseAddress?.assign(from: storage.readBuffer.baseAddress!, count: range.count)
-            case .readOnly(_):
+            case .readOnly:
                 makeCopy(withCapacity: self.count)
             }
         }

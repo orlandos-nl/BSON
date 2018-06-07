@@ -1,4 +1,4 @@
-internal struct BSONKey : CodingKey {
+internal struct BSONKey: CodingKey {
     var stringValue: String
     var intValue: Int?
     

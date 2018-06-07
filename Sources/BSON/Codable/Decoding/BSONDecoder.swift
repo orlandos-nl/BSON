@@ -283,7 +283,7 @@ fileprivate struct _BSONDecoder: Decoder {
         return codingPath.map { $0.stringValue }
     }
     
-    var userInfo: [CodingUserInfoKey : Any]
+    var userInfo: [CodingUserInfoKey: Any]
     
     let wrapped: DecoderValue
     
@@ -364,7 +364,7 @@ fileprivate struct _BSONDecoder: Decoder {
         self.settings = settings
     }
     
-    func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
+    func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key: CodingKey {
         guard case .document = wrapped else {
             throw BSONValueNotFound(type: Document.self, path: self.keyPath)
         }
@@ -436,7 +436,7 @@ extension FixedWidthInteger {
         if I.bitWidth < Self.bitWidth {
             if numericCast(I.max) < self {
                 throw BSONTypeConversionError(from: self, to: I.self)
-            } else if numericCast(I.min) > self  {
+            } else if numericCast(I.min) > self {
                 throw BSONTypeConversionError(from: self, to: I.self)
             }
         } else if !I.isSigned {
@@ -602,7 +602,7 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
         )
     }
     
-    func decode<T>(_ type: T.Type, forKey key: K) throws -> T where T : Decodable {
+    func decode<T>(_ type: T.Type, forKey key: K) throws -> T where T: Decodable {
         if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.document[key.stringValue]) as! T
         } else {
@@ -636,7 +636,7 @@ fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProto
         }
     }
     
-    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
+    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
         let document = self.document[key.stringValue, as: Document.self] ?? Document()
         
         let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
@@ -795,7 +795,7 @@ fileprivate struct SingleValueBSONContainer: SingleValueDecodingContainer, AnySi
         )
     }
     
-    func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+    func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
         if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.decoder.primitive) as! T
         } else {
@@ -902,7 +902,7 @@ fileprivate struct UnkeyedBSONContainer: UnkeyedDecodingContainer {
         return try self.decoder.settings.uint64DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
     }
     
-    mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+    mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
         if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.nextElement().primitive) as! T
         } else {
@@ -911,7 +911,7 @@ fileprivate struct UnkeyedBSONContainer: UnkeyedDecodingContainer {
         }
     }
     
-    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
+    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
         let document = try self.decode(Document.self)
         let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
         return KeyedDecodingContainer(KeyedBSONContainer(for: decoder))

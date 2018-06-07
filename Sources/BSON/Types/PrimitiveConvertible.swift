@@ -1,44 +1,50 @@
 /// Implemented by types that are convertible to a primitive
 public protocol PrimitiveConvertible {
-    func makePrimitive() -> Primitive
+    func makePrimitive() -> Primitive?
 }
 
 extension Primitive {
-    public func makePrimitive() -> Primitive {
+    public func makePrimitive() -> Primitive? {
         return self
     }
 }
 
 // - MARK: Sequences
 
-fileprivate extension Sequence where Element : PrimitiveConvertible {
+fileprivate extension Sequence where Element: PrimitiveConvertible {
     func makeDocument() -> Document {
-        return Document(elements: self.enumerated().map { ("\($0)", $1.makePrimitive()) }, isArray: true)
+        return Document(elements: self.flatMap { $0.makePrimitive() }.enumerated().map { ("\($0)", $1) }, isArray: true)
     }
 }
 
-extension Array : PrimitiveConvertible where Element : PrimitiveConvertible {
-    public func makePrimitive() -> Primitive {
+extension Array: PrimitiveConvertible where Element: PrimitiveConvertible {
+    public func makePrimitive() -> Primitive? {
         return self.makeDocument()
     }
 }
 
 // TODO: Discuss: Should set be PrimitiveConvertible? Maybe it is, because it is also a sequence.
-extension Set : PrimitiveConvertible where Element : PrimitiveConvertible {
-    public func makePrimitive() -> Primitive {
+extension Set: PrimitiveConvertible where Element: PrimitiveConvertible {
+    public func makePrimitive() -> Primitive? {
         return self.makeDocument()
     }
 }
 
-extension Dictionary : PrimitiveConvertible where Key == String, Value : PrimitiveConvertible {
-    public func makePrimitive() -> Primitive {
-        return Document(elements: self.lazy.map { ($0.key, $0.value.makePrimitive()) })
+extension Dictionary: PrimitiveConvertible where Key == String, Value: PrimitiveConvertible {
+    public func makePrimitive() -> Primitive? {
+        return Document(elements: self.flatMap { element in
+            guard let primitive = element.value.makePrimitive() else {
+                return nil // continue
+            }
+            
+            return (element.key, primitive)
+        })
     }
 }
 
 // - MARK: Optional
 
-fileprivate enum BSONInternalUnknownTypeForPrimitiveConvertibleConversion : Primitive {
+fileprivate enum BSONInternalUnknownTypeForPrimitiveConvertibleConversion: Primitive {
     case invalid // if we don't include a case, Swift generates a warning "Will never be executed"
     
     init(from decoder: Decoder) throws {
@@ -50,10 +56,10 @@ fileprivate enum BSONInternalUnknownTypeForPrimitiveConvertibleConversion : Prim
     }
 }
 
-extension Optional: PrimitiveConvertible where Wrapped : PrimitiveConvertible {
-    public func makePrimitive() -> Primitive {
+extension Optional: PrimitiveConvertible where Wrapped: PrimitiveConvertible {
+    public func makePrimitive() -> Primitive? {
         switch self {
-        case .none: return Optional<BSONInternalUnknownTypeForPrimitiveConvertibleConversion>.none as Primitive // TODO: Discuss: Is this adequate?
+        case .none: return nil
         case .some(let wrapped): return wrapped.makePrimitive()
         }
     }

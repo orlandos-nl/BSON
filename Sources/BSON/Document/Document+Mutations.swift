@@ -21,7 +21,7 @@ extension Document {
         func withPointer<I>(
             pointer: UnsafePointer<I>,
             length: Int,
-            run: (UnsafePointer<UInt8>, Int) -> ()
+            run: (UnsafePointer<UInt8>, Int) -> Void
         ) {
             return pointer.withMemoryRebound(to: UInt8.self, capacity: 1) { pointer in
                 return run(pointer, length)
