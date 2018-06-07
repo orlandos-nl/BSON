@@ -484,7 +484,7 @@ fileprivate class _BSONDecoder : Decoder, _BSONCodingPathContaining {
     
     var codingPath: [CodingKey]
     
-    var userInfo: [CodingUserInfoKey : Any]
+    public var userInfo: [CodingUserInfoKey : Any]
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
         let container = _BSONKeyedDecodingContainer<Key>(decoder: self, codingPath: self.codingPath)
