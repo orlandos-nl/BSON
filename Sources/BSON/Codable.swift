@@ -443,7 +443,7 @@ public class BSONDecoder {
         self.userInfo = userInfo
     }
     
-    var userInfo: [CodingUserInfoKey : Any]?
+    public var userInfo: [CodingUserInfoKey : Any]?
 }
 
 fileprivate func unwrap<T>(_ value: T?, codingPath: [CodingKey]) throws -> T {
