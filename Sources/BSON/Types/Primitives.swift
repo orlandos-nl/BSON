@@ -53,6 +53,8 @@ extension Document: BSONDataType {
             return
         }
         
+        // TODO: Implement decoding a document from a non-BSON decoder
+        // TODO: Replace this with a central BSON decoding error type
         throw UnsupportedDocumentDecoding()
     }
     
