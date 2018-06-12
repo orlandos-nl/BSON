@@ -5,6 +5,7 @@ func unimplemented(_ function: String = #function) -> Never {
     fatalError("\(function) is unimplemented")
 }
 
+@dynamicMemberLookup
 public struct Document: Primitive {
     /// The internal storage engine that stores BSON in it's original binary form
     var storage: BSONBuffer
