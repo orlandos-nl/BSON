@@ -32,6 +32,15 @@ extension Document {
         }
     }
     
+    public subscript(dynamicMember member: String) -> Double? {
+        get {
+            return self[member] as? Double
+        }
+        set {
+            self[member] = newValue
+        }
+    }
+    
     public subscript(dynamicMember member: String) -> ObjectId? {
         get {
             return self[member] as? ObjectId
