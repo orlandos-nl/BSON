@@ -1,4 +1,5 @@
 /// The BSON Null type
-struct Null: Primitive {
+public struct Null: Primitive {
+    /// Creates a new `Null`
     public init() {}
 }
