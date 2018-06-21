@@ -28,9 +28,13 @@ extension Document: ExpressibleByDictionaryLiteral {
     }
     
     /// Creates a new Document with the given elements
-    public init<S: Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, Primitive) {
+    public init<S: Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, PrimitiveConvertible) {
         self.init(isArray: isArray)
         for (key, value) in elements {
+            guard let value = value.makePrimitive() else {
+                continue
+            }
+            
             self.write(value, forKey: key)
         }
     }
