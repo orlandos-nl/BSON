@@ -138,7 +138,6 @@ extension Collection where Element == Primitive {
 
 extension Int32: Primitive {}
 extension Date: Primitive {}
-extension Int64: Primitive {}
 extension Int: Primitive {}
 extension Double: Primitive {}
 extension Bool: Primitive {}

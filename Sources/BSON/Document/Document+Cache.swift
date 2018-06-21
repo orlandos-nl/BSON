@@ -242,7 +242,7 @@ extension Document {
         case .timestamp:
             return pointer.withMemoryRebound(to: Timestamp.self, capacity: 1) { $0.pointee }
         case .int64:
-            return pointer.withMemoryRebound(to: Int64.self, capacity: 1) { $0.pointee }
+            return pointer.withMemoryRebound(to: Int.self, capacity: 1) { $0.pointee }
         case .null:
             return Null()
         case .minKey:

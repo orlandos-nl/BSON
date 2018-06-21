@@ -139,7 +139,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     func makePrimitive(_ value: UInt64) throws -> Primitive {
         switch strategies.unsignedIntegerEncodingStrategy {
         case .int64:
-            guard value <= UInt64(Int64.max) else {
+            guard value <= UInt64(Int.max) else {
                 let debugDescription = "Cannot encode \(value) as Int in BSON, because it is too large. You can use BSONEncodingStrategies.UnsignedIntegerEncodingStrategy.string to encode the integer as a String."
                 
                 throw EncodingError.invalidValue(
@@ -151,7 +151,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
                 )
             }
             
-            return Int64(value)
+            return Int(value)
         case .string:
             return "\(value)"
         }
@@ -225,7 +225,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
     }
     
     mutating func encode(_ value: Int64, forKey key: Key) throws {
-        encoder[key] = value
+        encoder[key] = Int(value)
     }
     
     mutating func encode(_ value: UInt, forKey key: Key) throws {
@@ -468,7 +468,7 @@ fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContain
     
     mutating func encode(_ value: Int64) throws {
         try encodingPrecheck(value)
-        encoder.target.primitive = value
+        encoder.target.primitive = Int(value)
     }
     
     mutating func encode(_ value: UInt) throws {

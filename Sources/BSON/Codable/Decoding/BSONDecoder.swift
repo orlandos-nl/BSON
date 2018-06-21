@@ -103,7 +103,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
             let int = try decoder.wrapped.unwrap(asType: Int32.self, path: path())
             return try int.convert(to: I.self)
         case .int64:
-            let int = try decoder.wrapped.unwrap(asType: Int64.self, path: path())
+            let int = try decoder.wrapped.unwrap(asType: Int.self, path: path())
             return try int.convert(to: I.self)
         case .anyInteger, .roundingAnyNumber:
             guard let type = decoder.identifier else {
@@ -116,7 +116,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
                 return try int.convert(to: I.self)
             case (.int64, _):
                 // Necessary also for custom integer types with different widths
-                let int = try decoder.wrapped.unwrap(asType: Int64.self, path: path())
+                let int = try decoder.wrapped.unwrap(asType: Int.self, path: path())
                 return try int.convert(to: I.self)
             case (.double, .roundingAnyNumber):
                 let double = try decoder.wrapped.unwrap(asType: Double.self, path: path())
@@ -150,7 +150,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
             let int = try decoder.wrapped.unwrap(asType: Int32.self, atKey: key, path: path())
             return try int.convert(to: I.self)
         case (.int64, .int64), (.adaptive, .int64), (.anyInteger, .int64), (.roundingAnyNumber, .int64):
-            let int = try decoder.wrapped.unwrap(asType: Int64.self, atKey: key, path: path())
+            let int = try decoder.wrapped.unwrap(asType: Int.self, atKey: key, path: path())
             return try int.convert(to: I.self)
         case (.roundingAnyNumber, .double), (.adaptive, .double):
             let double = try decoder.wrapped.unwrap(asType: Double.self, atKey: key, path: path())
@@ -184,7 +184,7 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
         case (.int32, .numerical), (.int32, .adaptive):
             return try Double(primitive.assert(asType: Int32.self))
         case (.int64, .numerical), (.int64, .adaptive):
-            return try Double(primitive.assert(asType: Int64.self))
+            return try Double(primitive.assert(asType: Int.self))
         default:
             throw BSONTypeConversionError(from: primitive, to: Double.self)
         }
@@ -347,7 +347,7 @@ fileprivate struct _BSONDecoder: Decoder {
         case .int32:
             return try value.assert(asType: Int32.self).description
         case .int64:
-            return try value.assert(asType: Int64.self).description
+            return try value.assert(asType: Int.self).description
         case .boolean:
             return try value.assert(asType: Bool.self) ? "true" : "false"
         case .objectId:
@@ -410,7 +410,7 @@ extension BSONDecoderSettings.StringDecodingStrategy {
         case (.int32, .integers), (.int32, .numerical):
             return try primitive.assert(asType: Int32.self).description
         case (.int64, .integers), (.int64, .numerical):
-            return try primitive.assert(asType: Int64.self).description
+            return try primitive.assert(asType: Int.self).description
         case (.double, .numerical):
             return try primitive.assert(asType: Double.self).description
         case (_, .adaptive):
