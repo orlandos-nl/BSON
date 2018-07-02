@@ -27,7 +27,18 @@ extension Document {
     }
 }
 
+func assertValid(_ document: Document, file: StaticString = #file, line: UInt = #line) {
+    let result = document.validate()
+    XCTAssert(result.valid, "\(result)", file: file, line: line)
+}
+
 final class BSONPublicTests: XCTestCase {
+    
+    override func setUp() {
+        super.setUp()
+        
+        arena = false
+    }
 
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
         return [
@@ -139,27 +150,36 @@ final class BSONPublicTests: XCTestCase {
     func testDocumentLockup() {
         var document = Document.new()
         document["_id"] = nil
+        assertValid(document)
         document["_id"] = "123"
+        assertValid(document)
         XCTAssertEqual(document["_id", as: String.self], "123")
         XCTAssert(document.keys.contains("_id"))
         document["_id"] = nil
+        assertValid(document)
         XCTAssertEqual(document["_id", as: String.self], nil)
         XCTAssertFalse(document.keys.contains("_id"))
         document["_id"] = "456"
+        assertValid(document)
         XCTAssertEqual(document["_id", as: String.self], "456")
         XCTAssert(document.keys.contains("_id"))
         document["anykey"] = "anyvalue"
+        assertValid(document)
         XCTAssertNotNil(document["anykey"] as? String)
 
         var document2 = Document.new()
         document2["anykey"] = nil
+        assertValid(document2)
         document2["_id"] = "123"
+        assertValid(document2)
         XCTAssertNotNil(document2["_id"])
 
         var document3 = Document.new()
         document3["_id"] = "123"
+        assertValid(document3)
         XCTAssertEqual(document3["_id", as: String.self], "123")
         document2["anykey"] = nil
+        assertValid(document3)
         XCTAssertEqual(document3["_id", as: String.self], "123")
         XCTAssert(document.keys.contains("anykey"))
     }

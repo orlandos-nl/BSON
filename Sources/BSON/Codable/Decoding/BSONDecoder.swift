@@ -290,6 +290,8 @@ fileprivate struct _BSONDecoder: Decoder {
     var document: Document? {
         if case .document(let doc) = wrapped {
             return doc
+        } else if let doc = self.primitive as? Document {
+            return doc
         }
         
         return nil
@@ -365,7 +367,7 @@ fileprivate struct _BSONDecoder: Decoder {
     }
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key: CodingKey {
-        guard case .document = wrapped else {
+        guard wrapped.primitive as? Document != nil else {
             throw BSONValueNotFound(type: Document.self, path: self.keyPath)
         }
         

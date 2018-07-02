@@ -1,12 +1,14 @@
 import Foundation
 
 extension Document {
-    public mutating func withUnsafeBufferPointer<T>(_ run: (UnsafeBufferPointer<UInt8>) throws -> T) rethrows -> T {
+    internal mutating func requireNullTerminated() {
         if !nullTerminated {
             self.storage.append(0x00)
             self.nullTerminated = true
         }
-        
+    }
+    
+    public mutating func withUnsafeBufferPointer<T>(_ run: (UnsafeBufferPointer<UInt8>) throws -> T) rethrows -> T {
         var length = Int32(self.storage.usedCapacity)
         withUnsafePointer(to: &length) { pointer in
             pointer.withMemoryRebound(to: UInt8.self, capacity: 4) { pointer in

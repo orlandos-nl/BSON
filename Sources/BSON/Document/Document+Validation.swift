@@ -11,22 +11,23 @@ public struct ValidationResult {
 fileprivate extension StaticString {
     static let notEnoughBytesForValue = "A value was correctly identifier, but the associated value could not be parsed" as StaticString
     static let notEnoughBytesForDocumentHeader = "Not enough bytes were remaining to parse a Document header" as StaticString
-    static let notEnoughBytesForDocument = "There were not enough bytes left to match the Document header" as StaticString
+    static let notEnoughBytesForDocument = "There were not enough bytes left to match the length in the document header" as StaticString
     static let trailingBytes = "After parsing the Document, trailing bytes were found" as StaticString
     static let invalidBoolean = "A value other than 0x00 or 0x01 was used to represent a boolean" as StaticString
     static let incorrectDocumentTermination = "The 0x00 byte was not found where it should have been terminating a Document" as StaticString
 }
 
 extension Document {
-    /// If `true`, this document is completely and recursively valid
-    public var isValid: Bool {
-        return validate().valid
-    }
-    
     /// Validates this document's technical correctness
     ///
     /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
     public func validate(recursively validatingRecursively: Bool = true) -> ValidationResult {
+        if !nullTerminated {
+            var copy = self
+            copy.requireNullTerminated()
+            return copy.validate(recursively: validatingRecursively)
+        }
+        
         var offset = 0
         let count = self.storage.usedCapacity
         
@@ -56,7 +57,7 @@ extension Document {
                 let length = numericCast(pointer.int32) as Int
                 
                 guard has(length) else {
-                    return errorFound(reason: .notEnoughBytesForDocument)
+t                    return errorFound(reason: .notEnoughBytesForDocument)
                 }
                 
                 let document = Document(
