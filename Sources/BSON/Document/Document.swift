@@ -8,6 +8,7 @@ func unimplemented(_ function: String = #function) -> Never {
 @dynamicMemberLookup
 public struct Document: Primitive {
     /// The internal storage engine that stores BSON in it's original binary form
+    /// The null terminator is missing here for performance reasons. We append it in `makeData()`
     var storage: BSONBuffer
     
     /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
@@ -22,7 +23,7 @@ public struct Document: Primitive {
     ///
     /// `isArray` dictates what kind of subdocument the `Document` is, and is `false` by default
     public init(isArray: Bool = false) {
-        self.init(bytes: [5, 0, 0, 0])
+        self.init(bytes: [5, 0, 0, 0, 0])
         self.isArray = isArray
     }
     

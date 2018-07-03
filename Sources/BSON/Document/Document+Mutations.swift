@@ -3,7 +3,7 @@ import Foundation
 extension Document {
     mutating func write(_ primitive: Primitive, forDimensions dimensions: DocumentCache.Dimensions?, key: String) {
         var type: TypeIdentifier!
-        var writeLengthPrefix = false
+        var writeLengthPrefix = false // true if the primitive type to write needs a length prefix
         
         /// Accesses the pointer as `UInt8`
         func withPointer<I>(
@@ -64,7 +64,7 @@ extension Document {
                     }
                 }
                 
-                fatalError("Internal Document error: updated with incorrect dimensions")
+                assertionFailure("Internal Document error: updated with incorrect dimensions")
             } else {
                 let start = self.storage.usedCapacity
                 let keyData = [UInt8](key.utf8) + [0]
@@ -164,7 +164,7 @@ extension Document {
             type = .minKey
             flush(from: nil, length: 0)
         default:
-            fatalError("Currently unsupported type \(primitive)")
+            assertionFailure("Currently unsupported type \(primitive)")
         }
     }
     

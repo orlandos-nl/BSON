@@ -22,6 +22,8 @@ extension Document {
     ///
     /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
     public func validate(recursively validatingRecursively: Bool = true) -> ValidationResult {
+        // TODO: Update header if document is mutated
+        
         var offset = 0
         let count = self.storage.usedCapacity
         
@@ -50,7 +52,7 @@ extension Document {
             if validatingRecursively {
                 let length = numericCast(pointer.int32) as Int
                 
-                guard has(length) else {
+                guard has(length-1) else { // -1 because our BSON implementation does not have a null terminator in its internal storage
                     return errorFound(reason: .notEnoughBytesForDocument)
                 }
                 
@@ -98,9 +100,11 @@ extension Document {
         }
         
         // + 1 for the missing null terminator
-        guard numericCast(pointer.int32) == count &+ 1 else {
-            return errorFound(reason: .notEnoughBytesForDocument)
-        }
+        // TODO: Re-enable this validation (validates the document header for having a correct length)
+        // This is currently disabled, because we lazily update the document header
+//        guard numericCast(pointer.int32) == count &+ 1 else {
+//            return errorFound(reason: .notEnoughBytesForDocument)
+//        }
         
         advance(4)
         
@@ -179,7 +183,7 @@ extension Document {
                 }
             case .int32:
                 guard has(4) else {
-                    return errorFound(reason: "An int32 was found but not enough")
+                    return errorFound(reason: "An int32 was found but not enough bytes are present")
                 }
                 
                 advance(4)

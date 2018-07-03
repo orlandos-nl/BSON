@@ -1,22 +1,27 @@
 import Foundation
 
 extension Document {
-    public mutating func withUnsafeBufferPointer<T>(_ run: (UnsafeBufferPointer<UInt8>) throws -> T) rethrows -> T {
-        requireNullTerminated()
+    /// Updates the document header, containing the length of the document
+    internal mutating func writeHeader() {
+        var length = Int32(self.storage.usedCapacity) + 1
         
-        var length = Int32(self.storage.usedCapacity)
         withUnsafePointer(to: &length) { pointer in
             pointer.withMemoryRebound(to: UInt8.self, capacity: 4) { pointer in
                 self.storage.replace(offset: 0, replacing: 4, with: pointer, length: 4)
             }
         }
+    }
+    
+    public mutating func withUnsafeBufferPointer<T>(_ run: (UnsafeBufferPointer<UInt8>) throws -> T) rethrows -> T {
+        writeHeader()
         
         return try run(self.storage.readBuffer)
     }
     
+    // TODO: This should not be a mutating func
     public mutating func makeData() -> Data {
         return self.withUnsafeBufferPointer { buffer in
-            return Data(buffer: buffer)
+            return Data(buffer: buffer) + [0] // TODO: Something more performant
         }
     }
 }
