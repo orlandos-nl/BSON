@@ -112,8 +112,9 @@ extension Document {
             flush(from: string, length: string.count)
         case var document as Document: // 0x03 (embedded document) or 0x04 (array)
             type = document.isArray ? .array : .document
-            document.withUnsafeBufferPointer { buffer in
-                flush(from: buffer.baseAddress!, length: buffer.count)
+            let data = document.makeData()
+            data.withUnsafeBytes { buffer in
+                flush(from: buffer, length: data.count)
             }
         case let binary as Binary: // 0x05
             type = .binary

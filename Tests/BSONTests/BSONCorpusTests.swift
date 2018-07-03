@@ -214,11 +214,11 @@ final class BSONCorpusTests: XCTestCase {
         let doc3 = Document(bytes: [0x0C,0x00,0x00,0x00,0x10,0x69,0x00,0x00,0x00,0x00,0x00,0x00])
         let doc4 = Document(bytes: [0x0C,0x00,0x00,0x00,0x10,0x69,0x00,0x01,0x00,0x00,0x00,0x00])
         
-        XCTAssert(doc0.validate().valid)
-        XCTAssert(doc1.validate().valid)
-        XCTAssert(doc2.validate().valid)
-        XCTAssert(doc3.validate().valid)
-        XCTAssert(doc4.validate().valid)
+        assertValid(doc0)
+        assertValid(doc1)
+        assertValid(doc2)
+        assertValid(doc3)
+        assertValid(doc4)
         
         XCTAssertEqual(doc0["i"] as? Int32, -2147483648)
         XCTAssertEqual(doc1["i"] as? Int32, 2147483647)

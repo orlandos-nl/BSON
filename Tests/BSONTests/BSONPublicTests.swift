@@ -22,7 +22,10 @@ extension Document {
 
 func assertValid(_ document: Document, file: StaticString = #file, line: UInt = #line) {
     let result = document.validate()
-    XCTAssert(result.valid, "\(result)", file: file, line: line)
+    guard result.valid else {
+        XCTFail("document.validate() failed - pos: \(result.errorPosition ?? -1), reason: \(result.reason ?? "nil")", file: file, line: line)
+        return
+    }
 }
 
 final class BSONPublicTests: XCTestCase {
@@ -91,6 +94,18 @@ final class BSONPublicTests: XCTestCase {
         
         doc["int32"] = 4 as Int32
         XCTAssertEqual(doc.keys, ["int32"])
+    }
+    
+    func testSubdocumentBasicAccess() {
+        var doc = Document()
+        var subdoc = ["foo": "bar"] as Document
+        assertValid(subdoc)
+        doc["a"] = subdoc
+        assertValid(doc)
+        XCTAssertEqual(doc["a"]["foo"] as? String, "bar")
+        
+        try! subdoc.makeData().write(to: URL(fileURLWithPath: "/Users/robbert/Downloads/subdoc"))
+        try! doc.makeData().write(to: URL(fileURLWithPath: "/Users/robbert/Downloads/doc"))
     }
     
     func testDecoding() throws {
