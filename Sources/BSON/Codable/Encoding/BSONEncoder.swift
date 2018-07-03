@@ -48,7 +48,9 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             }
             set {
                 switch self {
-                case .document: self = .document(newValue)
+                case .document:
+                    self = .document(newValue)
+                    assert(newValue.validate().valid) // TODO: Remove?
                 case .primitive(_, let set): set(newValue)
                 }
             }
@@ -68,7 +70,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
                         assertionFailure("This should not happen. Please file a bug.")
                         return
                     }
-                    
+                    assert(newValue.validate().valid) // TODO: Remove?
                     self = .document(newValue)
                 case .primitive(_, let set): set(newValue)
                 }

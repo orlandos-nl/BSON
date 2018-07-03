@@ -170,7 +170,7 @@ extension Document {
     
     /// Writes the `primitive` to this Document keyed by `key`
     mutating func write(_ primitive: Primitive, forKey key: String) {
-        assert(!key.contains("\0"))
+        assert(!key.contains("\0")) // TODO: this should not only fail on debug. Maybe just remove ocurrences of \0?
         
         let dimensions = self.dimension(forKey: key)
         self.write(primitive, forDimensions: dimensions, key: key)
