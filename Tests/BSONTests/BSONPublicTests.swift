@@ -14,16 +14,9 @@ import XCTest
     import Glibc
 #endif
 
-let testAllocator = BSONArenaAllocator(blocks: 64, blockSize: 64)
-var arena: Bool = false
-
 extension Document {
     static func new() -> Document {
-        if arena {
-            return Document(allocator: testAllocator)
-        } else {
-            return Document()
-        }
+        return Document()
     }
 }
 
@@ -36,8 +29,6 @@ final class BSONPublicTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        
-        arena = false
     }
 
     static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
@@ -68,16 +59,6 @@ final class BSONPublicTests: XCTestCase {
 //            ("testBinaryEquatable", testBinaryEquatable),
 //            ("testUsingDictionaryAsPrimitive", testUsingDictionaryAsPrimitive)
         ]
-    }
-    
-    func testArenaAllocator() throws {
-        arena = true
-        
-        for _ in 0..<100 {
-            for test in BSONPublicTests.allTests {
-                try test.1(self)()
-            }
-        }
     }
 //
 //    let kittenDocument: Document = [

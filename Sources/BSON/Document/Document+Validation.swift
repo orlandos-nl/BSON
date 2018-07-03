@@ -22,12 +22,6 @@ extension Document {
     ///
     /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
     public func validate(recursively validatingRecursively: Bool = true) -> ValidationResult {
-        if !nullTerminated {
-            var copy = self
-            copy.requireNullTerminated()
-            return copy.validate(recursively: validatingRecursively)
-        }
-        
         var offset = 0
         let count = self.storage.usedCapacity
         
@@ -63,7 +57,6 @@ extension Document {
                 let document = Document(
                     storage: self.storage[offset ..< offset &+ length &- 1],
                     cache: DocumentCache(), // FIXME: Try to share sub-caches
-                    nullTerminated: false,
                     isArray: array
                 )
                 
@@ -104,7 +97,8 @@ extension Document {
             return true
         }
         
-        guard numericCast(pointer.int32) == count else {
+        // + 1 for the missing null terminator
+        guard numericCast(pointer.int32) == count &+ 1 else {
             return errorFound(reason: .notEnoughBytesForDocument)
         }
         
@@ -153,10 +147,6 @@ extension Document {
             case .objectId:
                 advance(12)
             case .boolean:
-                guard has(1) else {
-                    return errorFound(reason: .notEnoughBytesForValue)
-                }
-                
                 guard pointer.pointee == 0x00 || pointer.pointee == 0x01 else {
                     return errorFound(reason: .invalidBoolean)
                 }
@@ -195,12 +185,6 @@ extension Document {
                 advance(4)
             case .decimal128:
                 advance(16)
-            }
-            
-            // Check parsed data size
-            guard offset < count else {
-                // Scrolled past the end
-                return errorFound(reason: .incorrectDocumentTermination)
             }
         }
         

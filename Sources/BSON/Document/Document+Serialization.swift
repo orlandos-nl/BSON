@@ -1,13 +1,6 @@
 import Foundation
 
 extension Document {
-    internal mutating func requireNullTerminated() {
-        if !nullTerminated {
-            self.storage.append(0x00)
-            self.nullTerminated = true
-        }
-    }
-    
     public mutating func withUnsafeBufferPointer<T>(_ run: (UnsafeBufferPointer<UInt8>) throws -> T) rethrows -> T {
         requireNullTerminated()
         

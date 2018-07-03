@@ -1,19 +1,7 @@
 import Foundation
 
 extension Document {
-    /// Prepates the document before mutations such as addition or removal of keys
-    ///
-    /// - Removes the null terminator if it's present
-    mutating func prepareForMutation() {
-        if self.nullTerminated {
-            self.storage.remove(from: self.storage.usedCapacity &- 1, length: 1)
-            self.nullTerminated = false
-        }
-    }
-    
     mutating func write(_ primitive: Primitive, forDimensions dimensions: DocumentCache.Dimensions?, key: String) {
-        prepareForMutation()
-        
         var type: TypeIdentifier!
         var writeLengthPrefix = false
         

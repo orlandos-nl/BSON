@@ -8,7 +8,6 @@ final class AutoDeallocatingStorage {
     let method: DeallocationMethod
     
     enum DeallocationMethod {
-        case `return`(BSONArenaAllocatorSlice)
         case deallocate
     }
     
@@ -29,8 +28,6 @@ final class AutoDeallocatingStorage {
         switch method {
         case .deallocate:
             buffer.baseAddress?.deallocate()
-        case .return(let allocatorMetadata):
-            allocatorMetadata.return()
         }
     }
 }
@@ -178,12 +175,6 @@ struct BSONBuffer {
         self.usedCapacity = storage.count
     }
     
-    /// Wraps a `AutoDeallocatingStorage` assuming the entire storage is unused capacity
-    public init(allocating: Int, allocator: BSONArenaAllocator) {
-        self.storage = .readWrite(allocator.reserve(minimumCapacity: allocating))
-        self.usedCapacity = 0
-    }
-    
     /// Creates a new storage buffer of the given size
     init(size: Int) {
         self.storage = .init(size: size)
@@ -317,6 +308,11 @@ struct BSONBuffer {
         )
         
         self.usedCapacity = self.usedCapacity &- length
+    }
+    
+    mutating func removeLast(_ n: Int) {
+        self.usedCapacity = self.usedCapacity &- n
+        assert(self.usedCapacity >= 0)
     }
     
     /// Creates a sliced substorage with the given range

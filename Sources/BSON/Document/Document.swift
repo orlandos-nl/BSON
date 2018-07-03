@@ -10,11 +10,6 @@ public struct Document: Primitive {
     /// The internal storage engine that stores BSON in it's original binary form
     var storage: BSONBuffer
     
-    /// Indicates that the `Document` holds the final null terminator
-    ///
-    /// If omitted, the performance for appends will increase until serialization
-    var nullTerminated: Bool
-    
     /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
     var isArray: Bool
     
@@ -28,7 +23,6 @@ public struct Document: Primitive {
     /// `isArray` dictates what kind of subdocument the `Document` is, and is `false` by default
     public init(isArray: Bool = false) {
         self.init(bytes: [5, 0, 0, 0])
-        self.nullTerminated = false
         self.isArray = isArray
     }
     
@@ -40,9 +34,8 @@ public struct Document: Primitive {
     /// If it's `false`, the final `nullTerminator` is ommitted from this Document allowing more efficient `appends`
     ///
     /// The `cache` provided can be empty if nothing is cached yet or can be used as a shortcut
-    internal init(storage: BSONBuffer, cache: DocumentCache, nullTerminated: Bool, isArray: Bool) {
+    internal init(storage: BSONBuffer, cache: DocumentCache, isArray: Bool) {
         self.storage = storage
-        self.nullTerminated = nullTerminated
         self.cache = cache
         self.isArray = isArray
     }
@@ -52,9 +45,12 @@ public struct Document: Primitive {
     /// `isArray` dictates what kind of `Document`
     public init(data: Data, isArray: Bool = false) {
         self.storage = BSONBuffer(data: data)
-        self.nullTerminated = true
         self.cache = DocumentCache()
         self.isArray = isArray
+        
+        if self.storage.usedCapacity > 0 {
+            self.storage.removeLast(1)
+        }
     }
     
     /// Creates a new `Document` by parsing the existing `[UInt8]` buffer
@@ -62,19 +58,12 @@ public struct Document: Primitive {
     /// `isArray` dictates what kind of `Document`
     public init(bytes: [UInt8], isArray: Bool = false) {
         self.storage = BSONBuffer(bytes: bytes)
-        self.nullTerminated = true
         self.cache = DocumentCache()
         self.isArray = isArray
-    }
-    
-    /// Creates a thread unsafe Document using a predefined `BSONArenaAllocator` allowing extremely cheap BSON operations
-    ///
-    /// `isArray` dictates what kind of `Document`
-    internal init(allocator: BSONArenaAllocator, isArray: Bool = false) {
-        self.storage = BSONBuffer(allocating: 4, allocator: allocator)
-        self.nullTerminated = false
-        self.cache = DocumentCache()
-        self.isArray = isArray
+        
+        if self.storage.usedCapacity > 0 {
+            self.storage.removeLast(1)
+        }
     }
     
     /// Assumes the buffer to not be deallocated for the duration of this Document
@@ -86,9 +75,12 @@ public struct Document: Primitive {
     /// The buffer will only be copied on mutations of this Document
     public init(withoutCopying buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
         self.storage = BSONBuffer(buffer: buffer)
-        self.nullTerminated = true
         self.cache = DocumentCache()
         self.isArray = isArray
+        
+        if self.storage.usedCapacity > 0 {
+            self.storage.removeLast(1)
+        }
     }
     
     /// Converts an array of Primitives to a BSON ArrayDocument
@@ -112,7 +104,6 @@ public struct Document: Primitive {
         self.storage.writeBuffer!.baseAddress?.assign(from: buffer.baseAddress!, count: buffer.count)
         self.storage.usedCapacity = buffer.count
         
-        self.nullTerminated = true
         self.cache = DocumentCache()
         self.isArray = isArray
     }

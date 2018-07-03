@@ -217,7 +217,6 @@ extension Document {
                 return Document(
                     storage: storage[offset..<offset &+ length &- 1],
                     cache: DocumentCache(),
-                    nullTerminated: false,
                     isArray: type == .array
                 )
             } else {
