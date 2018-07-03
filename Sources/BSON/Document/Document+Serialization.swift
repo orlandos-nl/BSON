@@ -9,6 +9,8 @@ extension Document {
     }
     
     public mutating func withUnsafeBufferPointer<T>(_ run: (UnsafeBufferPointer<UInt8>) throws -> T) rethrows -> T {
+        requireNullTerminated()
+        
         var length = Int32(self.storage.usedCapacity)
         withUnsafePointer(to: &length) { pointer in
             pointer.withMemoryRebound(to: UInt8.self, capacity: 4) { pointer in
