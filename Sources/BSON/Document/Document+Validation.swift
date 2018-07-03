@@ -57,7 +57,7 @@ extension Document {
                 let length = numericCast(pointer.int32) as Int
                 
                 guard has(length) else {
-t                    return errorFound(reason: .notEnoughBytesForDocument)
+                    return errorFound(reason: .notEnoughBytesForDocument)
                 }
                 
                 let document = Document(
