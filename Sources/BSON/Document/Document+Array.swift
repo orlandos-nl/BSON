@@ -3,7 +3,7 @@ extension Document: ExpressibleByArrayLiteral {
     public var values: [Primitive] {
         _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
         
-        return self.cache.storage.flatMap { (_, dimension) in
+        return self.cache.storage.compactMap { (_, dimension) in
             return self.readPrimitive(atDimensions: dimension)
         }
     }
@@ -46,7 +46,7 @@ extension Document: ExpressibleByArrayLiteral {
     }
     
     public init(arrayLiteral elements: PrimitiveConvertible...) {
-        self.init(elements: elements.flatMap { $0.makePrimitive() }.enumerated().map { ("\($0.offset)", $0.element) })
+        self.init(elements: elements.compactMap { $0.makePrimitive() }.enumerated().map { ("\($0.offset)", $0.element) })
     }
 }
 

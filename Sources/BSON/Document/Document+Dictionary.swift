@@ -18,7 +18,7 @@ extension Document: ExpressibleByDictionaryLiteral {
     
     /// Creates a new Document from a Dictionary literal
     public init(dictionaryLiteral elements: (String, PrimitiveConvertible)...) {
-        self.init(elements: elements.lazy.flatMap { key, value in
+        self.init(elements: elements.lazy.compactMap { key, value in
             guard let primitive = value.makePrimitive() else {
                 return nil // continue
             }

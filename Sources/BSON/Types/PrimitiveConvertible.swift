@@ -32,7 +32,7 @@ extension Set: PrimitiveConvertible where Element: PrimitiveConvertible {
 
 extension Dictionary: PrimitiveConvertible where Key == String, Value: PrimitiveConvertible {
     public func makePrimitive() -> Primitive? {
-        return Document(elements: self.flatMap { element in
+        return Document(elements: self.compactMap { element in
             guard let primitive = element.value.makePrimitive() else {
                 return nil // continue
             }
