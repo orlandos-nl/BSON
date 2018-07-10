@@ -1,4 +1,5 @@
 import Foundation
+import NIO
 
 extension Document {
     /// Updates the document header, containing the length of the document
@@ -23,5 +24,12 @@ extension Document {
         return self.withUnsafeBufferPointer { buffer in
             return Data(buffer: buffer) + [0] // TODO: Something more performant
         }
+    }
+    
+    public func makeByteBuffer() -> ByteBuffer {
+        var buffer = self.storage
+        buffer.moveReaderIndex(to: 0)
+        buffer.moveWriterIndex(to: Int(self.usedCapacity))
+        return buffer
     }
 }

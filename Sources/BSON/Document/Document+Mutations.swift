@@ -1,20 +1,94 @@
 import Foundation
 
+
+
 extension Document {
+    /// Writes the type identifier and key, and makes sure there is enough place to write the buffer
+    private func prepareWritingPrimitive(_ type: TypeIdentifier, bodyLength: Int, dimensions: DocumentCache.Dimensions?, key: String) {
+        // TODO: Handle existing dimensions
+    }
+    
     mutating func write(_ primitive: Primitive, forDimensions dimensions: DocumentCache.Dimensions?, key: String) {
+        // When changing this switch, please order in ascending type identifier order for readability
+        switch primitive {
+        case var double as Double: // 0x01
+            prepareWritingPrimitive(.double, bodyLength: 8, dimensions: dimensions, key: key)
+            storage.write(integer: double.bitPattern, endianness: .little)
+        case let string as String: // 0x02
+            let stringLengthWithNull = string.count + 1
+            prepareWritingPrimitive(.string, bodyLength: stringLengthWithNull + 4, dimensions: dimensions, key: key)
+            
+            storage.write(integer: Int32(stringLengthWithNull))
+            storage.write(string: string)
+        case var document as Document: // 0x03 (embedded document) or 0x04 (array)
+            prepareWritingPrimitive(document.isArray ? .array : .document, bodyLength: Int(document.usedCapacity), dimensions: dimensions, key: key)
+            var buffer = document.makeByteBuffer()
+            storage.write(buffer: &buffer)
+        case let binary as Binary: // 0x05
+            unimplemented()
+        // 0x06 is deprecated
+        case let objectId as ObjectId: // 0x07
+            unimplemented()
+//            type = .objectId
+//            flush(from: objectId.storage.readBuffer.baseAddress!, length: 12)
+        case let bool as Bool: // 0x08
+            unimplemented()
+//            type = .boolean
+//            var bool: UInt8 = bool ? 0x01 : 0x00
+//
+//            flush(from: &bool, length: 1)
+        case let date as Date: // 0x09
+            unimplemented()
+//            type = .datetime
+//            var milliseconds = Int(date.timeIntervalSince1970 * 1000)
+//            withPointer(pointer: &milliseconds, length: 8, run: flush)
+        case is Null: // 0x0A
+            unimplemented()
+//            type = .null
+//            flush(from: nil, length: 0)
+            // TODO: RegularExpression (0x0B)
+            // 0x0C is deprecated (DBPointer)
+            // TODO: JavascriptCode (0x0D)
+            // 0x0E is deprecated (Symbol)
+        // TODO: JavascriptCode With Scope (0x0F)
+        case var int as Int32: // 0x10
+            unimplemented()
+//            type = .int32
+//            withPointer(pointer: &int, length: 4, run: flush)
+        case var stamp as Timestamp:
+            unimplemented()
+//            type = .timestamp
+//            withPointer(pointer: &stamp, length: 8, run: flush)
+        case let int as Int: // 0x12
+            unimplemented()
+//            var int = (numericCast(int) as Int64)
+//            type = .int64
+//
+//            withPointer(pointer: &int, length: 8, run: flush)
+        case var int as Int64: // 0x12
+            unimplemented()
+//            type = .int64
+//            withPointer(pointer: &int, length: 8, run: flush)
+        case let decimal128 as Decimal128:
+            unimplemented()
+//            type = .decimal128
+//            flush(from: decimal128.storage.readBuffer.baseAddress!, length: 16)
+        case is MaxKey: // 0x7F
+            unimplemented()
+//            type = .maxKey
+//            flush(from: nil, length: 0)
+        case is MinKey: // 0xFF
+            unimplemented()
+//            type = .minKey
+//            flush(from: nil, length: 0)
+        default:
+            assertionFailure("Currently unsupported type \(primitive)")
+        }
+    }
+    
+    mutating func writeOld(_ primitive: Primitive, forDimensions dimensions: DocumentCache.Dimensions?, key: String) {
         var type: TypeIdentifier!
         var writeLengthPrefix = false // true if the primitive type to write needs a length prefix
-        
-        /// Accesses the pointer as `UInt8`
-        func withPointer<I>(
-            pointer: UnsafePointer<I>,
-            length: Int,
-            run: (UnsafePointer<UInt8>, Int) -> Void
-        ) {
-            return pointer.withMemoryRebound(to: UInt8.self, capacity: 1) { pointer in
-                return run(pointer, length)
-            }
-        }
         
         /// Flushes the value at the pointer with the given length to the document
         ///
@@ -104,6 +178,7 @@ extension Document {
         switch primitive {
         case var double as Double: // 0x01
             type = .double
+            
             withPointer(pointer: &double, length: 8, run: flush)
         case let string as String: // 0x02
             type = .string
@@ -170,6 +245,8 @@ extension Document {
     }
     
     /// Writes the `primitive` to this Document keyed by `key`
+    ///
+    /// - precondition: `key` does not contain a null character
     mutating func write(_ primitive: Primitive, forKey key: String) {
         assert(!key.contains("\0")) // TODO: this should not only fail on debug. Maybe just remove ocurrences of \0?
         
