@@ -43,12 +43,16 @@ extension Document {
         }
         
         func hasString() -> Bool {
-            guard let stringLength = buffer.readInteger(endianness: .little, as: Int32.self) else {
+            guard let stringLengthWithNull = buffer.readInteger(endianness: .little, as: Int32.self) else {
+                return false
+            }
+            
+            guard stringLengthWithNull >= 1 else {
                 return false
             }
             
             // check if string content present
-            guard buffer.readString(length: Int(stringLength) &- 1) != nil else {
+            guard buffer.readString(length: Int(stringLengthWithNull) &- 1) != nil else {
                 return false
             }
             

@@ -37,10 +37,36 @@ extension Document {
             }
             
             storage.moveWriterIndex(to: dimensions.from)
+            
+            // Update dimensions cache
+            for index in 0..<self.cache.storage.count {
+                if self.cache.storage[index].1.from == dimensions.from {
+                    // Found the old dimensions
+                    self.cache.storage[index].1 = dimensions
+                    break
+                }
+            }
         } else {
             // Move the writer index to the `null` byte, which will be overwritten with the new data
             storage.moveWriterIndex(to: Int(self.usedCapacity &- 1))
             changeCapacity(requiredCapacity)
+        }
+        
+        let newDimensions = DocumentCache.Dimensions(
+            type: type,
+            from: storage.writerIndex,
+            keyCString: key.count + 1,
+            valueLength: bodyLength
+        )
+        
+        if dimensions == nil {
+            cache.storage.append((key, newDimensions))
+        } else {
+            guard let index = cache.storage.firstIndex(where: { newDimensions.from == $0.1.from }) else {
+                fatalError("BSON internal inconsistency; please file an issue. This should not happen.")
+            }
+            
+            cache.storage[index] = (key, newDimensions)
         }
         
         // Write the type identifier
