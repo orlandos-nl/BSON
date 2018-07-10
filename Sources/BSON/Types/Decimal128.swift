@@ -1,11 +1,13 @@
+import NIO
+
 /// A BSON Decimal128 value
 ///
 /// OpenKitten BSON currently does not support the handling of Decimal128 values. The type is a stub and provides no API. It serves as a point for future implementation.
 public struct Decimal128: Primitive {
-    var storage: [UInt8]
+    var storage: ByteBuffer
     
-    internal init(_ storage: [UInt8]) {
-        assert(storage.usedCapacity == 16)
+    internal init(_ storage: ByteBuffer) {
+        assert(storage.readableBytes == 16)
         
         self.storage = storage
     }
