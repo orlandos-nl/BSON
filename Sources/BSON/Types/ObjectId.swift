@@ -1,98 +1,60 @@
 import Foundation
+import NIO
 
-#if os(Linux)
-import Glibc
-
-fileprivate var machineIdentifier: UInt32 = {
-    srand(UInt32(time(nil)))
-    return numericCast(rand())
-}()
-#else
-fileprivate var machineIdentifier: UInt32 = arc4random_uniform(UInt32.max)
-#endif
-
-fileprivate var currentIdentifier: UInt16 = 0
-let lock = NSRecursiveLock()
-
-fileprivate var nextIdentifer: UInt16 {
-    defer {
-        lock.lock()
-        currentIdentifier = currentIdentifier &+ 1
-        lock.unlock()
-    }
-    
-    return currentIdentifier
-}
+fileprivate let processIdentifier = ProcessInfo.processInfo.processIdentifier
 
 public final class ObjectIdGenerator {
+    // TODO: is a different MachineIdentifier per ObjectIdGenerator acceptable?
+    let machineIdentifier = UInt32.random(in: UInt32.min...UInt32.max)
+    
+    private var template: ByteBuffer
+    
     public init() {
-        var template = [UInt8](repeating: 0, count: 12)
+        self.template = Document.allocator.buffer(capacity: 12)
         
-        template.withUnsafeMutableBufferPointer { buffer in
-            let pointer = buffer.baseAddress!
-            
-            // 4 bytes of epoch
-            memcpy(pointer.advanced(by: 4), &machineIdentifier, 3)
-            
-            pointer.advanced(by: 4).withMemoryRebound(to: UInt32.self, capacity: 1) { pointer in
-                pointer.pointee = machineIdentifier
-            }
-            
-            pointer.advanced(by: 7).withMemoryRebound(to: UInt16.self, capacity: 1) { pointer in
-                pointer.pointee = nextIdentifer
-            }
-            
-            #if os(Linux)
-            var random: UInt32 = {
-                srand(UInt32(time(nil)))
-                return numericCast(rand())
-            }()
-            #else
-            var random: UInt32 = arc4random_uniform(UInt32.max)
-            #endif
-            
-            withUnsafePointer(to: &random) { randomPointer in
-                randomPointer.withMemoryRebound(to: UInt8.self, capacity: 3) { randomPointer in
-                    pointer.advanced(by: 9).assign(from: randomPointer, count: 3)
-                }
-            }
-        }
+        // 4 bytes of epoch time, will be unique for each ObjectId
         
-        self.template = template
+        // then 3 bytes of machine identifier
+        // yes, the code below writes 4 bytes, but the last one will be overwritten by the process id
+        template.set(integer: machineIdentifier, at: 4, endianness: .little)
+        
+        // last 3 bytes: random counter
+        // this will also write 4 bytes, at index 8, while the counter actually starts at index 9
+        // the process id will overwrite the first byte
+        let initialCounter = UInt32.random(in: UInt32.min...UInt32.max)
+        template.set(integer: initialCounter, at: 8, endianness: .little)
+        
+        // process id
+        template.set(integer: processIdentifier, at: 7, endianness: .little)
     }
     
     func incrementTemplateCounter() {
-        self.template.withUnsafeMutableBytes { buffer in
-            let pointer = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
-            
+        assert(template.readerIndex == 0)
+        
+        self.template.withUnsafeMutableReadableBytes { buffer in
             // Need to simulate an (U)Int24
-            pointer[11] = pointer[11] &+ 1
+            buffer[11] = buffer[11] &+ 1
             
-            if pointer[11] == 0 {
-                pointer[10] = pointer[10] &+ 1
+            if buffer[11] == 0 {
+                buffer[10] = buffer[10] &+ 1
                 
-                if pointer[10] == 0 {
-                    pointer[9] = pointer[9] &+ 1
+                if buffer[10] == 0 {
+                    buffer[9] = buffer[9] &+ 1
                 }
             }
         }
     }
-    
-    private var template: [UInt8]
     
     /// Generates a new ObjectId
     public func generate() -> ObjectId {
         var template = self.template
         
-        template.withUnsafeMutableBufferPointer { buffer in
-            buffer.baseAddress!.withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
-                pointer.pointee = Int32(time(nil)).bigEndian
-            }
-        }
+        // TODO: big or little endian?
+        template.write(integer: Int32(time(nil)), endianness: .little)
         
         self.incrementTemplateCounter()
         
-        return ObjectId(BSONBuffer(bytes: template))
+        return ObjectId(template)
     }
 }
 
@@ -103,16 +65,16 @@ private struct InvalidObjectIdString: Error {
 
 public struct ObjectId {
     /// The internal Storage Buffer
-    let storage: [UInt8]
+    let storage: ByteBuffer
     
-    /// Creates a new ObjectId using an existing (Sub-)Storage buffer
-    init(_ storage: [UInt8]) {
-        assert(storage.usedCapacity == 12)
+    /// Creates a new ObjectId using exsiting data
+    init(_ storage: ByteBuffer) {
+        assert(storage.readableBytes == 12)
         
         self.storage = storage
     }
  
-    // TODO: Implement this another way!
+    // TODO: Implement this another way
     public init() {
         self = ObjectIdGenerator().generate()
     }
@@ -123,8 +85,7 @@ public struct ObjectId {
             throw InvalidObjectIdString(hex: hex)
         }
         
-        var data = [UInt8]()
-        data.reserveCapacity(12)
+        var storage = Document.allocator.buffer(capacity: 12)
         
         var gen = hex.makeIterator()
         while let c1 = gen.next(), let c2 = gen.next() {
@@ -134,14 +95,14 @@ public struct ObjectId {
                 break
             }
             
-            data.append(d)
+            storage.write(integer: d, endianness: .little)
         }
         
-        guard data.count == 12 else {
+        guard storage.readableBytes == 12 else {
             throw InvalidObjectIdString(hex: hex)
         }
         
-        self.storage = data
+        self.storage = storage
     }
     
     /// The 12 bytes represented as 24-character hex-string
@@ -149,7 +110,7 @@ public struct ObjectId {
         var data = Data()
         data.reserveCapacity(24)
         
-        for byte in storage {
+        for byte in storage.readableBytesView {
             data.append(radix16table[Int(byte / 16)])
             data.append(radix16table[Int(byte % 16)])
         }
@@ -159,11 +120,7 @@ public struct ObjectId {
     
     /// Returns the ObjectId's creation date in UNIX epoch seconds
     public var epochSeconds: Int32 {
-        let basePointer = storage.readBuffer.baseAddress!
-        
-        return basePointer.withMemoryRebound(to: Int32.self, capacity: 1) { pointer in
-            return pointer.pointee.bigEndian
-        }
+        return storage.getInteger(at: 0, endianness: .little)!
     }
     
     /// The creation date of this ObjectId
@@ -174,20 +131,12 @@ public struct ObjectId {
 
 extension ObjectId: Hashable {
     public static func ==(lhs: ObjectId, rhs: ObjectId) -> Bool {
-        for i in 0..<12 {
-            guard lhs.storage.readBuffer[i] == rhs.storage.readBuffer[i] else {
-                return false
-            }
-        }
-        
-        return true
+        return lhs.storage == rhs.storage
     }
     
-    public var hashValue: Int {
-        let pointer = storage.readBuffer.baseAddress!
-        
-        return pointer.withMemoryRebound(to: Int32.self, capacity: 3) { pointer in
-            return numericCast(pointer.pointee &+ (pointer[1] &* 3) &+ (pointer[2] &* 8))
+    public func hash(into hasher: inout Hasher) {
+        storage.withUnsafeReadableBytes {
+            hasher.combine(bytes: $0)
         }
     }
 }
