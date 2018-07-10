@@ -123,18 +123,31 @@ extension Document {
     }
     
     func scanValue(startingAt position: Int, mode: ScanMode) -> DocumentCache.Dimensions? {
-        self.storage.moveReaderIndex(to: position)
+        var position = position
+        let usedCapacity = Int(self.usedCapacity)
         
-        while self.storage.readableBytes > 0 {
-            guard let typeId: UInt8 = self.storage.readInteger() else {
+        while position < usedCapacity {
+            guard let typeId = self.storage.getByte(at: position) else {
                 return nil
             }
             
-            let cStringStart = storage.readBuffer.baseAddress!.advanced(by: position)
-            let keyLength = storage.cString(at: position)
-            position = position &+ keyLength
+            let basePosition = position
+            position = position &+ 1
             
-            let readKey = String(cString: cStringStart)
+            let view = self.storage.viewBytes(at: position, length: usedCapacity &- position)
+            
+            guard let cStringEnd = view.firstIndex(of: 0x00) else {
+                return nil
+            }
+            
+            let cStringStart = position
+            
+            // Excluding null terminator
+            let keyLength = cStringEnd &- 1 &- cStringStart
+            
+            guard let readKey = self.storage.getString(at: cStringStart, length: keyLength) else {
+                return nil
+            }
             
             guard
                 let type = TypeIdentifier(rawValue: typeId),
@@ -189,21 +202,24 @@ extension Document {
             if type == .string {
                 return self.storage.getString(at: offset &+ 4, length: numericCast(length))
             } else if type == .document || type == .array {
+                guard let slice = self.storage.getSlice(at: offset, length: numericCast(length)) else {
+                    return nil
+                }
+                
                 return Document(
-                    storage: storage[offset..<offset &+ length &- 1],
+                    storage: slice,
                     cache: DocumentCache(),
                     isArray: type == .array
                 )
             } else {
-                basePointer += 5
-                
-                // Offset + Size + SubType + Data
-                if offset &+ 5 &+ length > self.storage.usedCapacity {
-                    // Corrupt data
+                guard
+                    let subType = self.storage.getByte(at: offset &+ 4),
+                    let slice = self.storage.getSlice(at: offset &+ 5, length: numericCast(length))
+                else {
                     return nil
                 }
                 
-                return Binary(storage: storage[offset..<offset &+ length])
+                return Binary(subType: Binary.SubType(subType), buffer: slice)
             }
         case .objectId:
             guard let bytes = storage.getBytes(at: offset, length: 12) else {
