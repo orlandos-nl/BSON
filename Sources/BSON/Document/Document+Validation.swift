@@ -5,8 +5,8 @@ public struct ValidationResult {
     public let reason: String?
     public let key: String?
     
-    public var valid: Bool {
-        return errorPosition != nil && reason != nil
+    public var isValid: Bool {
+        return errorPosition == nil && reason == nil
     }
     
     static func valid() -> ValidationResult {
@@ -61,7 +61,7 @@ extension Document {
         
         /// Moves the reader index past the CString and returns `true` if a CString (null terminated string) is present
         func hasCString() -> Bool {
-            guard let nullTerminatorIndex = buffer.readableBytesView.firstIndex(of: 0) else {
+            guard let nullTerminatorIndex = buffer.firstRelativeIndexOf(byte: 0) else {
                 return false
             }
             
@@ -76,13 +76,17 @@ extension Document {
                 return errorFound(reason: .notEnoughBytesForDocumentHeader)
             }
             
+            guard documentLength > 0 else {
+                return errorFound(reason: "Negative subdocument length")
+            }
+            
             guard var subBuffer = buffer.readSlice(length: Int(documentLength)) else {
                 return errorFound(reason: .notEnoughBytesForValue)
             }
             
             var recursiveValidation = Document.validate(buffer: &subBuffer, asArray: array)
             
-            guard recursiveValidation.valid else {
+            guard recursiveValidation.isValid else {
                 if let errorPosition = recursiveValidation.errorPosition {
                     recursiveValidation.errorPosition = errorPosition + documentOffset
                 }
@@ -118,11 +122,15 @@ extension Document {
             }
             
             /// Check for key
-            guard let nullTerminatorIndex = buffer.readableBytesView.firstIndex(of: 0) else {
+            guard let keyLengthWithNull = buffer.firstRelativeIndexOf(byte: 0) else {
                 return errorFound(reason: "Could not parse the element key")
             }
             
-            let key = buffer.readString(length: buffer.readableBytes - nullTerminatorIndex)
+            let key = buffer.readString(length: keyLengthWithNull - 1)
+            // skip the null terminator
+            guard has(1) else {
+                return errorFound(reason: .notEnoughBytesForValue, key: key)
+            }
             
             if validateAsArray {
                 guard key == "\(currentIndex)" else {
@@ -142,7 +150,7 @@ extension Document {
             case .document, .array:
                 let result = validateDocument(array: typeIdentifier == .array)
                 
-                guard result.valid else {
+                guard result.isValid else {
                     return result
                 }
             case .binary:
@@ -188,7 +196,7 @@ extension Document {
                 // validate scope document
                 let result = validateDocument(array: false)
                 
-                guard result.valid else {
+                guard result.isValid else {
                     return result
                 }
             case .int32:

@@ -16,7 +16,7 @@ import XCTest
 
 func assertValid(_ document: Document, file: StaticString = #file, line: UInt = #line) {
     let result = document.validate()
-    guard result.valid else {
+    guard result.isValid else {
         XCTFail("document.validate() failed - pos: \(result.errorPosition ?? -1), reason: \(result.reason ?? "nil")", file: file, line: line)
         return
     }
@@ -92,7 +92,7 @@ final class BSONPublicTests: XCTestCase {
     
     func testSubdocumentBasicAccess() {
         var doc = Document()
-        var subdoc = ["foo": "bar"] as Document
+        let subdoc = ["foo": "bar"] as Document
         assertValid(subdoc)
         doc["a"] = subdoc
         assertValid(doc)

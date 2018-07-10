@@ -13,7 +13,7 @@ final class DocumentCache {
         }
         
         var fullLength: Int {
-            return keyCString &+ valueLength
+            return 1 &+ keyCString &+ valueLength
         }
     }
     
@@ -137,49 +137,43 @@ extension Document {
     }
     
     func scanValue(startingAt position: Int, mode: ScanMode) -> DocumentCache.Dimensions? {
-        var position = position
-        let usedCapacity = Int(self.usedCapacity)
+        var storage = self.storage
+        storage.moveReaderIndex(to: position)
         
-        while position < usedCapacity {
-            guard let typeId = self.storage.getByte(at: position) else {
+        while storage.readableBytes > 1 {
+            let basePosition = storage.readerIndex
+            
+            guard let typeId = storage.readInteger(endianness: .little, as: UInt8.self) else {
                 return nil
             }
             
-            let basePosition = position
-            position = position &+ 1
-            
-            let view = self.storage.viewBytes(at: position, length: usedCapacity &- position)
-            
-            guard let cStringEnd = view.firstIndex(of: 0x00) else {
+            guard let keyLengthWithNull = storage.firstRelativeIndexOf(byte: 0) else {
                 return nil
             }
             
-            let cStringStart = position
-            
-            // Excluding null terminator
-            let keyLength = cStringEnd &- 1 &- cStringStart
-            
-            guard let readKey = self.storage.getString(at: cStringStart, length: keyLength) else {
+            guard let readKey = storage.readString(length: keyLengthWithNull-1) else {
                 return nil
             }
+            
+            // advance past null terminator
+            storage.moveReaderIndex(forwardBy: 1)
             
             guard
                 let type = TypeIdentifier(rawValue: typeId),
-                let valueLength = self.valueLength(forType: type, at: position)
+                let valueLength = self.valueLength(forType: type, at: storage.readerIndex)
             else {
                 return nil
             }
             
-            position = position &+ valueLength
-            
             let dimension = DocumentCache.Dimensions(
                 type: type,
                 from: basePosition,
-                keyCString: keyLength,
+                keyCString: keyLengthWithNull,
                 valueLength: valueLength
             )
             
             self.cache.storage.append((readKey, dimension))
+            storage.moveReaderIndex(forwardBy: valueLength)
             
             switch mode {
             case .key(let key):
@@ -219,7 +213,7 @@ extension Document {
             }
             
             if type == .string {
-                return self.storage.getString(at: offset &+ 4, length: numericCast(length))
+                return self.storage.getString(at: offset &+ 4, length: numericCast(length) - 1)
             } else if type == .document || type == .array {
                 guard let slice = self.storage.getSlice(at: offset, length: numericCast(length)) else {
                     return nil

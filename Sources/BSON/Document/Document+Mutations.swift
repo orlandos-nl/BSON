@@ -95,6 +95,7 @@ extension Document {
             
             storage.write(integer: Int32(stringLengthWithNull), endianness: .little)
             storage.write(string: string)
+            storage.write(integer: 0, endianness: .little, as: UInt8.self)
         case var document as Document: // 0x03 (embedded document) or 0x04 (array)
             prepareWritingPrimitive(document.isArray ? .array : .document, bodyLength: Int(document.usedCapacity), dimensions: dimensions, key: key)
             var buffer = document.makeByteBuffer()
