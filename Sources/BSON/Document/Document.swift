@@ -1,4 +1,5 @@
 import Foundation
+import NIO
 
 // TODO: Remove when unused
 func unimplemented(_ function: String = #function) -> Never {
@@ -7,9 +8,11 @@ func unimplemented(_ function: String = #function) -> Never {
 
 @dynamicMemberLookup
 public struct Document: Primitive {
+    static let allocator = ByteBufferAllocator()
+    
     /// The internal storage engine that stores BSON in it's original binary form
     /// The null terminator is missing here for performance reasons. We append it in `makeData()`
-    var storage: BSONBuffer
+    var storage: ByteBuffer
     
     /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
     var isArray: Bool
@@ -35,7 +38,7 @@ public struct Document: Primitive {
     /// If it's `false`, the final `nullTerminator` is ommitted from this Document allowing more efficient `appends`
     ///
     /// The `cache` provided can be empty if nothing is cached yet or can be used as a shortcut
-    internal init(storage: BSONBuffer, cache: DocumentCache, isArray: Bool) {
+    internal init(storage: ByteBuffer, cache: DocumentCache, isArray: Bool) {
         self.storage = storage
         self.cache = cache
         self.isArray = isArray

@@ -9,12 +9,17 @@ let package = Package(
             name: "BSON",
             targets: ["BSON"])
         ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-nio.git", from: "1.7.3")
+    ],
     targets: [
         .target(
-            name: "BSON"),
+            name: "BSON",
+            dependencies: ["NIO"]
+        ),
         .testTarget(
             name: "BSONTests",
-            dependencies: ["BSON"]),
+            dependencies: ["BSON"])
         ],
     swiftLanguageVersions: [.v4_2]
 )
