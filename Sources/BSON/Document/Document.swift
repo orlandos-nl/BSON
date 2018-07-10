@@ -14,6 +14,21 @@ public struct Document: Primitive {
     /// The null terminator is missing here for performance reasons. We append it in `makeData()`
     var storage: ByteBuffer
     
+    var usedCapacity: Int32 {
+        get {
+            guard let int = storage.getInteger(at: 0, endianness: .little, as: Int32.self) else {
+                assertionFailure("Corrupted document header")
+                return 0
+            }
+            
+            return int
+        }
+        set {
+            assert(usedCapacity >= 5)
+            storage.set(integer: newValue, at: 0, endianness: .little)
+        }
+    }
+    
     /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
     var isArray: Bool
     
@@ -26,7 +41,7 @@ public struct Document: Primitive {
     ///
     /// `isArray` dictates what kind of subdocument the `Document` is, and is `false` by default
     public init(isArray: Bool = false) {
-        self.init(bytes: [5, 0, 0, 0, 0])
+        self.init(data: Data(bytes: [5, 0, 0, 0, 0]))
         self.isArray = isArray
     }
     
@@ -48,43 +63,11 @@ public struct Document: Primitive {
     ///
     /// `isArray` dictates what kind of `Document`
     public init(data: Data, isArray: Bool = false) {
-        self.storage = BSONBuffer(data: data)
-        self.cache = DocumentCache()
-        self.isArray = isArray
-        
-        if self.storage.usedCapacity > 0 {
-            self.storage.removeLast(1)
-        }
-    }
+        self.storage = Document.allocator.buffer(capacity: data.count)
+        self.storage.write(bytes: data)
     
-    /// Creates a new `Document` by parsing the existing `[UInt8]` buffer
-    ///
-    /// `isArray` dictates what kind of `Document`
-    public init(bytes: [UInt8], isArray: Bool = false) {
-        self.storage = BSONBuffer(bytes: bytes)
         self.cache = DocumentCache()
         self.isArray = isArray
-        
-        if self.storage.usedCapacity > 0 {
-            self.storage.removeLast(1)
-        }
-    }
-    
-    /// Assumes the buffer to not be deallocated for the duration of this Document
-    ///
-    /// `isArray` dictates what kind of `Document`
-    ///
-    /// Provides a zero-copy interface with this data, including `Codable`
-    ///
-    /// The buffer will only be copied on mutations of this Document
-    public init(withoutCopying buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
-        self.storage = BSONBuffer(buffer: buffer)
-        self.cache = DocumentCache()
-        self.isArray = isArray
-        
-        if self.storage.usedCapacity > 0 {
-            self.storage.removeLast(1)
-        }
     }
     
     /// Converts an array of Primitives to a BSON ArrayDocument
@@ -94,21 +77,5 @@ public struct Document: Primitive {
         for element in array {
             self.append(element)
         }
-    }
-    
-    /// Creates a new document by copying the contents of the referenced buffer
-    ///
-    /// `isArray` dictates what kind of `Document`
-    ///
-    /// Provides a zero-copy interface with this data, including `Codable`
-    ///
-    /// The buffer will only be copied on mutations of this Document
-    public init(copying buffer: UnsafeBufferPointer<UInt8>, isArray: Bool = false) {
-        self.storage = BSONBuffer(size: buffer.count)
-        self.storage.writeBuffer!.baseAddress?.assign(from: buffer.baseAddress!, count: buffer.count)
-        self.storage.usedCapacity = buffer.count
-        
-        self.cache = DocumentCache()
-        self.isArray = isArray
     }
 }
