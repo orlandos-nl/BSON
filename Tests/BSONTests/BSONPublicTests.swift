@@ -22,6 +22,14 @@ func assertValid(_ document: Document, file: StaticString = #file, line: UInt = 
     }
 }
 
+func assertInvalid(_ document: Document, file: StaticString = #file, line: UInt = #line) {
+    let result = document.validate()
+    guard !result.isValid else {
+        XCTFail("Document validation succeeded but should not have", file: file, line: line)
+        return
+    }
+}
+
 final class BSONPublicTests: XCTestCase {
     
     override func setUp() {
@@ -156,6 +164,11 @@ final class BSONPublicTests: XCTestCase {
         document["anykey"] = "anyvalue"
         assertValid(document)
         XCTAssertNotNil(document["anykey"] as? String)
+        document["_id"] = "abcdefghijklmnop"
+        XCTAssertNotNil(document["anyKey"] as? String)
+        document["_id"] = "efg"
+        XCTAssertNotNil(document["anyKey"] as? String)
+        assertValid(document)
 
         var document2 = Document()
         document2["anykey"] = nil

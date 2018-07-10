@@ -22,29 +22,21 @@ extension Document {
     private mutating func prepareWritingPrimitive(_ type: TypeIdentifier, bodyLength: Int, dimensions: DocumentCache.Dimensions?, key: String) {
         // capacity needed for one element: typeId + key with null terminator + body
         let fullLength = 1 + key.count + 1 + bodyLength
-        let requiredCapacity = Int(self.usedCapacity) + fullLength
+        let requiredCapacity = Int(self.usedCapacity) + fullLength - (dimensions?.fullLength ?? 0)
         
         if let dimensions = dimensions {
-            if dimensions.fullLength < fullLength {
-                // need to make extra space; new value is bigger than old value
-                changeCapacity(requiredCapacity)
-                let requiredExtraLength = fullLength - dimensions.fullLength
-                moveBytes(from: dimensions.end &+ 1, to: dimensions.end &+ 1 &+ requiredExtraLength, length: numericCast(usedCapacity) &- dimensions.end &- 1)
-            } else if dimensions.fullLength > fullLength {
-                // need to make space smaller; new value is smaller than old value
-                moveBytes(from: dimensions.end &+ 1, to: dimensions.from &+ dimensions.fullLength, length: numericCast(usedCapacity) &- dimensions.end &- 1)
-                changeCapacity(requiredCapacity)
-            }
-            
             storage.moveWriterIndex(to: dimensions.from)
             
-            // Update dimensions cache
-            for index in 0..<self.cache.storage.count {
-                if self.cache.storage[index].1.from == dimensions.from {
-                    // Found the old dimensions
-                    self.cache.storage[index].1 = dimensions
-                    break
-                }
+            if dimensions.fullLength < fullLength {
+                // need to make extra space; new value is bigger than old value
+                let initialUsedCapacity = usedCapacity
+                changeCapacity(requiredCapacity)
+                let requiredExtraLength = fullLength - dimensions.fullLength
+                moveBytes(from: dimensions.end, to: dimensions.end &+ requiredExtraLength, length: numericCast(initialUsedCapacity) &- dimensions.end)
+            } else if dimensions.fullLength > fullLength {
+                // need to make space smaller; new value is smaller than old value
+                moveBytes(from: dimensions.end, to: dimensions.from &+ dimensions.fullLength, length: numericCast(usedCapacity) &- dimensions.end)
+                changeCapacity(requiredCapacity)
             }
         } else {
             // Move the writer index to the `null` byte, which will be overwritten with the new data
@@ -86,10 +78,17 @@ extension Document {
     }
     
     /// Moves the bytes with the given length at the position `from` to the position at `to`
-    /// This modifies the reader and writer index
     mutating func moveBytes(from: Int, to: Int, length: Int) {
+        let initialReaderIndex = storage.readerIndex
+        let initialWriterIndex = storage.writerIndex
+        
         storage.moveReaderIndex(to: 0)
         storage.moveWriterIndex(to: Int(self.usedCapacity))
+        
+        defer {
+            storage.moveReaderIndex(to: initialReaderIndex)
+            storage.moveWriterIndex(to: initialWriterIndex)
+        }
         
         _ = storage.withUnsafeMutableReadableBytes { pointer in
             memmove(

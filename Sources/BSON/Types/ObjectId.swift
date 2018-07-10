@@ -29,7 +29,8 @@ public final class ObjectIdGenerator {
     }
     
     func incrementTemplateCounter() {
-        assert(template.readerIndex == 0)
+        template.moveReaderIndex(to: 0)
+        template.moveWriterIndex(to: 12)
         
         self.template.withUnsafeMutableReadableBytes { buffer in
             // Need to simulate an (U)Int24
@@ -50,10 +51,11 @@ public final class ObjectIdGenerator {
         var template = self.template
         
         // TODO: big or little endian?
-        template.write(integer: Int32(time(nil)), endianness: .little)
+        template.set(integer: Int32(time(nil)), at: 0, endianness: .little)
         
         self.incrementTemplateCounter()
         
+        template.moveWriterIndex(to: 12)
         return ObjectId(template)
     }
 }
