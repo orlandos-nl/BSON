@@ -2,7 +2,7 @@ import NIO
 
 extension ByteBuffer {
     func getDouble(at offset: Int) -> Double? {
-        guard let int = storage.getInteger(at: offset, endianness: .little, as: UInt64.self) else {
+        guard let int = getInteger(at: offset, endianness: .little, as: UInt64.self) else {
             return nil
         }
         

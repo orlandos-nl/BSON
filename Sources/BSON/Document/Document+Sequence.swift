@@ -50,7 +50,7 @@ public struct DocumentPair {
     
     /// The key associated with this pair
     public var key: String {
-        return document[keyFor: dimensions]
+        return document.readKey(atDimensions: dimensions)
     }
     
     /// The value associated with this pair

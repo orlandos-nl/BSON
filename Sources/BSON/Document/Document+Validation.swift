@@ -1,197 +1,220 @@
+import NIO
+
 public struct ValidationResult {
-    public let valid: Bool
     public internal(set) var errorPosition: Int?
-    public let reason: StaticString?
+    public let reason: String?
+    public let key: String?
+    
+    public var valid: Bool {
+        return errorPosition != nil && reason != nil
+    }
     
     static func valid() -> ValidationResult {
-        return ValidationResult(valid: true, errorPosition: nil, reason: nil)
+        return ValidationResult(errorPosition: nil, reason: nil, key: nil)
     }
 }
 
-fileprivate extension StaticString {
-    static let notEnoughBytesForValue = "A value identifier was found, but the associated value could not be parsed" as StaticString
-    static let notEnoughBytesForDocumentHeader = "Not enough bytes were remaining to parse a Document header" as StaticString
-    static let notEnoughBytesForDocument = "There were not enough bytes left to match the length in the document header" as StaticString
-    static let trailingBytes = "After parsing the Document, trailing bytes were found" as StaticString
-    static let invalidBoolean = "A value other than 0x00 or 0x01 was used to represent a boolean" as StaticString
-    static let incorrectDocumentTermination = "The 0x00 byte was not found where it should have been terminating a Document" as StaticString
+fileprivate extension String {
+    static let notEnoughBytesForValue = "A value identifier was found, but the associated value could not be parsed"
+    static let notEnoughBytesForDocumentHeader = "Not enough bytes were remaining to parse a Document header"
+    static let notEnoughBytesForDocument = "There were not enough bytes left to match the length in the document header"
+    static let trailingBytes = "After parsing the Document, trailing bytes were found"
+    static let invalidBoolean = "A value other than 0x00 or 0x01 was used to represent a boolean"
+    static let incorrectDocumentTermination = "The 0x00 byte was not found where it should have been terminating a Document"
 }
 
 extension Document {
-    /// Validates this document's technical correctness
-    ///
-    /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
-    public func validate(recursively validatingRecursively: Bool = true) -> ValidationResult {
-        // TODO: Update header if document is mutated
-        
-        var offset = 0
-        let count = self.storage.usedCapacity
-        
-        func errorFound(reason: StaticString) -> ValidationResult {
-            return ValidationResult(valid: false, errorPosition: offset, reason: reason)
+    /// Validates the given `buffer` as a Document
+    static func validate(buffer: inout ByteBuffer, asArray validateAsArray: Bool) -> ValidationResult {
+        func errorFound(reason: String, key: String? = nil) -> ValidationResult {
+            return ValidationResult(errorPosition: buffer.readerIndex, reason: reason, key: key)
         }
         
-        guard count >= 4, var pointer = self.storage.readBuffer.baseAddress else {
-            return errorFound(reason: .notEnoughBytesForDocument)
-        }
-        
-        func advance(_ n: Int) {
-            pointer += n
-            offset = offset &+ n
-        }
-        
-        func has(_ n: Int) -> Bool {
-            return offset &+ n <= count
-        }
-        
-        func document(array: Bool) -> ValidationResult {
-            guard has(4) else {
-                return errorFound(reason: .notEnoughBytesForDocumentHeader)
-            }
-            
-            if validatingRecursively {
-                let length = numericCast(pointer.int32) as Int
-                
-                guard has(length-1) else { // -1 because our BSON implementation does not have a null terminator in its internal storage
-                    return errorFound(reason: .notEnoughBytesForDocument)
-                }
-                
-                let document = Document(
-                    storage: self.storage[offset ..< offset &+ length &- 1],
-                    cache: DocumentCache(), // FIXME: Try to share sub-caches
-                    isArray: array
-                )
-                
-                var recursiveValidation = document.validate(recursively: true)
-                
-                guard recursiveValidation.valid else {
-                    if let errorPosition = recursiveValidation.errorPosition {
-                        recursiveValidation.errorPosition = errorPosition + offset
-                    }
-                    
-                    return recursiveValidation
-                }
-            }
-            
-            advance(numericCast(pointer.int32))
-            
-            return .valid()
-        }
-        
-        func string() -> Bool {
-            guard has(4) else {
+        /// Moves the readerIndex by `amount` if at least that many bytes are present
+        /// Returns `false` if the operation was unsuccessful
+        func has(_ amount: Int) -> Bool {
+            guard buffer.readableBytes > amount else {
                 return false
             }
             
-            let stringLength: Int = numericCast(pointer.int32) &+ 4
-            
-            guard
-                stringLength >= 5,
-                offset &+ stringLength <= self.storage.usedCapacity,
-                pointer[stringLength &- 1] == 0x00
-            else {
-                return false
-            }
-            
-            // int32 contains the entire length, including null terminator
-            advance(stringLength)
+            buffer.moveReaderIndex(forwardBy: amount)
             
             return true
         }
         
-        // + 1 for the missing null terminator
-        // TODO: Re-enable this validation (validates the document header for having a correct length)
-        // This is currently disabled, because we lazily update the document header
-//        guard numericCast(pointer.int32) == count &+ 1 else {
-//            return errorFound(reason: .notEnoughBytesForDocument)
-//        }
-        
-        advance(4)
-        
-        // Iterate over key-value pairs.
-        // Key is null terminated
-        nextPair: while offset < count {
-            let typeId = pointer.pointee
-            
-            advance(1)
-            
-            if typeId == 0x00 { // should not be present - the BSON implementation removes the null terminator
-                return errorFound(reason: .incorrectDocumentTermination)
+        func hasString() -> Bool {
+            guard let stringLength = buffer.readInteger(endianness: .little, as: Int32.self) else {
+                return false
             }
             
-            // Type
-            guard let type = TypeIdentifier(rawValue: typeId) else {
-                return errorFound(reason: "The type identifier found was unknown or unsupported")
+            // check if string content present
+            guard buffer.readString(length: Int(stringLength) &- 1) != nil else {
+                return false
             }
             
-            // Key
-            advance(storage.cString(at: offset))
+            guard buffer.readInteger(endianness: .little, as: UInt8.self) == 0 else {
+                return false
+            }
             
-            // Value
-            switch type {
+            return true
+        }
+        
+        /// Moves the reader index past the CString and returns `true` if a CString (null terminated string) is present
+        func hasCString() -> Bool {
+            guard let nullTerminatorIndex = buffer.readableBytesView.firstIndex(of: 0) else {
+                return false
+            }
+            
+            buffer.moveReaderIndex(forwardBy: nullTerminatorIndex + 1)
+            
+            return true
+        }
+        
+        func validateDocument(array: Bool) -> ValidationResult {
+            let documentOffset = buffer.readerIndex
+            guard let documentLength = buffer.getInteger(at: documentOffset, endianness: .little, as: Int32.self) else {
+                return errorFound(reason: .notEnoughBytesForDocumentHeader)
+            }
+            
+            guard var subBuffer = buffer.readSlice(length: Int(documentLength)) else {
+                return errorFound(reason: .notEnoughBytesForValue)
+            }
+            
+            var recursiveValidation = Document.validate(buffer: &subBuffer, asArray: array)
+            
+            guard recursiveValidation.valid else {
+                if let errorPosition = recursiveValidation.errorPosition {
+                    recursiveValidation.errorPosition = errorPosition + documentOffset
+                }
+                
+                return recursiveValidation
+            }
+            
+            return .valid()
+        }
+        
+        // Extract the document header
+        guard let numberOfBytesFromHeader = buffer.readInteger(endianness: .little, as: Int32.self) else {
+            return errorFound(reason: .notEnoughBytesForDocumentHeader)
+        }
+        
+        // Validate that the number of bytes is correct
+        guard Int(numberOfBytesFromHeader) == buffer.readableBytes + 4 else { // +4 because the header is already parsed
+            return errorFound(reason: .notEnoughBytesForDocument)
+        }
+        
+        var currentIndex = 0
+        
+        // Validate document contents
+        while buffer.readableBytes > 1 {
+            defer { currentIndex += 1 }
+            
+            guard let typeId = buffer.readInteger(endianness: .little, as: UInt8.self) else {
+                return errorFound(reason: .notEnoughBytesForValue)
+            }
+            
+            guard let typeIdentifier = TypeIdentifier(rawValue: typeId) else {
+                return errorFound(reason: "The type identifier \(typeId) is not valid")
+            }
+            
+            /// Check for key
+            guard let nullTerminatorIndex = buffer.readableBytesView.firstIndex(of: 0) else {
+                return errorFound(reason: "Could not parse the element key")
+            }
+            
+            let key = buffer.readString(length: buffer.readableBytes - nullTerminatorIndex)
+            
+            if validateAsArray {
+                guard key == "\(currentIndex)" else {
+                    return errorFound(reason: "The document should be an array, but the element key does not have the expected value of \(currentIndex)", key: key)
+                }
+            }
+            
+            switch typeIdentifier {
             case .double:
-                advance(8)
+                guard has(8) else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
+                }
             case .string:
-                guard string() else {
-                    return errorFound(reason: .notEnoughBytesForValue)
+                guard hasString() else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
             case .document, .array:
-                let result = document(array: type == .array)
+                let result = validateDocument(array: typeIdentifier == .array)
                 
                 guard result.valid else {
                     return result
                 }
             case .binary:
-                guard has(4) else {
-                    return errorFound(reason: .notEnoughBytesForValue)
+                guard let numberOfBytes = buffer.readInteger(endianness: .little, as: Int32.self), buffer.readInteger(endianness: .little, as: UInt8.self) != nil, has(Int(numberOfBytes)) else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
-                
-                // int32 + subtype + bytes
-                advance(numericCast(5 &+ pointer.int32))
             case .objectId:
-                advance(12)
+                guard has(12) else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
+                }
             case .boolean:
-                guard pointer.pointee == 0x00 || pointer.pointee == 0x01 else {
-                    return errorFound(reason: .invalidBoolean)
+                guard let value = buffer.readInteger(endianness: .little, as: UInt8.self) else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
                 
-                advance(1)
+                guard value == 0x00 || value == 0x01 else {
+                    return errorFound(reason: .invalidBoolean, key: key)
+                }
             case .datetime, .timestamp, .int64:
                 guard has(8) else {
-                    return errorFound(reason: .notEnoughBytesForValue)
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
-                
-                advance(8)
             case .null, .minKey, .maxKey:
                 // no data
-                // Still need to check the key's size
                 break
             case .regex:
-                advance(storage.cString(at: offset))
-                advance(storage.cString(at: offset))
-            case .javascript, .javascriptWithScope:
-                guard string() else {
-                    return errorFound(reason: "Javascript code was found but the associated code could not be parsed")
+                guard hasCString() && hasCString() else {
+                    return errorFound(reason: "The regular expression is malformed", key: key)
+                }
+            case .javascript:
+                guard hasString() else {
+                    return errorFound(reason: "Could not parse JavascriptCode string", key: key)
+                }
+            case .javascriptWithScope:
+                guard buffer.readInteger(endianness: .little, as: Int32.self) != nil else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
                 
-                if type == .javascriptWithScope {
-                    let result = document(array: false)
-                    
-                    guard result.valid else {
-                        return result
-                    }
+                guard hasString() else {
+                    return errorFound(reason: "Could not parse JavascriptCode (with scope) string", key: key)
+                }
+                
+                // validate scope document
+                let result = validateDocument(array: false)
+                
+                guard result.valid else {
+                    return result
                 }
             case .int32:
                 guard has(4) else {
-                    return errorFound(reason: "An int32 was found but not enough bytes are present")
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
-                
-                advance(4)
             case .decimal128:
-                advance(16)
+                guard has(16) else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
+                }
             }
         }
         
-        return offset == count ? .valid() : errorFound(reason: .trailingBytes)
+        // Check the terminator
+        guard buffer.readInteger(endianness: .little, as: UInt8.self) == 0 else {
+            return errorFound(reason: .incorrectDocumentTermination)
+        }
+        
+        return .valid()
+    }
+    
+    /// Validates this document's technical correctness
+    ///
+    /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
+    public func validate() -> ValidationResult {
+        var buffer = self.makeByteBuffer()
+        return Document.validate(buffer: &buffer, asArray: self.isArray)
     }
 }

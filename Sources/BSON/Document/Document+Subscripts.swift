@@ -14,7 +14,7 @@ extension Document {
             } else {
                 guard let dimensions = self.dimension(forKey: key) else { return }
                 
-                self.storage.remove(from: dimensions.from, length: dimensions.fullLength)
+                self.removeBytes(at: dimensions.from, length: dimensions.fullLength)
                 
                 for i in 0..<self.cache.storage.count {
                     if self.cache.storage[i].0 == key {

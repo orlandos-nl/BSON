@@ -92,13 +92,27 @@ extension Document {
             return 8
         case .null, .minKey, .maxKey:
             // no data
-            // Still need to check the key's size
             return 0
         case .regex:
-            let offset = self.storage.cString(at: offset)
-            let optionsEnd = storage.cString(at: offset)
+            let view = storage.viewBytes(at: offset, length: Int(usedCapacity) &- offset)
+            var foundFirst = false
+            // this returns the relative index of the second null terminator, which is the (length-1) of the null terminator
+            guard let endIndex = view.firstIndex(where: { candidate in
+                // this returns true for the second null terminator
+                if candidate == 0 {
+                    if foundFirst {
+                        return true
+                    } else {
+                        foundFirst = true
+                    }
+                }
+                
+                return false
+            }) else {
+                return nil
+            }
             
-            return optionsEnd &- offset
+            return endIndex &+ 1
         case .javascriptWithScope:
             guard let string = valueLength(forType: .string, at: offset) else {
                 return nil
@@ -186,8 +200,13 @@ extension Document {
         return self.readPrimitive(type: dimensions.type, offset: dimensions.from &+ 1 &+ dimensions.keyCString, length: dimensions.valueLength)
     }
     
-    func readKey(atDimensions dimensions: DocumentCache.Dimensions) -> String? {
-        return storage.getString(at: dimensions.from &+ 1, length: dimensions.keyCString &- 1)
+    func readKey(atDimensions dimensions: DocumentCache.Dimensions) -> String {
+        guard let key = storage.getString(at: dimensions.from &+ 1, length: dimensions.keyCString &- 1) else {
+            assertionFailure("Key not found for dimensions \(dimensions)")
+            return ""
+        }
+        
+        return key
     }
     
     func readPrimitive(type: TypeIdentifier, offset: Int, length: Int) -> Primitive? {
@@ -222,11 +241,11 @@ extension Document {
                 return Binary(subType: Binary.SubType(subType), buffer: slice)
             }
         case .objectId:
-            guard let bytes = storage.getBytes(at: offset, length: 12) else {
+            guard let slice = storage.getSlice(at: offset, length: 12) else {
                 return nil
             }
             
-            return ObjectId(bytes)
+            return ObjectId(slice)
         case .boolean:
             return storage.getByte(at: offset) == 0x01
         case .datetime:
@@ -263,11 +282,11 @@ extension Document {
         case .int32:
             return self.storage.getInteger(at: offset, endianness: .little, as: Int32.self)
         case .decimal128:
-            guard let data = storage.getBytes(at: offset, length: 16) else {
+            guard let slice = storage.getSlice(at: offset, length: 16) else {
                 return nil
             }
             
-            return Decimal128(data)
+            return Decimal128(slice)
         }
     }
     

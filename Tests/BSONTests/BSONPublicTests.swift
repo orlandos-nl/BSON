@@ -14,12 +14,6 @@ import XCTest
     import Glibc
 #endif
 
-extension Document {
-    static func new() -> Document {
-        return Document()
-    }
-}
-
 func assertValid(_ document: Document, file: StaticString = #file, line: UInt = #line) {
     let result = document.validate()
     guard result.valid else {
@@ -88,7 +82,7 @@ final class BSONPublicTests: XCTestCase {
 //    ]
 
     func testBasicUsage() {
-        var doc = Document.new()
+        var doc = Document()
         
         XCTAssertEqual(doc.keys.count, 0)
         
@@ -144,7 +138,7 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testDocumentLockup() {
-        var document = Document.new()
+        var document = Document()
         document["_id"] = nil
         assertValid(document)
         document["_id"] = "123"
@@ -163,14 +157,14 @@ final class BSONPublicTests: XCTestCase {
         assertValid(document)
         XCTAssertNotNil(document["anykey"] as? String)
 
-        var document2 = Document.new()
+        var document2 = Document()
         document2["anykey"] = nil
         assertValid(document2)
         document2["_id"] = "123"
         assertValid(document2)
         XCTAssertNotNil(document2["_id"])
 
-        var document3 = Document.new()
+        var document3 = Document()
         document3["_id"] = "123"
         assertValid(document3)
         XCTAssertEqual(document3["_id", as: String.self], "123")
@@ -191,7 +185,7 @@ final class BSONPublicTests: XCTestCase {
 //    }
 //
 //    func testTrieCopy() {
-//        var doc = Document.new()
+//        var doc = Document()
 //        doc["username"] = "bob"
 //        doc["password"] = "Secrat"
 //
@@ -591,7 +585,7 @@ final class BSONPublicTests: XCTestCase {
 //        XCTAssert(kittenDocument["minKey"] is MinKey)
 //        XCTAssert(kittenDocument["maxKey"] is MaxKey)
 //
-//        let emptyDocument = Document.new()
+//        let emptyDocument = Document()
 //
 //        XCTAssertNotEqual(emptyDocument, [])
 //        XCTAssertEqual(emptyDocument, [:])

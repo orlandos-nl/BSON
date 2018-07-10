@@ -64,14 +64,17 @@ public struct Document: Primitive {
     }
     
     /// Creates a new `Document` by parsing the existing `Data` buffer
-    ///
-    /// `isArray` dictates what kind of `Document`
     public init(data: Data, isArray: Bool = false) {
         self.storage = Document.allocator.buffer(capacity: data.count)
         self.storage.write(bytes: data)
     
         self.cache = DocumentCache()
         self.isArray = isArray
+    }
+    
+    /// Creates a new `Document` from the given bytes
+    public init(bytes: [UInt8], isArray: Bool = false) {
+        self.init(data: Data(bytes: bytes), isArray: isArray)
     }
     
     /// Converts an array of Primitives to a BSON ArrayDocument
