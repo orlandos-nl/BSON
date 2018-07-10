@@ -18,14 +18,17 @@ extension Document {
             let stringLengthWithNull = string.count + 1
             prepareWritingPrimitive(.string, bodyLength: stringLengthWithNull + 4, dimensions: dimensions, key: key)
             
-            storage.write(integer: Int32(stringLengthWithNull))
+            storage.write(integer: Int32(stringLengthWithNull), endianness: .little)
             storage.write(string: string)
         case var document as Document: // 0x03 (embedded document) or 0x04 (array)
             prepareWritingPrimitive(document.isArray ? .array : .document, bodyLength: Int(document.usedCapacity), dimensions: dimensions, key: key)
             var buffer = document.makeByteBuffer()
             storage.write(buffer: &buffer)
         case let binary as Binary: // 0x05
-            unimplemented()
+            prepareWritingPrimitive(.binary, bodyLength: binary.count + 1, dimensions: dimensions, key: key)
+            storage.write(integer: binary.subType.identifier, endianness: .little)
+            var buffer = binary.storage
+            storage.write(buffer: &buffer)
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             unimplemented()
