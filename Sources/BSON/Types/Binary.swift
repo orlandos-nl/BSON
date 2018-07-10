@@ -1,4 +1,5 @@
 import Foundation
+import NIO
 
 public struct Binary: Primitive {
     public enum SubType {
@@ -29,24 +30,32 @@ public struct Binary: Primitive {
         }
     }
     
-    let storage: ByteBuffer
+    /// A single byte indicating the data type
+    public var subType: SubType
     
-    public init() {
-        self.storage = .init(bytes: [SubType.generic.identifier])
+    /// The underlying data storage of the Binary instance
+    public private(set) var storage: ByteBuffer
+    
+    /// The data stored
+    public var data: Data {
+        get {
+            return storage.withUnsafeReadableBytes(Data.init)
+        }
+        set {
+            storage = Document.allocator.buffer(capacity: newValue.count)
+            storage.write(bytes: newValue)
+        }
     }
     
-    internal init(storage: BSONBuffer) {
-        self.storage = storage
+    /// Initializes a new Binary from the given ByteBuffer
+    ///
+    /// - parameter buffer: The ByteBuffer to use as storage. The buffer will be sliced.
+    init(subType: SubType = .generic, buffer: ByteBuffer) {
+        self.subType = subType
+        self.storage = buffer.slice()
     }
     
-    public init(pointer: UnsafePointer<UInt8>, count: Int) {
-        var storage = BSONBuffer(size: count &+ 1)
-        storage.append(SubType.generic.identifier)
-        storage.append(from: pointer, length: count)
-        
-        self.storage = storage
-    }
-    
+    // TODO: Encode / decode the subtype
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
@@ -54,30 +63,18 @@ public struct Binary: Primitive {
             self = try container.decodeBinary()
         } else {
             let data = try container.decode(Data.self)
-            let size = data.count
-            
-            self = data.withUnsafeBytes { pointer in
-                return Binary(pointer: pointer, count: size)
-            }
+            self.subType = .generic
+            self.storage = Document.allocator.buffer(capacity: data.count)
+            self.storage.write(bytes: data)
         }
     }
     
     public func encode(to encoder: Encoder) throws {
-        try self.makeData().encode(to: encoder)
+        try self.data.encode(to: encoder)
     }
     
+    /// The amount of data, in bytes, stored in this Binary
     public var count: Int {
-        return self.storage.readBuffer.count &- 1
-    }
-    
-    public var subType: SubType {
-        return SubType(self.storage.readBuffer.baseAddress!.pointee)
-    }
-    
-    func makeData() -> Data {
-        let pointer = storage.readBuffer.baseAddress!.advanced(by: 1)
-        let buffer = UnsafeBufferPointer(start: pointer, count: self.count)
-        
-        return Data(buffer: buffer)
+        return storage.readableBytes
     }
 }
