@@ -1,13 +1,13 @@
+import NIO
+
 extension Document: ExpressibleByDictionaryLiteral {
     /// Gets all top level keys in this Document
     public var keys: [String] {
         _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
-        let pointer = self.storage.readBuffer.baseAddress!
-        
-        return self.cache.storage.map { (_, dimension) in
+        return self.cache.storage.compactMap { (_, dimension) in
             // + 1 for the type identifier
-            let pointer = pointer.advanced(by: dimension.from &+ 1)
-            return String(cString: pointer)
+            // - 1 for the null terminator
+            return self.storage.getString(at: dimension.from &+ 1, length: dimension.keyCString &- 1)
         }
     }
     

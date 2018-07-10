@@ -29,7 +29,7 @@ public struct Binary: Primitive {
         }
     }
     
-    let storage: BSONBuffer
+    let storage: ByteBuffer
     
     public init() {
         self.storage = .init(bytes: [SubType.generic.identifier])

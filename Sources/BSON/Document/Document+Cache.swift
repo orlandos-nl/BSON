@@ -66,27 +66,21 @@ extension Document {
     func valueLength(forType type: TypeIdentifier, at offset: Int) -> Int? {
         switch type {
         case .string, .javascript:
-            guard offset &+ 4 < self.storage.usedCapacity else {
+            guard let binaryLength = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
                 return nil
             }
             
-            let stringLength = self.storage.readBuffer.baseAddress!.advanced(by: offset).int32
-            
-            return 4 &+ numericCast(stringLength)
+            return numericCast(4 &+ binaryLength)
         case .document, .array:
-            guard offset &+ 4 < self.storage.usedCapacity else {
+            guard let documentLength = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
                 return nil
             }
-            
-            let documentLength = self.storage.readBuffer.baseAddress!.advanced(by: offset).int32
             
             return numericCast(documentLength)
         case .binary:
-            guard offset &+ 5 < self.storage.usedCapacity else {
+            guard let binaryLength = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
                 return nil
             }
-            
-            let binaryLength = self.storage.readBuffer.baseAddress!.advanced(by: offset).int32
             
             // int32 + subtype + bytes
             return numericCast(5 &+ binaryLength)
@@ -101,7 +95,7 @@ extension Document {
             // Still need to check the key's size
             return 0
         case .regex:
-            let offset = storage.cString(at: offset)
+            let offset = self.storage.cString(at: offset)
             let optionsEnd = storage.cString(at: offset)
             
             return optionsEnd &- offset
@@ -129,12 +123,12 @@ extension Document {
     }
     
     func scanValue(startingAt position: Int, mode: ScanMode) -> DocumentCache.Dimensions? {
-        var position = position
+        self.storage.moveReaderIndex(to: position)
         
-        while position < self.storage.usedCapacity {
-            let basePosition = position
-            let typeId = self.storage.readBuffer[position]
-            position = position &+ 1
+        while self.storage.readableBytes > 0 {
+            guard let typeId: UInt8 = self.storage.readInteger() else {
+                return nil
+            }
             
             let cStringStart = storage.readBuffer.baseAddress!.advanced(by: position)
             let keyLength = storage.cString(at: position)
@@ -179,40 +173,21 @@ extension Document {
         return self.readPrimitive(type: dimensions.type, offset: dimensions.from &+ 1 &+ dimensions.keyCString, length: dimensions.valueLength)
     }
     
-    func readKey(atDimensions dimensions: DocumentCache.Dimensions) -> String {
-        return String(cString: self.storage.readBuffer.baseAddress!.advanced(by: dimensions.from &+ 1))
+    func readKey(atDimensions dimensions: DocumentCache.Dimensions) -> String? {
+        return storage.getString(at: dimensions.from &+ 1, length: dimensions.keyCString &- 1)
     }
     
     func readPrimitive(type: TypeIdentifier, offset: Int, length: Int) -> Primitive? {
-        let pointer = self.storage.readBuffer.baseAddress!.advanced(by: offset)
-        
         switch type {
         case .double:
-            return pointer.withMemoryRebound(to: Double.self, capacity: 1) { $0.pointee }
+            return self.storage.getDouble(at: offset)
         case .string, .binary, .document, .array:
-            let buffer = self.storage.readBuffer
-            
-            var basePointer = buffer.baseAddress!.advanced(by: offset)
-            
-            let length = numericCast(basePointer.int32) as Int
+            guard let length = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
+                return nil
+            }
             
             if type == .string {
-                basePointer += 4
-                
-                // Offset + Size + Data
-                if offset &+ 4 &+ length > self.storage.usedCapacity {
-                    // Corrupt data
-                    return nil
-                }
-                
-                let stringBuffer = UnsafeBufferPointer(start: basePointer, count: length)
-                
-                let stringData = Data(buffer: stringBuffer)
-                
-                return String(
-                    data: stringData[..<stringData.endIndex.advanced(by: -1)],
-                    encoding: .utf8
-                )
+                return self.storage.getString(at: offset &+ 4, length: numericCast(length))
             } else if type == .document || type == .array {
                 return Document(
                     storage: storage[offset..<offset &+ length &- 1],
@@ -231,17 +206,30 @@ extension Document {
                 return Binary(storage: storage[offset..<offset &+ length])
             }
         case .objectId:
-            return ObjectId(storage[offset..<offset &+ 12])
-        case .boolean:
-            return pointer.pointee == 0x01
-        case .datetime:
-            return pointer.withMemoryRebound(to: Int64.self, capacity: 1) {
-                return Date(timeIntervalSince1970: Double($0.pointee) / 1000)
+            guard let bytes = storage.getBytes(at: offset, length: 12) else {
+                return nil
             }
+            
+            return ObjectId(bytes)
+        case .boolean:
+            return storage.getByte(at: offset) == 0x01
+        case .datetime:
+            guard let timestamp = self.storage.getInteger(at: offset, endianness: .little, as: Int64.self) else {
+                return nil
+            }
+            
+            return Date(timeIntervalSince1970: Double(timestamp) / 1000)
         case .timestamp:
-            return pointer.withMemoryRebound(to: Timestamp.self, capacity: 1) { $0.pointee }
+            guard
+                let increment = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self),
+                let timestamp = self.storage.getInteger(at: offset &+ 4, endianness: .little, as: Int32.self)
+            else {
+                return nil
+            }
+            
+            return Timestamp(increment: increment, timestamp: timestamp)
         case .int64:
-            return pointer.withMemoryRebound(to: Int.self, capacity: 1) { $0.pointee }
+            return self.storage.getInteger(at: offset, endianness: .little, as: Int.self)
         case .null:
             return Null()
         case .minKey:
@@ -257,14 +245,14 @@ extension Document {
         case .javascriptWithScope:
             unimplemented()
         case .int32:
-            return pointer.withMemoryRebound(to: Int32.self, capacity: 1) { $0.pointee }
+            return self.storage.getInteger(at: offset, endianness: .little, as: Int32.self)
         case .decimal128:
-            return Decimal128(storage[offset..<offset &+ 16])
+            guard let data = storage.getBytes(at: offset, length: 16) else {
+                return nil
+            }
+            
+            return Decimal128(data)
         }
-    }
-    
-    subscript(keyFor dimensions: DocumentCache.Dimensions) -> String {
-        return self.readKey(atDimensions: dimensions)
     }
     
     subscript(valueFor dimensions: DocumentCache.Dimensions) -> Primitive {

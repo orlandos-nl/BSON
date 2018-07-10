@@ -1,6 +1,10 @@
 import Foundation
 import NIO
 
+#if arch(i386) || arch(arm)
+    #error("BSON does not support 32-bit platforms, PRs are welcome 🎉🐈")
+#endif
+
 // TODO: Remove when unused
 func unimplemented(_ function: String = #function) -> Never {
     fatalError("\(function) is unimplemented")

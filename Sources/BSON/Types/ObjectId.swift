@@ -103,10 +103,10 @@ private struct InvalidObjectIdString: Error {
 
 public struct ObjectId {
     /// The internal Storage Buffer
-    let storage: BSONBuffer
+    let storage: [UInt8]
     
     /// Creates a new ObjectId using an existing (Sub-)Storage buffer
-    init(_ storage: BSONBuffer) {
+    init(_ storage: [UInt8]) {
         assert(storage.usedCapacity == 12)
         
         self.storage = storage
@@ -141,7 +141,7 @@ public struct ObjectId {
             throw InvalidObjectIdString(hex: hex)
         }
         
-        self.storage = BSONBuffer(bytes: data)
+        self.storage = data
     }
     
     /// The 12 bytes represented as 24-character hex-string
