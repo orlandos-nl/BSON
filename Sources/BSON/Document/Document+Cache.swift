@@ -4,33 +4,105 @@ final class DocumentCache {
     struct Dimensions {
         var type: TypeIdentifier
         var from: Int
-        var keyCString: Int
+        var keyLengthWithNull: Int
         var valueLength: Int
         
         var end: Int {
             // Type Identifier, CString, value
-            return from &+ 1 &+ keyCString &+ valueLength
+            return from &+ 1 &+ keyLengthWithNull &+ valueLength
         }
         
         var fullLength: Int {
-            return 1 &+ keyCString &+ valueLength
+            return 1 &+ keyLengthWithNull &+ valueLength
         }
     }
     
-    var storage = [(String, Dimensions)]()
+    typealias Element = (String, Dimensions)
+    typealias Storage = [Element]
+    private var storage: Storage
     
-    init() {}
-}
-
-extension Document {
-    var fullyCached: Bool {
-        return self.lastScannedPosition >= self.count &- 1
+    init(storage: Storage = .init()) {
+        self.storage = storage
+    }
+    
+    func copy() -> DocumentCache {
+        return DocumentCache(storage: self.storage)
+    }
+    
+    // MARK: Mutating the cache
+    
+    func add(_ element: Element) {
+        storage.append(element)
+    }
+    
+    /// Alters the cache for the deletion of the value at `position`, by removing the element
+    /// at the given position from the cache and updating the `from` values of all elements after
+    /// the item at the `position`.
+    func handleRemovalOfItem(atPosition position: Int) {
+        var removedDimensions: Dimensions? = nil
+        
+        storage = storage.compactMap { (key, dimensions) in
+            if let removedDimensions = removedDimensions {
+                // dimensions after the position must be updated
+                var newDimensions = dimensions
+                newDimensions.from &-= removedDimensions.fullLength
+                return (key, newDimensions)
+            } else if dimensions.from < position {
+                // dimensions before the position are not affected
+                return (key, dimensions)
+            } else if dimensions.from == position {
+                // the dimensions at the position need to be removed
+                removedDimensions = dimensions
+                return nil
+            }
+            
+            fatalError("Unreachable code reached - please file an issue")
+        }
+        
+        assert(removedDimensions != nil)
+    }
+    
+    func replace(_ dimensionsToReplace: Dimensions, with newDimensions: Dimensions, newKey: String) {
+        precondition(dimensionsToReplace.from == newDimensions.from, "Can only replace dimensions with new dimensions at the same position")
+        
+        storage = storage.compactMap { (key, dimensions) in
+            if dimensions.from < dimensionsToReplace.from {
+                // dimensions before the position are not affected
+                return (key, dimensions)
+            } else if dimensions.from == newDimensions.from {
+                return (newKey, newDimensions)
+            } else {
+                // dimensions after the position need to be updated
+                let sizeDifference = dimensionsToReplace.fullLength &- newDimensions.fullLength
+                var newDimensionsAtThisPosition = dimensions
+                newDimensionsAtThisPosition.from &-= sizeDifference
+                return (key, newDimensionsAtThisPosition)
+            }
+        }
+    }
+    
+    // MARK: Examining the cache
+    
+    var cachedDimensions: [Dimensions] {
+        return storage.map { $0.1 }
+    }
+    
+    var cachedKeys: [String] {
+        return storage.map { $0.0 }
+    }
+    
+    var count: Int {
+        return storage.count
+    }
+    
+    subscript(index: Int) -> Element {
+        return storage[index]
     }
     
     var lastScannedPosition: Int {
         var lastDimensions: Int?
         
-        for (_, dimensions) in self.cache.storage {
+        for (_, dimensions) in storage {
             if let existingDimensions = lastDimensions, existingDimensions < dimensions.end {
                 lastDimensions = dimensions.end
             } else if lastDimensions == nil {
@@ -41,20 +113,32 @@ extension Document {
         return lastDimensions ?? 4
     }
     
-    func dimension(forKey key: String) -> DocumentCache.Dimensions? {
-        for (dimensionKey, dimension) in cache.storage where dimensionKey == key {
+    func dimensions(forKey key: String) -> Dimensions? {
+        for (dimensionKey, dimension) in storage where dimensionKey == key {
             return dimension
         }
         
         return nil
     }
+}
+
+extension Document {
+    mutating func prepareCacheForMutation() {
+        if !isKnownUniquelyReferenced(&cache) {
+            cache = cache.copy()
+        }
+    }
+    
+    var fullyCached: Bool {
+        return cache.lastScannedPosition >= self.usedCapacity &- 1
+    }
     
     func getCached(byKey key: String) -> Primitive? {
         let dimensions: DocumentCache.Dimensions
         
-        if let d = dimension(forKey: key) {
+        if let d = cache.dimensions(forKey: key) {
             dimensions = d
-        } else if let d = scanValue(startingAt: lastScannedPosition, mode: .key(key)) {
+        } else if let d = scanValue(startingAt: cache.lastScannedPosition, mode: .key(key)) {
             dimensions = d
         } else {
             return nil
@@ -136,6 +220,12 @@ extension Document {
         case all
     }
     
+    func ensureFullyCached() {
+        if !self.fullyCached {
+            _ = self.scanValue(startingAt: cache.lastScannedPosition, mode: .all)
+        }
+    }
+    
     func scanValue(startingAt position: Int, mode: ScanMode) -> DocumentCache.Dimensions? {
         var storage = self.storage
         storage.moveReaderIndex(to: position)
@@ -168,11 +258,11 @@ extension Document {
             let dimension = DocumentCache.Dimensions(
                 type: type,
                 from: basePosition,
-                keyCString: keyLengthWithNull,
+                keyLengthWithNull: keyLengthWithNull,
                 valueLength: valueLength
             )
             
-            self.cache.storage.append((readKey, dimension))
+            cache.add((readKey, dimension))
             storage.moveReaderIndex(forwardBy: valueLength)
             
             switch mode {
@@ -191,11 +281,13 @@ extension Document {
     }
     
     func readPrimitive(atDimensions dimensions: DocumentCache.Dimensions) -> Primitive? {
-        return self.readPrimitive(type: dimensions.type, offset: dimensions.from &+ 1 &+ dimensions.keyCString, length: dimensions.valueLength)
+        return self.readPrimitive(type: dimensions.type, offset: dimensions.from &+ 1 &+ dimensions.keyLengthWithNull, length: dimensions.valueLength)
     }
     
     func readKey(atDimensions dimensions: DocumentCache.Dimensions) -> String {
-        guard let key = storage.getString(at: dimensions.from &+ 1, length: dimensions.keyCString &- 1) else {
+        // + 1 for the type identifier
+        // - 1 for the null terminator
+        guard let key = storage.getString(at: dimensions.from &+ 1, length: dimensions.keyLengthWithNull &- 1) else {
             assertionFailure("Key not found for dimensions \(dimensions)")
             return ""
         }
@@ -286,9 +378,5 @@ extension Document {
     
     subscript(valueFor dimensions: DocumentCache.Dimensions) -> Primitive {
         return self.readPrimitive(atDimensions: dimensions)!
-    }
-    
-    subscript(dimensionsAt index: Int) -> DocumentCache.Dimensions {
-        return self.cache.storage[index].1
     }
 }

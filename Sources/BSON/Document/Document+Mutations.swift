@@ -19,23 +19,23 @@ extension Document {
     /// - writes the key
     ///
     /// After calling `prepareForWritingPrimitive`, the `writerIndex` of the `storage` will be at the position where the primitive body can be written
-    private mutating func prepareWritingPrimitive(_ type: TypeIdentifier, bodyLength: Int, dimensions: DocumentCache.Dimensions?, key: String) {
+    private mutating func prepareWritingPrimitive(_ type: TypeIdentifier, bodyLength: Int, existingDimensions: DocumentCache.Dimensions?, key: String) {
         // capacity needed for one element: typeId + key with null terminator + body
         let fullLength = 1 + key.count + 1 + bodyLength
-        let requiredCapacity = Int(self.usedCapacity) + fullLength - (dimensions?.fullLength ?? 0)
+        let requiredCapacity = Int(self.usedCapacity) + fullLength - (existingDimensions?.fullLength ?? 0)
         
-        if let dimensions = dimensions {
-            storage.moveWriterIndex(to: dimensions.from)
+        if let existingDimensions = existingDimensions {
+            storage.moveWriterIndex(to: existingDimensions.from)
             
-            if dimensions.fullLength < fullLength {
+            if existingDimensions.fullLength < fullLength {
                 // need to make extra space; new value is bigger than old value
                 let initialUsedCapacity = usedCapacity
                 changeCapacity(requiredCapacity)
-                let requiredExtraLength = fullLength - dimensions.fullLength
-                moveBytes(from: dimensions.end, to: dimensions.end &+ requiredExtraLength, length: numericCast(initialUsedCapacity) &- dimensions.end)
-            } else if dimensions.fullLength > fullLength {
+                let requiredExtraLength = fullLength - existingDimensions.fullLength
+                moveBytes(from: existingDimensions.end, to: existingDimensions.end &+ requiredExtraLength, length: numericCast(initialUsedCapacity) &- existingDimensions.end)
+            } else if existingDimensions.fullLength > fullLength {
                 // need to make space smaller; new value is smaller than old value
-                moveBytes(from: dimensions.end, to: dimensions.from &+ dimensions.fullLength, length: numericCast(usedCapacity) &- dimensions.end)
+                moveBytes(from: existingDimensions.end, to: existingDimensions.from &+ fullLength, length: numericCast(usedCapacity) &- existingDimensions.end)
                 changeCapacity(requiredCapacity)
             }
         } else {
@@ -47,18 +47,15 @@ extension Document {
         let newDimensions = DocumentCache.Dimensions(
             type: type,
             from: storage.writerIndex,
-            keyCString: key.count + 1,
+            keyLengthWithNull: key.count + 1,
             valueLength: bodyLength
         )
         
-        if dimensions == nil {
-            cache.storage.append((key, newDimensions))
+        prepareCacheForMutation()
+        if let dimensions = existingDimensions {
+            cache.replace(dimensions, with: newDimensions, newKey: key)
         } else {
-            guard let index = cache.storage.firstIndex(where: { newDimensions.from == $0.1.from }) else {
-                fatalError("BSON internal inconsistency; please file an issue. This should not happen.")
-            }
-            
-            cache.storage[index] = (key, newDimensions)
+            cache.add((key, newDimensions))
         }
         
         // Write the type identifier
@@ -112,64 +109,64 @@ extension Document {
         // When changing this switch, please order in ascending type identifier order for readability
         switch primitive {
         case let double as Double: // 0x01
-            prepareWritingPrimitive(.double, bodyLength: 8, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.double, bodyLength: 8, existingDimensions: dimensions, key: key)
             storage.write(integer: double.bitPattern, endianness: .little)
         case let string as String: // 0x02
             let stringLengthWithNull = string.count + 1
-            prepareWritingPrimitive(.string, bodyLength: stringLengthWithNull + 4, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.string, bodyLength: stringLengthWithNull + 4, existingDimensions: dimensions, key: key)
             
             storage.write(integer: Int32(stringLengthWithNull), endianness: .little)
             storage.write(string: string)
             storage.write(integer: 0, endianness: .little, as: UInt8.self)
         case var document as Document: // 0x03 (embedded document) or 0x04 (array)
-            prepareWritingPrimitive(document.isArray ? .array : .document, bodyLength: Int(document.usedCapacity), dimensions: dimensions, key: key)
+            prepareWritingPrimitive(document.isArray ? .array : .document, bodyLength: Int(document.usedCapacity), existingDimensions: dimensions, key: key)
             var buffer = document.makeByteBuffer()
             storage.write(buffer: &buffer)
         case let binary as Binary: // 0x05
-            prepareWritingPrimitive(.binary, bodyLength: binary.count + 1, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.binary, bodyLength: binary.count + 1, existingDimensions: dimensions, key: key)
             storage.write(integer: binary.subType.identifier, endianness: .little)
             var buffer = binary.storage
             storage.write(buffer: &buffer)
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
-            prepareWritingPrimitive(.objectId, bodyLength: 12, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.objectId, bodyLength: 12, existingDimensions: dimensions, key: key)
             var buffer = objectId.storage
             storage.write(buffer: &buffer)
         case let bool as Bool: // 0x08
-            prepareWritingPrimitive(.boolean, bodyLength: 1, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.boolean, bodyLength: 1, existingDimensions: dimensions, key: key)
             
             let bool: UInt8 = bool ? 0x01 : 0x00
             storage.write(integer: bool, endianness: .little)
         case let date as Date: // 0x09
-            prepareWritingPrimitive(.datetime, bodyLength: 8, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.datetime, bodyLength: 8, existingDimensions: dimensions, key: key)
             
             let milliseconds = Int(date.timeIntervalSince1970 * 1000)
             storage.write(integer: milliseconds, endianness: .little)
         case is Null: // 0x0A
-            prepareWritingPrimitive(.null, bodyLength: 0, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.null, bodyLength: 0, existingDimensions: dimensions, key: key)
             // TODO: RegularExpression (0x0B)
             // 0x0C is deprecated (DBPointer)
             // TODO: JavascriptCode (0x0D)
             // 0x0E is deprecated (Symbol)
         // TODO: JavascriptCode With Scope (0x0F)
         case let int as Int32: // 0x10
-            prepareWritingPrimitive(.int32, bodyLength: 4, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.int32, bodyLength: 4, existingDimensions: dimensions, key: key)
             storage.write(integer: int, endianness: .little)
         case let stamp as Timestamp:
-            prepareWritingPrimitive(.timestamp, bodyLength: 8, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.timestamp, bodyLength: 8, existingDimensions: dimensions, key: key)
             storage.write(integer: stamp.increment, endianness: .little)
             storage.write(integer: stamp.timestamp, endianness: .little)
         case let int as Int: // 0x12
-            prepareWritingPrimitive(.int64, bodyLength: 8, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.int64, bodyLength: 8, existingDimensions: dimensions, key: key)
             storage.write(integer: int, endianness: .little)
         case let decimal128 as Decimal128:
-            prepareWritingPrimitive(.decimal128, bodyLength: 16, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.decimal128, bodyLength: 16, existingDimensions: dimensions, key: key)
             var buffer = decimal128.storage
             storage.write(buffer: &buffer)
         case is MaxKey: // 0x7F
-            prepareWritingPrimitive(.maxKey, bodyLength: 0, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.maxKey, bodyLength: 0, existingDimensions: dimensions, key: key)
         case is MinKey: // 0xFF
-            prepareWritingPrimitive(.maxKey, bodyLength: 0, dimensions: dimensions, key: key)
+            prepareWritingPrimitive(.maxKey, bodyLength: 0, existingDimensions: dimensions, key: key)
         default:
             assertionFailure("Currently unsupported type \(primitive)")
         }
@@ -178,10 +175,11 @@ extension Document {
     /// Writes the `primitive` to this Document keyed by `key`
     ///
     /// - precondition: `key` does not contain a null character
+    /// - precondition: the document is fully cached
     mutating func write(_ primitive: Primitive, forKey key: String) {
         assert(!key.contains("\0")) // TODO: this should not only fail on debug. Maybe just remove ocurrences of \0?
         
-        let dimensions = self.dimension(forKey: key)
+        let dimensions = cache.dimensions(forKey: key)
         self.write(primitive, forDimensions: dimensions, key: key)
     }
 }

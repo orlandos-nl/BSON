@@ -39,7 +39,7 @@ public struct Document: Primitive {
     /// A cache of all elements in this BSON Document
     ///
     /// Allows high performance access with lazy parsing and low memory footprint
-    let cache: DocumentCache
+    var cache: DocumentCache
     
     /// Creates a new empty BSONDocument
     ///

@@ -3,12 +3,9 @@ import NIO
 extension Document: ExpressibleByDictionaryLiteral {
     /// Gets all top level keys in this Document
     public var keys: [String] {
-        _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
-        return self.cache.storage.compactMap { (_, dimension) in
-            // + 1 for the type identifier
-            // - 1 for the null terminator
-            return self.storage.getString(at: dimension.from &+ 1, length: dimension.keyCString &- 1)
-        }
+        // NOTE: BSON internally depends on the side effect accessing the keys has, of making the document fully cached
+        ensureFullyCached()
+        return cache.cachedKeys
     }
     
     /// Tries to extract a value of type `P` from the value at key `key`

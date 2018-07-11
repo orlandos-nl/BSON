@@ -1,32 +1,30 @@
 extension Document: ExpressibleByArrayLiteral {
     /// Gets all top level values in this Document
     public var values: [Primitive] {
-        _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
+        ensureFullyCached()
         
-        return self.cache.storage.compactMap { (_, dimension) in
-            return self.readPrimitive(atDimensions: dimension)
-        }
+        return cache.cachedDimensions.compactMap(self.readPrimitive)
     }
     
     subscript(index: Int) -> Primitive {
         get {
             repeat {
-                if self.cache.storage.count > index {
-                    return self[valueFor: self[dimensionsAt: index]]
+                if cache.count > index {
+                    return self[valueFor: cache[index].1]
                 }
                 
-                _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .single)
+                _ = self.scanValue(startingAt: cache.lastScannedPosition, mode: .single)
             } while !self.fullyCached
             
             fatalError("Index \(index) out of range")
         }
         set {
             repeat {
-                if self.cache.storage.count > index {
-                    self.write(newValue, forDimensions: self[dimensionsAt: index], key: "\(index)")
+                if cache.count > index {
+                    self.write(newValue, forDimensions: cache[index].1, key: "\(index)")
                 }
                 
-                _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .single)
+                _ = self.scanValue(startingAt: cache.lastScannedPosition, mode: .single)
             } while !self.fullyCached
             
             // TODO: Investigate other options than fatalError()

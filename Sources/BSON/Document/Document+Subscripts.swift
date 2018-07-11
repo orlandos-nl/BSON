@@ -5,6 +5,7 @@ extension Document {
             return self.getCached(byKey: key)
         }
         set {
+            // calling keys makes sure the document is fully cached
             if !keys.contains(key) {
                 self.isArray = false
             }
@@ -12,16 +13,12 @@ extension Document {
             if let newValue = newValue {
                 self.write(newValue, forKey: key)
             } else {
-                guard let dimensions = self.dimension(forKey: key) else { return }
+                guard let dimensions = cache.dimensions(forKey: key) else { return }
+                
+                prepareCacheForMutation()
                 
                 self.removeBytes(at: dimensions.from, length: dimensions.fullLength)
-                
-                for i in 0..<self.cache.storage.count {
-                    if self.cache.storage[i].0 == key {
-                        self.cache.storage.remove(at: i)
-                        return
-                    }
-                }
+                cache.handleRemovalOfItem(atPosition: dimensions.from)
             }
         }
     }

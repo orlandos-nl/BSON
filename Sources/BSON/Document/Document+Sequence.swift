@@ -1,9 +1,9 @@
 extension Document: Sequence {
     /// Returns the amount of top-level elements
     public var count: Int {
-        _ = self.scanValue(startingAt: self.lastScannedPosition, mode: .all)
+        ensureFullyCached()
         
-        return self.cache.storage.count
+        return cache.count
     }
     
     /// Creates an iterator that iterates over each element in the Document until the end
@@ -19,14 +19,9 @@ extension Document: Sequence {
         }
     }
     
-    /// A more detailed view into the pairs contained in this Document
+    /// A more detailed view into the pairs contained in thi.1s
     public var pairs: DocumentIterator {
         return DocumentIterator(document: self)
-    }
-    
-    /// A helpers that get's the key name at the given index
-    subscript(keyAt index: Int) -> String {
-        return self.cache.storage[index].0
     }
 }
 
@@ -93,7 +88,7 @@ public struct DocumentIterator: IteratorProtocol, Sequence {
         
         return DocumentPair(
             document: self.document,
-            dimensions: document[dimensionsAt: currentIndex],
+            dimensions: document.cache[currentIndex].1,
             index: currentIndex
         )
     }

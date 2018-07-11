@@ -165,9 +165,9 @@ final class BSONPublicTests: XCTestCase {
         assertValid(document)
         XCTAssertNotNil(document["anykey"] as? String)
         document["_id"] = "abcdefghijklmnop"
-        XCTAssertNotNil(document["anyKey"] as? String)
+        XCTAssertNotNil(document["anykey"] as? String)
         document["_id"] = "efg"
-        XCTAssertNotNil(document["anyKey"] as? String)
+        XCTAssertNotNil(document["anykey"] as? String)
         assertValid(document)
 
         var document2 = Document()
