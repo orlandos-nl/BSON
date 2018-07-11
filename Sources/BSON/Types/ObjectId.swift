@@ -112,7 +112,7 @@ public struct ObjectId {
         var data = Data()
         data.reserveCapacity(24)
         
-        for byte in storage.readableBytesView {
+        for byte in storage.getBytes(at: 0, length: 12)! {
             data.append(radix16table[Int(byte / 16)])
             data.append(radix16table[Int(byte % 16)])
         }
