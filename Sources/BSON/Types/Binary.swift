@@ -39,7 +39,9 @@ public struct Binary: Primitive {
     /// The data stored
     public var data: Data {
         get {
-            return storage.withUnsafeReadableBytes(Data.init)
+            return storage.withUnsafeReadableBytes { bytes in
+                return Data(bytes: bytes)
+            }
         }
         set {
             storage = Document.allocator.buffer(capacity: newValue.count)
