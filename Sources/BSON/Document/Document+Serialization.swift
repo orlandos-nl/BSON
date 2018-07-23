@@ -3,7 +3,7 @@ import NIO
 
 extension Document {
     public func makeData() -> Data {
-        return makeByteBuffer().withUnsafeReadableBytes(Data.init)
+        return makeByteBuffer().withUnsafeReadableBytes { Data($0) }
     }
     
     public func makeByteBuffer() -> ByteBuffer {
