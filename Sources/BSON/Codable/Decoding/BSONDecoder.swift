@@ -697,6 +697,14 @@ fileprivate struct SingleValueBSONContainer: SingleValueDecodingContainer, AnySi
         return objectId
     }
     
+    func decodeRegularExpression() throws -> RegularExpression {
+        guard let regex = self.decoder.primitive as? RegularExpression else {
+            throw BSONValueNotFound(type: RegularExpression.self, path: self.codingPath.path)
+        }
+        
+        return regex
+    }
+    
     func decodeNil() -> Bool {
         if case .nothing = self.decoder.wrapped {
             return true

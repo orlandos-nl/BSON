@@ -142,7 +142,18 @@ extension Document {
             storage.write(integer: milliseconds, endianness: .little)
         case is Null: // 0x0A
             prepareWritingPrimitive(.null, bodyLength: 0, existingDimensions: dimensions, key: key)
-            // TODO: RegularExpression (0x0B)
+        case let regex as RegularExpression: // 0x0B
+            assert(!regex.pattern.contains("\0"))
+            assert(!regex.options.contains("\0"))
+            
+            // string counts + null terminators
+            prepareWritingPrimitive(.regex, bodyLength: regex.pattern.count + regex.options.count + 2, existingDimensions: dimensions, key: key)
+            
+            storage.write(string: regex.pattern)
+            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
+            
+            storage.write(string: regex.options)
+            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
             // 0x0C is deprecated (DBPointer)
             // TODO: JavascriptCode (0x0D)
             // 0x0E is deprecated (Symbol)

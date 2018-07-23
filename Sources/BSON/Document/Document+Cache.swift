@@ -360,7 +360,19 @@ extension Document {
             // Still need to check the key's size
             return MaxKey()
         case .regex:
-            unimplemented()
+            var buffer = storage
+            buffer.moveReaderIndex(to: offset)
+            guard let patternEnd = buffer.firstRelativeIndexOf(byte: 0x00), let pattern = buffer.readString(length: patternEnd - 1) else {
+                return nil
+            }
+            
+            buffer.moveReaderIndex(forwardBy: 1)
+            
+            guard let optionsEnd = buffer.firstRelativeIndexOf(byte: 0x00), let options = buffer.readString(length: optionsEnd - 1) else {
+                return nil
+            }
+            
+            return RegularExpression(pattern: pattern, options: options)
         case .javascript:
             unimplemented()
         case .javascriptWithScope:

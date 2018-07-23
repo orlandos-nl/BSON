@@ -68,4 +68,12 @@ extension Document {
         }
     }
     
+    public subscript(dynamicMember member: String) -> RegularExpression? {
+        get {
+            return self[member] as? RegularExpression
+        }
+        set {
+            self[member] = newValue
+        }
+    }
 }
