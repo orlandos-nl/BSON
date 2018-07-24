@@ -705,6 +705,14 @@ fileprivate struct SingleValueBSONContainer: SingleValueDecodingContainer, AnySi
         return regex
     }
     
+    func decodeNull() throws -> Null {
+        guard let null = self.decoder.primitive as? Null else {
+            throw BSONValueNotFound(type: Null.self, path: self.codingPath.path)
+        }
+        
+        return null
+    }
+    
     func decodeNil() -> Bool {
         if case .nothing = self.decoder.wrapped {
             return true
