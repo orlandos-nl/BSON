@@ -69,7 +69,7 @@ extension Document {
                 return false
             }
             
-            buffer.moveReaderIndex(forwardBy: nullTerminatorIndex + 1)
+            buffer.moveReaderIndex(forwardBy: nullTerminatorIndex)
             
             return true
         }

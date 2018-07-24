@@ -178,25 +178,20 @@ extension Document {
             // no data
             return 0
         case .regex:
-            let view = storage.viewBytes(at: offset, length: Int(usedCapacity) &- offset)
-            var foundFirst = false
-            // this returns the relative index of the second null terminator, which is the (length-1) of the null terminator
-            guard let endIndex = view.firstIndex(where: { candidate in
-                // this returns true for the second null terminator
-                if candidate == 0 {
-                    if foundFirst {
-                        return true
-                    } else {
-                        foundFirst = true
-                    }
-                }
-                
-                return false
-            }) else {
+            var slice = storage.slice()
+            slice.moveReaderIndex(to: offset)
+            
+            guard let patternEndOffset = slice.firstRelativeIndexOf(byte: 0x00) else {
                 return nil
             }
             
-            return endIndex &+ 1
+            slice.moveReaderIndex(forwardBy: patternEndOffset)
+            
+            guard let optionsEndOffset = slice.firstRelativeIndexOf(byte: 0x00) else {
+                return nil
+            }
+            
+            return patternEndOffset + optionsEndOffset
         case .javascriptWithScope:
             guard let string = valueLength(forType: .string, at: offset) else {
                 return nil

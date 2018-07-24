@@ -5,7 +5,7 @@ extension Document {
             return self.getCached(byKey: key)
         }
         set {
-            // calling keys makes sure the document is fully cached
+            // calling keys makes the document fully cached
             if !keys.contains(key) {
                 self.isArray = false
             }

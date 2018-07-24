@@ -110,7 +110,7 @@ extension Document {
             prepareWritingPrimitive(.double, bodyLength: 8, existingDimensions: dimensions, key: key)
             storage.write(integer: double.bitPattern, endianness: .little)
         case let string as String: // 0x02
-            let stringLengthWithNull = string.count + 1
+            let stringLengthWithNull = string.utf8.count + 1
             prepareWritingPrimitive(.string, bodyLength: stringLengthWithNull + 4, existingDimensions: dimensions, key: key)
             
             storage.write(integer: Int32(stringLengthWithNull), endianness: .little)
