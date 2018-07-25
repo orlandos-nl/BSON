@@ -39,8 +39,10 @@ public struct Binary: Primitive {
     /// The data stored
     public var data: Data {
         get {
-            return storage.withUnsafeReadableBytes { bytes in
-                return Data(bytes: bytes)
+            return storage.withUnsafeReadableBytes { buffer in
+                let bytes = buffer.bindMemory(to: UInt8.self)
+                
+                return Data(buffer: bytes)
             }
         }
         set {
