@@ -40,7 +40,7 @@ public struct Binary: Primitive {
     public var data: Data {
         get {
             return storage.withUnsafeReadableBytes { bytes in
-                return Data(bytes: bytes)
+                return Data(bytes: Array(bytes))
             }
         }
         set {
