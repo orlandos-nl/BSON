@@ -71,7 +71,7 @@ public struct ObjectId {
     
     /// Creates a new ObjectId using exsiting data
     init(_ storage: ByteBuffer) {
-        assert(storage.readableBytes == 12)
+        Swift.assert(storage.readableBytes == 12)
         
         self.storage = storage
     }

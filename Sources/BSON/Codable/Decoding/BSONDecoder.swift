@@ -18,7 +18,7 @@ public struct BSONDecoder {
 
 extension BSONDecoderSettings.FloatDecodingStrategy {
     /// Decodes the `value` with a key of `key` to a `Float` using the current strategy
-    fileprivate func decode<K: CodingKey>(fromKey key: K, in value: DecoderValue, path: [String]) throws -> Float {
+    internal func decode<K: CodingKey>(fromKey key: K, in value: DecoderValue, path: [String]) throws -> Float {
         switch self {
         case .double:
             return try Float(value.unwrap(asType: Double.self, atKey: key, path: path))
@@ -45,7 +45,7 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
     }
     
     /// Decodes the `value` without key to a `Float` using the current strategy
-    fileprivate func decode(from value: DecoderValue, path: [String]) throws -> Float {
+    internal func decode(from value: DecoderValue, path: [String]) throws -> Float {
         switch self {
         case .double:
             let double = try value.unwrap(asType: Double.self, path: path)
@@ -72,7 +72,7 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
 
 extension BSONDecoderSettings.IntegerDecodingStrategy {
     /// A helper that converts a String to an integer of type `I`
-    fileprivate func convert(from string: String) throws -> I {
+    internal func convert(from string: String) throws -> I {
         if I.isSigned {
             guard let int = Int64(string) else {
                 throw BSONTypeConversionError(from: string, to: I.self)
@@ -89,7 +89,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
     }
     
     /// Decodes the `value` without key to an integer of type `I` using the current strategy
-    fileprivate func decode(
+    internal func decode(
         from decoder: _BSONDecoder,
         path: @autoclosure () -> [String]
     ) throws -> I {
@@ -137,7 +137,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
     }
     
     /// Decodes the `value` with a key of `key` to an integer of type `I` using the current strategy
-    fileprivate func decode<K: CodingKey>(
+    internal func decode<K: CodingKey>(
         from decoder: _BSONDecoder,
         forKey key: K,
         path: @autoclosure () -> [String]
@@ -174,7 +174,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
 }
 
 extension BSONDecoderSettings.DoubleDecodingStrategy {
-    fileprivate func decode(primitive: Primitive, identifier: TypeIdentifier, path: @autoclosure () -> [String]) throws -> Double {
+    internal func decode(primitive: Primitive, identifier: TypeIdentifier, path: @autoclosure () -> [String]) throws -> Double {
         switch (identifier, self) {
         case (.string, .textual), (.string, .adaptive):
             guard let double = try Double(primitive.assert(asType: String.self)) else {
@@ -193,7 +193,7 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
         }
     }
     
-    fileprivate func decode(from decoder: _BSONDecoder, path: @autoclosure () -> [String]) throws -> Double {
+    internal func decode(from decoder: _BSONDecoder, path: @autoclosure () -> [String]) throws -> Double {
         switch self {
         case .custom(let strategy):
             guard let double = try strategy(nil, decoder.primitive) else {
@@ -213,7 +213,7 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
         }
     }
     
-    fileprivate func decode<K: CodingKey>(from decoder: _BSONDecoder, forKey key: K, path: @autoclosure () -> [String]) throws -> Double {
+    internal func decode<K: CodingKey>(from decoder: _BSONDecoder, forKey key: K, path: @autoclosure () -> [String]) throws -> Double {
         switch self {
         case .custom(let strategy):
             guard let double = try strategy(key.stringValue, decoder.document?[key.stringValue]) else {
@@ -241,7 +241,7 @@ extension BSONDecoder {
     }
 }
 
-fileprivate enum DecoderValue {
+internal enum DecoderValue {
     case primitive(TypeIdentifier, Primitive)
     case nothing
     case document(Document)
@@ -280,7 +280,7 @@ fileprivate enum DecoderValue {
     }
 }
 
-fileprivate struct _BSONDecoder: Decoder {
+internal struct _BSONDecoder: Decoder {
     var codingPath: [CodingKey]
     var keyPath: [String] {
         return codingPath.map { $0.stringValue }
@@ -374,20 +374,20 @@ fileprivate struct _BSONDecoder: Decoder {
             throw BSONValueNotFound(type: Document.self, path: self.keyPath)
         }
         
-        return KeyedDecodingContainer(KeyedBSONContainer(for: self))
+        return KeyedDecodingContainer(KeyedBSONDecodingContainer(for: self))
     }
     
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        return UnkeyedBSONContainer(decoder: self)
+        return UnkeyedBSONDecodingContainer(decoder: self)
     }
     
     func singleValueContainer() throws -> SingleValueDecodingContainer {
-        return SingleValueBSONContainer(for: self)
+        return SingleValueBSONDecodingContainer(for: self)
     }
 }
 
 extension BSONDecoderSettings.StringDecodingStrategy {
-    fileprivate func decode<K: CodingKey>(
+    internal func decode<K: CodingKey>(
         from decoder: _BSONDecoder,
         forKey key: K,
         path: @autoclosure () -> [String]
@@ -404,7 +404,7 @@ extension BSONDecoderSettings.StringDecodingStrategy {
         return try decode(from: decoder, path: path)
     }
         
-    fileprivate func decode(from decoder: _BSONDecoder, path: @autoclosure () -> [String]) throws -> String {
+    internal func decode(from decoder: _BSONDecoder, path: @autoclosure () -> [String]) throws -> String {
         guard let identifier = decoder.identifier, let primitive = decoder.primitive else {
             throw BSONValueNotFound(type: String.self, path: path())
         }
@@ -436,7 +436,7 @@ extension FixedWidthInteger {
     /// Converts the current FixedWidthInteger to another FixedWithInteger type `I`
     ///
     /// Throws a `BSONTypeConversionError` if the range of `I` does not contain `self`
-    fileprivate func convert<I: FixedWidthInteger>(to int: I.Type) throws -> I {
+    internal func convert<I: FixedWidthInteger>(to int: I.Type) throws -> I {
         // If I is smaller in width we need to see if the current integer fits inside of I
         if I.bitWidth < Self.bitWidth {
             if numericCast(I.max) < self {
@@ -459,7 +459,7 @@ extension Primitive {
     /// Asserts that the primitive is of type `P`
     ///
     /// Throws a `BSONTypeConversionError` otherwise
-    fileprivate func assert<P: Primitive>(asType type: P.Type) throws -> P {
+    internal func assert<P: Primitive>(asType type: P.Type) throws -> P {
         guard let value = self as? P else {
             throw BSONTypeConversionError(from: self, to: P.self)
         }
@@ -470,486 +470,9 @@ extension Primitive {
 
 /// MARK: Decoding types
 
-fileprivate struct KeyedBSONContainer<K: CodingKey>: KeyedDecodingContainerProtocol {
-    typealias Key = K
-    
-    var codingPath: [CodingKey]
-    
-    var allKeys: [K] {
-        return self.document.keys.compactMap(K.init)
-    }
-    
-    let decoder: _BSONDecoder
-    
-    var document: Document {
-        // Guaranteed to be a document when initialized
-        return self.decoder.document!
-    }
-    
-    init(for decoder: _BSONDecoder) {
-        self.codingPath = []
-        self.decoder = decoder
-    }
-    
-    func path(forKey key: K) -> [String] {
-        return self.codingPath.map { $0.stringValue } + [key.stringValue]
-    }
-    
-    func contains(_ key: K) -> Bool {
-        return self.document.keys.contains(key.stringValue)
-    }
-    
-    func decodeNil(forKey key: K) throws -> Bool {
-        return (self.contains(key) && self.document.typeIdentifier(of: key.stringValue) == .null)
-    }
-    
-    func decode(_ type: Bool.Type, forKey key: K) throws -> Bool {
-        return try self.document.assertPrimitive(typeOf: type, forKey: key.stringValue)
-    }
-    
-    func decode(_ type: String.Type, forKey key: K) throws -> String {
-        return try self.decoder.settings.stringDecodingStrategy.decode(from: decoder, forKey: key, path: path(forKey: key))
-    }
-    
-    func decode(_ type: Double.Type, forKey key: K) throws -> Double {
-        return try self.decoder.settings.doubleDecodingStrategy.decode(
-            from: decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: Float.Type, forKey key: K) throws -> Float {
-        return try self.decoder.settings.floatDecodingStrategy.decode(
-            fromKey: key,
-            in: self.decoder.wrapped,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: Int.Type, forKey key: K) throws -> Int {
-        return try self.decoder.settings.intDecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: Int8.Type, forKey key: K) throws -> Int8 {
-        return try self.decoder.settings.int8DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: Int16.Type, forKey key: K) throws -> Int16 {
-        return try self.decoder.settings.int16DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: Int32.Type, forKey key: K) throws -> Int32 {
-        return try self.decoder.settings.int32DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: Int64.Type, forKey key: K) throws -> Int64 {
-        return try self.decoder.settings.int64DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: UInt.Type, forKey key: K) throws -> UInt {
-        return try self.decoder.settings.uintDecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: UInt8.Type, forKey key: K) throws -> UInt8 {
-        return try self.decoder.settings.uint8DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: UInt16.Type, forKey key: K) throws -> UInt16 {
-        return try self.decoder.settings.uint16DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: UInt32.Type, forKey key: K) throws -> UInt32 {
-        return try self.decoder.settings.uint32DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode(_ type: UInt64.Type, forKey key: K) throws -> UInt64 {
-        return try self.decoder.settings.uint64DecodingStrategy.decode(
-            from: self.decoder,
-            forKey: key,
-            path: path(forKey: key)
-        )
-    }
-    
-    func decode<T>(_ type: T.Type, forKey key: K) throws -> T where T: Decodable {
-        if let type = T.self as? BSONDataType.Type {
-            return try type.init(primitive: self.document[key.stringValue]) as! T
-        } else {
-            guard
-                let typeIdentifer = self.document.typeIdentifier(of: key.stringValue),
-                let value = self.document[key.stringValue]
-            else {
-                throw BSONValueNotFound(type: T.self, path: path(forKey: key))
-            }
-            
-            // Decoding strategy for Primitives, like Date
-            if let value = value as? T {
-                return value
-            }
-            
-            let decoder: _BSONDecoder
-                
-            if typeIdentifer == .document || typeIdentifer == .array {
-                decoder = _BSONDecoder(
-                    wrapped: .document(value as! Document),
-                    settings: self.decoder.settings
-                )
-            } else {
-                decoder = _BSONDecoder(
-                    wrapped: .primitive(typeIdentifer, value),
-                    settings: self.decoder.settings
-                )
-            }
-            
-            return try T.init(from: decoder)
-        }
-    }
-    
-    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
-        let document = self.document[key.stringValue, as: Document.self] ?? Document()
-        
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
-        
-        return KeyedDecodingContainer(KeyedBSONContainer<NestedKey>(for: decoder))
-    }
-    
-    func nestedUnkeyedContainer(forKey key: K) throws -> UnkeyedDecodingContainer {
-        let document = try self.decode(Document.self, forKey: key)
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
-        return UnkeyedBSONContainer(decoder: decoder)
-    }
-    
-    func superDecoder() throws -> Decoder {
-        return decoder
-    }
-    
-    func superDecoder(forKey key: K) throws -> Decoder {
-        return decoder
-    }
-}
+internal struct EndOfBSONDocument: Error {}
 
-fileprivate struct EndOfBSONDocument: Error {}
-
-fileprivate struct SingleValueBSONContainer: SingleValueDecodingContainer, AnySingleValueBSONDecodingContainer {
-    var codingPath: [CodingKey]
-    
-    let decoder: _BSONDecoder
-    
-    init(for decoder: _BSONDecoder) {
-        self.codingPath = []
-        self.decoder = decoder
-    }
-    
-    func decodeDocument() throws -> Document {
-        guard let doc = self.decoder.document else {
-            throw BSONValueNotFound(type: Document.self, path: self.codingPath.path)
-        }
-        
-        return doc
-    }
-    
-    func decodeBinary() throws -> Binary {
-        guard let binary = self.decoder.primitive as? Binary else {
-            throw BSONValueNotFound(type: Binary.self, path: self.codingPath.path)
-        }
-        
-        return binary
-    }
-    
-    func decodeObjectId() throws -> ObjectId {
-        guard let objectId = self.decoder.primitive as? ObjectId else {
-            throw BSONValueNotFound(type: ObjectId.self, path: self.codingPath.path)
-        }
-        
-        return objectId
-    }
-    
-    func decodeRegularExpression() throws -> RegularExpression {
-        guard let regex = self.decoder.primitive as? RegularExpression else {
-            throw BSONValueNotFound(type: RegularExpression.self, path: self.codingPath.path)
-        }
-        
-        return regex
-    }
-    
-    func decodeNull() throws -> Null {
-        guard let null = self.decoder.primitive as? Null else {
-            throw BSONValueNotFound(type: Null.self, path: self.codingPath.path)
-        }
-        
-        return null
-    }
-    
-    func decodeNil() -> Bool {
-        if case .nothing = self.decoder.wrapped {
-            return true
-        }
-        
-        return false
-    }
-    
-    func decode(_ type: Bool.Type) throws -> Bool {
-        return try self.decoder.wrapped.unwrap(asType: Bool.self, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: String.Type) throws -> String {
-        return try self.decoder.settings.stringDecodingStrategy.decode(from: decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Double.Type) throws -> Double {
-        return try self.decoder.settings.doubleDecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: Float.Type) throws -> Float {
-        return try self.decoder.settings.floatDecodingStrategy.decode(
-            from: self.decoder.wrapped,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: Int.Type) throws -> Int {
-        return try self.decoder.settings.intDecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: Int8.Type) throws -> Int8 {
-        return try self.decoder.settings.int8DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: Int16.Type) throws -> Int16 {
-        return try self.decoder.settings.int16DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: Int32.Type) throws -> Int32 {
-        return try self.decoder.settings.int32DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: Int64.Type) throws -> Int64 {
-        return try self.decoder.settings.int64DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: UInt.Type) throws -> UInt {
-        return try self.decoder.settings.uintDecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: UInt8.Type) throws -> UInt8 {
-        return try self.decoder.settings.uint8DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: UInt16.Type) throws -> UInt16 {
-        return try self.decoder.settings.uint16DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: UInt32.Type) throws -> UInt32 {
-        return try self.decoder.settings.uint32DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode(_ type: UInt64.Type) throws -> UInt64 {
-        return try self.decoder.settings.uint64DecodingStrategy.decode(
-            from: self.decoder,
-            path: self.codingPath.path
-        )
-    }
-    
-    func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        if let type = T.self as? BSONDataType.Type {
-            return try type.init(primitive: self.decoder.primitive) as! T
-        } else {
-            let decoder = _BSONDecoder(wrapped: self.decoder.wrapped, settings: self.decoder.settings)
-            return try T.init(from: decoder)
-        }
-    }
-}
-
-fileprivate struct UnkeyedBSONContainer: UnkeyedDecodingContainer {
-    var codingPath: [CodingKey]
-    
-    var count: Int? {
-        return self.iterator.count
-    }
-    
-    var isAtEnd: Bool {
-        return self.iterator.isDrained
-    }
-    
-    var currentIndex: Int {
-        return self.iterator.currentIndex
-    }
-    
-    let decoder: _BSONDecoder
-    
-    var iterator: DocumentIterator
-    
-    mutating func nextElement() throws -> DecoderValue {
-        guard let pair = iterator.next() else {
-            throw EndOfBSONDocument()
-        }
-        
-        return .primitive(pair.identifier, pair.value)
-    }
-    
-    init(decoder: _BSONDecoder) {
-        self.decoder = decoder
-        self.codingPath = []
-        self.iterator = decoder.document!.pairs
-    }
-    
-    func decodeNil() -> Bool {
-        if case .nothing = self.decoder.wrapped {
-            return true
-        }
-        
-        return false
-    }
-    
-    func decode(_ type: Bool.Type) throws -> Bool {
-        return try self.decoder.wrapped.unwrap(asType: Bool.self, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: String.Type) throws -> String {
-        return try self.decoder.settings.stringDecodingStrategy.decode(from: decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Double.Type) throws -> Double {
-        return try self.decoder.settings.doubleDecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Float.Type) throws -> Float {
-        return try self.decoder.settings.floatDecodingStrategy.decode(from: self.decoder.wrapped, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Int.Type) throws -> Int {
-        return try self.decoder.settings.intDecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Int8.Type) throws -> Int8 {
-        return try self.decoder.settings.int8DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Int16.Type) throws -> Int16 {
-        return try self.decoder.settings.int16DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Int32.Type) throws -> Int32 {
-        return try self.decoder.settings.int32DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: Int64.Type) throws -> Int64 {
-        return try self.decoder.settings.int64DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: UInt.Type) throws -> UInt {
-        return try self.decoder.settings.uintDecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: UInt8.Type) throws -> UInt8 {
-        return try self.decoder.settings.uint8DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: UInt16.Type) throws -> UInt16 {
-        return try self.decoder.settings.uint16DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: UInt32.Type) throws -> UInt32 {
-        return try self.decoder.settings.uint32DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    func decode(_ type: UInt64.Type) throws -> UInt64 {
-        return try self.decoder.settings.uint64DecodingStrategy.decode(from: self.decoder, path: self.codingPath.path)
-    }
-    
-    mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        if let type = T.self as? BSONDataType.Type {
-            return try type.init(primitive: self.nextElement().primitive) as! T
-        } else {
-            let decoder = try _BSONDecoder(wrapped: self.nextElement(), settings: self.decoder.settings)
-            return try T.init(from: decoder)
-        }
-    }
-    
-    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
-        let document = try self.decode(Document.self)
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
-        return KeyedDecodingContainer(KeyedBSONContainer(for: decoder))
-    }
-    
-    mutating func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
-        let document = try self.decode(Document.self)
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
-        return UnkeyedBSONContainer(decoder: decoder)
-    }
-    
-    mutating func superDecoder() throws -> Decoder {
-        return self.decoder
-    }
-}
-
-fileprivate extension Array where Element == CodingKey {
+internal extension Array where Element == CodingKey {
     var path: [String] {
         return self.map { $0.stringValue }
     }

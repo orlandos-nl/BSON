@@ -28,7 +28,7 @@ public struct Document: Primitive {
             return int
         }
         set {
-            assert(usedCapacity >= 5)
+            Swift.assert(usedCapacity >= 5)
             storage.set(integer: newValue, at: 0, endianness: .little)
         }
     }

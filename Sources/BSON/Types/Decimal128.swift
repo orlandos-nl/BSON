@@ -7,7 +7,7 @@ public struct Decimal128: Primitive {
     var storage: ByteBuffer
     
     internal init(_ storage: ByteBuffer) {
-        assert(storage.readableBytes == 16)
+        Swift.assert(storage.readableBytes == 16)
         
         self.storage = storage
     }

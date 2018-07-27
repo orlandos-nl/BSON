@@ -143,8 +143,8 @@ extension Document {
         case is Null: // 0x0A
             prepareWritingPrimitive(.null, bodyLength: 0, existingDimensions: dimensions, key: key)
         case let regex as RegularExpression: // 0x0B
-            assert(!regex.pattern.contains("\0"))
-            assert(!regex.options.contains("\0"))
+            Swift.assert(!regex.pattern.contains("\0"))
+            Swift.assert(!regex.options.contains("\0"))
             
             // string counts + null terminators
             prepareWritingPrimitive(.regex, bodyLength: regex.pattern.count + regex.options.count + 2, existingDimensions: dimensions, key: key)
@@ -186,7 +186,7 @@ extension Document {
     /// - precondition: `key` does not contain a null character
     /// - precondition: the document is fully cached
     mutating func write(_ primitive: Primitive, forKey key: String) {
-        assert(!key.contains("\0")) // TODO: this should not only fail on debug. Maybe just remove ocurrences of \0?
+        Swift.assert(!key.contains("\0")) // TODO: this should not only fail on debug. Maybe just remove ocurrences of \0?
         
         let dimensions = cache.dimensions(forKey: key)
         self.write(primitive, forDimensions: dimensions, key: key)
