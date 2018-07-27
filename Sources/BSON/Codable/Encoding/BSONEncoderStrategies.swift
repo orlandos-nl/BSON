@@ -4,7 +4,7 @@ public struct BSONEncoderStrategies { // TODO: EncoderStrategies or EncodingStra
     /// Defines how optionals that are `nil` are encoded in keyed containers
     ///
     /// Note that for unkeyed containers, like arrays, `nil` is always encoded as `null`
-    enum KeyedNilEncodingStrategy {
+    public enum KeyedNilEncodingStrategy {
         /// A value of `nil` is encoded as BSON `Null`
         case null
         
@@ -13,7 +13,7 @@ public struct BSONEncoderStrategies { // TODO: EncoderStrategies or EncodingStra
     }
     
     /// Defines how unsigned integers are encoded
-    enum UnsignedIntegerEncodingStrategy {
+    public enum UnsignedIntegerEncodingStrategy {
         /// Unsigned integers are encoded as Int64. If the value is too large to fit in an int64, an error will be thrown.
         case int64
         
@@ -26,9 +26,9 @@ public struct BSONEncoderStrategies { // TODO: EncoderStrategies or EncodingStra
     }
     
     /// Defines how optionals that are `nil` are encoded in keyed containers
-    var keyedNilEncodingStrategy: KeyedNilEncodingStrategy = .omitted
+    public var keyedNilEncodingStrategy: KeyedNilEncodingStrategy = .omitted
     
     /// Defines how unsigned integers are encoded
-    var unsignedIntegerEncodingStrategy: UnsignedIntegerEncodingStrategy = .int64
+    public var unsignedIntegerEncodingStrategy: UnsignedIntegerEncodingStrategy = .int64
     
 }

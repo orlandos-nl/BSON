@@ -5,6 +5,9 @@ public struct BSONDecoder {
     /// The configuration used for decoding
     public var settings: BSONDecoderSettings
     
+    /// A dictionary you use to customize the decoding process by providing contextual information.
+    public var userInfo: [CodingUserInfoKey: Any] = [:]
+    
     /// Creates a new decoder using fresh settings
     public init(settings: BSONDecoderSettings = .adaptive) {
         self.settings = settings
