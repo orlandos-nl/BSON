@@ -258,12 +258,11 @@ internal enum DecoderValue {
     }
     
     func unwrap<P: Primitive, K: CodingKey>(asType type: P.Type, atKey key: K, path: [String]) throws -> P {
-        switch self {
-        case .document(let document):
-            return try document.assertPrimitive(typeOf: P.self, forKey: key.stringValue)
-        default:
+        guard let document = self.primitive as? Document else {
             throw BSONValueNotFound(type: P.self, path: path)
         }
+        
+        return try document.assertPrimitive(typeOf: P.self, forKey: key.stringValue)
     }
     
     func unwrap<P: Primitive>(asType type: P.Type, path: [String]) throws -> P {
