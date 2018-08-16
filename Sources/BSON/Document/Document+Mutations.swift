@@ -121,7 +121,8 @@ extension Document {
             var buffer = document.makeByteBuffer()
             storage.write(buffer: &buffer)
         case let binary as Binary: // 0x05
-            prepareWritingPrimitive(.binary, bodyLength: binary.count + 1, existingDimensions: dimensions, key: key)
+            prepareWritingPrimitive(.binary, bodyLength: binary.count + 1 + 4, existingDimensions: dimensions, key: key)
+            storage.write(integer: Int32(binary.count), endianness: .little)
             storage.write(integer: binary.subType.identifier, endianness: .little)
             var buffer = binary.storage
             storage.write(buffer: &buffer)
