@@ -236,7 +236,8 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
 
 extension BSONDecoder {
     public func decode<D: Decodable>(_ type: D.Type, from document: Document) throws -> D {
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings)
+        var decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings)
+        decoder.userInfo = self.userInfo
         return try D(from: decoder)
     }
 }
