@@ -23,6 +23,24 @@ extension Document {
         }
     }
     
+    public subscript(dynamicMember member: String) -> Bool? {
+        get {
+            return self[member] as? Bool
+        }
+        set {
+            self[member] = newValue
+        }
+    }
+    
+    public subscript(dynamicMember member: String) -> Binary? {
+        get {
+            return self[member] as? Binary
+        }
+        set {
+            self[member] = newValue
+        }
+    }
+    
     public subscript(dynamicMember member: String) -> Int32? {
         get {
             return self[member] as? Int32
