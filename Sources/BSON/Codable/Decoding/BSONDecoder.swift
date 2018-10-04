@@ -96,7 +96,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         switch self {
         case .string, .adaptive:
             if case .adaptive = self {
-                guard decoder.identifier == .string else {
+                guard decoder.primitive is String else {
                     throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
                 }
             }
@@ -109,19 +109,19 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
             let int = try decoder.wrapped.unwrap(asType: Int.self, path: path())
             return try int.convert(to: I.self)
         case .anyInteger, .roundingAnyNumber:
-            guard let type = decoder.identifier else {
+            guard let value = decoder.primitive else {
                 throw BSONValueNotFound(type: I.self, path: path())
             }
             
-            switch (type, self) {
-            case (.int32, _):
+            switch value {
+            case is Int32:
                 let int = try decoder.wrapped.unwrap(asType: Int32.self, path: path())
                 return try int.convert(to: I.self)
-            case (.int64, _):
+            case is Int:
                 // Necessary also for custom integer types with different widths
                 let int = try decoder.wrapped.unwrap(asType: Int.self, path: path())
                 return try int.convert(to: I.self)
-            case (.double, .roundingAnyNumber):
+            case is Double:
                 let double = try decoder.wrapped.unwrap(asType: Double.self, path: path())
                 return I(double)
             default:
@@ -174,20 +174,20 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
 }
 
 extension BSONDecoderSettings.DoubleDecodingStrategy {
-    internal func decode(primitive: Primitive, identifier: TypeIdentifier, path: @autoclosure () -> [String]) throws -> Double {
-        switch (identifier, self) {
-        case (.string, .textual), (.string, .adaptive):
-            guard let double = try Double(primitive.assert(asType: String.self)) else {
+    internal func decode(primitive: Primitive, path: @autoclosure () -> [String]) throws -> Double {
+        switch (primitive, self) {
+        case (let string as String, .textual), (let string as String, .adaptive):
+            guard let double = try Double(string) else {
                 throw BSONValueNotFound(type: Double.self, path: path())
             }
             
             return double
-        case (.double, _):
-            return try primitive.assert(asType: Double.self)
-        case (.int32, .numerical), (.int32, .adaptive):
-            return try Double(primitive.assert(asType: Int32.self))
-        case (.int64, .numerical), (.int64, .adaptive):
-            return try Double(primitive.assert(asType: Int.self))
+        case (let double as Double, _):
+            return double
+        case (let int as Int32, .numerical), (let int as Int32, .adaptive):
+            return Double(int)
+        case (let int as Int, .numerical), (let int as Int, .adaptive):
+            return Double(int)
         default:
             throw BSONTypeConversionError(from: primitive, to: Double.self)
         }
@@ -203,13 +203,12 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
             return double
         default:
             guard
-                let primitive = decoder.primitive,
-                let identifier = decoder.identifier
-                else {
-                    throw BSONValueNotFound(type: Double.self, path: path())
+                let primitive = decoder.primitive
+            else {
+                throw BSONValueNotFound(type: Double.self, path: path())
             }
             
-            return try decode(primitive: primitive, identifier: identifier, path: path)
+            return try decode(primitive: primitive, path: path)
         }
     }
     
@@ -229,12 +228,18 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
                     throw BSONValueNotFound(type: Double.self, path: path())
             }
             
-            return try decode(primitive: primitive, identifier: identifier, path: path)
+            return try decode(primitive: primitive, path: path)
         }
     }
 }
 
 extension BSONDecoder {
+    public func decode<D: Decodable>(_ type: D.Type, fromPrimitive primitive: Primitive) throws -> D {
+        var decoder = _BSONDecoder(wrapped: .primitive(primitive), settings: self.settings)
+        decoder.userInfo = self.userInfo
+        return try D(from: decoder)
+    }
+        
     public func decode<D: Decodable>(_ type: D.Type, from document: Document) throws -> D {
         var decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings)
         decoder.userInfo = self.userInfo
@@ -243,7 +248,7 @@ extension BSONDecoder {
 }
 
 internal enum DecoderValue {
-    case primitive(TypeIdentifier, Primitive)
+    case primitive(Primitive)
     case nothing
     case document(Document)
     
@@ -251,7 +256,7 @@ internal enum DecoderValue {
         switch self {
         case .document(let doc):
             return doc
-        case .primitive(_, let value):
+        case .primitive(let value):
             return value
         case .nothing:
             return nil
@@ -300,19 +305,11 @@ internal struct _BSONDecoder: Decoder {
         return nil
     }
     
-    var identifier: TypeIdentifier? {
-        if case .primitive(let identifer, _) = wrapped {
-            return identifer
-        }
-        
-        return nil
-    }
-    
     var primitive: Primitive? {
         switch wrapped {
         case .document(let doc):
             return doc
-        case .primitive(_, let p):
+        case .primitive(let p):
             return p
         case .nothing:
             return nil
@@ -326,37 +323,36 @@ internal struct _BSONDecoder: Decoder {
         
         guard
             let document = self.document,
-            let identifier = document.typeIdentifier(of: key),
             let value = document[key]
         else {
             throw BSONValueNotFound(type: String.self, path: path())
         }
         
-        return try self.lossyDecodeString(identifier: identifier, value: value)
+        return try self.lossyDecodeString(value: value)
     }
     
     func lossyDecodeString(path: @autoclosure () -> [String]) throws -> String {
-        guard case .primitive(let identifier, let value) = wrapped else {
+        guard case .primitive(let value) = wrapped else {
             throw BSONValueNotFound(type: String.self, path: path())
         }
         
-        return try self.lossyDecodeString(identifier: identifier, value: value)
+        return try self.lossyDecodeString(value: value)
     }
     
-    func lossyDecodeString(identifier: TypeIdentifier, value: Primitive) throws -> String {
-        switch identifier {
-        case .string:
-            return try value.assert(asType: String.self)
-        case .double:
-            return try value.assert(asType: Double.self).description
-        case .int32:
-            return try value.assert(asType: Int32.self).description
-        case .int64:
-            return try value.assert(asType: Int.self).description
-        case .boolean:
-            return try value.assert(asType: Bool.self) ? "true" : "false"
-        case .objectId:
-            return try value.assert(asType: ObjectId.self).hexString
+    func lossyDecodeString(value: Primitive) throws -> String {
+        switch value {
+        case let string as String:
+            return string
+        case let double as String:
+            return double.description
+        case let int as Int32:
+            return int.description
+        case let int as Int:
+            return int.description
+        case let bool as Bool:
+            return bool ? "true" : "false"
+        case let objectId as ObjectId:
+            return objectId.hexString
         default:
             throw BSONTypeConversionError(from: value, to: String.self)
         }
@@ -393,33 +389,32 @@ extension BSONDecoderSettings.StringDecodingStrategy {
         path: @autoclosure () -> [String]
     ) throws -> String {
         guard
-            let identifier = decoder.document?.typeIdentifier(of: key.stringValue),
             let primitive = decoder.document?[key.stringValue]
         else {
             throw BSONValueNotFound(type: String.self, path: path())
         }
         
-        let decoder = _BSONDecoder(wrapped: .primitive(identifier, primitive), settings: decoder.settings)
+        let decoder = _BSONDecoder(wrapped: .primitive( primitive), settings: decoder.settings)
         
         return try decode(from: decoder, path: path)
     }
         
     internal func decode(from decoder: _BSONDecoder, path: @autoclosure () -> [String]) throws -> String {
-        guard let identifier = decoder.identifier, let primitive = decoder.primitive else {
+        guard let primitive = decoder.primitive else {
             throw BSONValueNotFound(type: String.self, path: path())
         }
         
-        switch (identifier, self) {
-        case (.string, .string):
-            return try primitive.assert(asType: String.self)
-        case (.int32, .integers), (.int32, .numerical):
-            return try primitive.assert(asType: Int32.self).description
-        case (.int64, .integers), (.int64, .numerical):
-            return try primitive.assert(asType: Int.self).description
-        case (.double, .numerical):
-            return try primitive.assert(asType: Double.self).description
+        switch (primitive, self) {
+        case (let string as String, .string):
+            return string
+        case (let int as Int32, .integers), (let int as Int32, .numerical):
+            return int.description
+        case (let int as Int, .integers), (let int as Int, .numerical):
+            return int.description
+        case (let double as Double, .numerical):
+            return double.description
         case (_, .adaptive):
-            return try decoder.lossyDecodeString(identifier: identifier, value: primitive)
+            return try decoder.lossyDecodeString(value: primitive)
         case (_, .custom(let strategy)):
             guard let string = try strategy(nil, decoder.primitive) else {
                 throw BSONValueNotFound(type: String.self, path: path())

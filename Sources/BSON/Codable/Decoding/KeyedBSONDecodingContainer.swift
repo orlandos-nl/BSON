@@ -154,7 +154,6 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
             return try type.init(primitive: self.document[key.stringValue]) as! T
         } else {
             guard
-                let typeIdentifer = self.document.typeIdentifier(of: key.stringValue),
                 let value = self.document[key.stringValue]
                 else {
                     throw BSONValueNotFound(type: T.self, path: path(forKey: key))
@@ -167,14 +166,14 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
             
             let decoder: _BSONDecoder
             
-            if typeIdentifer == .document || typeIdentifer == .array {
+            if let document = value as? Document {
                 decoder = _BSONDecoder(
-                    wrapped: .document(value as! Document),
+                    wrapped: .document(document),
                     settings: self.decoder.settings
                 )
             } else {
                 decoder = _BSONDecoder(
-                    wrapped: .primitive(typeIdentifer, value),
+                    wrapped: .primitive(value),
                     settings: self.decoder.settings
                 )
             }

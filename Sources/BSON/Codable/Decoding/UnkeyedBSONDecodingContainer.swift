@@ -22,7 +22,7 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
             throw EndOfBSONDocument()
         }
         
-        return .primitive(pair.identifier, pair.value)
+        return .primitive(pair.value)
     }
     
     init(decoder: _BSONDecoder) {
