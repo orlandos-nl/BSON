@@ -1,5 +1,4 @@
 extension Optional where Wrapped == Primitive {
-    
     public subscript(key: String) -> Primitive? {
         get {
             return (self as? Document)?[key]

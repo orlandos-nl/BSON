@@ -6,7 +6,7 @@ extension Document: ExpressibleByArrayLiteral {
         return cache.cachedDimensions.compactMap(self.readPrimitive)
     }
     
-    subscript(index: Int) -> Primitive {
+    public subscript(index: Int) -> Primitive {
         get {
             repeat {
                 if cache.count > index {
@@ -45,6 +45,15 @@ extension Document: ExpressibleByArrayLiteral {
     
     public init(arrayLiteral elements: PrimitiveConvertible...) {
         self.init(elements: elements.compactMap { $0.makePrimitive() }.enumerated().map { ("\($0.offset)", $0.element) })
+    }
+    
+    /// Converts an array of Primitives to a BSON ArrayDocument
+    public init(array: [Primitive]) {
+        self.init(isArray: true)
+        
+        for element in array {
+            self.append(element)
+        }
     }
 }
 

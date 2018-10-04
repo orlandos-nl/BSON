@@ -76,7 +76,7 @@ public struct ObjectId {
         self.storage = storage
     }
  
-    // TODO: Implement this another way
+    // TODO: Implement this another way, perhaps with a generator per thread
     public init() {
         self = ObjectIdGenerator().generate()
     }

@@ -1,6 +1,8 @@
 import Foundation
 
 public protocol Primitive: Codable, PrimitiveConvertible {}
+
+// TODO: Investigate if this protocol is needed
 internal protocol BSONDataType: Primitive {
     var primitive: Primitive { get }
     init(primitive: Primitive?) throws
@@ -144,5 +146,11 @@ extension Int: Primitive {}
 extension Double: Primitive {}
 extension Bool: Primitive {}
 extension String: Primitive {}
-public struct MinKey: Primitive {}
-public struct MaxKey: Primitive {}
+
+public struct MinKey: Primitive {
+    public init() {}
+}
+
+public struct MaxKey: Primitive {
+    public init() {}
+}

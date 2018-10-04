@@ -6,6 +6,7 @@ import NIO
 #endif
 
 // TODO: Remove when unused
+@available(*, deprecated, message: "Unimplemented methods should be implemented")
 func unimplemented(_ function: String = #function) -> Never {
     fatalError("\(function) is unimplemented")
 }
@@ -75,14 +76,5 @@ public struct Document: Primitive {
     /// Creates a new `Document` from the given bytes
     public init(bytes: [UInt8], isArray: Bool = false) {
         self.init(data: Data(bytes: bytes), isArray: isArray)
-    }
-    
-    /// Converts an array of Primitives to a BSON ArrayDocument
-    public init(array: [Primitive]) {
-        self.init(isArray: true)
-        
-        for element in array {
-            self.append(element)
-        }
     }
 }

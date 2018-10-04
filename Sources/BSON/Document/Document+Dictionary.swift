@@ -25,6 +25,7 @@ extension Document: ExpressibleByDictionaryLiteral {
     }
     
     /// Creates a new Document with the given elements
+    // TODO: @_specialize ?
     public init<S: Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, PrimitiveConvertible) {
         self.init(isArray: isArray)
         for (key, value) in elements {

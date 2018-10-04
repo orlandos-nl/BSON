@@ -1,8 +1,5 @@
 /// Special internal type used by MongoDB replication and sharding. First 4 bytes are an increment, second 4 are a timestamp.
-public struct Timestamp: Primitive, Equatable {
-    // IMPORTANT: These properties MUST appear in this order. Do not change this. Do not add other properties before these to `Timestamp`.
-    // A pointer is used to serialize timestamp.
-    
+public struct Timestamp: Primitive, Equatable {    
     public var increment: Int32
     public var timestamp: Int32
     
