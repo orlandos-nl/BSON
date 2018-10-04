@@ -24,6 +24,25 @@ public final class BSONEncoder {
         return encoder.target.document
     }
     
+    /// Returns the BSON-encoded representation of the value you supply
+    ///
+    /// If there's a problem encoding the value you supply, this method throws an error based on the type of problem:
+    ///
+    /// - The value fails to encode, or contains a nested value that fails to encode—this method throws the corresponding error.
+    public func encodePrimitive(_ value: Encodable) throws -> Primitive? {
+        var target: Primitive?
+        
+        let encoder = _BSONEncoder(
+            strategies: self.strategies,
+            userInfo: self.userInfo,
+            target: .primitive(get: { return target }, set: { target = $0 })
+        )
+        
+        try value.encode(to: encoder)
+        
+        return target
+    }
+    
     // MARK: Configuration
     
     /// Configures the behavior of the BSON Encoder. See the documentation on `BSONEncoderStrategies` for details.
