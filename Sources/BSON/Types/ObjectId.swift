@@ -77,7 +77,13 @@ public struct ObjectId {
  
     // TODO: Implement this another way, perhaps with a generator per thread
     public init() {
-        self = ObjectIdGenerator().generate()
+        if let generator = Thread.current.threadDictionary["_BSON_ObjectId_Generator"] as? ObjectIdGenerator { 
+            self = generator.generate()
+        } else {
+            let generator = ObjectIdGenerator()
+            Thread.current.threadDictionary["_BSON_ObjectId_Generator"] = generator
+            self = generator.generate()
+        }
     }
     
     /// Decodes the ObjectID from the provided (24 character) hexString
