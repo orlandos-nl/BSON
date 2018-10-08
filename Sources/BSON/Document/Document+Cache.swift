@@ -17,7 +17,7 @@ final class DocumentCache {
         }
     }
     
-    typealias Element = (String, Dimensions)
+    typealias Element = (key: String, dimensions: Dimensions)
     typealias Storage = [Element]
     private var storage: Storage
     
@@ -84,11 +84,11 @@ final class DocumentCache {
     // MARK: Examining the cache
     
     var cachedDimensions: [Dimensions] {
-        return storage.map { $0.1 }
+        return storage.map { $0.dimensions }
     }
     
     var cachedKeys: [String] {
-        return storage.map { $0.0 }
+        return storage.map { $0.key }
     }
     
     var count: Int {
@@ -322,11 +322,11 @@ extension Document {
                 return Binary(subType: Binary.SubType(subType), buffer: slice)
             }
         case .objectId:
-            guard let slice = storage.getSlice(at: offset, length: 12) else {
+            guard let slice = storage.getBytes(at: offset, length: 12) else {
                 return nil
             }
             
-            return ObjectId(slice)
+            return ObjectId(ContiguousArray(slice))
         case .boolean:
             return storage.getByte(at: offset) == 0x01
         case .datetime:

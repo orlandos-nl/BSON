@@ -10,7 +10,7 @@ extension Document: ExpressibleByArrayLiteral {
         get {
             repeat {
                 if cache.count > index {
-                    return self[valueFor: cache[index].1]
+                    return self[valueFor: cache[index].dimensions]
                 }
                 
                 _ = self.scanValue(startingAt: cache.lastScannedPosition, mode: .single)
@@ -21,7 +21,7 @@ extension Document: ExpressibleByArrayLiteral {
         set {
             repeat {
                 if cache.count > index {
-                    self.write(newValue, forDimensions: cache[index].1, key: "\(index)")
+                    self.write(newValue, forDimensions: cache[index].dimensions, key: "\(index)")
                 }
                 
                 _ = self.scanValue(startingAt: cache.lastScannedPosition, mode: .single)

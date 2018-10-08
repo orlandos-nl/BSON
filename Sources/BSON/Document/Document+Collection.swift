@@ -1,27 +1,57 @@
-extension Document: Sequence {
-    /// Returns the amount of top-level elements
+extension Document: BidirectionalCollection {
+    public subscript(position: DocumentIndex) -> (String, Primitive) {
+        self.ensureFullyCached()
+        
+        let dimensions = self.cache[position.offset].dimensions
+        
+        let key = self.readKey(atDimensions: dimensions)
+        let primitive = self.readPrimitive(atDimensions: dimensions)!
+        return (key, primitive)
+    }
+    
+    public typealias Iterator = DocumentIterator
+    public typealias SubSequence = DocumentSlice
+    public typealias Index = DocumentIndex
+    
     public var count: Int {
         ensureFullyCached()
         
         return cache.count
     }
     
-    /// Creates an iterator that iterates over each element in the Document until the end
-    public func makeIterator() -> AnyIterator<(String, Primitive)> {
-        var pairs = self.pairs
-        
-        return AnyIterator {
-            guard let pair = pairs.next() else {
-                return nil
-            }
-            
-            return (pair.key, pair.value)
-        }
+    public var startIndex: DocumentIndex {
+        return DocumentIndex(offset: 0)
+    }
+    
+    public func index(after i: DocumentIndex) -> DocumentIndex {
+        return DocumentIndex(offset: i.offset + 1)
+    }
+    
+    public func index(before i: DocumentIndex) -> DocumentIndex {
+        return DocumentIndex(offset: i.offset - 1)
+    }
+    
+    public var endIndex: DocumentIndex {
+        return DocumentIndex(offset: count)
+    }
+    
+    /// Creates an iterator that iterates over each pair in the Document
+    public func makeIterator() -> DocumentIterator {
+        return DocumentIterator(document: self)
     }
     
     /// A more detailed view into the pairs contained in thi.1s
-    public var pairs: DocumentIterator {
-        return DocumentIterator(document: self)
+    public var pairs: DocumentPairIterator {
+        return DocumentPairIterator(document: self)
+    }
+}
+
+public struct DocumentIndex: Comparable {
+    /// The offset in the Document to look for
+    var offset: Int
+    
+    public static func < (lhs: DocumentIndex, rhs: DocumentIndex) -> Bool {
+        return lhs.offset < rhs.offset
     }
 }
 
@@ -54,7 +84,7 @@ public struct DocumentPair {
     }
 }
 
-public struct DocumentIterator: IteratorProtocol, Sequence {
+public struct DocumentPairIterator: IteratorProtocol, Sequence {
     /// The Document that is being iterated over
     fileprivate let document: Document
     

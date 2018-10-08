@@ -11,7 +11,6 @@ func unimplemented(_ function: String = #function) -> Never {
     fatalError("\(function) is unimplemented")
 }
 
-@dynamicMemberLookup
 public struct Document: Primitive {
     static let allocator = ByteBufferAllocator()
     

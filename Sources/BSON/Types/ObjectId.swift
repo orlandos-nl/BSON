@@ -7,32 +7,31 @@ public final class ObjectIdGenerator {
     // TODO: is a different MachineIdentifier per ObjectIdGenerator acceptable?
     let machineIdentifier = UInt32.random(in: UInt32.min...UInt32.max)
     
-    private var template: ByteBuffer
+    private var template: ContiguousArray<UInt8>
     
     public init() {
-        self.template = Document.allocator.buffer(capacity: 12)
+        self.template = ContiguousArray<UInt8>(repeating: 0, count: 12)
         
-        // 4 bytes of epoch time, will be unique for each ObjectId
-        
-        // then 3 bytes of machine identifier
-        // yes, the code below writes 4 bytes, but the last one will be overwritten by the process id
-        template.set(integer: machineIdentifier, at: 4, endianness: .little)
-        
-        // last 3 bytes: random counter
-        // this will also write 4 bytes, at index 8, while the counter actually starts at index 9
-        // the process id will overwrite the first byte
-        let initialCounter = UInt32.random(in: UInt32.min...UInt32.max)
-        template.set(integer: initialCounter, at: 8, endianness: .little)
-        
-        // process id
-        template.set(integer: processIdentifier, at: 7, endianness: .little)
+        withUnsafeMutableBytes(of: &template) { buffer in
+            // 4 bytes of epoch time, will be unique for each ObjectId, set on creation
+            
+            // then 3 bytes of machine identifier
+            // yes, the code below writes 4 bytes, but the last one will be overwritten by the process id
+            buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt32.self).pointee = machineIdentifier.littleEndian
+            
+            // last 3 bytes: random counter
+            // this will also write 4 bytes, at index 8, while the counter actually starts at index 9
+            // the process id will overwrite the first byte
+            let initialCounter = UInt32.random(in: UInt32.min...UInt32.max)
+            buffer.baseAddress!.advanced(by: 8).assumingMemoryBound(to: UInt32.self).pointee = initialCounter.littleEndian
+            
+            // process id - UInt16
+            buffer.baseAddress!.advanced(by: 7).assumingMemoryBound(to: Int32.self).pointee = processIdentifier.littleEndian
+        }
     }
     
     func incrementTemplateCounter() {
-        template.moveReaderIndex(to: 0)
-        template.moveWriterIndex(to: 12)
-        
-        self.template.withUnsafeMutableReadableBytes { buffer in
+        self.template.withUnsafeMutableBytes { buffer in
             // Need to simulate an (U)Int24
             buffer[11] = buffer[11] &+ 1
             
@@ -48,14 +47,14 @@ public final class ObjectIdGenerator {
     
     /// Generates a new ObjectId
     public func generate() -> ObjectId {
+        defer { self.incrementTemplateCounter() }
+        
         var template = self.template
         
-        // TODO: big or little endian?
-        template.set(integer: Int32(time(nil)), at: 0, endianness: .little)
+        template.withUnsafeMutableBytes { buffer in
+            buffer.bindMemory(to: Int32.self).baseAddress!.pointee = Int32(time(nil)).littleEndian
+        }
         
-        self.incrementTemplateCounter()
-        
-        template.moveWriterIndex(to: 12)
         return ObjectId(template)
     }
 }
@@ -65,14 +64,14 @@ private struct InvalidObjectIdString: Error {
     var hex: String
 }
 
+typealias RawObjectId = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
+
 public struct ObjectId {
     /// The internal Storage Buffer
-    let storage: ByteBuffer
+    let storage: ContiguousArray<UInt8>
     
     /// Creates a new ObjectId using exsiting data
-    init(_ storage: ByteBuffer) {
-        Swift.assert(storage.readableBytes == 12)
-        
+    init(_ storage: ContiguousArray<UInt8>) {
         self.storage = storage
     }
  
@@ -87,7 +86,8 @@ public struct ObjectId {
             throw InvalidObjectIdString(hex: hex)
         }
         
-        var storage = Document.allocator.buffer(capacity: 12)
+        var storage = ContiguousArray<UInt8>()
+        storage.reserveCapacity(12)
         
         var gen = hex.makeIterator()
         while let c1 = gen.next(), let c2 = gen.next() {
@@ -97,10 +97,10 @@ public struct ObjectId {
                 break
             }
             
-            storage.write(integer: d, endianness: .little)
+            storage.append(d)
         }
         
-        guard storage.readableBytes == 12 else {
+        guard storage.count == 12 else {
             throw InvalidObjectIdString(hex: hex)
         }
         
@@ -112,9 +112,13 @@ public struct ObjectId {
         var data = Data()
         data.reserveCapacity(24)
         
-        for byte in storage.getBytes(at: 0, length: 12)! {
+        func transform(_ byte: UInt8) {
             data.append(radix16table[Int(byte / 16)])
             data.append(radix16table[Int(byte % 16)])
+        }
+        
+        for byte in storage {
+            transform(byte)
         }
         
         return String(data: data, encoding: .utf8)!
@@ -122,7 +126,9 @@ public struct ObjectId {
     
     /// Returns the ObjectId's creation date in UNIX epoch seconds
     public var epochSeconds: Int32 {
-        return storage.getInteger(at: 0, endianness: .little)!
+        return storage.withUnsafeBytes { buffer in
+            return buffer.bindMemory(to: Int32.self).baseAddress!.pointee
+        }
     }
     
     /// The creation date of this ObjectId
@@ -137,9 +143,7 @@ extension ObjectId: Hashable {
     }
     
     public func hash(into hasher: inout Hasher) {
-        storage.withUnsafeReadableBytes {
-            hasher.combine(bytes: $0)
-        }
+        storage.hash(into: &hasher)
     }
 }
 

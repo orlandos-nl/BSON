@@ -130,7 +130,7 @@ extension Document {
         case let objectId as ObjectId: // 0x07
             prepareWritingPrimitive(.objectId, bodyLength: 12, existingDimensions: dimensions, key: key)
             var buffer = objectId.storage
-            storage.write(buffer: &buffer)
+            storage.write(bytes: buffer)
         case let bool as Bool: // 0x08
             prepareWritingPrimitive(.boolean, bodyLength: 1, existingDimensions: dimensions, key: key)
             

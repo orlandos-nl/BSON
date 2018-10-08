@@ -15,7 +15,7 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     
     let decoder: _BSONDecoder
     
-    var iterator: DocumentIterator
+    var iterator: DocumentPairIterator
     
     mutating func nextElement() throws -> DecoderValue {
         guard let pair = iterator.next() else {
