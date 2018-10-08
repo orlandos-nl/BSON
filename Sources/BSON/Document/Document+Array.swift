@@ -44,7 +44,7 @@ extension Document: ExpressibleByArrayLiteral {
     }
     
     public init(arrayLiteral elements: PrimitiveConvertible...) {
-        self.init(elements: elements.compactMap { $0.makePrimitive() }.enumerated().map { ("\($0.offset)", $0.element) })
+        self.init(array: elements.compactMap { $0.makePrimitive() } )
     }
     
     /// Converts an array of Primitives to a BSON ArrayDocument
