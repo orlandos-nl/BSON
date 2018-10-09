@@ -372,7 +372,7 @@ internal struct _BSONDecoder: Decoder {
     }
     
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        return UnkeyedBSONDecodingContainer(decoder: self, codingPath: self.codingPath)
+        return try UnkeyedBSONDecodingContainer(decoder: self, codingPath: self.codingPath)
     }
     
     func singleValueContainer() throws -> SingleValueDecodingContainer {

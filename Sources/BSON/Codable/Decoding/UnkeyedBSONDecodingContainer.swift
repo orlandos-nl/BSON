@@ -25,7 +25,11 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
         return .primitive(pair.value)
     }
     
-    init(decoder: _BSONDecoder, codingPath: [CodingKey]) {
+    init(decoder: _BSONDecoder, codingPath: [CodingKey]) throws {
+        guard let document = decoder.document else {
+            throw DecodingError.valueNotFound(Document.self, .init(codingPath: codingPath, debugDescription: "An unkeyed container could not be made because the value is not a document"))
+        }
+        
         self.decoder = decoder
         self.codingPath = codingPath
         self.iterator = decoder.document!.pairs
@@ -113,7 +117,7 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     mutating func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
         let document = try self.decode(Document.self)
         let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
-        return UnkeyedBSONDecodingContainer(decoder: decoder, codingPath: self.codingPath)
+        return try UnkeyedBSONDecodingContainer(decoder: decoder, codingPath: self.codingPath)
     }
     
     mutating func superDecoder() throws -> Decoder {

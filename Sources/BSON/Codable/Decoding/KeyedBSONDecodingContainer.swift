@@ -193,7 +193,7 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     func nestedUnkeyedContainer(forKey key: K) throws -> UnkeyedDecodingContainer {
         let document = try self.decode(Document.self, forKey: key)
         let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
-        return UnkeyedBSONDecodingContainer(decoder: decoder, codingPath: self.codingPath + [key])
+        return try UnkeyedBSONDecodingContainer(decoder: decoder, codingPath: self.codingPath + [key])
     }
     
     func superDecoder() throws -> Decoder {
