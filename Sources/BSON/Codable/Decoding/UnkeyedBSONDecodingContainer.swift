@@ -25,9 +25,9 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
         return .primitive(pair.value)
     }
     
-    init(decoder: _BSONDecoder) {
+    init(decoder: _BSONDecoder, codingPath: [CodingKey]) {
         self.decoder = decoder
-        self.codingPath = []
+        self.codingPath = codingPath
         self.iterator = decoder.document!.pairs
     }
     
@@ -99,21 +99,21 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
         if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.nextElement().primitive) as! T
         } else {
-            let decoder = try _BSONDecoder(wrapped: self.nextElement(), settings: self.decoder.settings)
+            let decoder = try _BSONDecoder(wrapped: self.nextElement(), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
             return try T.init(from: decoder)
         }
     }
     
     mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
         let document = try self.decode(Document.self)
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
-        return KeyedDecodingContainer(KeyedBSONDecodingContainer(for: decoder))
+        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
+        return KeyedDecodingContainer(KeyedBSONDecodingContainer(for: decoder, codingPath: self.codingPath))
     }
     
     mutating func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
         let document = try self.decode(Document.self)
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
-        return UnkeyedBSONDecodingContainer(decoder: decoder)
+        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
+        return UnkeyedBSONDecodingContainer(decoder: decoder, codingPath: self.codingPath)
     }
     
     mutating func superDecoder() throws -> Decoder {

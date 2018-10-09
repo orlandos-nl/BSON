@@ -3,8 +3,8 @@ internal struct SingleValueBSONDecodingContainer: SingleValueDecodingContainer, 
     
     let decoder: _BSONDecoder
     
-    init(for decoder: _BSONDecoder) {
-        self.codingPath = []
+    init(for decoder: _BSONDecoder, codingPath: [CodingKey]) {
+        self.codingPath = codingPath
         self.decoder = decoder
     }
     
@@ -152,7 +152,7 @@ internal struct SingleValueBSONDecodingContainer: SingleValueDecodingContainer, 
         if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.decoder.primitive) as! T
         } else {
-            let decoder = _BSONDecoder(wrapped: self.decoder.wrapped, settings: self.decoder.settings)
+            let decoder = _BSONDecoder(wrapped: self.decoder.wrapped, settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
             return try T.init(from: decoder)
         }
     }

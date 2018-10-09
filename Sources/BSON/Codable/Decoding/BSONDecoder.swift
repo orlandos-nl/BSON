@@ -235,14 +235,12 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
 
 extension BSONDecoder {
     public func decode<D: Decodable>(_ type: D.Type, fromPrimitive primitive: Primitive) throws -> D {
-        var decoder = _BSONDecoder(wrapped: .primitive(primitive), settings: self.settings)
-        decoder.userInfo = self.userInfo
+        var decoder = _BSONDecoder(wrapped: .primitive(primitive), settings: self.settings, codingPath: [], userInfo: self.userInfo)
         return try D(from: decoder)
     }
         
     public func decode<D: Decodable>(_ type: D.Type, from document: Document) throws -> D {
-        var decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings)
-        decoder.userInfo = self.userInfo
+        var decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings, codingPath: [], userInfo: self.userInfo)
         return try D(from: decoder)
     }
 }
@@ -358,9 +356,9 @@ internal struct _BSONDecoder: Decoder {
         }
     }
     
-    init(wrapped: DecoderValue, settings: BSONDecoderSettings) {
-        self.codingPath = []
-        self.userInfo = [:]
+    init(wrapped: DecoderValue, settings: BSONDecoderSettings, codingPath: [CodingKey], userInfo: [CodingUserInfoKey: Any]) {
+        self.codingPath = codingPath
+        self.userInfo = userInfo
         self.wrapped = wrapped
         self.settings = settings
     }
@@ -370,15 +368,15 @@ internal struct _BSONDecoder: Decoder {
             throw BSONValueNotFound(type: Document.self, path: self.keyPath)
         }
         
-        return KeyedDecodingContainer(KeyedBSONDecodingContainer(for: self))
+        return KeyedDecodingContainer(KeyedBSONDecodingContainer(for: self, codingPath: self.codingPath))
     }
     
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        return UnkeyedBSONDecodingContainer(decoder: self)
+        return UnkeyedBSONDecodingContainer(decoder: self, codingPath: self.codingPath)
     }
     
     func singleValueContainer() throws -> SingleValueDecodingContainer {
-        return SingleValueBSONDecodingContainer(for: self)
+        return SingleValueBSONDecodingContainer(for: self, codingPath: self.codingPath)
     }
 }
 
@@ -394,7 +392,7 @@ extension BSONDecoderSettings.StringDecodingStrategy {
             throw BSONValueNotFound(type: String.self, path: path())
         }
         
-        let decoder = _BSONDecoder(wrapped: .primitive( primitive), settings: decoder.settings)
+        let decoder = _BSONDecoder(wrapped: .primitive( primitive), settings: decoder.settings, codingPath: decoder.codingPath + [key], userInfo: decoder.userInfo)
         
         return try decode(from: decoder, path: path)
     }

@@ -14,8 +14,8 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
         return self.decoder.document!
     }
     
-    init(for decoder: _BSONDecoder) {
-        self.codingPath = []
+    init(for decoder: _BSONDecoder, codingPath: [CodingKey]) {
+        self.codingPath = codingPath
         self.decoder = decoder
     }
     
@@ -164,19 +164,19 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
                 return value
             }
             
-            let decoder: _BSONDecoder
-            
+            let decoderValue: DecoderValue
             if let document = value as? Document {
-                decoder = _BSONDecoder(
-                    wrapped: .document(document),
-                    settings: self.decoder.settings
-                )
+                decoderValue = .document(document)
             } else {
-                decoder = _BSONDecoder(
-                    wrapped: .primitive(value),
-                    settings: self.decoder.settings
-                )
+                decoderValue = .primitive(value)
             }
+            
+            let decoder = _BSONDecoder(
+                wrapped: decoderValue,
+                settings: self.decoder.settings,
+                codingPath: self.codingPath + [key],
+                userInfo: self.decoder.userInfo
+            )
             
             return try T.init(from: decoder)
         }
@@ -185,15 +185,15 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
         let document = self.document[key.stringValue, as: Document.self] ?? Document()
         
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
+        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
         
-        return KeyedDecodingContainer(KeyedBSONDecodingContainer<NestedKey>(for: decoder))
+        return KeyedDecodingContainer(KeyedBSONDecodingContainer<NestedKey>(for: decoder, codingPath: self.codingPath + [key]))
     }
     
     func nestedUnkeyedContainer(forKey key: K) throws -> UnkeyedDecodingContainer {
         let document = try self.decode(Document.self, forKey: key)
-        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings)
-        return UnkeyedBSONDecodingContainer(decoder: decoder)
+        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
+        return UnkeyedBSONDecodingContainer(decoder: decoder, codingPath: self.codingPath + [key])
     }
     
     func superDecoder() throws -> Decoder {
