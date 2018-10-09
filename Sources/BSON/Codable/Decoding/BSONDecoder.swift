@@ -94,11 +94,9 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         path: @autoclosure () -> [String]
     ) throws -> I {
         switch self {
-        case .string, .adaptive:
-            if case .string = self {
-                guard decoder.primitive is String else {
-                    throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
-                }
+        case .string:
+            guard decoder.primitive is String else {
+                throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
             }
             
             return try convert(from: decoder.wrapped.unwrap(asType: String.self, path: path()))
@@ -108,22 +106,25 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         case .int64:
             let int = try decoder.wrapped.unwrap(asType: Int.self, path: path())
             return try int.convert(to: I.self)
-        case .anyInteger, .roundingAnyNumber:
+        case .anyInteger, .roundingAnyNumber, .adaptive:
             guard let value = decoder.primitive else {
                 throw BSONValueNotFound(type: I.self, path: path())
             }
             
-            switch value {
-            case is Int32:
-                let int = try decoder.wrapped.unwrap(asType: Int32.self, path: path())
+            switch (value, self) {
+            case (let int as Int32, _):
                 return try int.convert(to: I.self)
-            case is Int:
-                // Necessary also for custom integer types with different widths
-                let int = try decoder.wrapped.unwrap(asType: Int.self, path: path())
+            case (let int as Int, _):
                 return try int.convert(to: I.self)
-            case is Double:
-                let double = try decoder.wrapped.unwrap(asType: Double.self, path: path())
+            case (let double as Double, .roundingAnyNumber), (let double as Double, .adaptive):
                 return I(double)
+            case (let string as String, .adaptive):
+                guard let int = I(string) else {
+                    // TODO: Add the correct CodingPath in this error
+                    throw DecodingError.typeMismatch(I.self, .init(codingPath: [], debugDescription: "The IntegerDecodingStrategy is adaptive, but the String could not be parsed as \(I.self)"))
+                }
+                
+                return int
             default:
                 throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
             }
@@ -235,12 +236,12 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
 
 extension BSONDecoder {
     public func decode<D: Decodable>(_ type: D.Type, fromPrimitive primitive: Primitive) throws -> D {
-        var decoder = _BSONDecoder(wrapped: .primitive(primitive), settings: self.settings, codingPath: [], userInfo: self.userInfo)
+        let decoder = _BSONDecoder(wrapped: .primitive(primitive), settings: self.settings, codingPath: [], userInfo: self.userInfo)
         return try D(from: decoder)
     }
         
     public func decode<D: Decodable>(_ type: D.Type, from document: Document) throws -> D {
-        var decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings, codingPath: [], userInfo: self.userInfo)
+        let decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings, codingPath: [], userInfo: self.userInfo)
         return try D(from: decoder)
     }
 }

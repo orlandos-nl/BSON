@@ -4,34 +4,29 @@ import NIO
 fileprivate let processIdentifier = ProcessInfo.processInfo.processIdentifier
 
 public final class ObjectIdGenerator {
-    // TODO: is a different MachineIdentifier per ObjectIdGenerator acceptable?
-    let machineIdentifier = UInt32.random(in: UInt32.min...UInt32.max)
-    
     private var template: ContiguousArray<UInt8>
     
     public init() {
         self.template = ContiguousArray<UInt8>(repeating: 0, count: 12)
         
-        withUnsafeMutableBytes(of: &template) { buffer in
+        template.withUnsafeMutableBytes { buffer in
             // 4 bytes of epoch time, will be unique for each ObjectId, set on creation
             
-            // then 3 bytes of machine identifier
+            // then 5 bytes of random value
             // yes, the code below writes 4 bytes, but the last one will be overwritten by the process id
-            buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt32.self).pointee = machineIdentifier.littleEndian
+            let randomBytes = UInt32.random(in: UInt32.min...UInt32.max)
+            buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt32.self).pointee = randomBytes
             
             // last 3 bytes: random counter
             // this will also write 4 bytes, at index 8, while the counter actually starts at index 9
             // the process id will overwrite the first byte
-            let initialCounter = UInt32.random(in: UInt32.min...UInt32.max)
-            buffer.baseAddress!.advanced(by: 8).assumingMemoryBound(to: UInt32.self).pointee = initialCounter.littleEndian
-            
-            // process id - UInt16
-            buffer.baseAddress!.advanced(by: 7).assumingMemoryBound(to: Int32.self).pointee = processIdentifier.littleEndian
+            let randomByteAndInitialCounter = UInt32.random(in: UInt32.min...UInt32.max)
+            buffer.baseAddress!.advanced(by: 8).assumingMemoryBound(to: UInt32.self).pointee = randomByteAndInitialCounter
         }
     }
     
     func incrementTemplateCounter() {
-        self.template.withUnsafeMutableBytes { buffer in
+        template.withUnsafeMutableBytes { buffer in
             // Need to simulate an (U)Int24
             buffer[11] = buffer[11] &+ 1
             
