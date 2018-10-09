@@ -32,7 +32,7 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
         
         self.decoder = decoder
         self.codingPath = codingPath
-        self.iterator = decoder.document!.pairs
+        self.iterator = document.pairs
     }
     
     func decodeNil() -> Bool {
