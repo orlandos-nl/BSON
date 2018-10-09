@@ -95,7 +95,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
     ) throws -> I {
         switch self {
         case .string, .adaptive:
-            if case .adaptive = self {
+            if case .string = self {
                 guard decoder.primitive is String else {
                     throw BSONTypeConversionError(from: decoder.primitive, to: I.self)
                 }
