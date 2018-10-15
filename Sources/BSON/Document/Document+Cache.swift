@@ -326,7 +326,7 @@ extension Document {
                 return nil
             }
             
-            return ObjectId(Data(slice))
+            return ObjectId(ContiguousArray(slice))
         case .boolean:
             return storage.getByte(at: offset) == 0x01
         case .datetime:
