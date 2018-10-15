@@ -1,6 +1,12 @@
 import Foundation
 import NIO
 
+// Documentation from MongoDB on ObjectId can be found in this comment:
+// https://github.com/mongodb/mongo/blob/e5c39e225effd4a28937c32c84ac3dc0c1ceb355/src/mongo/bson/oid.h#L43
+//
+// Note that the spec (as of version 0.2) of ObjectID contradicts this:
+// https://github.com/mongodb/specifications/blob/6a31988385f54e4ec9daddfbf21344a2a96e2656/source/objectid.rst
+
 fileprivate let processIdentifier = ProcessInfo.processInfo.processIdentifier
 
 public final class ObjectIdGenerator {
@@ -25,6 +31,7 @@ public final class ObjectIdGenerator {
         }
     }
     
+    // TODO: Make this in line with the MongoDB implementation (big endian)
     func incrementTemplateCounter() {
         template.withUnsafeMutableBytes { buffer in
             // Need to simulate an (U)Int24
@@ -47,7 +54,8 @@ public final class ObjectIdGenerator {
         var template = self.template
         
         template.withUnsafeMutableBytes { buffer in
-            buffer.bindMemory(to: Int32.self).baseAddress!.pointee = Int32(time(nil)).littleEndian
+            // Unlike the rest of BSON, the timestamp is big endian
+            buffer.bindMemory(to: Int32.self).baseAddress!.pointee = Int32(time(nil)).bigEndian
         }
         
         return ObjectId(template)
@@ -70,7 +78,6 @@ public struct ObjectId {
         self.storage = storage
     }
  
-    // TODO: Implement this another way, perhaps with a generator per thread
     public init() {
         if let generator = Thread.current.threadDictionary["_BSON_ObjectId_Generator"] as? ObjectIdGenerator { 
             self = generator.generate()
@@ -128,7 +135,8 @@ public struct ObjectId {
     /// Returns the ObjectId's creation date in UNIX epoch seconds
     public var timestamp: Int32 {
         return storage.withUnsafeBytes { buffer in
-            return buffer.bindMemory(to: Int32.self).baseAddress!.pointee
+            // Unlike the rest of BSON, the timestamp is big endian
+            return Int32(bigEndian: buffer.bindMemory(to: Int32.self).baseAddress!.pointee)
         }
     }
     
