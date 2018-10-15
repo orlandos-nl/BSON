@@ -4,38 +4,40 @@ import NIO
 fileprivate let processIdentifier = ProcessInfo.processInfo.processIdentifier
 
 public final class ObjectIdGenerator {
-    private var template: ContiguousArray<UInt8>
+    private var template: Data
     
     public init() {
-        self.template = ContiguousArray<UInt8>(repeating: 0, count: 12)
+        self.template = Data(count: 12)
         
-        template.withUnsafeMutableBytes { buffer in
+        template.withUnsafeMutableBytes { (pointer: UnsafeMutablePointer<UInt8>) in
             // 4 bytes of epoch time, will be unique for each ObjectId, set on creation
             
             // then 5 bytes of random value
             // yes, the code below writes 4 bytes, but the last one will be overwritten by the process id
             let randomBytes = UInt32.random(in: UInt32.min...UInt32.max)
-            buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt32.self).pointee = randomBytes
+            pointer.advanced(by: 4).withMemoryRebound(to: UInt32.self, capacity: 1) { randomPointer in
+                randomPointer.pointee = randomBytes
+            }
             
             // last 3 bytes: random counter
             // this will also write 4 bytes, at index 8, while the counter actually starts at index 9
             // the process id will overwrite the first byte
             let randomByteAndInitialCounter = UInt32.random(in: UInt32.min...UInt32.max)
-            buffer.baseAddress!.advanced(by: 8).assumingMemoryBound(to: UInt32.self).pointee = randomByteAndInitialCounter
+            pointer.advanced(by: 8).withMemoryRebound(to: UInt32.self, capacity: 1) { counterPointer in
+                counterPointer.pointee = randomByteAndInitialCounter
+            }
         }
     }
     
     func incrementTemplateCounter() {
-        template.withUnsafeMutableBytes { buffer in
-            // Need to simulate an (U)Int24
-            buffer[11] = buffer[11] &+ 1
+        // Need to simulate an (U)Int24
+        template[11] = template[11] &+ 1
+        
+        if template[11] == 0 {
+            template[10] = template[10] &+ 1
             
-            if buffer[11] == 0 {
-                buffer[10] = buffer[10] &+ 1
-                
-                if buffer[10] == 0 {
-                    buffer[9] = buffer[9] &+ 1
-                }
+            if template[10] == 0 {
+                template[9] = template[9] &+ 1
             }
         }
     }
@@ -45,9 +47,8 @@ public final class ObjectIdGenerator {
         defer { self.incrementTemplateCounter() }
         
         var template = self.template
-        
-        template.withUnsafeMutableBytes { buffer in
-            buffer.bindMemory(to: UInt32.self).baseAddress!.pointee = UInt32(time(nil)).littleEndian
+        template.withUnsafeMutableBytes { (pointer: UnsafeMutablePointer<UInt32>) in
+            pointer.pointee = UInt32(time(nil)).littleEndian
         }
         
         return ObjectId(template)
@@ -63,10 +64,10 @@ typealias RawObjectId = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
 
 public struct ObjectId {
     /// The internal Storage Buffer
-    let storage: ContiguousArray<UInt8>
+    let storage: Data
     
     /// Creates a new ObjectId using exsiting data
-    init(_ storage: ContiguousArray<UInt8>) {
+    init(_ storage: Data) {
         self.storage = storage
     }
  
@@ -87,7 +88,7 @@ public struct ObjectId {
             throw InvalidObjectIdString(hex: hex)
         }
         
-        var storage = ContiguousArray<UInt8>()
+        var storage = Data()
         storage.reserveCapacity(12)
         
         var gen = hex.makeIterator()
@@ -127,8 +128,8 @@ public struct ObjectId {
     
     /// Returns the ObjectId's creation date in UNIX epoch seconds
     public var timestamp: UInt32 {
-        return storage.withUnsafeBytes { buffer in
-            return buffer.bindMemory(to: UInt32.self).baseAddress!.pointee
+        return storage.withUnsafeBytes { (pointer: UnsafePointer<UInt32>) in
+            return UInt32(littleEndian: pointer.pointee)
         }
     }
     
