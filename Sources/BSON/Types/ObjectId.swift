@@ -126,9 +126,9 @@ public struct ObjectId {
     }
     
     /// Returns the ObjectId's creation date in UNIX epoch seconds
-    public var epochSeconds: Int32 {
+    public var epochSeconds: UInt32 {
         return storage.withUnsafeBytes { buffer in
-            return buffer.bindMemory(to: Int32.self).baseAddress!.pointee
+            return buffer.bindMemory(to: UInt32.self).baseAddress!.pointee
         }
     }
     
