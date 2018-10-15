@@ -47,7 +47,7 @@ public final class ObjectIdGenerator {
         var template = self.template
         
         template.withUnsafeMutableBytes { buffer in
-            buffer.bindMemory(to: Int32.self).baseAddress!.pointee = Int32(time(nil)).littleEndian
+            buffer.bindMemory(to: UInt32.self).baseAddress!.pointee = UInt32(time(nil)).littleEndian
         }
         
         return ObjectId(template)
@@ -126,15 +126,15 @@ public struct ObjectId {
     }
     
     /// Returns the ObjectId's creation date in UNIX epoch seconds
-    public var epochSeconds: UInt32 {
+    public var timestamp: UInt32 {
         return storage.withUnsafeBytes { buffer in
             return buffer.bindMemory(to: UInt32.self).baseAddress!.pointee
         }
     }
     
     /// The creation date of this ObjectId
-    public var epoch: Date {
-        return Date(timeIntervalSince1970: Double(epochSeconds))
+    public var date: Date {
+        return Date(timeIntervalSince1970: .init(timestamp))
     }
 }
 
