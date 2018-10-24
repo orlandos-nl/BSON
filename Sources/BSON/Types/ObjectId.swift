@@ -67,8 +67,6 @@ private struct InvalidObjectIdString: Error {
     var hex: String
 }
 
-typealias RawObjectId = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
-
 public struct ObjectId {
     /// The internal Storage Buffer
     let storage: ContiguousArray<UInt8>
