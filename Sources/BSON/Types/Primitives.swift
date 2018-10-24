@@ -43,10 +43,19 @@ extension Document: BSONDataType {
         if let encoder = encoder as? AnyBSONEncoder {
             try encoder.encode(document: self)
         } else {
-            var container = encoder.container(keyedBy: CustomKey.self)
-            
-            for pair in self.pairs {
-                try container.encode(AnyEncodable(encodable: pair.value), forKey: CustomKey(stringValue: pair.key)!)
+            switch self.isArray {
+            case true:
+                var container = encoder.unkeyedContainer()
+                
+                for value in self.values {
+                    try container.encode(AnyEncodable(encodable: value))
+                }
+            case false:
+                var container = encoder.container(keyedBy: CustomKey.self)
+                
+                for pair in self.pairs {
+                    try container.encode(AnyEncodable(encodable: pair.value), forKey: CustomKey(stringValue: pair.key)!)
+                }
             }
         }
     }
