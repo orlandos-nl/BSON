@@ -38,6 +38,31 @@ fileprivate struct AnyEncodable: Encodable {
     }
 }
 
+extension Data: BSONDataType {
+    init(primitive: Primitive?) throws {
+        guard let value = primitive, let binary = value as? Binary else {
+            throw BSONTypeConversionError(from: type(of: primitive), to: Data.self)
+        }
+        
+        self = binary.data
+    }
+    
+    var primitive: Primitive {
+        var buffer = Document.allocator.buffer(capacity: self.count)
+        buffer.writeWithUnsafeMutableBytes { writer in
+            let writer = writer.bindMemory(to: UInt8.self)
+            let size = self.count
+            return self.withUnsafeBytes { (reader: UnsafePointer<UInt8>) in
+                writer.baseAddress!.initialize(from: reader, count: size)
+                
+                return size
+            }
+        }
+        
+        return Binary(buffer: buffer)
+    }
+}
+
 extension Document: BSONDataType {
     public func encode(to encoder: Encoder) throws {
         if let encoder = encoder as? AnyBSONEncoder {

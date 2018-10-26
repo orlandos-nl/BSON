@@ -129,8 +129,7 @@ extension Document {
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             prepareWritingPrimitive(.objectId, bodyLength: 12, existingDimensions: dimensions, key: key)
-            var buffer = objectId.storage
-            storage.write(bytes: buffer)
+            storage.write(bytes: objectId.storage)
         case let bool as Bool: // 0x08
             prepareWritingPrimitive(.boolean, bodyLength: 1, existingDimensions: dimensions, key: key)
             
@@ -178,7 +177,12 @@ extension Document {
         case is MinKey: // 0xFF
             prepareWritingPrimitive(.maxKey, bodyLength: 0, existingDimensions: dimensions, key: key)
         default:
-            assertionFailure("Currently unsupported type \(primitive)")
+            guard let data = primitive as? BSONDataType else {
+                assertionFailure("Currently unsupported type \(primitive)")
+                return
+            }
+            
+            self.write(data.primitive, forDimensions: dimensions, key: key)
         }
     }
     

@@ -18,6 +18,21 @@ class BSONEncoderTests: XCTestCase {
         super.tearDown()
     }
     
+    func testData() throws {
+        struct User: Codable {
+            let _id: ObjectId
+            let username: String
+            let data: Data
+        }
+        
+        let user = User(_id: ObjectId(), username: "Joannis", data: "test".data(using: .utf8)!)
+        let doc = try BSONEncoder().encode(user)
+        let copy = try BSONDecoder().decode(User.self, from: doc)
+        XCTAssertEqual(user._id, copy._id)
+        XCTAssertEqual(user.username, copy.username)
+        XCTAssertEqual(user.data, copy.data)
+    }
+    
     func testDictionaryEncodingDecodesCorrectly() throws {
         let dictionary = ["sample": 4.0, "other": 2.0]
         let codedDocument = try BSONEncoder().encode(dictionary)
