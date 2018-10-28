@@ -2,7 +2,6 @@ import Foundation
 
 public protocol Primitive: Codable, PrimitiveConvertible {}
 
-// TODO: Investigate if this protocol is needed
 internal protocol BSONDataType: Primitive {
     var primitive: Primitive { get }
     init(primitive: Primitive?) throws

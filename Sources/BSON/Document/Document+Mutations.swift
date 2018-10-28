@@ -155,9 +155,7 @@ extension Document {
             storage.write(string: regex.options)
             storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
             // 0x0C is deprecated (DBPointer)
-            // TODO: JavascriptCode (0x0D)
             // 0x0E is deprecated (Symbol)
-        // TODO: JavascriptCode With Scope (0x0F)
         case let int as Int32: // 0x10
             prepareWritingPrimitive(.int32, bodyLength: 4, existingDimensions: dimensions, key: key)
             storage.write(integer: int, endianness: .little)

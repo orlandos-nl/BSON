@@ -289,6 +289,7 @@ extension Document {
                 return nil
             }
             
+            // Omit the null terminator as we don't use/need that in Swift
             return self.storage.getString(at: offset &+ 4, length: numericCast(length) - 1)
         case .binary:
             guard let length = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
