@@ -24,6 +24,14 @@ internal struct SingleValueBSONDecodingContainer: SingleValueDecodingContainer, 
         return binary
     }
     
+    func decodeDecimal128() throws -> Decimal128 {
+        guard let decimal128 = self.decoder.primitive as? Decimal128 else {
+            throw BSONValueNotFound(type: Decimal128.self, path: self.codingPath.path)
+        }
+        
+        return decimal128
+    }
+    
     func decodeObjectId() throws -> ObjectId {
         guard let objectId = self.decoder.primitive as? ObjectId else {
             throw BSONValueNotFound(type: ObjectId.self, path: self.codingPath.path)

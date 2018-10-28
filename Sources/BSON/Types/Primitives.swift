@@ -19,6 +19,7 @@ internal protocol AnyBSONEncoder {
 internal protocol AnySingleValueBSONDecodingContainer {
     func decodeObjectId() throws -> ObjectId
     func decodeDocument() throws -> Document
+    func decodeDecimal128() throws -> Decimal128
     func decodeBinary() throws -> Binary
     func decodeRegularExpression() throws -> RegularExpression
     func decodeNull() throws -> Null

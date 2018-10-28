@@ -149,13 +149,13 @@ extension Document {
     
     func valueLength(forType type: TypeIdentifier, at offset: Int) -> Int? {
         switch type {
-        case .string, .javascript:
+        case .string, .javascript: // Int32 is excluding the int32 header
             guard let binaryLength = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
                 return nil
             }
             
             return numericCast(4 &+ binaryLength)
-        case .document, .array:
+        case .document, .array, .javascriptWithScope: // Int32 is including the int32 header
             guard let documentLength = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
                 return nil
             }
@@ -192,16 +192,6 @@ extension Document {
             }
             
             return patternEndOffset + optionsEndOffset
-        case .javascriptWithScope:
-            guard let string = valueLength(forType: .string, at: offset) else {
-                return nil
-            }
-            
-            guard let document = valueLength(forType: .document, at: offset) else {
-                return nil
-            }
-            
-            return string &+ document
         case .int32:
             return 4
         case .decimal128:
@@ -294,33 +284,38 @@ extension Document {
         switch type {
         case .double:
             return self.storage.getDouble(at: offset)
-        case .string, .binary, .document, .array:
+        case .string:
             guard let length = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
                 return nil
             }
             
-            if type == .string {
-                return self.storage.getString(at: offset &+ 4, length: numericCast(length) - 1)
-            } else if type == .document || type == .array {
-                guard let slice = self.storage.getSlice(at: offset, length: numericCast(length)) else {
-                    return nil
-                }
-                
-                return Document(
-                    storage: slice,
-                    cache: DocumentCache(),
-                    isArray: type == .array
-                )
-            } else {
-                guard
-                    let subType = self.storage.getByte(at: offset &+ 4),
-                    let slice = self.storage.getSlice(at: offset &+ 5, length: numericCast(length))
-                else {
-                    return nil
-                }
-                
-                return Binary(subType: Binary.SubType(subType), buffer: slice)
+            return self.storage.getString(at: offset &+ 4, length: numericCast(length) - 1)
+        case .binary:
+            guard let length = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
+                return nil
             }
+            
+            guard
+                let subType = self.storage.getByte(at: offset &+ 4),
+                let slice = self.storage.getSlice(at: offset &+ 5, length: numericCast(length))
+            else {
+                return nil
+            }
+            
+            return Binary(subType: Binary.SubType(subType), buffer: slice)
+        case .document, .array:
+            guard
+                let length = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self),
+                let slice = self.storage.getSlice(at: offset, length: numericCast(length))
+            else {
+                return nil
+            }
+            
+            return Document(
+                storage: slice,
+                cache: DocumentCache(),
+                isArray: type == .array
+            )
         case .objectId:
             guard let slice = storage.getBytes(at: offset, length: 12) else {
                 return nil
@@ -369,13 +364,44 @@ extension Document {
             
             return RegularExpression(pattern: pattern, options: options)
         case .javascript:
-            unimplemented()
+            guard
+                let length = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self),
+                let code = self.storage.getString(at: offset &+ 4, length: numericCast(length) - 1)
+            else {
+                return nil
+            }
+            
+            return JavaScriptCode(code)
         case .javascriptWithScope:
-            unimplemented()
+            guard let length = self.storage.getInteger(at: offset, endianness: .little, as: Int32.self) else {
+                return nil
+            }
+            
+            guard
+                let codeLength = self.storage.getInteger(at: offset &+ 4, endianness: .little, as: Int32.self),
+                let code = self.storage.getString(at: offset &+ 8, length: numericCast(length) - 1)
+            else {
+                return nil
+            }
+            
+            guard
+                let documentLength = self.storage.getInteger(at: offset &+ 8 &+ numericCast(codeLength), endianness: .little, as: Int32.self),
+                let slice = self.storage.getSlice(at: offset, length: numericCast(documentLength))
+            else {
+                return nil
+            }
+            
+            let scope = Document(
+                storage: slice,
+                cache: DocumentCache(),
+                isArray: false
+            )
+            
+            return JavaScriptCodeWithScope(code, scope: scope)
         case .int32:
             return self.storage.getInteger(at: offset, endianness: .little, as: Int32.self)
         case .decimal128:
-            guard let slice = storage.getSlice(at: offset, length: 16) else {
+            guard let slice = storage.getBytes(at: offset, length: 16) else {
                 return nil
             }
             

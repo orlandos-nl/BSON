@@ -20,8 +20,16 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
     /// Decodes the `value` with a key of `key` to a `Float` using the current strategy
     internal func decode<K: CodingKey>(fromKey key: K, in value: DecoderValue, path: [String]) throws -> Float {
         switch self {
-        case .double:
-            return try Float(value.unwrap(asType: Double.self, atKey: key, path: path))
+        case .double, .adaptive:
+            do {
+                return try Float(value.unwrap(asType: Double.self, atKey: key, path: path))
+            } catch {
+                guard case .adaptive = self else {
+                    throw error
+                }
+                
+                fallthrough // if adaptive
+            }
         case .string:
             let string = try value.unwrap(asType: String.self, atKey: key, path: path)
             
@@ -30,8 +38,6 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
             }
             
             return float
-        case .adaptive:
-            unimplemented()
         case .custom(let strategy):
             guard
                 case .document(let document) = value,
@@ -47,9 +53,18 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
     /// Decodes the `value` without key to a `Float` using the current strategy
     internal func decode(from value: DecoderValue, path: [String]) throws -> Float {
         switch self {
-        case .double:
-            let double = try value.unwrap(asType: Double.self, path: path)
-            return Float(double)
+        case .double, .adaptive:
+            do {
+                let double = try value.unwrap(asType: Double.self, path: path)
+                
+                return Float(double)
+            } catch {
+                guard case .adaptive = self else {
+                    throw error
+                }
+                
+                fallthrough // if adaptive
+            }
         case .string:
             let string = try value.unwrap(asType: String.self, path: path)
             
@@ -58,8 +73,6 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
             }
             
             return float
-        case .adaptive:
-            unimplemented()
         case .custom(let strategy):
             guard let float = try strategy(nil, value.primitive) else {
                 throw BSONValueNotFound(type: Float.self, path: path)
@@ -178,7 +191,7 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
     internal func decode(primitive: Primitive, path: @autoclosure () -> [String]) throws -> Double {
         switch (primitive, self) {
         case (let string as String, .textual), (let string as String, .adaptive):
-            guard let double = try Double(string) else {
+            guard let double = Double(string) else {
                 throw BSONValueNotFound(type: Double.self, path: path())
             }
             
@@ -223,10 +236,9 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
             return double
         default:
             guard
-                let primitive = decoder.document?[key.stringValue],
-                let identifier = decoder.document?.typeIdentifier(of: key.stringValue)
-                else {
-                    throw BSONValueNotFound(type: Double.self, path: path())
+                let primitive = decoder.document?[key.stringValue]
+            else {
+                throw BSONValueNotFound(type: Double.self, path: path())
             }
             
             return try decode(primitive: primitive, path: path)
@@ -342,7 +354,7 @@ internal struct _BSONDecoder: Decoder {
         switch value {
         case let string as String:
             return string
-        case let double as String:
+        case let double as Double:
             return double.description
         case let int as Int32:
             return int.description

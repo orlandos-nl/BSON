@@ -5,12 +5,6 @@ import NIO
     #error("BSON does not support 32-bit platforms, PRs are welcome 🎉🐈")
 #endif
 
-// TODO: Remove when unused
-@available(*, deprecated, message: "Unimplemented methods should be implemented")
-func unimplemented(_ function: String = #function) -> Never {
-    fatalError("\(function) is unimplemented")
-}
-
 public struct Document: Primitive {
     static let allocator = ByteBufferAllocator()
     

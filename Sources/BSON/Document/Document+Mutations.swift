@@ -170,12 +170,31 @@ extension Document {
             storage.write(integer: int, endianness: .little)
         case let decimal128 as Decimal128:
             prepareWritingPrimitive(.decimal128, bodyLength: 16, existingDimensions: dimensions, key: key)
-            var buffer = decimal128.storage
-            storage.write(buffer: &buffer)
+            storage.write(bytes: decimal128.storage)
         case is MaxKey: // 0x7F
             prepareWritingPrimitive(.maxKey, bodyLength: 0, existingDimensions: dimensions, key: key)
         case is MinKey: // 0xFF
             prepareWritingPrimitive(.maxKey, bodyLength: 0, existingDimensions: dimensions, key: key)
+        case let javascript as JavaScriptCode:
+            let codeLengthWithNull = javascript.code.utf8.count + 1
+            prepareWritingPrimitive(.javascript, bodyLength: 4 + codeLengthWithNull, existingDimensions: dimensions, key: key)
+            
+            storage.write(integer: Int32(codeLengthWithNull), endianness: .little)
+            storage.write(string: javascript.code)
+            storage.write(integer: 0, endianness: .little, as: UInt8.self)
+        case let javascript as JavaScriptCodeWithScope:
+            var codeBuffer = javascript.scope.makeByteBuffer()
+            
+            let codeLength = javascript.code.utf8.count + 1 // code, null terminator
+            let codeLengthWithHeader = 4 + codeLength
+            let primitiveLength = 4 + codeLengthWithHeader + codeBuffer.writerIndex // int32(code_w_s size), code, scope doc
+            
+            prepareWritingPrimitive(.javascriptWithScope, bodyLength: primitiveLength, existingDimensions: dimensions, key: key)
+            
+            storage.write(integer: Int32(primitiveLength), endianness: .little) // header
+            storage.write(integer: codeLength) // string (code)
+            storage.write(string: javascript.code)
+            storage.write(buffer: &codeBuffer)
         default:
             guard let data = primitive as? BSONDataType else {
                 assertionFailure("Currently unsupported type \(primitive)")

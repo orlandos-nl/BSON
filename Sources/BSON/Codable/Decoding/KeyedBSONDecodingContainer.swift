@@ -155,8 +155,8 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
         } else {
             guard
                 let value = self.document[key.stringValue]
-                else {
-                    throw BSONValueNotFound(type: T.self, path: path(forKey: key))
+            else {
+                throw BSONValueNotFound(type: T.self, path: path(forKey: key))
             }
             
             // Decoding strategy for Primitives, like Date
