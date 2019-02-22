@@ -10,7 +10,7 @@ let package = Package(
             targets: ["BSON"])
         ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-nio.git", from: "1.7.3")
+        .package(url: "https://github.com/apple/swift-nio.git", from: "1.9.0")
     ],
     targets: [
         .target(

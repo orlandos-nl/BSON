@@ -3,7 +3,7 @@ import Foundation
 extension Document {
     /// Calls `changeCapacity` on `storage` and updates the document header
     private mutating func changeCapacity(_ requiredCapacity: Int) {
-        storage.changeCapacity(to: requiredCapacity)
+        storage.reserveCapacity(requiredCapacity)
         self.usedCapacity = Int32(requiredCapacity)
     }
     
