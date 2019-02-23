@@ -9,7 +9,7 @@
 Pod::Spec.new do |s|
   s.ios.deployment_target = '11.0'
   s.name             = 'BSON'
-  s.version          = '6.0.0'
+  s.version          = '6.0.1'
   s.summary          = 'A Swift implementation of the BSON specification'
 
   s.description      = <<-DESC
@@ -24,5 +24,5 @@ APIs designed to parse/serialize as well as encode/decode BSON data.
   s.social_media_url = 'https://twitter.com/joannisorlandos'
 
   s.source_files     = 'Sources/BSON/**/*'
-  s.dependency 'SwiftNIO', '~> 1.9.0'
+  s.dependency 'SwiftNIO', '>= 1.9.0'
 end
