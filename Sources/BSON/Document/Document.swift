@@ -1,10 +1,6 @@
 import Foundation
 import NIO
 
-#if arch(i386) || arch(arm)
-    #error("BSON does not support 32-bit platforms, PRs are welcome 🎉🐈")
-#endif
-
 public struct Document: Primitive {
     static let allocator = ByteBufferAllocator()
     

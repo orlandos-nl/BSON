@@ -170,7 +170,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
                 )
             }
             
-            return Int(value)
+            return _BSON64BitInteger(value)
         case .string:
             return "\(value)"
         }
@@ -228,7 +228,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
     }
     
     mutating func encode(_ value: Int, forKey key: Key) throws {
-        encoder[key] = value
+        encoder[key] = _BSON64BitInteger(value)
     }
     
     mutating func encode(_ value: Int8, forKey key: Key) throws {
@@ -244,7 +244,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
     }
     
     mutating func encode(_ value: Int64, forKey key: Key) throws {
-        encoder[key] = Int(value)
+        encoder[key] = _BSON64BitInteger(value)
     }
     
     mutating func encode(_ value: UInt, forKey key: Key) throws {
@@ -337,7 +337,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
     
     mutating func encode(_ value: Int) throws {
-        encoder.target.document.append(value)
+        encoder.target.document.append(_BSON64BitInteger(value))
     }
     
     mutating func encode(_ value: Int8) throws {
@@ -353,7 +353,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
     
     mutating func encode(_ value: Int64) throws {
-        encoder.target.document.append(Int(value))
+        encoder.target.document.append(_BSON64BitInteger(value))
     }
     
     mutating func encode(_ value: UInt) throws {
@@ -467,7 +467,7 @@ fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContain
     
     mutating func encode(_ value: Int) throws {
         try encodingPrecheck(value)
-        encoder.target.primitive = value
+        encoder.target.primitive = _BSON64BitInteger(value)
     }
     
     mutating func encode(_ value: Int8) throws {
@@ -487,7 +487,7 @@ fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContain
     
     mutating func encode(_ value: Int64) throws {
         try encodingPrecheck(value)
-        encoder.target.primitive = Int(value)
+        encoder.target.primitive = _BSON64BitInteger(value)
     }
     
     mutating func encode(_ value: UInt) throws {

@@ -341,7 +341,7 @@ extension Document {
             
             return Timestamp(increment: increment, timestamp: timestamp)
         case .int64:
-            return self.storage.getInteger(at: offset, endianness: .little, as: Int.self)
+            return self.storage.getInteger(at: offset, endianness: .little, as: _BSON64BitInteger.self)
         case .null:
             return Null()
         case .minKey:
