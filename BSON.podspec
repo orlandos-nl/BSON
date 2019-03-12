@@ -8,6 +8,7 @@
 
 Pod::Spec.new do |s|
   s.ios.deployment_target = '11.0'
+  s.osx.deployment_target = '10.13'
   s.name             = 'BSON'
   s.version          = '6.0.2'
   s.summary          = 'A Swift implementation of the BSON specification'
