@@ -3,3 +3,11 @@ extension Document: Equatable {
         return lhs.makeData() == rhs.makeData()
     }
 }
+
+extension Document: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        self.makeByteBuffer().withUnsafeReadableBytes { buffer in
+            hasher.combine(bytes: buffer)
+        }
+    }
+}
