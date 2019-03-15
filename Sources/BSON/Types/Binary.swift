@@ -47,7 +47,7 @@ public struct Binary: Primitive {
         }
         set {
             storage = Document.allocator.buffer(capacity: newValue.count)
-            storage.writeBytes(newValue)
+            storage.write(bytes: newValue)
         }
     }
     
@@ -69,7 +69,7 @@ public struct Binary: Primitive {
             let data = try container.decode(Data.self)
             self.subType = .generic
             self.storage = Document.allocator.buffer(capacity: data.count)
-            self.storage.writeBytes(data)
+            self.storage.write(bytes: data)
         }
     }
     

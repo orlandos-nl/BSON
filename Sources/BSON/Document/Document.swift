@@ -23,7 +23,7 @@ public struct Document: Primitive {
         }
         set {
             Swift.assert(usedCapacity >= 5)
-            storage.setInteger(newValue, at: 0, endianness: .little)
+            storage.set(integer: newValue, at: 0, endianness: .little)
         }
     }
     
@@ -60,7 +60,7 @@ public struct Document: Primitive {
     /// Creates a new `Document` by parsing the existing `Data` buffer
     public init(data: Data, isArray: Bool = false) {
         self.storage = Document.allocator.buffer(capacity: data.count)
-        self.storage.writeBytes(data)
+        self.storage.write(bytes: data)
     
         self.cache = DocumentCache()
         self.isArray = isArray

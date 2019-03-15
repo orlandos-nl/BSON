@@ -57,11 +57,11 @@ extension Document {
         }
         
         // Write the type identifier
-        storage.writeInteger(type.rawValue, endianness: .little)
+        storage.write(integer: type.rawValue, endianness: .little)
         
         // Write the key
-        storage.writeString(key)
-        storage.writeInteger(0, endianness: .little, as: UInt8.self)
+        storage.write(string: key)
+        storage.write(integer: 0, endianness: .little, as: UInt8.self)
         
         // Writer index is now at the position of the body
     }
@@ -69,7 +69,7 @@ extension Document {
     /// Moves the writer index to the end of the document and writes the null terminator
     private mutating func finalizeWriting() {
         storage.moveWriterIndex(to: Int(self.usedCapacity &- 1))
-        storage.writeInteger(0, endianness: .little, as: UInt8.self)
+        storage.write(integer: 0, endianness: .little, as: UInt8.self)
     }
     
     /// Moves the bytes with the given length at the position `from` to the position at `to`
@@ -108,38 +108,38 @@ extension Document {
         switch primitive {
         case let double as Double: // 0x01
             prepareWritingPrimitive(.double, bodyLength: 8, existingDimensions: dimensions, key: key)
-            storage.writeInteger(double.bitPattern, endianness: .little)
+            storage.write(integer: double.bitPattern, endianness: .little)
         case let string as String: // 0x02
             let stringLengthWithNull = string.utf8.count + 1
             prepareWritingPrimitive(.string, bodyLength: stringLengthWithNull + 4, existingDimensions: dimensions, key: key)
             
-            storage.writeInteger(Int32(stringLengthWithNull), endianness: .little)
-            storage.writeString(string)
-            storage.writeInteger(0, endianness: .little, as: UInt8.self)
+            storage.write(integer: Int32(stringLengthWithNull), endianness: .little)
+            storage.write(string: string)
+            storage.write(integer: 0, endianness: .little, as: UInt8.self)
         case var document as Document: // 0x03 (embedded document) or 0x04 (array)
             prepareWritingPrimitive(document.isArray ? .array : .document, bodyLength: Int(document.usedCapacity), existingDimensions: dimensions, key: key)
             var buffer = document.makeByteBuffer()
-            storage.writeBuffer(&buffer)
+            storage.write(buffer: &buffer)
         case let binary as Binary: // 0x05
             prepareWritingPrimitive(.binary, bodyLength: binary.count + 1 + 4, existingDimensions: dimensions, key: key)
-            storage.writeInteger(Int32(binary.count), endianness: .little)
-            storage.writeInteger(binary.subType.identifier, endianness: .little)
+            storage.write(integer: Int32(binary.count), endianness: .little)
+            storage.write(integer: binary.subType.identifier, endianness: .little)
             var buffer = binary.storage
-            storage.writeBuffer(&buffer)
+            storage.write(buffer: &buffer)
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             prepareWritingPrimitive(.objectId, bodyLength: 12, existingDimensions: dimensions, key: key)
-            storage.writeBytes(objectId.storage)
+            storage.write(bytes: objectId.storage)
         case let bool as Bool: // 0x08
             prepareWritingPrimitive(.boolean, bodyLength: 1, existingDimensions: dimensions, key: key)
             
             let bool: UInt8 = bool ? 0x01 : 0x00
-            storage.writeInteger(bool, endianness: .little)
+            storage.write(integer: bool, endianness: .little)
         case let date as Date: // 0x09
             prepareWritingPrimitive(.datetime, bodyLength: 8, existingDimensions: dimensions, key: key)
             
             let milliseconds = Int(date.timeIntervalSince1970 * 1000)
-            storage.writeInteger(milliseconds, endianness: .little)
+            storage.write(integer: milliseconds, endianness: .little)
         case is Null: // 0x0A
             prepareWritingPrimitive(.null, bodyLength: 0, existingDimensions: dimensions, key: key)
         case let regex as RegularExpression: // 0x0B
@@ -149,26 +149,26 @@ extension Document {
             // string counts + null terminators
             prepareWritingPrimitive(.regex, bodyLength: regex.pattern.count + regex.options.count + 2, existingDimensions: dimensions, key: key)
             
-            storage.writeString(regex.pattern)
-            storage.writeInteger(0x00, endianness: .little, as: UInt8.self)
+            storage.write(string: regex.pattern)
+            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
             
-            storage.writeString(regex.options)
-            storage.writeInteger(0x00, endianness: .little, as: UInt8.self)
+            storage.write(string: regex.options)
+            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
             // 0x0C is deprecated (DBPointer)
             // 0x0E is deprecated (Symbol)
         case let int as Int32: // 0x10
             prepareWritingPrimitive(.int32, bodyLength: 4, existingDimensions: dimensions, key: key)
-            storage.writeInteger(int, endianness: .little)
+            storage.write(integer: int, endianness: .little)
         case let stamp as Timestamp:
             prepareWritingPrimitive(.timestamp, bodyLength: 8, existingDimensions: dimensions, key: key)
-            storage.writeInteger(stamp.increment, endianness: .little)
-            storage.writeInteger(stamp.timestamp, endianness: .little)
+            storage.write(integer: stamp.increment, endianness: .little)
+            storage.write(integer: stamp.timestamp, endianness: .little)
         case let int as Int: // 0x12
             prepareWritingPrimitive(.int64, bodyLength: 8, existingDimensions: dimensions, key: key)
-            storage.writeInteger(int, endianness: .little)
+            storage.write(integer: int, endianness: .little)
         case let decimal128 as Decimal128:
             prepareWritingPrimitive(.decimal128, bodyLength: 16, existingDimensions: dimensions, key: key)
-            storage.writeBytes(decimal128.storage)
+            storage.write(bytes: decimal128.storage)
         case is MaxKey: // 0x7F
             prepareWritingPrimitive(.maxKey, bodyLength: 0, existingDimensions: dimensions, key: key)
         case is MinKey: // 0xFF
@@ -177,9 +177,9 @@ extension Document {
             let codeLengthWithNull = javascript.code.utf8.count + 1
             prepareWritingPrimitive(.javascript, bodyLength: 4 + codeLengthWithNull, existingDimensions: dimensions, key: key)
             
-            storage.writeInteger(Int32(codeLengthWithNull), endianness: .little)
-            storage.writeString(javascript.code)
-            storage.writeInteger(0, endianness: .little, as: UInt8.self)
+            storage.write(integer: Int32(codeLengthWithNull), endianness: .little)
+            storage.write(string: javascript.code)
+            storage.write(integer: 0, endianness: .little, as: UInt8.self)
         case let javascript as JavaScriptCodeWithScope:
             var codeBuffer = javascript.scope.makeByteBuffer()
             
@@ -189,10 +189,10 @@ extension Document {
             
             prepareWritingPrimitive(.javascriptWithScope, bodyLength: primitiveLength, existingDimensions: dimensions, key: key)
             
-            storage.writeInteger(Int32(primitiveLength), endianness: .little) // header
-            storage.writeInteger(codeLength) // string (code)
-            storage.writeString(javascript.code)
-            storage.writeBuffer(&codeBuffer)
+            storage.write(integer: Int32(primitiveLength), endianness: .little) // header
+            storage.write(integer: codeLength) // string (code)
+            storage.write(string: javascript.code)
+            storage.write(buffer: &codeBuffer)
         default:
             guard let data = primitive as? BSONDataType else {
                 assertionFailure("Currently unsupported type \(primitive)")
