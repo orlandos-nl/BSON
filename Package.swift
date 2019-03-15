@@ -1,4 +1,4 @@
-// swift-tools-version:4.2
+// swift-tools-version:5.0
 
 import PackageDescription
 
@@ -10,7 +10,7 @@ let package = Package(
             targets: ["BSON"])
         ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-nio.git", from: "1.9.0")
+        .package(url: "https://github.com/apple/swift-nio.git", .revision("master"))
     ],
     targets: [
         .target(
