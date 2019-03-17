@@ -57,6 +57,13 @@ public struct Document: Primitive {
         self.isArray = isArray
     }
     
+    /// Creates a new `Document` by parsing an existing `ByteBuffer`
+    public init(buffer: ByteBuffer, isArray: Bool = false) {
+        self.storage = buffer
+        self.cache = DocumentCache()
+        self.isArray = isArray
+    }
+    
     /// Creates a new `Document` by parsing the existing `Data` buffer
     public init(data: Data, isArray: Bool = false) {
         self.storage = Document.allocator.buffer(capacity: data.count)
