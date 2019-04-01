@@ -9,11 +9,22 @@ import NIO
 
 fileprivate let processIdentifier = ProcessInfo.processInfo.processIdentifier
 
-// ObjectIdGenerator subclasses NSObject so it can be used in the thread dictionary on Linux
-public final class ObjectIdGenerator: NSObject {
+public final class ObjectIdGenerator {
+    private static var threadSpecificGenerator = ThreadSpecificVariable<ObjectIdGenerator>()
     private var template: ContiguousArray<UInt8>
     
-    public override init() {
+    /// Returns the `ObjectIdGenerator` for the current thread
+    public static var shared: ObjectIdGenerator {
+        if let generator = threadSpecificGenerator.currentValue {
+            return generator
+        }
+        
+        let generator = ObjectIdGenerator()
+        threadSpecificGenerator.currentValue = generator
+        return generator
+    }
+    
+    public init() {
         self.template = ContiguousArray<UInt8>(repeating: 0, count: 12)
         
         template.withUnsafeMutableBytes { buffer in
@@ -78,13 +89,7 @@ public struct ObjectId {
     }
  
     public init() {
-        if let generator = Thread.current.threadDictionary["_BSON_ObjectId_Generator"] as? ObjectIdGenerator { 
-            self = generator.generate()
-        } else {
-            let generator = ObjectIdGenerator()
-            Thread.current.threadDictionary["_BSON_ObjectId_Generator"] = generator
-            self = generator.generate()
-        }
+        self = ObjectIdGenerator.shared.generate()
     }
     
     /// Decodes the ObjectID from the provided (24 character) hexString
