@@ -10,7 +10,21 @@ import NIO
 fileprivate let processIdentifier = ProcessInfo.processInfo.processIdentifier
 
 public final class ObjectIdGenerator {
+    private static var threadSpecificGenerator = ThreadSpecificVariable<ObjectIdGenerator>()
     private var template: ContiguousArray<UInt8>
+    
+    /// Returns the `ObjectIdGenerator` for the current thread
+    ///
+    /// - warning: Note that `ObjectIdGenerator` in itself is not thread-safe. It is advised not to store the value that results from accessing this property. Instead, use it directly: `ObjectIdGenerator.default.generate()`
+    public static var `default`: ObjectIdGenerator {
+        if let generator = threadSpecificGenerator.currentValue {
+            return generator
+        }
+        
+        let generator = ObjectIdGenerator()
+        threadSpecificGenerator.currentValue = generator
+        return generator
+    }
     
     public init() {
         self.template = ContiguousArray<UInt8>(repeating: 0, count: 12)
@@ -77,13 +91,7 @@ public struct ObjectId {
     }
  
     public init() {
-        if let generator = Thread.current.threadDictionary["_BSON_ObjectId_Generator"] as? ObjectIdGenerator { 
-            self = generator.generate()
-        } else {
-            let generator = ObjectIdGenerator()
-            Thread.current.threadDictionary["_BSON_ObjectId_Generator"] = generator
-            self = generator.generate()
-        }
+        self = ObjectIdGenerator.default.generate()
     }
     
     /// Decodes the ObjectID from the provided (24 character) hexString
