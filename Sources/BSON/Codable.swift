@@ -104,7 +104,7 @@ extension Document : Codable {
 //            case let value as Decimal128:
 //                try container.encode(value, forKey: codingKey)
             default:
-                throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Value of type \(type(of: primitive)) in Document is not Encodable"))
+                throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: encoder.codingPath, debugDescription: "Value of type \(Swift.type(of: primitive)) in Document is not Encodable"))
             }
         }
     }
@@ -114,7 +114,7 @@ extension Document : Codable {
             let container = try decoder.singleValueContainer() as! _BSONSingleValueDecodingContainer
             
             guard container.decoder.target.primitive is Document else {
-                throw DecodingError.typeMismatch(Document.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Tried to decode a document from BSON, but the primitive found is of type \(type(of: container.decoder.target.primitive))"))
+                throw DecodingError.typeMismatch(Document.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Tried to decode a document from BSON, but the primitive found is of type \(Swift.type(of: container.decoder.target.primitive))"))
             }
             
             self = container.decoder.target.document
