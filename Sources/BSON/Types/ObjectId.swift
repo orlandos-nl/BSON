@@ -14,7 +14,9 @@ public final class ObjectIdGenerator {
     private var template: ContiguousArray<UInt8>
     
     /// Returns the `ObjectIdGenerator` for the current thread
-    public static var shared: ObjectIdGenerator {
+    ///
+    /// - warning: Note that `ObjectIdGenerator` in itself is not thread-safe. It is advised not to store the value that results from accessing this property. Instead, use it directly: `ObjectIdGenerator.default.generate()`
+    public static var `default`: ObjectIdGenerator {
         if let generator = threadSpecificGenerator.currentValue {
             return generator
         }
@@ -89,7 +91,7 @@ public struct ObjectId {
     }
  
     public init() {
-        self = ObjectIdGenerator.shared.generate()
+        self = ObjectIdGenerator.default.generate()
     }
     
     /// Decodes the ObjectID from the provided (24 character) hexString
