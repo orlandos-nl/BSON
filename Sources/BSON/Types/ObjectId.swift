@@ -9,10 +9,11 @@ import NIO
 
 fileprivate let processIdentifier = ProcessInfo.processInfo.processIdentifier
 
-public final class ObjectIdGenerator {
+// ObjectIdGenerator subclasses NSObject so it can be used in the thread dictionary on Linux
+public final class ObjectIdGenerator: NSObject {
     private var template: ContiguousArray<UInt8>
     
-    public init() {
+    public override init() {
         self.template = ContiguousArray<UInt8>(repeating: 0, count: 12)
         
         template.withUnsafeMutableBytes { buffer in
