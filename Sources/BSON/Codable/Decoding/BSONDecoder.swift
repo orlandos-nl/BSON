@@ -117,7 +117,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
             let int = try decoder.wrapped.unwrap(asType: Int32.self, path: path())
             return try int.convert(to: I.self)
         case .int64:
-            let int = try decoder.wrapped.unwrap(asType: Int.self, path: path())
+            let int = try decoder.wrapped.unwrap(asType: _BSON64BitInteger.self, path: path())
             return try int.convert(to: I.self)
         case .anyInteger, .roundingAnyNumber, .adaptive:
             guard let value = decoder.primitive else {
@@ -167,7 +167,7 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
             let int = try decoder.wrapped.unwrap(asType: Int32.self, atKey: key, path: path())
             return try int.convert(to: I.self)
         case (.int64, .int64), (.adaptive, .int64), (.anyInteger, .int64), (.roundingAnyNumber, .int64):
-            let int = try decoder.wrapped.unwrap(asType: Int.self, atKey: key, path: path())
+            let int = try decoder.wrapped.unwrap(asType: _BSON64BitInteger.self, atKey: key, path: path())
             return try int.convert(to: I.self)
         case (.roundingAnyNumber, .double), (.adaptive, .double):
             let double = try decoder.wrapped.unwrap(asType: Double.self, atKey: key, path: path())

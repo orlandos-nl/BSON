@@ -176,7 +176,15 @@ extension ObjectId: Primitive {
 
 extension Int32: Primitive {}
 extension Date: Primitive {}
+
+#if (arch(i386) || arch(arm)) && BSONInt64Primitive
+internal typealias _BSON64BitInteger = Int64
+extension Int64: Primitive {}
+#else
+internal typealias _BSON64BitInteger = Int
 extension Int: Primitive {}
+#endif
+
 extension Double: Primitive {}
 extension Bool: Primitive {}
 extension String: Primitive {}
