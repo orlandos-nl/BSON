@@ -58,7 +58,7 @@ public struct RegularExpression: Primitive, Equatable {
     }
 }
 
-public extension NSRegularExpression {
+extension NSRegularExpression {
     /// Returns an initialized NSRegularExpression instance with the pattern and options from the specified BSON regular expression.
     public convenience init(_ regex: RegularExpression) throws {
         try self.init(pattern: regex.pattern, options: makeFoundationOptions(from: regex.options))
