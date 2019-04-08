@@ -17,6 +17,25 @@ class BSONEncoderTests: XCTestCase {
         XCTAssertEqual(user.username, copy.username)
         XCTAssertEqual(user.data, copy.data)
     }
+
+    func testEncodeDocument() throws {
+        struct User: Codable {
+            let name: String
+            let age: Int
+            let pets: [String]
+        }
+
+        let user = User(name: "Bob", age: 42, pets: ["Snuffles", "Doodles", "Noodles"])
+
+        let doc = try BSONEncoder().encode(user)
+        let json = try JSONEncoder().encode(doc)
+
+        let user2 = try JSONDecoder().decode(User.self, from: json)
+
+        XCTAssertEqual(user.name, user2.name)
+        XCTAssertEqual(user.age, user2.age)
+        XCTAssertEqual(user.pets, user2.pets)
+    }
     
     func testDictionaryEncodingDecodesCorrectly() throws {
         let dictionary = ["sample": 4.0, "other": 2.0]

@@ -25,5 +25,5 @@ APIs designed to parse/serialize as well as encode/decode BSON data.
   s.social_media_url = 'https://twitter.com/joannisorlandos'
 
   s.source_files     = 'Sources/BSON/**/*'
-  s.dependency 'SwiftNIO', '>= 1.9.0'
+  s.dependency 'SwiftNIO', '~> 1.9'
 end
