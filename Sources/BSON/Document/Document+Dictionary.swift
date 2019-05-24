@@ -89,7 +89,18 @@ extension Document: ExpressibleByDictionaryLiteral {
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             writeKey(.objectId)
-            storage.write(bytes: objectId.storage)
+            storage.write(integer: objectId.byte0)
+            storage.write(integer: objectId.byte1)
+            storage.write(integer: objectId.byte2)
+            storage.write(integer: objectId.byte3)
+            storage.write(integer: objectId.byte4)
+            storage.write(integer: objectId.byte5)
+            storage.write(integer: objectId.byte6)
+            storage.write(integer: objectId.byte7)
+            storage.write(integer: objectId.byte8)
+            storage.write(integer: objectId.byte9)
+            storage.write(integer: objectId.byte10)
+            storage.write(integer: objectId.byte11)
         case let bool as Bool: // 0x08
             writeKey(.boolean)
             let bool: UInt8 = bool ? 0x01 : 0x00

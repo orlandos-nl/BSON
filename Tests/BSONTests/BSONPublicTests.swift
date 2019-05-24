@@ -105,6 +105,36 @@ final class BSONPublicTests: XCTestCase {
         assertValid(doc)
         XCTAssertEqual(doc["a"]["foo"] as? String, "bar")
     }
+
+    func testperf() throws {
+        for _ in 0..<10_000 {
+            let id = ObjectId()
+            var doc = Document()
+            doc["_id"] = id
+            doc["hello"] = "world"
+            doc["num"] = 42
+            doc["subdoc"]["awesome"] = true
+
+            var doc2 = [
+                "_id": id,
+                "hello": "world",
+                "num": 42,
+                "subdoc": [
+                    "awesome": true
+                ] as Document
+            ] as Document
+
+            @inline(__always)
+            func equal<T: Equatable>(_ type: T.Type, key: String) {
+                XCTAssertEqual(doc[key] as? T, doc2[key] as? T)
+            }
+
+            equal(ObjectId.self, key: "_id")
+            equal(String.self, key: "hello")
+            equal(Int.self, key: "num")
+            equal(Document.self, key: "subdoc")
+        }
+    }
     
     func testDecoding() throws {
         struct HugeDocument: Codable {

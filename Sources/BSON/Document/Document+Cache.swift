@@ -91,11 +91,7 @@ extension Document {
                 isArray: type == .array
             )
         case .objectId:
-            guard let slice = storage.getBytes(at: offset, length: 12) else {
-                return nil
-            }
-            
-            return ObjectId(ContiguousArray(slice))
+            return storage.getObjectId(at: offset)
         case .boolean:
             return storage.getByte(at: offset) == 0x01
         case .datetime:

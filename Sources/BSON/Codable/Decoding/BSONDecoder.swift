@@ -222,7 +222,7 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
                 throw BSONValueNotFound(type: Double.self, path: path())
             }
             
-            return try decode(primitive: primitive, path: path)
+            return try decode(primitive: primitive, path: path())
         }
     }
     
@@ -241,7 +241,7 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
                 throw BSONValueNotFound(type: Double.self, path: path())
             }
             
-            return try decode(primitive: primitive, path: path)
+            return try decode(primitive: primitive, path: path())
         }
     }
 }
@@ -407,7 +407,7 @@ extension BSONDecoderSettings.StringDecodingStrategy {
         
         let decoder = _BSONDecoder(wrapped: .primitive( primitive), settings: decoder.settings, codingPath: decoder.codingPath + [key], userInfo: decoder.userInfo)
         
-        return try decode(from: decoder, path: path)
+        return try decode(from: decoder, path: path())
     }
         
     internal func decode(from decoder: _BSONDecoder, path: @autoclosure () -> [String]) throws -> String {

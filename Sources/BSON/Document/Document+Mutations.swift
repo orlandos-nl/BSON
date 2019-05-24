@@ -156,11 +156,7 @@ extension Document {
                 isArray: type == .array
             )
         case .objectId:
-            guard let slice = storage.getBytes(at: offset, length: 12) else {
-                return nil
-            }
-
-            return ObjectId(ContiguousArray(slice))
+            return storage.getObjectId(at: offset)
         case .boolean:
             return storage.getByte(at: offset) == 0x01
         case .datetime:
@@ -307,7 +303,18 @@ extension Document {
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             beforeWriting(.objectId, newLength: 12)
-            storage.set(bytes: objectId.storage, at: offset)
+            storage.set(integer: objectId.byte0, at: offset)
+            storage.set(integer: objectId.byte1, at: offset &+ 1)
+            storage.set(integer: objectId.byte2, at: offset &+ 2)
+            storage.set(integer: objectId.byte3, at: offset &+ 3)
+            storage.set(integer: objectId.byte4, at: offset &+ 4)
+            storage.set(integer: objectId.byte5, at: offset &+ 5)
+            storage.set(integer: objectId.byte6, at: offset &+ 6)
+            storage.set(integer: objectId.byte7, at: offset &+ 7)
+            storage.set(integer: objectId.byte8, at: offset &+ 8)
+            storage.set(integer: objectId.byte9, at: offset &+ 9)
+            storage.set(integer: objectId.byte10, at: offset &+ 10)
+            storage.set(integer: objectId.byte11, at: offset &+ 11)
         case let bool as Bool: // 0x08
             beforeWriting(.boolean, newLength: 1)
             let bool: UInt8 = bool ? 0x01 : 0x00

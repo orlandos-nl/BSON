@@ -30,7 +30,10 @@ public struct Document: Primitive {
     ///
     /// `isArray` dictates what kind of subdocument the `Document` is, and is `false` by default
     public init(isArray: Bool = false) {
-        self.init(data: Data(bytes: [5, 0, 0, 0, 0]))
+        var buffer = Document.allocator.buffer(capacity: 4_096)
+        buffer.write(integer: Int32(5))
+        buffer.write(integer: UInt8(0))
+        self.storage = buffer
         self.isArray = isArray
     }
     
