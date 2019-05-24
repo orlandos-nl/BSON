@@ -2,23 +2,83 @@ extension Document {
     /// Extracts any `Primitive` fom the value at key `key`
     public subscript(key: String) -> Primitive? {
         get {
-            return self.getCached(byKey: key)
+            var offset = 4
+
+            repeat {
+                guard
+                    let typeId = storage.getInteger(at: offset, as: UInt8.self),
+                    let type = TypeIdentifier(rawValue: typeId)
+                else {
+                    return nil
+                }
+
+                offset += 1
+
+                let matches = matchesKey(key, at: offset)
+                guard skipKey(at: &offset) else {
+                    return nil
+                }
+
+                if matches {
+                    return value(forType: type, at: offset)
+                }
+
+                guard skipValue(ofType: type, at: &offset) else {
+                    return nil
+                }
+            } while offset + 1 < storage.readableBytes
+
+            return nil
         }
         set {
-            // calling keys makes the document fully cached
-            if !keys.contains(key) {
-                self.isArray = false
-            }
-            
+            var offset = 4
+
+            findKey: repeat {
+                let baseOffset = offset
+
+                guard
+                    let typeId = storage.getInteger(at: offset, as: UInt8.self)
+                else {
+                    return
+                }
+
+                guard
+                    let type = TypeIdentifier(rawValue: typeId)
+                else {
+                    if typeId == 0x00 {
+                        break findKey
+                    }
+
+                    return
+                }
+
+                let pairOffset = offset
+                offset += 1
+
+                let matches = matchesKey(key, at: offset)
+
+                guard skipKey(at: &offset) else {
+                    return
+                }
+
+                if matches {
+                    if let newValue = newValue {
+                        overwriteValue(with: newValue, atPairOffset: pairOffset)
+                    } else if let valueLength = self.valueLength(forType: type, at: offset) {
+                        let end = offset + valueLength
+                        let length = end - baseOffset
+                        self.removeBytes(at: baseOffset, length: length)
+                    }
+                    return
+                }
+
+                guard skipValue(ofType: type, at: &offset) else {
+                    return
+                }
+            } while offset + 1 < storage.readableBytes
+
             if let newValue = newValue {
-                self.write(newValue, forKey: key)
-            } else {
-                guard let dimensions = cache.dimensions(forKey: key) else { return }
-                
-                prepareCacheForMutation()
-                
-                self.removeBytes(at: dimensions.from, length: dimensions.fullLength)
-                cache.handleRemovalOfItem(atPosition: dimensions.from)
+                appendValue(newValue, forKey: key)
             }
         }
     }

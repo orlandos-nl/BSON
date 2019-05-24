@@ -56,20 +56,21 @@ public final class BSONEncoder {
 fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     enum Target {
         case document(Document)
-        case primitive(get: () -> Primitive?, set: (Primitive?) -> Void)
+        case primitive(Primitive?)
         
         var document: Document {
             get {
                 switch self {
                 case .document(let doc): return doc
-                case .primitive(let get, _): return get() as? Document ?? Document()
+                case .primitive(let primitive): return primitive as? Document ?? Document()
                 }
             }
             set {
                 switch self {
                 case .document:
                     self = .document(newValue)
-                case .primitive(_, let set): set(newValue)
+                case .primitive(_):
+                    self = .primitive(newValue)
                 }
             }
         }
@@ -78,7 +79,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             get {
                 switch self {
                 case .document(let doc): return doc
-                case .primitive(let get, _): return get()
+                case .primitive(let primitive): return primitive
                 }
             }
             set {
@@ -89,7 +90,8 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
                         return
                     }
                     self = .document(newValue)
-                case .primitive(_, let set): set(newValue)
+                case .primitive(_):
+                    self = .primitive(newValue)
                 }
             }
         }
@@ -298,7 +300,6 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
 }
 
 fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
-    
     var count: Int {
         return encoder.target.document.count
     }
@@ -388,17 +389,18 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     
     func makeNestedEncoder() -> _BSONEncoder {
         let index = encoder.target.document.count
-        let key = BSONKey(stringValue: "\(index)", intValue: index)
-        encoder.target.document.append(Null())
+        let key = String(index)
+        let codingKey = BSONKey(stringValue: key, intValue: index)
+        encoder.target.document.appendValue(Null(), forKey: key)
         
         return _BSONEncoder(
             strategies: encoder.strategies,
-            codingPath: codingPath + [key],
+            codingPath: codingPath + [codingKey],
             userInfo: encoder.userInfo,
             target: .primitive(
-                get: { self.encoder[key] },
+                get: { self.encoder[codingKey] },
                 set: {
-                    self.encoder[key] = $0
+                    self.encoder[codingKey] = $0
                 }
             )
         )

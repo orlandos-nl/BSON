@@ -14,11 +14,13 @@ extension ByteBuffer {
     }
     
     /// Returns the first index at which `byte` appears, starting from the reader position
-    func firstRelativeIndexOf(byte: UInt8) -> Int? {
-        var buffer = self
-        while let candidate = buffer.readInteger(endianness: .little, as: UInt8.self) {
+    func firstRelativeIndexOf(byte: UInt8, startingAt: Int) -> Int? {
+        var i = 0
+        while let candidate = self.getInteger(at: startingAt + i, endianness: .little, as: UInt8.self) {
             if candidate == byte {
-                return buffer.readerIndex - self.readerIndex
+                return i
+            } else {
+                i += 1
             }
         }
         

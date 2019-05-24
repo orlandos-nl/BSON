@@ -25,12 +25,7 @@ public struct Document: Primitive {
     
     /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
     var isArray: Bool
-    
-    /// A cache of all elements in this BSON Document
-    ///
-    /// Allows high performance access with lazy parsing and low memory footprint
-    var cache: DocumentCache
-    
+
     /// Creates a new empty BSONDocument
     ///
     /// `isArray` dictates what kind of subdocument the `Document` is, and is `false` by default
@@ -39,24 +34,9 @@ public struct Document: Primitive {
         self.isArray = isArray
     }
     
-    /// Creates a new `Document` based on an existing `Storage`
-    ///
-    /// `isArray` dictates what kind of `Document`
-    ///
-    /// If `nullTerminated` is true the Document is exactly according to spec
-    /// If it's `false`, the final `nullTerminator` is ommitted from this Document allowing more efficient `appends`
-    ///
-    /// The `cache` provided can be empty if nothing is cached yet or can be used as a shortcut
-    internal init(storage: ByteBuffer, cache: DocumentCache, isArray: Bool) {
-        self.storage = storage
-        self.cache = cache
-        self.isArray = isArray
-    }
-    
     /// Creates a new `Document` by parsing an existing `ByteBuffer`
     public init(buffer: ByteBuffer, isArray: Bool = false) {
         self.storage = buffer
-        self.cache = DocumentCache()
         self.isArray = isArray
     }
     
@@ -64,8 +44,6 @@ public struct Document: Primitive {
     public init(data: Data, isArray: Bool = false) {
         self.storage = Document.allocator.buffer(capacity: data.count)
         self.storage.write(bytes: data)
-    
-        self.cache = DocumentCache()
         self.isArray = isArray
     }
     

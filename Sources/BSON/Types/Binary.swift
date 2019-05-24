@@ -56,7 +56,7 @@ public struct Binary: Primitive {
     /// - parameter buffer: The ByteBuffer to use as storage. The buffer will be sliced.
     public init(subType: SubType = .generic, buffer: ByteBuffer) {
         self.subType = subType
-        self.storage = buffer.slice()
+        self.storage = buffer
     }
     
     // TODO: Encode / decode the subtype

@@ -25,7 +25,6 @@ public struct DocumentIterator: IteratorProtocol {
     var index: DocumentIndex
     
     init(document: Document) {
-        document.ensureFullyCached()
         self.document = document
         self.count = document.count
         self.index = document.startIndex
@@ -41,15 +40,7 @@ public struct DocumentIterator: IteratorProtocol {
 extension Document {
     func pair(atIndex index: DocumentIndex) -> (String, Primitive)? {
         guard index.offset < count else { return nil }
-        
-        let dimensions = self.cache.cachedDimensions[index.offset]
-        
-        guard let primitive = self.readPrimitive(atDimensions: dimensions) else {
-            return nil
-        }
-        
-        let key = self.readKey(atDimensions: dimensions)
-        
-        return (key, primitive)
+
+        return (keys[index.offset], values[index.offset])
     }
 }

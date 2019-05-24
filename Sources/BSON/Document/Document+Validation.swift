@@ -25,58 +25,61 @@ fileprivate extension String {
 
 extension Document {
     /// Validates the given `buffer` as a Document
-    static func validate(buffer: inout ByteBuffer, asArray validateAsArray: Bool) -> ValidationResult {
+    static func validate(buffer: ByteBuffer, asArray validateAsArray: Bool) -> ValidationResult {
+        var currentIndex = 0
+
         func errorFound(reason: String, key: String? = nil) -> ValidationResult {
-            return ValidationResult(errorPosition: buffer.readerIndex, reason: reason, key: key)
+            return ValidationResult(errorPosition: currentIndex, reason: reason, key: key)
         }
         
         /// Moves the readerIndex by `amount` if at least that many bytes are present
         /// Returns `false` if the operation was unsuccessful
         func has(_ amount: Int) -> Bool {
-            guard buffer.readableBytes > amount else {
+            guard buffer.readableBytes > currentIndex + amount else {
                 return false
             }
-            
-            buffer.moveReaderIndex(forwardBy: amount)
-            
+
+            currentIndex += amount
             return true
         }
         
         func hasString() -> Bool {
-            guard let stringLengthWithNull = buffer.readInteger(endianness: .little, as: Int32.self) else {
+            guard let stringLengthWithNull = buffer.getInteger(at: currentIndex, endianness: .little, as: Int32.self) else {
                 return false
             }
             
             guard stringLengthWithNull >= 1 else {
                 return false
             }
+
+            currentIndex += 4
             
             // check if string content present
-            guard buffer.readString(length: Int(stringLengthWithNull) &- 1) != nil else {
+            guard buffer.getString(at: currentIndex, length: Int(stringLengthWithNull) &- 1) != nil else {
                 return false
             }
+
+            currentIndex += Int(stringLengthWithNull)
             
-            guard buffer.readInteger(endianness: .little, as: UInt8.self) == 0 else {
+            guard buffer.getInteger(at: currentIndex - 1, endianness: .little, as: UInt8.self) == 0 else {
                 return false
             }
-            
+
             return true
         }
         
         /// Moves the reader index past the CString and returns `true` if a CString (null terminated string) is present
         func hasCString() -> Bool {
-            guard let nullTerminatorIndex = buffer.firstRelativeIndexOf(byte: 0) else {
+            guard let length = buffer.firstRelativeIndexOf(byte: 0, startingAt: currentIndex) else {
                 return false
             }
-            
-            buffer.moveReaderIndex(forwardBy: nullTerminatorIndex)
-            
+
+            currentIndex += length
             return true
         }
         
         func validateDocument(array: Bool) -> ValidationResult {
-            let documentOffset = buffer.readerIndex
-            guard let documentLength = buffer.getInteger(at: documentOffset, endianness: .little, as: Int32.self) else {
+            guard let documentLength = buffer.getInteger(at: currentIndex, endianness: .little, as: Int32.self) else {
                 return errorFound(reason: .notEnoughBytesForDocumentHeader)
             }
             
@@ -84,15 +87,16 @@ extension Document {
                 return errorFound(reason: "Negative subdocument length")
             }
             
-            guard var subBuffer = buffer.readSlice(length: Int(documentLength)) else {
+            guard let subBuffer = buffer.getSlice(at: currentIndex, length: Int(documentLength)) else {
                 return errorFound(reason: .notEnoughBytesForValue)
             }
             
-            var recursiveValidation = Document.validate(buffer: &subBuffer, asArray: array)
+            var recursiveValidation = Document.validate(buffer: subBuffer, asArray: array)
+            currentIndex += Int(documentLength)
             
             guard recursiveValidation.isValid else {
                 if let errorPosition = recursiveValidation.errorPosition {
-                    recursiveValidation.errorPosition = errorPosition + documentOffset
+                    recursiveValidation.errorPosition = errorPosition + currentIndex
                 }
                 
                 return recursiveValidation
@@ -100,41 +104,42 @@ extension Document {
             
             return .valid()
         }
-        
+
         // Extract the document header
-        guard let numberOfBytesFromHeader = buffer.readInteger(endianness: .little, as: Int32.self) else {
+        guard let numberOfBytesFromHeader = buffer.getInteger(at: currentIndex, endianness: .little, as: Int32.self) else {
             return errorFound(reason: .notEnoughBytesForDocumentHeader)
         }
-        
+
+        currentIndex += 4
+
         // Validate that the number of bytes is correct
-        guard Int(numberOfBytesFromHeader) == buffer.readableBytes + 4 else { // +4 because the header is already parsed
+        guard Int(numberOfBytesFromHeader) == buffer.readableBytes else { // +4 because the header is already parsed
             return errorFound(reason: .notEnoughBytesForDocument)
         }
         
-        var currentIndex = 0
-        
         // Validate document contents
         while buffer.readableBytes > 1 {
-            defer { currentIndex += 1 }
-            
-            guard let typeId = buffer.readInteger(endianness: .little, as: UInt8.self) else {
+            guard let typeId = buffer.getInteger(at: currentIndex, endianness: .little, as: UInt8.self) else {
                 return errorFound(reason: .notEnoughBytesForValue)
             }
-            
+
             guard let typeIdentifier = TypeIdentifier(rawValue: typeId) else {
+                if typeId == 0x00, currentIndex + 1 == Int(numberOfBytesFromHeader) {
+                    return .valid()
+                }
+
                 return errorFound(reason: "The type identifier \(typeId) is not valid")
             }
-            
+
+            currentIndex += 1
+
             /// Check for key
-            guard let keyLengthWithNull = buffer.firstRelativeIndexOf(byte: 0) else {
+            guard let keyLengthWithoutNull = buffer.firstRelativeIndexOf(byte: 0, startingAt: currentIndex) else {
                 return errorFound(reason: "Could not parse the element key")
             }
             
-            let key = buffer.readString(length: keyLengthWithNull - 1)
-            // skip the null terminator
-            guard has(1) else {
-                return errorFound(reason: .notEnoughBytesForValue, key: key)
-            }
+            let key = buffer.getString(at: currentIndex, length: keyLengthWithoutNull)
+            currentIndex += keyLengthWithoutNull + 1
             
             if validateAsArray {
                 guard key == "\(currentIndex)" else {
@@ -158,7 +163,18 @@ extension Document {
                     return result
                 }
             case .binary:
-                guard let numberOfBytes = buffer.readInteger(endianness: .little, as: Int32.self), buffer.readInteger(endianness: .little, as: UInt8.self) != nil, has(Int(numberOfBytes)) else {
+                guard let numberOfBytes = buffer.getInteger(at: currentIndex, endianness: .little, as: Int32.self) else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
+                }
+
+                currentIndex += 4
+
+                // Binary type
+                guard buffer.getInteger(at: currentIndex, endianness: .little, as: UInt8.self) != nil else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
+                }
+
+                guard has(Int(numberOfBytes)) else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
             case .objectId:
@@ -166,9 +182,11 @@ extension Document {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
             case .boolean:
-                guard let value = buffer.readInteger(endianness: .little, as: UInt8.self) else {
+                guard let value = buffer.getInteger(at: currentIndex, endianness: .little, as: UInt8.self) else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
+
+                currentIndex += 1
                 
                 guard value == 0x00 || value == 0x01 else {
                     return errorFound(reason: .invalidBoolean, key: key)
@@ -189,10 +207,12 @@ extension Document {
                     return errorFound(reason: "Could not parse JavascriptCode string", key: key)
                 }
             case .javascriptWithScope:
-                guard buffer.readInteger(endianness: .little, as: Int32.self) != nil else {
+                guard buffer.getInteger(at: currentIndex, endianness: .little, as: Int32.self) != nil else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
-                
+
+                currentIndex += 4
+
                 guard hasString() else {
                     return errorFound(reason: "Could not parse JavascriptCode (with scope) string", key: key)
                 }
@@ -215,7 +235,7 @@ extension Document {
         }
         
         // Check the terminator
-        guard buffer.readInteger(endianness: .little, as: UInt8.self) == 0 else {
+        guard buffer.getInteger(at: currentIndex, endianness: .little, as: UInt8.self) == 0 else {
             return errorFound(reason: .incorrectDocumentTermination)
         }
         
@@ -226,7 +246,6 @@ extension Document {
     ///
     /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
     public func validate() -> ValidationResult {
-        var buffer = self.makeByteBuffer()
-        return Document.validate(buffer: &buffer, asArray: self.isArray)
+        return Document.validate(buffer: storage, asArray: self.isArray)
     }
 }
