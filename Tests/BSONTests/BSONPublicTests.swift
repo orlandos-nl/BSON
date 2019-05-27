@@ -195,11 +195,11 @@ final class BSONPublicTests: XCTestCase {
         XCTAssert(document.keys.contains("_id"))
         document["anykey"] = "anyvalue"
         assertValid(document)
-        XCTAssertNotNil(document["anykey"] as? String)
+        XCTAssertEqual(document["anykey"] as? String, "anyvalue")
         document["_id"] = "abcdefghijklmnop"
-        XCTAssertNotNil(document["anykey"] as? String)
+        XCTAssertEqual(document["_id"] as? String, "abcdefghijklmnop")
         document["_id"] = "efg"
-        XCTAssertNotNil(document["anykey"] as? String)
+        XCTAssertEqual(document["_id"] as? String, "efg")
         assertValid(document)
 
         var document2 = Document()

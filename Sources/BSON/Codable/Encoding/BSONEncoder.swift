@@ -1,8 +1,11 @@
 import Foundation
 
+private enum BSONEncoderError: Error {
+    case encodableNotDocument
+}
+
 /// An object that encodes instances of `Encodable` types as BSON Documents.
 public final class BSONEncoder {
-
     // MARK: Encoding
 
     /// Creates a new, reusable encoder with the given strategies
@@ -21,7 +24,11 @@ public final class BSONEncoder {
 
         try value.encode(to: encoder)
 
-        return encoder.target.document
+        guard encoder.target == .document else {
+            throw BSONEncoderError.encodableNotDocument
+        }
+
+        return encoder.document
     }
 
     /// Returns the BSON-encoded representation of the value you supply
@@ -30,17 +37,23 @@ public final class BSONEncoder {
     ///
     /// - The value fails to encode, or contains a nested value that fails to encode—this method throws the corresponding error.
     public func encodePrimitive(_ value: Encodable) throws -> Primitive? {
-        var target: Primitive?
-
         let encoder = _BSONEncoder(
             strategies: self.strategies,
-            userInfo: self.userInfo,
-            target: .primitive(get: { return target }, set: { target = $0 })
+            userInfo: self.userInfo
         )
 
         try value.encode(to: encoder)
 
-        return target
+        guard let target = encoder.target else {
+            return nil
+        }
+
+        switch target {
+        case .primitive:
+            return encoder.primitive
+        case .document:
+            return encoder.document
+        }
     }
 
     // MARK: Configuration
@@ -50,51 +63,26 @@ public final class BSONEncoder {
 
     /// Contextual user-provided information for use during encoding.
     public var userInfo: [CodingUserInfoKey: Any] = [:]
-
 }
 
 fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     enum Target {
-        case document(Document)
-        case primitive(get: () -> Primitive?, set: (Primitive?) -> Void)
+        case document
+        case primitive
+    }
 
-        var document: Document {
-            get {
-                switch self {
-                case .document(let doc): return doc
-                case .primitive(let get, _): return get() as? Document ?? Document()
-                }
-            }
-            set {
-                switch self {
-                case .document:
-                    self = .document(newValue)
-                case .primitive(_, let set): set(newValue)
-                }
-            }
-        }
-
-        var primitive: Primitive? {
-            get {
-                switch self {
-                case .document(let doc): return doc
-                case .primitive(let get, _): return get()
-                }
-            }
-            set {
-                switch self {
-                case .document:
-                    guard let newValue = newValue as? Document else {
-                        assertionFailure("This should not happen. Please file a bug.")
-                        return
-                    }
-                    self = .document(newValue)
-                case .primitive(_, let set): set(newValue)
-                }
-            }
+    var target: Target?
+    var document: Document! {
+        didSet {
+            writer?(document)
         }
     }
-    var target: Target
+
+    var primitive: Primitive! {
+        didSet {
+            writer?(primitive)
+        }
+    }
 
     // MARK: Configuration
 
@@ -102,18 +90,22 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
 
     var codingPath: [CodingKey]
 
+    var writer: ((Primitive) -> ())?
     var userInfo: [CodingUserInfoKey: Any]
 
     // MARK: Initialization
 
-    init(strategies: BSONEncoderStrategies, codingPath: [CodingKey] = [], userInfo: [CodingUserInfoKey: Any], target: Target = .document([:])) {
+    init(strategies: BSONEncoderStrategies, codingPath: [CodingKey] = [], userInfo: [CodingUserInfoKey: Any]) {
         self.strategies = strategies
         self.codingPath = codingPath
         self.userInfo = userInfo
-        self.target = target
+        self.target = nil
     }
 
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey {
+        self.target = .document
+        self.document = Document()
+
         let container = _BSONKeyedEncodingContainer<Key>(
             encoder: self,
             codingPath: codingPath
@@ -123,6 +115,9 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     func unkeyedContainer() -> UnkeyedEncodingContainer {
+        self.target = .document
+        self.document = Document()
+
         return _BSONUnkeyedEncodingContainer(
             encoder: self,
             codingPath: codingPath
@@ -130,6 +125,8 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     func singleValueContainer() -> SingleValueEncodingContainer {
+        self.target = .primitive
+
         return _BSONSingleValueEncodingContainer(
             encoder: self,
             codingPath: codingPath
@@ -138,15 +135,15 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
 
     // MARK: Encoding
     func encode(document: Document) throws {
-        self.target.document = document
+        self.document = document
     }
 
     subscript(key: CodingKey) -> Primitive? {
         get {
-            return self.target.document[converted(key.stringValue)]
+            return self.document[converted(key.stringValue)]
         }
         set {
-            self.target.document[converted(key.stringValue)] = newValue
+            self.document[converted(key.stringValue)] = newValue
         }
     }
 
@@ -177,22 +174,22 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     func nestedEncoder(forKey key: CodingKey) -> _BSONEncoder {
-        return _BSONEncoder(
+        let encoder = _BSONEncoder(
             strategies: strategies,
             codingPath: codingPath + [key],
-            userInfo: userInfo,
-            target: .primitive(
-                get: { self[key] },
-                set: { self[key] = $0 }
-            )
+            userInfo: userInfo
         )
+
+        encoder.writer = { primitive in
+            self[key] = primitive
+        }
+
+        return encoder
     }
 }
 
 fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingContainerProtocol {
-
     var encoder: _BSONEncoder
-
     var codingPath: [CodingKey]
 
     init(encoder: _BSONEncoder, codingPath: [CodingKey]) {
@@ -205,7 +202,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
     mutating func encodeNil(forKey key: Key) throws {
         switch encoder.strategies.keyedNilEncodingStrategy {
         case .null:
-            encoder.target.document[encoder.converted(key.stringValue)] = BSON.Null()
+            encoder.document[encoder.converted(key.stringValue)] = BSON.Null()
         case .omitted:
             return
         }
@@ -272,7 +269,6 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
         case let primitive as Primitive:
             encoder[key] = primitive
         default:
-            encoder.target.document[key.stringValue] = Document()
             let nestedEncoder = encoder.nestedEncoder(forKey: key)
             try value.encode(to: nestedEncoder)
         }
@@ -300,7 +296,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
 fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
 
     var count: Int {
-        return encoder.target.document.count
+        return encoder.document.count
     }
 
     var encoder: _BSONEncoder
@@ -311,75 +307,75 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
         self.encoder = encoder
         self.codingPath = codingPath
 
-        encoder.target.document = Document(isArray: true)
+        encoder.document = Document(isArray: true)
     }
 
     // MARK: UnkeyedEncodingContainerProtocol
 
     mutating func encodeNil() throws {
-        encoder.target.document.append(BSON.Null())
+        encoder.document.append(BSON.Null())
     }
 
     mutating func encode(_ value: Bool) throws {
-        encoder.target.document.append(value)
+        encoder.document.append(value)
     }
 
     mutating func encode(_ value: String) throws {
-        encoder.target.document.append(value)
+        encoder.document.append(value)
     }
 
     mutating func encode(_ value: Double) throws {
-        encoder.target.document.append(value)
+        encoder.document.append(value)
     }
 
     mutating func encode(_ value: Float) throws {
-        encoder.target.document.append(Double(value))
+        encoder.document.append(Double(value))
     }
 
     mutating func encode(_ value: Int) throws {
-        encoder.target.document.append(_BSON64BitInteger(value))
+        encoder.document.append(_BSON64BitInteger(value))
     }
 
     mutating func encode(_ value: Int8) throws {
-        encoder.target.document.append(Int32(value))
+        encoder.document.append(Int32(value))
     }
 
     mutating func encode(_ value: Int16) throws {
-        encoder.target.document.append(Int32(value))
+        encoder.document.append(Int32(value))
     }
 
     mutating func encode(_ value: Int32) throws {
-        encoder.target.document.append(value)
+        encoder.document.append(value)
     }
 
     mutating func encode(_ value: Int64) throws {
-        encoder.target.document.append(_BSON64BitInteger(value))
+        encoder.document.append(_BSON64BitInteger(value))
     }
 
     mutating func encode(_ value: UInt) throws {
-        encoder.target.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt8) throws {
-        encoder.target.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt16) throws {
-        encoder.target.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt32) throws {
-        encoder.target.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt64) throws {
-        encoder.target.document.append(try encoder.makePrimitive(value))
+        encoder.document.append(try encoder.makePrimitive(value))
     }
 
     mutating func encode<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let primitive as Primitive:
-            encoder.target.document.append(primitive)
+            encoder.document.append(primitive)
         default:
             let nestedEncoder = makeNestedEncoder()
             try value.encode(to: nestedEncoder)
@@ -387,21 +383,8 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
 
     func makeNestedEncoder() -> _BSONEncoder {
-        let index = encoder.target.document.count
-        let key = BSONKey(stringValue: "\(index)", intValue: index)
-        encoder.target.document.append(Null())
-
-        return _BSONEncoder(
-            strategies: encoder.strategies,
-            codingPath: codingPath + [key],
-            userInfo: encoder.userInfo,
-            target: .primitive(
-                get: { self.encoder[key] },
-                set: {
-                    self.encoder[key] = $0
-            }
-            )
-        )
+        let index = encoder.document.count
+        return encoder.nestedEncoder(forKey: BSONKey(stringValue: "\(index)", intValue: index))
     }
 
     mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
@@ -413,7 +396,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
 
     mutating func superEncoder() -> Encoder {
-        return makeNestedEncoder()
+        return encoder
     }
 }
 
@@ -426,106 +409,74 @@ fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContain
         self.codingPath = codingPath
     }
 
-    func encodingPrecheck(_ value: Any) throws {
-        switch encoder.target {
-        case .primitive: return
-        case .document:
-            throw EncodingError.invalidValue(
-                value,
-                EncodingError.Context(
-                    codingPath: codingPath,
-                    debugDescription: "Attempted to encode on the top level through a single value container"
-                )
-            )
-        }
-    }
-
     mutating func encodeNil() throws {
-        try encodingPrecheck(nil as Primitive? as Any)
-        encoder.target.primitive = nil
+        encoder.primitive = nil
     }
 
     mutating func encode(_ value: Bool) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = value
+        encoder.primitive = value
     }
 
     mutating func encode(_ value: String) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = value
+        encoder.primitive = value
     }
 
     mutating func encode(_ value: Double) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = value
+        encoder.primitive = value
     }
 
     mutating func encode(_ value: Float) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = Double(value)
+        encoder.primitive = Double(value)
     }
 
     mutating func encode(_ value: Int) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = _BSON64BitInteger(value)
+        encoder.primitive = _BSON64BitInteger(value)
     }
 
     mutating func encode(_ value: Int8) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = Int32(value)
+        encoder.primitive = Int32(value)
     }
 
     mutating func encode(_ value: Int16) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = Int32(value)
+        encoder.primitive = Int32(value)
     }
 
     mutating func encode(_ value: Int32) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = value
+        encoder.primitive = value
     }
 
     mutating func encode(_ value: Int64) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = _BSON64BitInteger(value)
+        encoder.primitive = _BSON64BitInteger(value)
     }
 
     mutating func encode(_ value: UInt) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+        encoder.primitive = try encoder.makePrimitive(UInt64(value))
     }
 
     mutating func encode(_ value: UInt8) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+        encoder.primitive = try encoder.makePrimitive(UInt64(value))
     }
 
     mutating func encode(_ value: UInt16) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+        encoder.primitive = try encoder.makePrimitive(UInt64(value))
     }
 
     mutating func encode(_ value: UInt32) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = try encoder.makePrimitive(UInt64(value))
+        encoder.primitive = try encoder.makePrimitive(UInt64(value))
     }
 
     mutating func encode(_ value: UInt64) throws {
-        try encodingPrecheck(value)
-        encoder.target.primitive = try encoder.makePrimitive(value)
+        encoder.primitive = try encoder.makePrimitive(value)
     }
 
     mutating func encode(primitive: Primitive) throws {
-        try encodingPrecheck(primitive)
-        encoder.target.primitive = primitive
+        encoder.primitive = primitive
     }
 
     mutating func encode<T>(_ value: T) throws where T: Encodable {
-        try encodingPrecheck(value)
-
         switch value {
         case let primitive as Primitive:
-            encoder.target.primitive = primitive
+            encoder.primitive = primitive
         default:
             try value.encode(to: encoder)
         }

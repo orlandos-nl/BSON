@@ -12,17 +12,17 @@ extension ByteBuffer {
     func getObjectId(at offset: Int) -> ObjectId? {
         guard
             let byte0 = getByte(at: offset),
-            let byte1 = getByte(at: offset),
-            let byte2 = getByte(at: offset),
-            let byte3 = getByte(at: offset),
-            let byte4 = getByte(at: offset),
-            let byte5 = getByte(at: offset),
-            let byte6 = getByte(at: offset),
-            let byte7 = getByte(at: offset),
-            let byte8 = getByte(at: offset),
-            let byte9 = getByte(at: offset),
-            let byte10 = getByte(at: offset),
-            let byte11 = getByte(at: offset)
+            let byte1 = getByte(at: offset + 1),
+            let byte2 = getByte(at: offset + 2),
+            let byte3 = getByte(at: offset + 3),
+            let byte4 = getByte(at: offset + 4),
+            let byte5 = getByte(at: offset + 5),
+            let byte6 = getByte(at: offset + 6),
+            let byte7 = getByte(at: offset + 7),
+            let byte8 = getByte(at: offset + 8),
+            let byte9 = getByte(at: offset + 9),
+            let byte10 = getByte(at: offset + 10),
+            let byte11 = getByte(at: offset + 11)
         else {
             return nil
         }

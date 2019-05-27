@@ -155,7 +155,7 @@ extension Document: ExpressibleByDictionaryLiteral {
             let primitiveLength = 4 + codeLengthWithHeader + codeBuffer.writerIndex // int32(code_w_s size), code, scope doc
 
             storage.write(integer: Int32(primitiveLength), endianness: .little) // header
-            storage.write(integer: codeLength) // string (code)
+            storage.write(integer: codeLength, endianness: .little) // string (code)
             storage.write(string: javascript.code)
             storage.write(buffer: &codeBuffer)
         case let bsonData as BSONDataType:

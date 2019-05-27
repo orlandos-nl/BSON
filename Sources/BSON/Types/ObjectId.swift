@@ -40,18 +40,18 @@ public final class ObjectIdGenerator {
         // then 5 bytes of random value
         // yes, the code below writes 4 bytes, but the last one will be overwritten by the process id
         let randomBytes = UInt32.random(in: UInt32.min...UInt32.max)
-        byte4 = UInt8(truncatingIfNeeded: randomBytes << 24)
-        byte5 = UInt8(truncatingIfNeeded: randomBytes << 16)
-        byte6 = UInt8(truncatingIfNeeded: randomBytes << 8)
+        byte4 = UInt8(truncatingIfNeeded: randomBytes >> 24)
+        byte5 = UInt8(truncatingIfNeeded: randomBytes >> 16)
+        byte6 = UInt8(truncatingIfNeeded: randomBytes >> 8)
         byte7 = UInt8(truncatingIfNeeded: randomBytes)
 
         // last 3 bytes: random counter
         // this will also write 4 bytes, at index 8, while the counter actually starts at index 9
         // the process id will overwrite the first byte
         let randomByteAndInitialCounter = UInt32.random(in: UInt32.min...UInt32.max)
-        byte8 = UInt8(truncatingIfNeeded: randomByteAndInitialCounter << 24)
-        byte9 = UInt8(truncatingIfNeeded: randomByteAndInitialCounter << 16)
-        byte10 = UInt8(truncatingIfNeeded: randomByteAndInitialCounter << 8)
+        byte8 = UInt8(truncatingIfNeeded: randomByteAndInitialCounter >> 24)
+        byte9 = UInt8(truncatingIfNeeded: randomByteAndInitialCounter >> 16)
+        byte10 = UInt8(truncatingIfNeeded: randomByteAndInitialCounter >> 8)
         byte11 = UInt8(truncatingIfNeeded: randomByteAndInitialCounter)
     }
     
@@ -75,9 +75,9 @@ public final class ObjectIdGenerator {
 
         let timestamp = Int32(time(nil)).bigEndian
 
-        let byte0 = UInt8(truncatingIfNeeded: timestamp << 24)
-        let byte1 = UInt8(truncatingIfNeeded: timestamp << 16)
-        let byte2 = UInt8(truncatingIfNeeded: timestamp << 8)
+        let byte0 = UInt8(truncatingIfNeeded: timestamp >> 24)
+        let byte1 = UInt8(truncatingIfNeeded: timestamp >> 16)
+        let byte2 = UInt8(truncatingIfNeeded: timestamp >> 8)
         let byte3 = UInt8(truncatingIfNeeded: timestamp)
 
         return ObjectId(byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7, byte8, byte9, byte10, byte11)

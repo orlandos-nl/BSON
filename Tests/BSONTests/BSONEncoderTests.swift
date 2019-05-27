@@ -20,7 +20,7 @@ class BSONEncoderTests: XCTestCase {
     }
 
     func testEncodeDocument() throws {
-        for _ in 0..<1000 {
+//        for _ in 0..<1000 {
             struct User: Codable {
                 let name: String
                 let age: Int
@@ -36,7 +36,7 @@ class BSONEncoderTests: XCTestCase {
             XCTAssertEqual(user.name, user2.name)
             XCTAssertEqual(user.age, user2.age)
             XCTAssertEqual(user.pets, user2.pets)
-        }
+//        }
     }
     
     func testDictionaryEncodingDecodesCorrectly() throws {

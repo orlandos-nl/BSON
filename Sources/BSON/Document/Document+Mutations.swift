@@ -261,9 +261,13 @@ extension Document {
         guard let length = valueLength(forType: oldType, at: offset) else {
             return
         }
+        
+        defer {
+            usedCapacity = Int32(self.storage.readableBytes)
+        }
 
         func beforeWriting(_ type: TypeIdentifier, newLength: Int) {
-            storage.set(integer: type.rawValue, at: typeOffset)
+            storage.set(integer: type.rawValue, at: typeOffset, endianness: .little)
             let diff = length - newLength
 
             if diff < 0 {
@@ -292,9 +296,9 @@ extension Document {
             storage.set(integer: Int32(stringLength + 1), at: offset, endianness: .little)
             storage.set(string: string, at: offset + 4)
             storage.set(integer: 0, at: offset + 4 + stringLength, endianness: .little, as: UInt8.self)
-        case var document as Document: // 0x03 (embedded document) or 0x04 (array)
+        case let document as Document: // 0x03 (embedded document) or 0x04 (array)
             beforeWriting(document.isArray ? .array : .document, newLength: document.storage.readableBytes)
-            storage.write(buffer: &document.storage)
+            storage.set(buffer: document.storage, at: offset)
         case let binary as Binary: // 0x05
             beforeWriting(.binary, newLength: 5 + binary.count)
             storage.set(integer: Int32(binary.count), at: offset, endianness: .little)
