@@ -141,12 +141,12 @@ extension Document {
             let key = buffer.getString(at: currentIndex, length: keyLengthWithoutNull)
             currentIndex += keyLengthWithoutNull + 1
             
-            if validateAsArray {
-                guard key == "\(currentIndex)" else {
-                    return errorFound(reason: "The document should be an array, but the element key does not have the expected value of \(currentIndex)", key: key)
-                }
-            }
-            
+//            if validateAsArray {
+//                guard key == "\(currentIndex)" else {
+//                    return errorFound(reason: "The document should be an array, but the element key does not have the expected value of \(currentIndex)", key: key)
+//                }
+//            }
+
             switch typeIdentifier {
             case .double:
                 guard has(8) else {

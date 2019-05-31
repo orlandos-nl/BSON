@@ -344,17 +344,17 @@ extension Document {
         // 0x0E is deprecated (Symbol)
         case let int as Int32: // 0x10
             beforeWriting(.int32, newLength: 4)
-            storage.write(integer: int, endianness: .little)
+            storage.set(integer: int, at: offset, endianness: .little)
         case let stamp as Timestamp:
             beforeWriting(.timestamp, newLength: 8)
-            storage.write(integer: stamp.increment, endianness: .little)
-            storage.write(integer: stamp.timestamp, endianness: .little)
+            storage.set(integer: stamp.increment, at: offset, endianness: .little)
+            storage.set(integer: stamp.timestamp, at: offset + 4, endianness: .little)
         case let int as Int: // 0x12
             beforeWriting(.int64, newLength: 8)
-            storage.write(integer: int, endianness: .little)
+            storage.set(integer: int, at: offset, endianness: .little)
         case let decimal128 as Decimal128:
             beforeWriting(.decimal128, newLength: decimal128.storage.count)
-            storage.write(bytes: decimal128.storage)
+            storage.set(bytes: decimal128.storage, at: offset)
         case is MaxKey: // 0x7F
             beforeWriting(.maxKey, newLength: 0)
         case is MinKey: // 0xFF
@@ -362,20 +362,20 @@ extension Document {
         case let javascript as JavaScriptCode:
             let codeLengthWithNull = javascript.code.utf8.count + 1
             beforeWriting(.javascript, newLength: 4 + codeLengthWithNull)
-            storage.write(integer: Int32(codeLengthWithNull), endianness: .little)
-            storage.write(string: javascript.code)
-            storage.write(integer: 0, endianness: .little, as: UInt8.self)
+            storage.set(integer: Int32(codeLengthWithNull), at: offset, endianness: .little)
+            storage.set(string: javascript.code, at: offset + 4)
+            storage.set(integer: 0, at: offset + 4 + javascript.code.utf8.count, endianness: .little, as: UInt8.self)
         case let javascript as JavaScriptCodeWithScope:
-            var codeBuffer = javascript.scope.makeByteBuffer()
+            let codeBuffer = javascript.scope.makeByteBuffer()
             let codeLength = javascript.code.utf8.count + 1 // code, null terminator
             let codeLengthWithHeader = 4 + codeLength
             let primitiveLength = 4 + codeLengthWithHeader + codeBuffer.writerIndex // int32(code_w_s size), code, scope doc
             beforeWriting(.javascriptWithScope, newLength: primitiveLength)
 
-            storage.write(integer: Int32(primitiveLength), endianness: .little) // header
-            storage.write(integer: codeLength) // string (code)
-            storage.write(string: javascript.code)
-            storage.write(buffer: &codeBuffer)
+            storage.set(integer: Int32(primitiveLength), at: offset, endianness: .little) // header
+            storage.set(integer: Int32(codeLength), at: offset + 4) // string (code)
+            storage.set(string: javascript.code, at: offset + 8)
+            storage.set(buffer: codeBuffer, at: offset + 8 + codeLengthWithHeader)
         case let bsonData as BSONDataType:
             self.overwriteValue(with: bsonData.primitive, atPairOffset: pairOffset)
             return

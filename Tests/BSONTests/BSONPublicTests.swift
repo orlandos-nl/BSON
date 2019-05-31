@@ -6,6 +6,7 @@
 //  Copyright © 2016 Robbert Brandsma. All rights reserved.
 //
 
+import NIO
 import Foundation
 import XCTest
 @testable import BSON
@@ -29,6 +30,13 @@ func assertInvalid(_ document: Document, file: StaticString = #file, line: UInt 
         return
     }
 }
+
+var binaryData: ByteBuffer = {
+    let alloc = ByteBufferAllocator()
+    var buffer = alloc.buffer(capacity: 5)
+    buffer.write(bytes: [34,34,34,34,34])
+    return buffer
+}()
 
 final class BSONPublicTests: XCTestCase {
     
@@ -64,29 +72,31 @@ final class BSONPublicTests: XCTestCase {
 //            ("testUsingDictionaryAsPrimitive", testUsingDictionaryAsPrimitive)
         ]
     }
-//
-    let kittenDocument: Document = [
-        "doubleTest": 0.04,
-        "stringTest": "foo",
-        "documentTest": [
-            "documentSubDoubleTest": 13.37,
-            "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
-        ] as Document,
-        "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
-        "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
-        "cool32bitNumber": Int32(9001),
-        "cool64bitNumber": 21312153,
-        "code": JavaScriptCode("console.log(\"Hello there\");"),
-        "codeWithScope": JavaScriptCodeWithScope("console.log(\"Hello there\");", scope: ["hey": "hello"]),
-        "nothing": Null(),
-//        "data": Binary(data: [34,34,34,34,34], withSubtype: .generic),
-        "boolFalse": false,
-        "boolTrue": true,
-        "timestamp": Timestamp(increment: 2000, timestamp: 8),
-        "regex": RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: ""),
-        "minKey": MinKey(),
-        "maxKey": MaxKey()
-    ]
+
+    let kittenDocument: Document = {
+        return [
+            "doubleTest": 0.04,
+            "stringTest": "foo",
+            "documentTest": [
+                "documentSubDoubleTest": 13.37,
+                "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
+            ] as Document,
+            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
+            "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
+            "cool32bitNumber": Int32(9001),
+            "cool64bitNumber": 21312153,
+            "code": JavaScriptCode("console.log(\"Hello there\");"),
+            "codeWithScope": JavaScriptCodeWithScope("console.log(\"Hello there\");", scope: ["hey": "hello"]),
+            "nothing": Null(),
+            "data": Binary(subType: .generic, buffer: binaryData),
+            "boolFalse": false,
+            "boolTrue": true,
+            "timestamp": Timestamp(increment: 2000, timestamp: 8),
+            "regex": RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: ""),
+            "minKey": MinKey(),
+            "maxKey": MaxKey()
+        ] as Document
+    }()
 
     func testBasicUsage() {
         var doc = Document()
@@ -259,21 +269,21 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(kittenDocument["nonRandomObjectId"] as? ObjectId, try! ObjectId("0123456789ABCDEF01234567"))
     }
 
-//    func testDocumentCollectionFunctionality() {
-//        var document = kittenDocument
-//
-//        XCTAssert(document.validate().isValid)
-//        XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, "foo")
-//        XCTAssert(document.validate().isValid)
-//        XCTAssertEqual(String(lossy: document["stringTest"]), nil)
-//        XCTAssertEqual(String(lossy: document.removeValue(forKey: "stringTest")), nil)
-//       XCTAssert(document.validate().isValid)
-//
-//        XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
-//       XCTAssert(document.validate().isValid)
-//
-//        XCTAssertEqual(document.dictionaryRepresentation.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
-//    }
+    func testDocumentCollectionFunctionality() {
+        var document = kittenDocument
+
+        assertValid(document)
+        XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, "foo")
+        assertValid(document)
+        XCTAssertEqual(document["stringTest"] as? String, nil)
+        XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, nil)
+        assertValid(document)
+
+        XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
+        assertValid(document)
+
+        XCTAssertEqual(document.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
+    }
 
     func testObjectIdUniqueness() {
         var oids = [String]()

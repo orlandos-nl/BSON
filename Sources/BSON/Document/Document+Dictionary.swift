@@ -53,6 +53,15 @@ extension Document: ExpressibleByDictionaryLiteral {
         })
     }
 
+    mutating func removeValue(forKey key: String) -> Primitive? {
+        if let value = self[key] {
+            self[key] = nil
+            return value
+        }
+
+        return nil
+    }
+
     mutating func appendValue(_ value: Primitive, forKey key: String) {
         defer {
             usedCapacity = Int32(self.storage.readableBytes)
@@ -149,15 +158,15 @@ extension Document: ExpressibleByDictionaryLiteral {
             storage.write(integer: 0, endianness: .little, as: UInt8.self)
         case let javascript as JavaScriptCodeWithScope:
             writeKey(.javascriptWithScope)
-            var codeBuffer = javascript.scope.makeByteBuffer()
+            var scopeBuffer = javascript.scope.makeByteBuffer()
             let codeLength = javascript.code.utf8.count + 1 // code, null terminator
             let codeLengthWithHeader = 4 + codeLength
-            let primitiveLength = 4 + codeLengthWithHeader + codeBuffer.writerIndex // int32(code_w_s size), code, scope doc
+            let primitiveLength = 4 + codeLengthWithHeader + scopeBuffer.readableBytes // int32(code_w_s size), code, scope doc
 
             storage.write(integer: Int32(primitiveLength), endianness: .little) // header
-            storage.write(integer: codeLength, endianness: .little) // string (code)
+            storage.write(integer: Int32(codeLength), endianness: .little) // string (code)
             storage.write(string: javascript.code)
-            storage.write(buffer: &codeBuffer)
+            storage.write(buffer: &scopeBuffer)
         case let bsonData as BSONDataType:
             self.appendValue(bsonData.primitive, forKey: key)
             return
