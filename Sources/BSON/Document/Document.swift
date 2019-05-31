@@ -19,7 +19,7 @@ public struct Document: Primitive {
         }
         set {
             Swift.assert(usedCapacity >= 5)
-            storage.set(integer: newValue, at: 0, endianness: .little)
+            storage.setInteger(newValue, at: 0, endianness: .little)
         }
     }
     
@@ -31,8 +31,8 @@ public struct Document: Primitive {
     /// `isArray` dictates what kind of subdocument the `Document` is, and is `false` by default
     public init(isArray: Bool = false) {
         var buffer = Document.allocator.buffer(capacity: 4_096)
-        buffer.write(integer: Int32(5), endianness: .little)
-        buffer.write(integer: UInt8(0), endianness: .little)
+        buffer.writeInteger(Int32(5), endianness: .little)
+        buffer.writeInteger(UInt8(0), endianness: .little)
         self.storage = buffer
         self.isArray = isArray
     }
@@ -46,7 +46,7 @@ public struct Document: Primitive {
     /// Creates a new `Document` by parsing the existing `Data` buffer
     public init(data: Data, isArray: Bool = false) {
         self.storage = Document.allocator.buffer(capacity: data.count)
-        self.storage.write(bytes: data)
+        self.storage.writeBytes(data)
         self.isArray = isArray
     }
     

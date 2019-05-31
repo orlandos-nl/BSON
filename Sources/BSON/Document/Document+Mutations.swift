@@ -267,7 +267,7 @@ extension Document {
         }
 
         func beforeWriting(_ type: TypeIdentifier, newLength: Int) {
-            storage.set(integer: type.rawValue, at: typeOffset, endianness: .little)
+            storage.setInteger(type.rawValue, at: typeOffset, endianness: .little)
             let diff = length - newLength
 
             if diff < 0 {
@@ -277,7 +277,7 @@ extension Document {
                 }
 
                 storage.moveWriterIndex(to: offset + newLength)
-                storage.write(bytes: bytes)
+                storage.writeBytes(bytes)
             } else if diff == 0 {
                 return
             } else if diff > 0 {
@@ -289,44 +289,44 @@ extension Document {
         switch value {
         case let double as Double: // 0x01
             beforeWriting(.double, newLength: 8)
-            storage.set(integer: double.bitPattern, at: offset, endianness: .little)
+            storage.setInteger(double.bitPattern, at: offset, endianness: .little)
         case let string as String: // 0x02
             let stringLength = string.utf8.count
             beforeWriting(.string, newLength: 4 + stringLength + 1)
-            storage.set(integer: Int32(stringLength + 1), at: offset, endianness: .little)
-            storage.set(string: string, at: offset + 4)
-            storage.set(integer: 0, at: offset + 4 + stringLength, endianness: .little, as: UInt8.self)
+            storage.setInteger(Int32(stringLength + 1), at: offset, endianness: .little)
+            storage.setString(string, at: offset + 4)
+            storage.setInteger(0, at: offset + 4 + stringLength, endianness: .little, as: UInt8.self)
         case let document as Document: // 0x03 (embedded document) or 0x04 (array)
             beforeWriting(document.isArray ? .array : .document, newLength: document.storage.readableBytes)
             storage.set(buffer: document.storage, at: offset)
         case let binary as Binary: // 0x05
             beforeWriting(.binary, newLength: 5 + binary.count)
-            storage.set(integer: Int32(binary.count), at: offset, endianness: .little)
-            storage.set(integer: binary.subType.identifier, at: offset + 4, endianness: .little)
+            storage.setInteger(Int32(binary.count), at: offset, endianness: .little)
+            storage.setInteger(binary.subType.identifier, at: offset + 4, endianness: .little)
             storage.set(buffer: binary.storage, at: offset + 5)
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             beforeWriting(.objectId, newLength: 12)
-            storage.set(integer: objectId.byte0, at: offset)
-            storage.set(integer: objectId.byte1, at: offset &+ 1)
-            storage.set(integer: objectId.byte2, at: offset &+ 2)
-            storage.set(integer: objectId.byte3, at: offset &+ 3)
-            storage.set(integer: objectId.byte4, at: offset &+ 4)
-            storage.set(integer: objectId.byte5, at: offset &+ 5)
-            storage.set(integer: objectId.byte6, at: offset &+ 6)
-            storage.set(integer: objectId.byte7, at: offset &+ 7)
-            storage.set(integer: objectId.byte8, at: offset &+ 8)
-            storage.set(integer: objectId.byte9, at: offset &+ 9)
-            storage.set(integer: objectId.byte10, at: offset &+ 10)
-            storage.set(integer: objectId.byte11, at: offset &+ 11)
+            storage.setInteger(objectId.byte0, at: offset)
+            storage.setInteger(objectId.byte1, at: offset &+ 1)
+            storage.setInteger(objectId.byte2, at: offset &+ 2)
+            storage.setInteger(objectId.byte3, at: offset &+ 3)
+            storage.setInteger(objectId.byte4, at: offset &+ 4)
+            storage.setInteger(objectId.byte5, at: offset &+ 5)
+            storage.setInteger(objectId.byte6, at: offset &+ 6)
+            storage.setInteger(objectId.byte7, at: offset &+ 7)
+            storage.setInteger(objectId.byte8, at: offset &+ 8)
+            storage.setInteger(objectId.byte9, at: offset &+ 9)
+            storage.setInteger(objectId.byte10, at: offset &+ 10)
+            storage.setInteger(objectId.byte11, at: offset &+ 11)
         case let bool as Bool: // 0x08
             beforeWriting(.boolean, newLength: 1)
             let bool: UInt8 = bool ? 0x01 : 0x00
-            storage.set(integer: bool, at: offset, endianness: .little)
+            storage.setInteger(bool, at: offset, endianness: .little)
         case let date as Date: // 0x09
             beforeWriting(.datetime, newLength: 8)
             let milliseconds = Int(date.timeIntervalSince1970 * 1000)
-            storage.set(integer: milliseconds, at: offset, endianness: .little)
+            storage.setInteger(milliseconds, at: offset, endianness: .little)
         case is Null: // 0x0A
             beforeWriting(.null, newLength: 0)
         case let regex as RegularExpression: // 0x0B
@@ -335,26 +335,26 @@ extension Document {
 
             beforeWriting(.regex, newLength: regex.pattern.utf8.count + regex.options.utf8.count + 2)
             // string counts + null terminators
-            storage.write(string: regex.pattern)
-            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
+            storage.writeString(regex.pattern)
+            storage.writeInteger(0x00, endianness: .little, as: UInt8.self)
 
-            storage.write(string: regex.options)
-            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
+            storage.writeString(regex.options)
+            storage.writeInteger(0x00, endianness: .little, as: UInt8.self)
             // 0x0C is deprecated (DBPointer)
         // 0x0E is deprecated (Symbol)
         case let int as Int32: // 0x10
             beforeWriting(.int32, newLength: 4)
-            storage.set(integer: int, at: offset, endianness: .little)
+            storage.setInteger(int, at: offset, endianness: .little)
         case let stamp as Timestamp:
             beforeWriting(.timestamp, newLength: 8)
-            storage.set(integer: stamp.increment, at: offset, endianness: .little)
-            storage.set(integer: stamp.timestamp, at: offset + 4, endianness: .little)
+            storage.setInteger(stamp.increment, at: offset, endianness: .little)
+            storage.setInteger(stamp.timestamp, at: offset + 4, endianness: .little)
         case let int as Int: // 0x12
             beforeWriting(.int64, newLength: 8)
-            storage.set(integer: int, at: offset, endianness: .little)
+            storage.setInteger(int, at: offset, endianness: .little)
         case let decimal128 as Decimal128:
             beforeWriting(.decimal128, newLength: decimal128.storage.count)
-            storage.set(bytes: decimal128.storage, at: offset)
+            storage.setBytes(decimal128.storage, at: offset)
         case is MaxKey: // 0x7F
             beforeWriting(.maxKey, newLength: 0)
         case is MinKey: // 0xFF
@@ -362,9 +362,9 @@ extension Document {
         case let javascript as JavaScriptCode:
             let codeLengthWithNull = javascript.code.utf8.count + 1
             beforeWriting(.javascript, newLength: 4 + codeLengthWithNull)
-            storage.set(integer: Int32(codeLengthWithNull), at: offset, endianness: .little)
-            storage.set(string: javascript.code, at: offset + 4)
-            storage.set(integer: 0, at: offset + 4 + javascript.code.utf8.count, endianness: .little, as: UInt8.self)
+            storage.setInteger(Int32(codeLengthWithNull), at: offset, endianness: .little)
+            storage.setString(javascript.code, at: offset + 4)
+            storage.setInteger(0, at: offset + 4 + javascript.code.utf8.count, endianness: .little, as: UInt8.self)
         case let javascript as JavaScriptCodeWithScope:
             let codeBuffer = javascript.scope.makeByteBuffer()
             let codeLength = javascript.code.utf8.count + 1 // code, null terminator
@@ -372,9 +372,9 @@ extension Document {
             let primitiveLength = 4 + codeLengthWithHeader + codeBuffer.writerIndex // int32(code_w_s size), code, scope doc
             beforeWriting(.javascriptWithScope, newLength: primitiveLength)
 
-            storage.set(integer: Int32(primitiveLength), at: offset, endianness: .little) // header
-            storage.set(integer: Int32(codeLength), at: offset + 4) // string (code)
-            storage.set(string: javascript.code, at: offset + 8)
+            storage.setInteger(Int32(primitiveLength), at: offset, endianness: .little) // header
+            storage.setInteger(Int32(codeLength), at: offset + 4) // string (code)
+            storage.setString(javascript.code, at: offset + 8)
             storage.set(buffer: codeBuffer, at: offset + 8 + codeLengthWithHeader)
         case let bsonData as BSONDataType:
             self.overwriteValue(with: bsonData.primitive, atPairOffset: pairOffset)

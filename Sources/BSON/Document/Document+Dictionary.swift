@@ -69,55 +69,55 @@ extension Document: ExpressibleByDictionaryLiteral {
 
         func writeKey(_ type: TypeIdentifier) {
             storage.moveWriterIndex(to: storage.writerIndex - 1)
-            storage.write(integer: type.rawValue)
-            storage.write(string: key)
-            storage.write(integer: 0x00 as UInt8)
+            storage.writeInteger(type.rawValue)
+            storage.writeString(key)
+            storage.writeInteger(0x00 as UInt8)
         }
 
         switch value {
         case let double as Double: // 0x01
             writeKey(.double)
-            storage.write(integer: double.bitPattern, endianness: .little)
+            storage.writeInteger(double.bitPattern, endianness: .little)
         case let string as String: // 0x02
             writeKey(.string)
             let lengthIndex = storage.writerIndex
-            storage.write(integer: Int32(0), endianness: .little)
-            storage.write(string: string)
-            storage.write(integer: 0, endianness: .little, as: UInt8.self)
+            storage.writeInteger(Int32(0), endianness: .little)
+            storage.writeString(string)
+            storage.writeInteger(0, endianness: .little, as: UInt8.self)
             let length = storage.writerIndex - 4 - lengthIndex
-            storage.set(integer: Int32(length), at: lengthIndex, endianness: .little)
+            storage.setInteger(Int32(length), at: lengthIndex, endianness: .little)
         case var document as Document: // 0x03 (embedded document) or 0x04 (array)
             writeKey(document.isArray ? .array : .document)
-            storage.write(buffer: &document.storage)
+            storage.writeBuffer(&document.storage)
         case let binary as Binary: // 0x05
             writeKey(.binary)
-            storage.write(integer: Int32(binary.count), endianness: .little)
-            storage.write(integer: binary.subType.identifier, endianness: .little)
+            storage.writeInteger(Int32(binary.count), endianness: .little)
+            storage.writeInteger(binary.subType.identifier, endianness: .little)
             var buffer = binary.storage
-            storage.write(buffer: &buffer)
+            storage.writeBuffer(&buffer)
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             writeKey(.objectId)
-            storage.write(integer: objectId.byte0)
-            storage.write(integer: objectId.byte1)
-            storage.write(integer: objectId.byte2)
-            storage.write(integer: objectId.byte3)
-            storage.write(integer: objectId.byte4)
-            storage.write(integer: objectId.byte5)
-            storage.write(integer: objectId.byte6)
-            storage.write(integer: objectId.byte7)
-            storage.write(integer: objectId.byte8)
-            storage.write(integer: objectId.byte9)
-            storage.write(integer: objectId.byte10)
-            storage.write(integer: objectId.byte11)
+            storage.writeInteger(objectId.byte0)
+            storage.writeInteger(objectId.byte1)
+            storage.writeInteger(objectId.byte2)
+            storage.writeInteger(objectId.byte3)
+            storage.writeInteger(objectId.byte4)
+            storage.writeInteger(objectId.byte5)
+            storage.writeInteger(objectId.byte6)
+            storage.writeInteger(objectId.byte7)
+            storage.writeInteger(objectId.byte8)
+            storage.writeInteger(objectId.byte9)
+            storage.writeInteger(objectId.byte10)
+            storage.writeInteger(objectId.byte11)
         case let bool as Bool: // 0x08
             writeKey(.boolean)
             let bool: UInt8 = bool ? 0x01 : 0x00
-            storage.write(integer: bool, endianness: .little)
+            storage.writeInteger(bool, endianness: .little)
         case let date as Date: // 0x09
             writeKey(.datetime)
             let milliseconds = Int(date.timeIntervalSince1970 * 1000)
-            storage.write(integer: milliseconds, endianness: .little)
+            storage.writeInteger(milliseconds, endianness: .little)
         case is Null: // 0x0A
             writeKey(.null)
         case let regex as RegularExpression: // 0x0B
@@ -126,26 +126,26 @@ extension Document: ExpressibleByDictionaryLiteral {
             Swift.assert(!regex.options.contains("\0"))
 
             // string counts + null terminators
-            storage.write(string: regex.pattern)
-            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
+            storage.writeString(regex.pattern)
+            storage.writeInteger(0x00, endianness: .little, as: UInt8.self)
 
-            storage.write(string: regex.options)
-            storage.write(integer: 0x00, endianness: .little, as: UInt8.self)
+            storage.writeString(regex.options)
+            storage.writeInteger(0x00, endianness: .little, as: UInt8.self)
             // 0x0C is deprecated (DBPointer)
         // 0x0E is deprecated (Symbol)
         case let int as Int32: // 0x10
             writeKey(.int32)
-            storage.write(integer: int, endianness: .little)
+            storage.writeInteger(int, endianness: .little)
         case let stamp as Timestamp:
             writeKey(.timestamp)
-            storage.write(integer: stamp.increment, endianness: .little)
-            storage.write(integer: stamp.timestamp, endianness: .little)
+            storage.writeInteger(stamp.increment, endianness: .little)
+            storage.writeInteger(stamp.timestamp, endianness: .little)
         case let int as Int: // 0x12
             writeKey(.int64)
-            storage.write(integer: int, endianness: .little)
+            storage.writeInteger(int, endianness: .little)
         case let decimal128 as Decimal128:
             writeKey(.decimal128)
-            storage.write(bytes: decimal128.storage)
+            storage.writeBytes(decimal128.storage)
         case is MaxKey: // 0x7F
             writeKey(.maxKey)
         case is MinKey: // 0xFF
@@ -153,9 +153,9 @@ extension Document: ExpressibleByDictionaryLiteral {
         case let javascript as JavaScriptCode:
             writeKey(.javascript)
             let codeLengthWithNull = javascript.code.utf8.count + 1
-            storage.write(integer: Int32(codeLengthWithNull), endianness: .little)
-            storage.write(string: javascript.code)
-            storage.write(integer: 0, endianness: .little, as: UInt8.self)
+            storage.writeInteger(Int32(codeLengthWithNull), endianness: .little)
+            storage.writeString(javascript.code)
+            storage.writeInteger(0, endianness: .little, as: UInt8.self)
         case let javascript as JavaScriptCodeWithScope:
             writeKey(.javascriptWithScope)
             var scopeBuffer = javascript.scope.makeByteBuffer()
@@ -163,10 +163,10 @@ extension Document: ExpressibleByDictionaryLiteral {
             let codeLengthWithHeader = 4 + codeLength
             let primitiveLength = 4 + codeLengthWithHeader + scopeBuffer.readableBytes // int32(code_w_s size), code, scope doc
 
-            storage.write(integer: Int32(primitiveLength), endianness: .little) // header
-            storage.write(integer: Int32(codeLength), endianness: .little) // string (code)
-            storage.write(string: javascript.code)
-            storage.write(buffer: &scopeBuffer)
+            storage.writeInteger(Int32(primitiveLength), endianness: .little) // header
+            storage.writeInteger(Int32(codeLength), endianness: .little) // string (code)
+            storage.writeString(javascript.code)
+            storage.writeBuffer(&scopeBuffer)
         case let bsonData as BSONDataType:
             self.appendValue(bsonData.primitive, forKey: key)
             return
@@ -176,7 +176,7 @@ extension Document: ExpressibleByDictionaryLiteral {
             return
         }
 
-        storage.write(integer: 0, endianness: .little, as: UInt8.self)
+        storage.writeInteger(0, endianness: .little, as: UInt8.self)
     }
     
     /// Creates a new Document with the given elements

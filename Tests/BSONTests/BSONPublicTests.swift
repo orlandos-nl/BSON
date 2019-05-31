@@ -34,7 +34,7 @@ func assertInvalid(_ document: Document, file: StaticString = #file, line: UInt 
 var binaryData: ByteBuffer = {
     let alloc = ByteBufferAllocator()
     var buffer = alloc.buffer(capacity: 5)
-    buffer.write(bytes: [34,34,34,34,34])
+    buffer.writeBytes([34,34,34,34,34])
     return buffer
 }()
 
