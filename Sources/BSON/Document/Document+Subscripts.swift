@@ -52,7 +52,6 @@ extension Document {
                     return
                 }
 
-                let pairOffset = offset
                 offset += 1
 
                 let matches = matchesKey(key, at: offset)
@@ -61,22 +60,18 @@ extension Document {
                     return
                 }
 
-                if matches {
-                    if let newValue = newValue {
-                        overwriteValue(with: newValue, atPairOffset: pairOffset)
-                    } else if let valueLength = self.valueLength(forType: type, at: offset) {
-                        let end = offset + valueLength
-                        let length = end - baseOffset
-                        self.removeBytes(at: baseOffset, length: length)
-                    }
-                    return
+                if matches, let valueLength = self.valueLength(forType: type, at: offset) {
+                    let end = offset + valueLength
+                    let length = end - baseOffset
+                    self.removeBytes(at: baseOffset, length: length)
+                    break findKey
                 }
-
+                
                 guard skipValue(ofType: type, at: &offset) else {
                     return
                 }
             } while offset + 1 < storage.readableBytes
-
+            
             if let newValue = newValue {
                 appendValue(newValue, forKey: key)
             }
