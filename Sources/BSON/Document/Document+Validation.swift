@@ -118,7 +118,7 @@ extension Document {
         }
         
         // Validate document contents
-        while buffer.readableBytes > 1 {
+        while buffer.readableBytes - currentIndex > 1 {
             guard let typeId = buffer.getInteger(at: currentIndex, endianness: .little, as: UInt8.self) else {
                 return errorFound(reason: .notEnoughBytesForValue)
             }
@@ -177,6 +177,8 @@ extension Document {
                 guard has(Int(numberOfBytes)) else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
+                
+                currentIndex += 1
             case .objectId:
                 guard has(12) else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)

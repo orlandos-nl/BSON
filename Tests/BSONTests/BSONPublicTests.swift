@@ -146,6 +146,30 @@ final class BSONPublicTests: XCTestCase {
         }
     }
     
+    func testBinaryOverwrite() {
+        struct User: Codable {
+            let id = ObjectId()
+            let data: Data
+        }
+        
+        let data = Data(repeating: 0x01, count: 4_096 * 8)
+        let alloc = ByteBufferAllocator()
+        var buffer = alloc.buffer(capacity: data.count)
+        buffer.write(bytes: data)
+        var doc: Document = ["data": "hi"]
+        doc["data"] = Binary(buffer: buffer)
+        doc["data"] = data
+        
+        guard let binary = doc["data"] as? Binary else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(doc.validate().isValid)
+        XCTAssert(binary.count == 4_096 * 8)
+        XCTAssert(binary.data == data)
+    }
+    
     func testDecoding() throws {
         struct HugeDocument: Codable {
             var _id: ObjectId
