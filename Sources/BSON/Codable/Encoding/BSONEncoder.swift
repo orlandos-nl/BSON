@@ -148,7 +148,12 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     func converted(_ key: String) -> String {
-        // TODO: Implement key strategies
+        if strategies.filterDollarPrefix, key.first == "$" {
+            var key = key
+            key.removeFirst()
+            return key
+        }
+        
         return key
     }
 

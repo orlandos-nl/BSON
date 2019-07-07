@@ -9,6 +9,7 @@ public struct BSONDecoderSettings {
     public static var strict: BSONDecoderSettings {
         return .init(
             decodeNullAsNil: false,
+            filterDollarPrefix: false,
             stringDecodingStrategy: .string,
             decodeObjectIdFromString: false,
             floatDecodingStrategy: .double,
@@ -30,6 +31,7 @@ public struct BSONDecoderSettings {
     public static var adaptive: BSONDecoderSettings {
         return .init(
             decodeNullAsNil: true,
+            filterDollarPrefix: false,
             stringDecodingStrategy: .adaptive,
             decodeObjectIdFromString: true,
             floatDecodingStrategy: .adaptive,
@@ -148,6 +150,7 @@ public struct BSONDecoderSettings {
     
     /// If `true`, BSON Null values will be regarded as `nil`
     public var decodeNullAsNil: Bool = true
+    public var filterDollarPrefix = false
     
     /// A strategy that is applied when encountering a request to decode a `String`
     public var stringDecodingStrategy: StringDecodingStrategy

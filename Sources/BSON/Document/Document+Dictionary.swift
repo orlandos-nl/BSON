@@ -52,8 +52,14 @@ extension Document: ExpressibleByDictionaryLiteral {
             return (key, primitive)
         })
     }
+    
+    public mutating func append(contentsOf document: Document) {
+        for (key, value) in document {
+            self.appendValue(value, forKey: key)
+        }
+    }
 
-    mutating func removeValue(forKey key: String) -> Primitive? {
+    public mutating func removeValue(forKey key: String) -> Primitive? {
         if let value = self[key] {
             self[key] = nil
             return value
@@ -62,7 +68,7 @@ extension Document: ExpressibleByDictionaryLiteral {
         return nil
     }
 
-    mutating func appendValue(_ value: Primitive, forKey key: String) {
+    public mutating func appendValue(_ value: Primitive, forKey key: String) {
         defer {
             usedCapacity = Int32(self.storage.readableBytes)
         }
@@ -98,18 +104,8 @@ extension Document: ExpressibleByDictionaryLiteral {
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             writeKey(.objectId)
-            storage.writeInteger(objectId.byte0)
-            storage.writeInteger(objectId.byte1)
-            storage.writeInteger(objectId.byte2)
-            storage.writeInteger(objectId.byte3)
-            storage.writeInteger(objectId.byte4)
-            storage.writeInteger(objectId.byte5)
-            storage.writeInteger(objectId.byte6)
-            storage.writeInteger(objectId.byte7)
-            storage.writeInteger(objectId.byte8)
-            storage.writeInteger(objectId.byte9)
-            storage.writeInteger(objectId.byte10)
-            storage.writeInteger(objectId.byte11)
+            storage.writeInteger(objectId._timestamp, endianness: .little)
+            storage.writeInteger(objectId._random, endianness: .little)
         case let bool as Bool: // 0x08
             writeKey(.boolean)
             let bool: UInt8 = bool ? 0x01 : 0x00
@@ -140,7 +136,7 @@ extension Document: ExpressibleByDictionaryLiteral {
             writeKey(.timestamp)
             storage.writeInteger(stamp.increment, endianness: .little)
             storage.writeInteger(stamp.timestamp, endianness: .little)
-        case let int as Int: // 0x12
+        case let int as _BSON64BitInteger: // 0x12
             writeKey(.int64)
             storage.writeInteger(int, endianness: .little)
         case let decimal128 as Decimal128:

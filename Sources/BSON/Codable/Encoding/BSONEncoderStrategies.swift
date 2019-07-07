@@ -31,4 +31,5 @@ public struct BSONEncoderStrategies { // TODO: EncoderStrategies or EncodingStra
     /// Defines how unsigned integers are encoded
     public var unsignedIntegerEncodingStrategy: UnsignedIntegerEncodingStrategy = .int64
     
+    public var filterDollarPrefix = false
 }

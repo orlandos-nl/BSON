@@ -18,11 +18,11 @@ public struct BSONDecoder {
 
 extension BSONDecoderSettings.FloatDecodingStrategy {
     /// Decodes the `value` with a key of `key` to a `Float` using the current strategy
-    internal func decode<K: CodingKey>(fromKey key: K, in value: DecoderValue, path: [String]) throws -> Float {
+    internal func decode(stringKey: String, in value: DecoderValue, path: [String]) throws -> Float {
         switch self {
         case .double, .adaptive:
             do {
-                return try Float(value.unwrap(asType: Double.self, atKey: key, path: path))
+                return try Float(value.unwrap(asType: Double.self, atKey: stringKey, path: path))
             } catch {
                 guard case .adaptive = self else {
                     throw error
@@ -31,7 +31,7 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
                 fallthrough // if adaptive
             }
         case .string:
-            let string = try value.unwrap(asType: String.self, atKey: key, path: path)
+            let string = try value.unwrap(asType: String.self, atKey: stringKey, path: path)
             
             guard let float = Float(string) else {
                 throw BSONValueNotFound(type: Float.self, path: path)
@@ -41,7 +41,7 @@ extension BSONDecoderSettings.FloatDecodingStrategy {
         case .custom(let strategy):
             guard
                 case .document(let document) = value,
-                let float = try strategy(key.stringValue, document[key.stringValue])
+                let float = try strategy(stringKey, document[stringKey])
             else {
                 throw BSONValueNotFound(type: Float.self, path: path)
             }
@@ -153,10 +153,11 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
     /// Decodes the `value` with a key of `key` to an integer of type `I` using the current strategy
     internal func decode<K: CodingKey>(
         from decoder: _BSONDecoder,
-        forKey key: K,
+        forKey codingKey: K,
         path: @autoclosure () -> [String]
     ) throws -> I {
-        guard let identifier = decoder.document?.typeIdentifier(of: key.stringValue) else {
+        let key = decoder.converted(codingKey.stringValue)
+        guard let identifier = decoder.document?.typeIdentifier(of: key) else {
             throw BSONValueNotFound(type: I.self, path: path())
         }
         
@@ -174,15 +175,15 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
             return I(double)
         case (.custom(let strategy), _):
             guard let value: I = try strategy(
-                key.stringValue,
-                decoder.document?[key.stringValue]
+                key,
+                decoder.document?[key]
             ) else {
                 throw BSONValueNotFound(type: I.self, path: path())
             }
             
             return value
         default:
-            throw BSONTypeConversionError(from: decoder.document?[key.stringValue], to: I.self)
+            throw BSONTypeConversionError(from: decoder.document?[key], to: I.self)
         }
     }
 }
@@ -226,17 +227,18 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
         }
     }
     
-    internal func decode<K: CodingKey>(from decoder: _BSONDecoder, forKey key: K, path: @autoclosure () -> [String]) throws -> Double {
+    internal func decode<K: CodingKey>(from decoder: _BSONDecoder, forKey codingKey: K, path: @autoclosure () -> [String]) throws -> Double {
+        let key = decoder.converted(codingKey.stringValue)
         switch self {
         case .custom(let strategy):
-            guard let double = try strategy(key.stringValue, decoder.document?[key.stringValue]) else {
+            guard let double = try strategy(key, decoder.document?[key]) else {
                 throw BSONValueNotFound(type: Double.self, path: path())
             }
             
             return double
         default:
             guard
-                let primitive = decoder.document?[key.stringValue]
+                let primitive = decoder.document?[key]
             else {
                 throw BSONValueNotFound(type: Double.self, path: path())
             }
@@ -274,12 +276,12 @@ internal enum DecoderValue {
         }
     }
     
-    func unwrap<P: Primitive, K: CodingKey>(asType type: P.Type, atKey key: K, path: [String]) throws -> P {
+    func unwrap<P: Primitive>(asType type: P.Type, atKey key: String, path: [String]) throws -> P {
         guard let document = self.primitive as? Document else {
             throw BSONValueNotFound(type: P.self, path: path)
         }
         
-        return try document.assertPrimitive(typeOf: P.self, forKey: key.stringValue)
+        return try document.assertPrimitive(typeOf: P.self, forKey: key)
     }
     
     func unwrap<P: Primitive>(asType type: P.Type, path: [String]) throws -> P {
@@ -327,10 +329,20 @@ internal struct _BSONDecoder: Decoder {
         }
     }
     
+    func converted(_ key: String) -> String {
+        if settings.filterDollarPrefix, key.first == "$" {
+            var key = key
+            key.removeFirst()
+            return key
+        }
+        
+        return key
+    }
+    
     let settings: BSONDecoderSettings
     
     func lossyDecodeString<K: CodingKey>(atKey key: K, path: @autoclosure () -> [String]) throws -> String {
-        let key = key.stringValue
+        let key = converted(key.stringValue)
         
         guard
             let document = self.document,
@@ -400,7 +412,7 @@ extension BSONDecoderSettings.StringDecodingStrategy {
         path: @autoclosure () -> [String]
     ) throws -> String {
         guard
-            let primitive = decoder.document?[key.stringValue]
+            let primitive = decoder.document?[decoder.converted(key.stringValue)]
         else {
             throw BSONValueNotFound(type: String.self, path: path())
         }
