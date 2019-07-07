@@ -20,19 +20,19 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     }
     
     func path(forKey key: K) -> [String] {
-        return self.codingPath.map { $0.stringValue } + [key.stringValue]
+        return self.codingPath.map { decoder.converted($0.stringValue) } + [decoder.converted(key.stringValue)]
     }
     
     func contains(_ key: K) -> Bool {
-        return self.document.keys.contains(key.stringValue)
+        return self.document.keys.contains(decoder.converted(key.stringValue))
     }
     
     func decodeNil(forKey key: K) throws -> Bool {
-        return (self.contains(key) && self.document.typeIdentifier(of: key.stringValue) == .null)
+        return (self.contains(key) && self.document.typeIdentifier(of: decoder.converted(key.stringValue)) == .null)
     }
     
     func decode(_ type: Bool.Type, forKey key: K) throws -> Bool {
-        return try self.document.assertPrimitive(typeOf: type, forKey: key.stringValue)
+        return try self.document.assertPrimitive(typeOf: type, forKey: decoder.converted(key.stringValue))
     }
     
     func decode(_ type: String.Type, forKey key: K) throws -> String {
@@ -49,7 +49,7 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     
     func decode(_ type: Float.Type, forKey key: K) throws -> Float {
         return try self.decoder.settings.floatDecodingStrategy.decode(
-            fromKey: key,
+            stringKey: decoder.converted(key.stringValue),
             in: self.decoder.wrapped,
             path: path(forKey: key)
         )
@@ -136,7 +136,7 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     }
     
     func decode(_ type: Primitive.Protocol, forKey key: K) throws -> Primitive {
-        guard let value = self.document[key.stringValue] else {
+        guard let value = self.document[decoder.converted(key.stringValue)] else {
             throw BSONValueNotFound(type: Primitive.self, path: path(forKey: key))
         }
         
@@ -144,19 +144,20 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     }
     
     func decodeIfPresent(_ type: Primitive.Protocol, forKey key: K) throws -> Primitive? {
-        return self.document[key.stringValue]
+        return self.document[decoder.converted(key.stringValue)]
     }
     
-    func decode<T>(_ type: T.Type, forKey key: K) throws -> T where T: Decodable {
+    func decode<T>(_ type: T.Type, forKey codingKey: K) throws -> T where T: Decodable {
+        let key = decoder.converted(codingKey.stringValue)
         if let instance = self as? T {
             return instance
         } else if let type = T.self as? BSONDataType.Type {
-            return try type.init(primitive: self.document[key.stringValue]) as! T
+            return try type.init(primitive: self.document[key]) as! T
         } else {
             guard
-                let value = self.document[key.stringValue]
+                let value = self.document[key]
             else {
-                throw BSONValueNotFound(type: T.self, path: path(forKey: key))
+                throw BSONValueNotFound(type: T.self, path: path(forKey: codingKey))
             }
             
             // Decoding strategy for Primitives, like Date
@@ -174,7 +175,7 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
             let decoder = _BSONDecoder(
                 wrapped: decoderValue,
                 settings: self.decoder.settings,
-                codingPath: self.codingPath + [key],
+                codingPath: self.codingPath + [codingKey],
                 userInfo: self.decoder.userInfo
             )
             
@@ -183,7 +184,7 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     }
     
     func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
-        let document = self.document[key.stringValue, as: Document.self] ?? Document()
+        let document = self.document[decoder.converted(key.stringValue), as: Document.self] ?? Document()
         
         let decoder = _BSONDecoder(wrapped: .document(document), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
         

@@ -23,7 +23,7 @@ extension Document: ExpressibleByArrayLiteral {
                 return values
             }
 
-            skipValue(ofType: type, at: &index)
+            _ = skipValue(ofType: type, at: &index)
 
             values.append(value)
         }
@@ -61,7 +61,7 @@ extension Document: ExpressibleByArrayLiteral {
                 }
             }
 
-            overwriteValue(with: newValue, atPairOffset: offset)
+            fatalError()
         }
     }
 

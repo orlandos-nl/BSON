@@ -66,12 +66,12 @@ extension Document {
                     self.removeBytes(at: baseOffset, length: length)
                     break findKey
                 }
-                
+
                 guard skipValue(ofType: type, at: &offset) else {
                     return
                 }
             } while offset + 1 < storage.readableBytes
-            
+
             if let newValue = newValue {
                 appendValue(newValue, forKey: key)
             }

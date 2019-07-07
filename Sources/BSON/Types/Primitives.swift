@@ -52,8 +52,8 @@ extension Data: BSONDataType {
         buffer.writeWithUnsafeMutableBytes { writer in
             let writer = writer.bindMemory(to: UInt8.self)
             let size = self.count
-            return self.withUnsafeBytes { (reader: UnsafePointer<UInt8>) in
-                writer.baseAddress!.initialize(from: reader, count: size)
+            return self.withUnsafeBytes { buffer in
+                writer.baseAddress!.initialize(from: buffer.baseAddress!.assumingMemoryBound(to: UInt8.self), count: buffer.count)
                 
                 return size
             }
@@ -143,21 +143,11 @@ extension ObjectId: Primitive {
     }
 }
 
-//public func ==(lhs: Primitive?, rhs: Primitive?) -> Bool {
-//    guard let lhs = lhs else {
-//        if case .none = rhs {
-//            return true
-//        }
-//        return false
-//    }
-//    
-//    guard let rhs = rhs else {
-//        return false
-//    }
-//    
-//    return [lhs] as Document == [rhs] as Document
-//}
-//
+struct BSONComparisonTypeMismatch: Error {
+    let lhs: Primitive?
+    let rhs: Primitive?
+}
+
 //extension Collection where Element == Primitive {
 //    public static func ==(lhs: Self, rhs: Self) -> Bool {
 //        guard lhs.count == rhs.count else {

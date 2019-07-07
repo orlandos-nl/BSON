@@ -8,7 +8,7 @@ internal struct BSONKey: CodingKey {
     }
     
     init?(intValue: Int) {
-        self.stringValue = "\(intValue)"
+        self.stringValue = String(intValue)
         self.intValue = intValue
     }
     
