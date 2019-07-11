@@ -90,7 +90,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
 
     var codingPath: [CodingKey]
 
-    var writer: ((Primitive) -> ())?
+    var writer: ((Primitive?) -> ())?
     var userInfo: [CodingUserInfoKey: Any]
 
     // MARK: Initialization
