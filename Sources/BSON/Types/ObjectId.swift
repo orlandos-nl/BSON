@@ -90,7 +90,7 @@ public struct ObjectId {
 
 extension ObjectId: Hashable, Comparable {
     public static func ==(lhs: ObjectId, rhs: ObjectId) -> Bool {
-        return lhs._timestamp == rhs._timestamp && lhs._random == rhs._random
+        return lhs._random == rhs._random && lhs._timestamp == rhs._timestamp 
     }
     
     public static func <(lhs: ObjectId, rhs: ObjectId) -> Bool {
