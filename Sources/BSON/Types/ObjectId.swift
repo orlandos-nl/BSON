@@ -47,10 +47,11 @@ public struct ObjectId {
         
         (_timestamp, _random) = storage.withUnsafeBytes { bytes in
             let address = bytes.baseAddress!
-            return (
-                address.load(fromByteOffset: 0, as: UInt32.self), // TODO: Make sure that the endianness is correct
-                address.load(fromByteOffset: 4, as: UInt64.self)
-            )
+            
+            let timestamp = address.assumingMemoryBound(to: UInt32.self).pointee.littleEndian
+            let random = (address + 4).assumingMemoryBound(to: UInt64.self).pointee
+            
+            return (timestamp, random)
         }
     }
     
@@ -64,20 +65,23 @@ public struct ObjectId {
             data.append(radix16table[Int(byte % 16)])
         }
         
-        // TODO: Take endianness into account
-        transform(UInt8(truncatingIfNeeded: _timestamp >> 24))
-        transform(UInt8(truncatingIfNeeded: _timestamp >> 16))
-        transform(UInt8(truncatingIfNeeded: _timestamp >> 8))
-        transform(UInt8(truncatingIfNeeded: _timestamp))
+        let timestamp = _timestamp.bigEndian
+        let random = _random.bigEndian
         
-        transform(UInt8(truncatingIfNeeded: _random >> 56))
-        transform(UInt8(truncatingIfNeeded: _random >> 48))
-        transform(UInt8(truncatingIfNeeded: _random >> 40))
-        transform(UInt8(truncatingIfNeeded: _random >> 32))
-        transform(UInt8(truncatingIfNeeded: _random >> 24))
-        transform(UInt8(truncatingIfNeeded: _random >> 16))
-        transform(UInt8(truncatingIfNeeded: _random >> 8))
-        transform(UInt8(truncatingIfNeeded: _random))
+        // TODO: Take endianness into account
+        transform(UInt8(truncatingIfNeeded: timestamp >> 24))
+        transform(UInt8(truncatingIfNeeded: timestamp >> 16))
+        transform(UInt8(truncatingIfNeeded: timestamp >> 8))
+        transform(UInt8(truncatingIfNeeded: timestamp))
+        
+        transform(UInt8(truncatingIfNeeded: random >> 56))
+        transform(UInt8(truncatingIfNeeded: random >> 48))
+        transform(UInt8(truncatingIfNeeded: random >> 40))
+        transform(UInt8(truncatingIfNeeded: random >> 32))
+        transform(UInt8(truncatingIfNeeded: random >> 24))
+        transform(UInt8(truncatingIfNeeded: random >> 16))
+        transform(UInt8(truncatingIfNeeded: random >> 8))
+        transform(UInt8(truncatingIfNeeded: random))
         
         return String(data: data, encoding: .utf8)!
     }

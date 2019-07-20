@@ -155,7 +155,7 @@ final class BSONPublicTests: XCTestCase {
         let data = Data(repeating: 0x01, count: 4_096 * 8)
         let alloc = ByteBufferAllocator()
         var buffer = alloc.buffer(capacity: data.count)
-        buffer.write(bytes: data)
+        buffer.writeBytes(data)
         var doc: Document = ["data": "hi"]
         doc["data"] = Binary(buffer: buffer)
         doc["data"] = data
@@ -168,6 +168,15 @@ final class BSONPublicTests: XCTestCase {
         XCTAssert(doc.validate().isValid)
         XCTAssert(binary.count == 4_096 * 8)
         XCTAssert(binary.data == data)
+    }
+    
+    func testInitObjectIdFromStrig() throws {
+        for _ in 0..<10_000 {
+            let id = ObjectId()
+            let string = id.hexString
+            let id2 = try ObjectId(string)
+            XCTAssertEqual(id, id2)
+        }
     }
     
     func testDecoding() throws {
@@ -183,7 +192,7 @@ final class BSONPublicTests: XCTestCase {
             var morePi: Double
         }
 
-        let id = ObjectIdGenerator().generate()
+        let id = ObjectId()
 
         let doc: Document = [
             "_id": id,
@@ -312,10 +321,9 @@ final class BSONPublicTests: XCTestCase {
     func testObjectIdUniqueness() {
         var oids = [String]()
         oids.reserveCapacity(10_000)
-        let generator = ObjectIdGenerator()
 
         for _ in 0..<10_000 {
-            let oid = generator.generate().hexString
+            let oid = ObjectId().hexString
 
             XCTAssertFalse(oids.contains(oid))
             oids.append(oid)

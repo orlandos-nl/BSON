@@ -51,9 +51,9 @@ public struct Document: Primitive {
     }
     
     /// Creates a new `Document` from the given bytes
-//    public init(bytes: [UInt8], isArray: Bool = false) {
-//        self.storage = Document.allocator.buffer(capacity: bytes.count)
-//        self.storage.writeBytes(bytes)
-//        self.isArray = isArray
-//    }
+    public init(bytes: [UInt8], isArray: Bool = false) {
+        self.storage = Document.allocator.buffer(capacity: bytes.count)
+        self.storage.writeBytes(bytes)
+        self.isArray = isArray
+    }
 }
