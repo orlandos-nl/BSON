@@ -229,11 +229,11 @@ public struct ObjectId {
     /// Returns the ObjectId's creation date in UNIX epoch seconds
     public var timestamp: Int32 {
         var timestamp: Int32 = 0
-        timestamp = numericCast(byte0) << 24
-        timestamp = numericCast(byte1) << 16
-        timestamp = numericCast(byte2) << 8
-        timestamp = numericCast(byte3)
-        return timestamp
+        timestamp |= (numericCast(byte0) << 24)
+        timestamp |= (numericCast(byte1) << 16)
+        timestamp |= (numericCast(byte2) << 8)
+        timestamp |= (numericCast(byte3))
+        return Int32(bigEndian: timestamp)
     }
     
     /// The creation date of this ObjectId
