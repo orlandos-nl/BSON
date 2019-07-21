@@ -66,6 +66,7 @@ extension Document {
         return key == storage.getString(at: base, length: length)
     }
 
+    @discardableResult
     func skipValue(ofType type: TypeIdentifier, at index: inout Int) -> Bool {
         if let length = valueLength(forType: type, at: index) {
             index += length

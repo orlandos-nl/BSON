@@ -87,7 +87,7 @@ class BSONEncoderTests: XCTestCase {
             var name = "Fred"
             var sample: Float = 5.0
 
-            #if !os(Linux)
+            #if !os(Linux) && !os(iOS)
             struct Tail : Encodable {
                 var length = Measurement(value: 30, unit: UnitLength.centimeters)
             }

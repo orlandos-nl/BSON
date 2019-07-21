@@ -115,7 +115,21 @@ final class BSONPublicTests: XCTestCase {
         assertValid(doc)
         XCTAssertEqual(doc["a"]["foo"] as? String, "bar")
     }
-
+    
+    func testInitObjectIdFromString() throws {
+        for _ in 0..<1_000 {
+            let id = ObjectId()
+            let string = id.hexString
+            let id2 = try ObjectId(string)
+            XCTAssertEqual(id, id2)
+            let string2 = id2.hexString
+            let id3 = try ObjectId(string2)
+            XCTAssertEqual(id, id3)
+            XCTAssertGreaterThanOrEqual(id3.date, Date().addingTimeInterval(-1))
+            XCTAssertLessThanOrEqual(id3.date, Date().addingTimeInterval(1))
+        }
+    }
+    
     func testperf() throws {
         for _ in 0..<10_000 {
             let id = ObjectId()
