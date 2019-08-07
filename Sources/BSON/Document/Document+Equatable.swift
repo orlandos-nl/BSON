@@ -30,7 +30,7 @@ extension Document: Equatable {
     }
 }
 
-public func ==(lhs: Primitive, rhs: Primitive) -> Bool {
+internal func ==(lhs: Primitive, rhs: Primitive) -> Bool {
     switch (lhs, rhs) {
     case (let lhs as Double, let rhs as Double):
         return lhs == rhs
