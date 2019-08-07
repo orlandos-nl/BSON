@@ -158,9 +158,9 @@ final class BSONCorpusTests: XCTestCase {
         XCTAssert(doc1.validate().isValid)
         XCTAssert(doc2.validate().isValid)
         
-        XCTAssertEqual(doc0["a"] as? ObjectId, try ObjectId("000000000000000000000000"))
-        XCTAssertEqual(doc1["a"] as? ObjectId, try ObjectId("ffffffffffffffffffffffff"))
-        XCTAssertEqual(doc2["a"] as? ObjectId, try ObjectId("56e1fc72e0c917e9c4714161"))
+        XCTAssertEqual(doc0["a"] as? ObjectId, ObjectId("000000000000000000000000"))
+        XCTAssertEqual(doc1["a"] as? ObjectId, ObjectId("ffffffffffffffffffffffff"))
+        XCTAssertEqual(doc2["a"] as? ObjectId, ObjectId("56e1fc72e0c917e9c4714161"))
         
         XCTAssertFalse(Document(bytes: [0x12,0x00,0x00,0x00,0x07,0x61,0x00,0x56,0xE1,0xFC,0x72,0xE0,0xC9,0x17,0xE9,0xC4,0x71]).validate().isValid)
     }

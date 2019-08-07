@@ -81,7 +81,7 @@ final class BSONPublicTests: XCTestCase {
                 "documentSubDoubleTest": 13.37,
                 "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
             ] as Document,
-            "nonRandomObjectId": try! ObjectId("0123456789ABCDEF01234567"),
+            "nonRandomObjectId": ObjectId("0123456789ABCDEF01234567"),
             "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
             "cool32bitNumber": Int32(9001),
             "cool64bitNumber": 21312153,
@@ -171,11 +171,16 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testInitObjectIdFromStrig() throws {
-        for _ in 0..<10_000 {
+        for _ in 0..<1_000 {
             let id = ObjectId()
             let string = id.hexString
-            let id2 = try ObjectId(string)
+            let id2 = try ObjectId.make(from: string)
             XCTAssertEqual(id, id2)
+            let string2 = id2.hexString
+            let id3 = try ObjectId.make(from: string2)
+            XCTAssertEqual(id, id3)
+            XCTAssertGreaterThanOrEqual(id3.date, Date().addingTimeInterval(-1))
+            XCTAssertLessThanOrEqual(id3.date, Date().addingTimeInterval(1))
         }
     }
     
@@ -218,6 +223,40 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(huge.awesome, true)
         XCTAssertEqual(huge.pi, 3.14)
         XCTAssertEqual(huge.morePi, 3.14)
+    }
+    
+    func testEquality() {
+        var document: Document = [
+            "dict": [
+                "lhs": true,
+                "rhs": false
+            ]
+        ]
+        
+        var otherDocument: Document = [
+            "dict": [
+                "rhs": false,
+                "lhs": true
+            ]
+        ]
+        
+        XCTAssertEqual(document, otherDocument)
+        
+        document = [
+            "dict": [
+                "lhs",
+                "rhs",
+            ]
+        ]
+        
+        otherDocument = [
+            "dict": [
+                "rhs",
+                "lhs"
+            ]
+        ]
+        
+        XCTAssertNotEqual(document, otherDocument)
     }
     
     func testDocumentLockup() {
@@ -299,7 +338,7 @@ final class BSONPublicTests: XCTestCase {
 
     func testDictionaryLiteral() {
         XCTAssertEqual(kittenDocument["doubleTest"] as? Double, 0.04)
-        XCTAssertEqual(kittenDocument["nonRandomObjectId"] as? ObjectId, try! ObjectId("0123456789ABCDEF01234567"))
+        XCTAssertEqual(kittenDocument["nonRandomObjectId"] as? ObjectId, ObjectId("0123456789ABCDEF01234567"))
     }
 
     func testDocumentCollectionFunctionality() {

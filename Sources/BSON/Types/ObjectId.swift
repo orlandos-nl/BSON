@@ -20,11 +20,19 @@ public struct ObjectId {
         _timestamp = timestamp
         _random = random
     }
+    
+    public static func make(from hex: String) throws -> ObjectId {
+        guard let me = self.init(hex) else {
+            throw InvalidObjectIdString(hex: hex)
+        }
+        
+        return me
+    }
 
     /// Decodes the ObjectID from the provided (24 character) hexString
-    public init(_ hex: String) throws {
+    public init?(_ hex: String) {
         guard hex.count == 24 else {
-            throw InvalidObjectIdString(hex: hex)
+            return nil
         }
         
         var storage = ContiguousArray<UInt8>()
@@ -42,7 +50,7 @@ public struct ObjectId {
         }
         
         guard storage.count == 12 else {
-            throw InvalidObjectIdString(hex: hex)
+            return nil
         }
         
         (_timestamp, _random) = storage.withUnsafeBytes { bytes in

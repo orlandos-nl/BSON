@@ -138,7 +138,7 @@ extension ObjectId: Primitive {
             self = try container.decodeObjectId()
         } else {
             let string = try container.decode(String.self)
-            try self.init(string)
+            self = try ObjectId.make(from: string)
         }
     }
 }

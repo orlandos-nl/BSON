@@ -7,7 +7,7 @@ extension Document: CustomDebugStringConvertible {
     }
 }
 
-extension ObjectId: CustomDebugStringConvertible {
+extension ObjectId: CustomDebugStringConvertible, LosslessStringConvertible {
     public var debugDescription: String {
         return "ObjectId(\"\(self.hexString)\")"
     }
