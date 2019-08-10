@@ -24,7 +24,7 @@ public struct Document: Primitive {
     }
     
     /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
-    var isArray: Bool
+    public internal(set) var isArray: Bool
 
     /// Creates a new empty BSONDocument
     ///
