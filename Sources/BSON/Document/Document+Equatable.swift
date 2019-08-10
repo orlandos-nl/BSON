@@ -30,51 +30,57 @@ extension Document: Equatable {
     }
 }
 
-internal func ==(lhs: Primitive, rhs: Primitive) -> Bool {
-    switch (lhs, rhs) {
-    case (let lhs as Double, let rhs as Double):
-        return lhs == rhs
-    case (let lhs as String, let rhs as String):
-        return lhs == rhs
-    case (let lhs as Document, let rhs as Document):
-        return lhs == rhs
-    case (let lhs as Binary, let rhs as Binary):
-        return lhs == rhs
-    case (let lhs as ObjectId, let rhs as ObjectId):
-        return lhs == rhs
-    case (let lhs as Bool, let rhs as Bool):
-        return lhs == rhs
-    case (let lhs as Date, let rhs as Date):
-        return lhs == rhs
-    case (is Null, is Null):
-        return true
-    case (let lhs as RegularExpression, let rhs as RegularExpression):
-        return lhs == rhs
-    case (let lhs as Int32, let rhs as Int32):
-        return lhs == rhs
-    case (let lhs as Timestamp, let rhs as Timestamp):
-        return lhs == rhs
-    case (let lhs as _BSON64BitInteger, let rhs as _BSON64BitInteger):
-        return lhs == rhs
-    case (let lhs as Decimal128, let rhs as Decimal128):
-        return lhs == rhs
-    case (is MaxKey, is MaxKey):
-        return true
-    case (is MinKey, is MinKey):
-        return true
-    case (let lhs as JavaScriptCode, let rhs as JavaScriptCode):
-        return lhs == rhs
-    case (let lhs as JavaScriptCodeWithScope, let rhs as JavaScriptCodeWithScope):
-        return lhs == rhs
-    case (let lhs as BSONDataType, let rhs as BSONDataType):
-        return lhs == rhs
-    default:
-        return false
+extension Primitive {
+    public func equals(_ primitive: Primitive) -> Bool {
+        switch (self, primitive) {
+        case (let lhs as Double, let rhs as Double):
+            return lhs == rhs
+        case (let lhs as String, let rhs as String):
+            return lhs == rhs
+        case (let lhs as Document, let rhs as Document):
+            return lhs == rhs
+        case (let lhs as Binary, let rhs as Binary):
+            return lhs == rhs
+        case (let lhs as ObjectId, let rhs as ObjectId):
+            return lhs == rhs
+        case (let lhs as Bool, let rhs as Bool):
+            return lhs == rhs
+        case (let lhs as Date, let rhs as Date):
+            return lhs == rhs
+        case (is Null, is Null):
+            return true
+        case (let lhs as RegularExpression, let rhs as RegularExpression):
+            return lhs == rhs
+        case (let lhs as Int32, let rhs as Int32):
+            return lhs == rhs
+        case (let lhs as Timestamp, let rhs as Timestamp):
+            return lhs == rhs
+        case (let lhs as _BSON64BitInteger, let rhs as _BSON64BitInteger):
+            return lhs == rhs
+        case (let lhs as Decimal128, let rhs as Decimal128):
+            return lhs == rhs
+        case (is MaxKey, is MaxKey):
+            return true
+        case (is MinKey, is MinKey):
+            return true
+        case (let lhs as JavaScriptCode, let rhs as JavaScriptCode):
+            return lhs == rhs
+        case (let lhs as JavaScriptCodeWithScope, let rhs as JavaScriptCodeWithScope):
+            return lhs == rhs
+        case (let lhs as BSONDataType, let rhs as BSONDataType):
+            return lhs == rhs
+        default:
+            return false
+        }
     }
 }
 
-public func !=(lhs: Primitive, rhs: Primitive) -> Bool {
-    return !(lhs == rhs)
+internal func ==(lhs: Primitive, rhs: Primitive) -> Bool {
+    return lhs.equals(rhs)
+}
+
+internal func !=(lhs: Primitive, rhs: Primitive) -> Bool {
+    return !lhs.equals(rhs)
 }
 
 extension Document: Hashable {

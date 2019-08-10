@@ -1,5 +1,5 @@
 /// Special internal type used by MongoDB replication and sharding. First 4 bytes are an increment, second 4 are a timestamp.
-public struct Timestamp: Primitive, Equatable {    
+public struct Timestamp: Primitive, Hashable {    
     public var increment: Int32
     public var timestamp: Int32
     

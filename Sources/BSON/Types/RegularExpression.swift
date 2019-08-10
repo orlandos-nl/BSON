@@ -10,7 +10,7 @@ import Foundation
 /// The `RegularExpression` struct represents a regular expression as part of a BSON `Document`.
 ///
 /// An extension to `NSRegularExpression` is provided for converting between `Foundation.NSRegularExpression` and `BSON.RegularExpression`.
-public struct RegularExpression: Primitive, Equatable {
+public struct RegularExpression: Primitive, Hashable {
     private enum CodingKeys: String, CodingKey {
         case pattern = "$regex"
         case options = "$options"

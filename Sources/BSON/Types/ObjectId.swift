@@ -119,7 +119,7 @@ extension ObjectId: Hashable, Comparable {
     }
 }
 
-extension ObjectId: CustomStringConvertible {
+extension ObjectId: LosslessStringConvertible {
     public var description: String {
         return self.hexString
     }

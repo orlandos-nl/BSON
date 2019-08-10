@@ -1,6 +1,53 @@
 import Foundation
 
-public struct AnyPrimitive: PrimitiveConvertible, Encodable {
+public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable {
+    public static func == (lhs: AnyPrimitive, rhs: AnyPrimitive) -> Bool {
+        return lhs.primitive.equals(rhs.primitive)
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        switch primitive {
+        case let value as Double:
+            value.hash(into: &hasher)
+        case let value as String:
+            value.hash(into: &hasher)
+        case let value as Document:
+            value.hash(into: &hasher)
+        case let value as Binary:
+            value.hash(into: &hasher)
+        case let value as ObjectIdentifier:
+            value.hash(into: &hasher)
+        case let value as Bool:
+            value.hash(into: &hasher)
+        case let value as Date:
+            value.hash(into: &hasher)
+        case let value as Int32:
+            value.hash(into: &hasher)
+        case let value as _BSON64BitInteger:
+            value.hash(into: &hasher)
+        case let value as Timestamp:
+            value.hash(into: &hasher)
+        case let value as Decimal128:
+            value.hash(into: &hasher)
+        case is Null:
+            ObjectIdentifier(Null.self).hash(into: &hasher)
+        case is MaxKey:
+            ObjectIdentifier(MaxKey.self).hash(into: &hasher)
+        case is MinKey:
+            ObjectIdentifier(MinKey.self).hash(into: &hasher)
+        case let value as RegularExpression:
+            value.hash(into: &hasher)
+        case let value as JavaScriptCode:
+            value.hash(into: &hasher)
+        case let value as JavaScriptCodeWithScope:
+            value.hash(into: &hasher)
+        case let value as BSONDataType:
+            AnyPrimitive(value.primitive).hash(into: &hasher)
+        default:
+            fatalError("Invalid primitive")
+        }
+    }
+    
     private let primitive: Primitive
     
     public init(_ primitive: Primitive) {

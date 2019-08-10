@@ -1,4 +1,4 @@
-public struct JavaScriptCode: Primitive, ExpressibleByStringLiteral {
+public struct JavaScriptCode: Primitive, ExpressibleByStringLiteral, Hashable {
     public var code: String
     
     public init(_ code: String) {
@@ -10,7 +10,7 @@ public struct JavaScriptCode: Primitive, ExpressibleByStringLiteral {
     }
 }
 
-public struct JavaScriptCodeWithScope: Primitive {
+public struct JavaScriptCodeWithScope: Primitive, Hashable {
     public var code: String
     public var scope: Document
     

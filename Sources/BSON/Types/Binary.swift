@@ -1,7 +1,18 @@
 import Foundation
 import NIO
 
-public struct Binary: Primitive {
+public struct Binary: Primitive, Hashable {
+    public static func == (lhs: Binary, rhs: Binary) -> Bool {
+        return lhs.subType.identifier == rhs.subType.identifier && lhs.storage == rhs.storage
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        subType.identifier.hash(into: &hasher)
+        storage.withUnsafeReadableBytes { buffer in
+            hasher.combine(bytes: buffer)
+        }
+    }
+    
     public enum SubType {
         case generic
         case function
