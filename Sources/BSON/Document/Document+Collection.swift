@@ -1,6 +1,6 @@
 extension Document: RandomAccessCollection {
     public subscript(position: DocumentIndex) -> (String, Primitive) {
-        var offset = 0
+        var offset = 4
         for _ in 0..<position.offset {
             guard self.skipKeyValuePair(at: &offset) else {
                 fatalError("DocumentIndex exceeded Document bounds")
