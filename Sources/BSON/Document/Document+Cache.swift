@@ -36,11 +36,11 @@ extension Document {
                 return nil
             }
             
-            guard let optionsEndOffset = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset + patternEndOffset) else {
+            guard let optionsEndOffset = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset + patternEndOffset + 1) else {
                 return nil
             }
             
-            return patternEndOffset + optionsEndOffset
+            return patternEndOffset + 1 + optionsEndOffset + 1
         case .int32:
             return 4
         case .decimal128:

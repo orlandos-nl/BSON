@@ -343,10 +343,16 @@ final class BSONPublicTests: XCTestCase {
 
     func testDocumentCollectionFunctionality() {
         var document = kittenDocument
+
+        assertValid(document)
+        XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, "foo")
+        assertValid(document)
+        XCTAssertEqual(document["stringTest"] as? String, nil)
+        XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, nil)
+        assertValid(document)
         
-        let keys = [
+        let keys: Set<String> = [
             "doubleTest",
-            "stringTest",
             "documentTest",
             "nonRandomObjectId",
             "currentTime",
@@ -364,17 +370,8 @@ final class BSONPublicTests: XCTestCase {
             "maxKey",
         ]
 
+        XCTAssertEqual(Set(document.keys), keys)
         assertValid(document)
-        XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, "foo")
-        assertValid(document)
-        XCTAssertEqual(document["stringTest"] as? String, nil)
-        XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, nil)
-        assertValid(document)
-
-        XCTAssertEqual(document.keys, keys)
-        assertValid(document)
-
-        XCTAssertEqual(document.keys.sorted(), keys.sorted())
     }
 
     func testObjectIdUniqueness() {

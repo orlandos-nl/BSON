@@ -74,7 +74,7 @@ extension Document {
                 return false
             }
 
-            currentIndex += length
+            currentIndex += length + 1
             return true
         }
         
