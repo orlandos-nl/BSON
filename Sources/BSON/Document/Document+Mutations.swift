@@ -111,14 +111,6 @@ extension Document {
         return key == storage.getString(at: index, length: length)
     }
 
-    func key(at index: Int) -> String? {
-        guard let length = storage.getInteger(at: index, endianness: .little, as: Int32.self), length > 0 else {
-            return nil
-        }
-
-        return storage.getString(at: index + 4, length: Int(length - 1))
-    }
-
     func value(forType type: TypeIdentifier, at offset: Int) -> Primitive? {
         switch type {
         case .double:

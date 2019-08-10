@@ -8,11 +8,15 @@ extension Document: RandomAccessCollection {
         }
         
         let type = typeIdentifier(at: offset)!
+        offset += 1
+        
+        let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index)!
+        let key = storage.getString(at: index, length: length)!
+        offset += length + 1
+        
+        let value = self.value(forType: type, at: offset)!
 
-        return (
-            key(at: offset)!,
-            value(forType: type, at: offset)!
-        )
+        return (key, value)
     }
     
     public typealias Iterator = DocumentIterator
