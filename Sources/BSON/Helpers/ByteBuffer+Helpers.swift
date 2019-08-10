@@ -11,8 +11,8 @@ extension ByteBuffer {
 
     func getObjectId(at offset: Int) -> ObjectId? {
         guard
-            let timestamp = getInteger(at: 0, endianness: .little, as: UInt32.self),
-            let random = getInteger(at: 4, endianness: .little, as: UInt64.self)
+            let timestamp = getInteger(at: offset + 0, endianness: .big, as: UInt32.self),
+            let random = getInteger(at: offset + 4, endianness: .big, as: UInt64.self)
         else {
             return nil
         }

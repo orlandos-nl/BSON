@@ -173,6 +173,8 @@ extension Document {
                 guard buffer.getInteger(at: currentIndex, endianness: .little, as: UInt8.self) != nil else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
+                
+                currentIndex += 1
 
                 guard has(Int(numberOfBytes)) else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
@@ -207,10 +209,11 @@ extension Document {
                     return errorFound(reason: "Could not parse JavascriptCode string", key: key)
                 }
             case .javascriptWithScope:
-                guard buffer.getInteger(at: currentIndex, endianness: .little, as: Int32.self) != nil else {
+                guard let size = buffer.getInteger(at: currentIndex, endianness: .little, as: Int32.self) else {
                     return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
 
+                let finalOffset = currentIndex + Int(size)
                 currentIndex += 4
 
                 guard hasString() else {
@@ -222,6 +225,10 @@ extension Document {
                 
                 guard result.isValid else {
                     return result
+                }
+                
+                guard currentIndex == finalOffset else {
+                    return errorFound(reason: .notEnoughBytesForValue, key: key)
                 }
             case .int32:
                 guard has(4) else {

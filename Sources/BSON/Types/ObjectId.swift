@@ -56,8 +56,8 @@ public struct ObjectId {
         (_timestamp, _random) = storage.withUnsafeBytes { bytes in
             let address = bytes.baseAddress!
             
-            let timestamp = address.assumingMemoryBound(to: UInt32.self).pointee.littleEndian
-            let random = (address + 4).assumingMemoryBound(to: UInt64.self).pointee
+            let timestamp = address.assumingMemoryBound(to: UInt32.self).pointee.bigEndian
+            let random = (address + 4).assumingMemoryBound(to: UInt64.self).pointee.bigEndian
             
             return (timestamp, random)
         }
@@ -73,23 +73,27 @@ public struct ObjectId {
             data.append(radix16table[Int(byte % 16)])
         }
         
-        let timestamp = _timestamp.bigEndian
-        let random = _random.bigEndian
+        withUnsafeBytes(of: _timestamp.bigEndian) { buffer in
+            let buffer = buffer.bindMemory(to: UInt8.self)
+            
+            transform(buffer[0])
+            transform(buffer[1])
+            transform(buffer[2])
+            transform(buffer[3])
+        }
         
-        // TODO: Take endianness into account
-        transform(UInt8(truncatingIfNeeded: timestamp >> 24))
-        transform(UInt8(truncatingIfNeeded: timestamp >> 16))
-        transform(UInt8(truncatingIfNeeded: timestamp >> 8))
-        transform(UInt8(truncatingIfNeeded: timestamp))
-        
-        transform(UInt8(truncatingIfNeeded: random >> 56))
-        transform(UInt8(truncatingIfNeeded: random >> 48))
-        transform(UInt8(truncatingIfNeeded: random >> 40))
-        transform(UInt8(truncatingIfNeeded: random >> 32))
-        transform(UInt8(truncatingIfNeeded: random >> 24))
-        transform(UInt8(truncatingIfNeeded: random >> 16))
-        transform(UInt8(truncatingIfNeeded: random >> 8))
-        transform(UInt8(truncatingIfNeeded: random))
+        withUnsafeBytes(of: _random.bigEndian) { buffer in
+            let buffer = buffer.bindMemory(to: UInt8.self)
+            
+            transform(buffer[0])
+            transform(buffer[1])
+            transform(buffer[2])
+            transform(buffer[3])
+            transform(buffer[4])
+            transform(buffer[5])
+            transform(buffer[6])
+            transform(buffer[7])
+        }
         
         return String(data: data, encoding: .utf8)!
     }

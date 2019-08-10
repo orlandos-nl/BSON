@@ -104,8 +104,8 @@ extension Document: ExpressibleByDictionaryLiteral {
         // 0x06 is deprecated
         case let objectId as ObjectId: // 0x07
             writeKey(.objectId)
-            storage.writeInteger(objectId._timestamp, endianness: .little)
-            storage.writeInteger(objectId._random, endianness: .little)
+            storage.writeInteger(objectId._timestamp, endianness: .big)
+            storage.writeInteger(objectId._random, endianness: .big)
         case let bool as Bool: // 0x08
             writeKey(.boolean)
             let bool: UInt8 = bool ? 0x01 : 0x00
@@ -162,6 +162,7 @@ extension Document: ExpressibleByDictionaryLiteral {
             storage.writeInteger(Int32(primitiveLength), endianness: .little) // header
             storage.writeInteger(Int32(codeLength), endianness: .little) // string (code)
             storage.writeString(javascript.code)
+            storage.writeInteger(0, endianness: .little, as: UInt8.self)
             storage.writeBuffer(&scopeBuffer)
         case let bsonData as BSONDataType:
             self.appendValue(bsonData.primitive, forKey: key)

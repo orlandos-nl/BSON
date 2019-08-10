@@ -170,7 +170,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssert(binary.data == data)
     }
     
-    func testInitObjectIdFromStrig() throws {
+    func testInitObjectIdFromString() throws {
         for _ in 0..<1_000 {
             let id = ObjectId()
             let string = id.hexString
@@ -343,6 +343,26 @@ final class BSONPublicTests: XCTestCase {
 
     func testDocumentCollectionFunctionality() {
         var document = kittenDocument
+        
+        let keys = [
+            "doubleTest",
+            "stringTest",
+            "documentTest",
+            "nonRandomObjectId",
+            "currentTime",
+            "cool32bitNumber",
+            "cool64bitNumber",
+            "code",
+            "codeWithScope",
+            "nothing",
+            "data",
+            "boolFalse",
+            "boolTrue",
+            "timestamp",
+            "regex",
+            "minKey",
+            "maxKey",
+        ]
 
         assertValid(document)
         XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, "foo")
@@ -351,10 +371,10 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(document.removeValue(forKey: "stringTest") as? String, nil)
         assertValid(document)
 
-        XCTAssertEqual(document.keys, ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"])
+        XCTAssertEqual(document.keys, keys)
         assertValid(document)
 
-        XCTAssertEqual(document.keys.sorted(), ["doubleTest", "documentTest", "nonRandomObjectId", "currentTime", "cool32bitNumber", "cool64bitNumber", "code", "codeWithScope", "nothing", "data", "boolFalse", "boolTrue", "timestamp", "regex", "minKey", "maxKey"].sorted())
+        XCTAssertEqual(document.keys.sorted(), keys.sorted())
     }
 
     func testObjectIdUniqueness() {
