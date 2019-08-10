@@ -15,6 +15,8 @@ public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable {
             value.hash(into: &hasher)
         case let value as Binary:
             value.hash(into: &hasher)
+        case let value as ObjectId:
+            value.hash(into: &hasher)
         case let value as ObjectIdentifier:
             value.hash(into: &hasher)
         case let value as Bool:
