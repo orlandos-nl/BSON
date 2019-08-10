@@ -1,10 +1,17 @@
 extension Document: RandomAccessCollection {
     public subscript(position: DocumentIndex) -> (String, Primitive) {
-        let type = typeIdentifier(at: position.offset)!
+        var offset = 0
+        for _ in 0..<position.offset {
+            guard self.skipKeyValuePair(at: &offset) else {
+                fatalError("DocumentIndex exceeded Document bounds")
+            }
+        }
+        
+        let type = typeIdentifier(at: offset)!
 
         return (
-            key(at: position.offset)!,
-            value(forType: type, at: position.offset)!
+            key(at: offset)!,
+            value(forType: type, at: offset)!
         )
     }
     
