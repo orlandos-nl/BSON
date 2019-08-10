@@ -1,4 +1,4 @@
-public struct DocumentSlice: BidirectionalCollection {
+public struct DocumentSlice: RandomAccessCollection {
     public func index(before i: DocumentIndex) -> DocumentIndex {
         return DocumentIndex(offset: i.offset - 1)
     }

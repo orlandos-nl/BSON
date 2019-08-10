@@ -1,4 +1,4 @@
-extension Document: BidirectionalCollection {
+extension Document: RandomAccessCollection {
     public subscript(position: DocumentIndex) -> (String, Primitive) {
         let type = typeIdentifier(at: position.offset)!
 
