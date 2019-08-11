@@ -19,7 +19,7 @@ extension Document: Equatable {
                 guard
                     let lhsValue = lhs[key],
                     let rhsValue = rhs[key],
-                    lhsValue == rhsValue
+                    lhsValue.equals(rhsValue)
                 else {
                     return false
                 }
@@ -67,21 +67,12 @@ extension Primitive {
             return lhs == rhs
         case (let lhs as JavaScriptCodeWithScope, let rhs as JavaScriptCodeWithScope):
             return lhs == rhs
-        case (let lhs as BSONDataType, let rhs as BSONDataType):
-            return lhs == rhs
         default:
             return false
         }
     }
 }
 
-internal func ==(lhs: Primitive, rhs: Primitive) -> Bool {
-    return lhs.equals(rhs)
-}
-
-internal func !=(lhs: Primitive, rhs: Primitive) -> Bool {
-    return !lhs.equals(rhs)
-}
 
 extension Document: Hashable {
     public func hash(into hasher: inout Hasher) {
