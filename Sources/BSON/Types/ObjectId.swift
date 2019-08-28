@@ -74,31 +74,26 @@ public struct ObjectId {
         var data = Data()
         data.reserveCapacity(24)
         
-        func transform(_ byte: UInt8) {
-            data.append(radix16table[Int(byte / 16)])
-            data.append(radix16table[Int(byte % 16)])
-        }
-        
         withUnsafeBytes(of: _timestamp.bigEndian) { buffer in
             let buffer = buffer.bindMemory(to: UInt8.self)
             
-            transform(buffer[0])
-            transform(buffer[1])
-            transform(buffer[2])
-            transform(buffer[3])
+            data.appendHexCharacters(of: buffer[0])
+            data.appendHexCharacters(of: buffer[1])
+            data.appendHexCharacters(of: buffer[2])
+            data.appendHexCharacters(of: buffer[3])
         }
         
         withUnsafeBytes(of: _random.bigEndian) { buffer in
             let buffer = buffer.bindMemory(to: UInt8.self)
             
-            transform(buffer[0])
-            transform(buffer[1])
-            transform(buffer[2])
-            transform(buffer[3])
-            transform(buffer[4])
-            transform(buffer[5])
-            transform(buffer[6])
-            transform(buffer[7])
+            data.appendHexCharacters(of: buffer[0])
+            data.appendHexCharacters(of: buffer[1])
+            data.appendHexCharacters(of: buffer[2])
+            data.appendHexCharacters(of: buffer[3])
+            data.appendHexCharacters(of: buffer[4])
+            data.appendHexCharacters(of: buffer[5])
+            data.appendHexCharacters(of: buffer[6])
+            data.appendHexCharacters(of: buffer[7])
         }
         
         return String(data: data, encoding: .utf8)!
@@ -135,8 +130,6 @@ extension ObjectId: LosslessStringConvertible {
     }
 }
 
-fileprivate let radix16table: [UInt8] = [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66]
-
 fileprivate extension Int8 {
     func hexDecoded() -> Int8? {
         let byte: Int8
@@ -171,12 +164,12 @@ fileprivate extension Int8 {
 
 fileprivate extension Data {
     mutating func appendHexCharacters(of byte: UInt8) {
-        append((byte & 0b00001111).singleHexCharacter)
         append((byte >> 4).singleHexCharacter)
+        append((byte & 0b00001111).singleHexCharacter)
     }
 }
 
-extension UInt8 {
+fileprivate extension UInt8 {
     var singleHexCharacter: UInt8 {
         switch self {
         case 0b00000000: return 0x30
