@@ -9,7 +9,7 @@
 import NIO
 import Foundation
 import XCTest
-@testable import BSON
+import BSON
 
 #if os(Linux)
     import Glibc
@@ -265,15 +265,15 @@ final class BSONPublicTests: XCTestCase {
         assertValid(document)
         document["_id"] = "123"
         assertValid(document)
-        XCTAssertEqual(document["_id", as: String.self], "123")
+        XCTAssertEqual(document["_id"] as? String, "123")
         XCTAssert(document.keys.contains("_id"))
         document["_id"] = nil
         assertValid(document)
-        XCTAssertEqual(document["_id", as: String.self], nil)
+        XCTAssertEqual(document["_id"] as? String, nil)
         XCTAssertFalse(document.keys.contains("_id"))
         document["_id"] = "456"
         assertValid(document)
-        XCTAssertEqual(document["_id", as: String.self], "456")
+        XCTAssertEqual(document["_id"] as? String, "456")
         XCTAssert(document.keys.contains("_id"))
         document["anykey"] = "anyvalue"
         assertValid(document)
@@ -294,10 +294,10 @@ final class BSONPublicTests: XCTestCase {
         var document3 = Document()
         document3["_id"] = "123"
         assertValid(document3)
-        XCTAssertEqual(document3["_id", as: String.self], "123")
+        XCTAssertEqual(document3["_id"] as? String, "123")
         document2["anykey"] = nil
         assertValid(document3)
-        XCTAssertEqual(document3["_id", as: String.self], "123")
+        XCTAssertEqual(document3["_id"] as? String, "123")
         XCTAssert(document.keys.contains("anykey"))
     }
 

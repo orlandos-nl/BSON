@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import BSON
+import BSON
 
 final class BSONCorpusTests: XCTestCase {
     func testTopLevel() {

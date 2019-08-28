@@ -31,22 +31,28 @@ public struct ObjectId {
 
     /// Decodes the ObjectID from the provided (24 character) hexString
     public init?(_ hex: String) {
-        guard hex.count == 24 else {
+        var storage = Data()
+        storage.reserveCapacity(12)
+        
+        let cString = hex.utf8CString
+        
+        // 24 characters + 1 null terminator
+        guard cString.count == 25 else {
             return nil
         }
         
-        var storage = ContiguousArray<UInt8>()
-        storage.reserveCapacity(12)
-        
-        var gen = hex.makeIterator()
-        while let c1 = gen.next(), let c2 = gen.next() {
-            let s = String([c1, c2])
-            
-            guard let d = UInt8(s, radix: 16) else {
-                break
+        var i = 0
+        while i < 23 {
+            guard
+                let c1 = cString[i].hexDecoded(),
+                let c2 = cString[i &+ 1].hexDecoded()
+            else {
+                return nil
             }
             
-            storage.append(d)
+            i = i &+ 2
+            
+            storage.append(UInt8(bitPattern: c1 << 4) | UInt8(bitPattern: c2))
         }
         
         guard storage.count == 12 else {
@@ -130,3 +136,67 @@ extension ObjectId: LosslessStringConvertible {
 }
 
 fileprivate let radix16table: [UInt8] = [0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66]
+
+fileprivate extension Int8 {
+    func hexDecoded() -> Int8? {
+        let byte: Int8
+        
+        if self >= 0x61 {
+            byte = self - 0x20
+        } else {
+            byte = self
+        }
+        
+        switch byte {
+        case 0x30: return 0b00000000
+        case 0x31: return 0b00000001
+        case 0x32: return 0b00000010
+        case 0x33: return 0b00000011
+        case 0x34: return 0b00000100
+        case 0x35: return 0b00000101
+        case 0x36: return 0b00000110
+        case 0x37: return 0b00000111
+        case 0x38: return 0b00001000
+        case 0x39: return 0b00001001
+        case 0x41: return 0b00001010
+        case 0x42: return 0b00001011
+        case 0x43: return 0b00001100
+        case 0x44: return 0b00001101
+        case 0x45: return 0b00001110
+        case 0x46: return 0b00001111
+        default: return nil
+        }
+    }
+}
+
+fileprivate extension Data {
+    mutating func appendHexCharacters(of byte: UInt8) {
+        append((byte & 0b00001111).singleHexCharacter)
+        append((byte >> 4).singleHexCharacter)
+    }
+}
+
+extension UInt8 {
+    var singleHexCharacter: UInt8 {
+        switch self {
+        case 0b00000000: return 0x30
+        case 0b00000001: return 0x31
+        case 0b00000010: return 0x32
+        case 0b00000011: return 0x33
+        case 0b00000100: return 0x34
+        case 0b00000101: return 0x35
+        case 0b00000110: return 0x36
+        case 0b00000111: return 0x37
+        case 0b00001000: return 0x38
+        case 0b00001001: return 0x39
+        case 0b00001010: return 0x61
+        case 0b00001011: return 0x62
+        case 0b00001100: return 0x63
+        case 0b00001101: return 0x64
+        case 0b00001110: return 0x65
+        case 0b00001111: return 0x66
+        default:
+            fatalError("Invalid 4 bits provided")
+        }
+    }
+}
