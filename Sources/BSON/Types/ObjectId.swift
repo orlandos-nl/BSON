@@ -31,8 +31,10 @@ public struct ObjectId {
 
     /// Decodes the ObjectID from the provided (24 character) hexString
     public init?(_ hex: String) {
-        var storage = Data()
-        storage.reserveCapacity(12)
+        let storage = UnsafeMutablePointer<UInt8>.allocate(capacity: 12)
+        defer {
+            storage.deallocate()
+        }
         
         let cString = hex.utf8CString
         
@@ -41,32 +43,24 @@ public struct ObjectId {
             return nil
         }
         
-        var i = 0
-        while i < 23 {
+        var input = 0
+        var output = 0
+        while input < 23 {
             guard
-                let c1 = cString[i].hexDecoded(),
-                let c2 = cString[i &+ 1].hexDecoded()
+                let c1 = cString[input].hexDecoded(),
+                let c2 = cString[input &+ 1].hexDecoded()
             else {
                 return nil
             }
             
-            i = i &+ 2
+            storage[output] = UInt8(bitPattern: c1 << 4) | UInt8(bitPattern: c2)
             
-            storage.append(UInt8(bitPattern: c1 << 4) | UInt8(bitPattern: c2))
+            input = input &+ 2
+            output = output &+ 1
         }
         
-        guard storage.count == 12 else {
-            return nil
-        }
-        
-        (_timestamp, _random) = storage.withUnsafeBytes { bytes in
-            let address = bytes.baseAddress!
-            
-            let timestamp = address.assumingMemoryBound(to: UInt32.self).pointee.bigEndian
-            let random = (address + 4).assumingMemoryBound(to: UInt64.self).pointee.bigEndian
-            
-            return (timestamp, random)
-        }
+        _timestamp = storage.withMemoryRebound(to: UInt32.self, capacity: 1) { $0.pointee.bigEndian }
+        _random = storage.advanced(by: 4).withMemoryRebound(to: UInt64.self, capacity: 1) { $0.pointee.bigEndian }
     }
     
     /// The 12 bytes represented as 24-character hex-string
@@ -107,7 +101,7 @@ public struct ObjectId {
 
 extension ObjectId: Hashable, Comparable {
     public static func ==(lhs: ObjectId, rhs: ObjectId) -> Bool {
-        return lhs._random == rhs._random && lhs._timestamp == rhs._timestamp 
+        return lhs._random == rhs._random && lhs._timestamp == rhs._timestamp
     }
     
     public static func <(lhs: ObjectId, rhs: ObjectId) -> Bool {
