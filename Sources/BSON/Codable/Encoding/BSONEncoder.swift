@@ -24,11 +24,11 @@ public final class BSONEncoder {
 
         try value.encode(to: encoder)
 
-        guard encoder.target == .document else {
+        guard encoder.target == .document, let document = encoder.document else {
             throw BSONEncoderError.encodableNotDocument
         }
 
-        return encoder.document
+        return document
     }
 
     /// Returns the BSON-encoded representation of the value you supply
@@ -72,13 +72,13 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     var target: Target?
-    var document: Document! {
+    var document: Document? {
         didSet {
             writer?(document)
         }
     }
 
-    var primitive: Primitive! {
+    var primitive: Primitive? {
         didSet {
             writer?(primitive)
         }
@@ -90,7 +90,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
 
     var codingPath: [CodingKey]
 
-    var writer: ((Primitive) -> ())?
+    var writer: ((Primitive?) -> ())?
     var userInfo: [CodingUserInfoKey: Any]
 
     // MARK: Initialization
@@ -140,10 +140,10 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
 
     subscript(key: CodingKey) -> Primitive? {
         get {
-            return self.document[converted(key.stringValue)]
+            return self.document?[converted(key.stringValue)]
         }
         set {
-            self.document[converted(key.stringValue)] = newValue
+            self.document?[converted(key.stringValue)] = newValue
         }
     }
 
@@ -185,8 +185,8 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             userInfo: userInfo
         )
 
-        encoder.writer = { primitive in
-            self[key] = primitive
+        encoder.writer = { [weak self] primitive in
+            self?[key] = primitive
         }
 
         return encoder
@@ -207,7 +207,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
     mutating func encodeNil(forKey key: Key) throws {
         switch encoder.strategies.keyedNilEncodingStrategy {
         case .null:
-            encoder.document[encoder.converted(key.stringValue)] = BSON.Null()
+            encoder.document?[encoder.converted(key.stringValue)] = BSON.Null()
         case .omitted:
             return
         }
@@ -301,7 +301,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
 fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
 
     var count: Int {
-        return encoder.document.count
+        return encoder.document?.count ?? 0
     }
 
     var encoder: _BSONEncoder
@@ -318,69 +318,69 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     // MARK: UnkeyedEncodingContainerProtocol
 
     mutating func encodeNil() throws {
-        encoder.document.append(BSON.Null())
+        encoder.document?.append(BSON.Null())
     }
 
     mutating func encode(_ value: Bool) throws {
-        encoder.document.append(value)
+        encoder.document?.append(value)
     }
 
     mutating func encode(_ value: String) throws {
-        encoder.document.append(value)
+        encoder.document?.append(value)
     }
 
     mutating func encode(_ value: Double) throws {
-        encoder.document.append(value)
+        encoder.document?.append(value)
     }
 
     mutating func encode(_ value: Float) throws {
-        encoder.document.append(Double(value))
+        encoder.document?.append(Double(value))
     }
 
     mutating func encode(_ value: Int) throws {
-        encoder.document.append(_BSON64BitInteger(value))
+        encoder.document?.append(_BSON64BitInteger(value))
     }
 
     mutating func encode(_ value: Int8) throws {
-        encoder.document.append(Int32(value))
+        encoder.document?.append(Int32(value))
     }
 
     mutating func encode(_ value: Int16) throws {
-        encoder.document.append(Int32(value))
+        encoder.document?.append(Int32(value))
     }
 
     mutating func encode(_ value: Int32) throws {
-        encoder.document.append(value)
+        encoder.document?.append(value)
     }
 
     mutating func encode(_ value: Int64) throws {
-        encoder.document.append(_BSON64BitInteger(value))
+        encoder.document?.append(_BSON64BitInteger(value))
     }
 
     mutating func encode(_ value: UInt) throws {
-        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document?.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt8) throws {
-        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document?.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt16) throws {
-        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document?.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt32) throws {
-        encoder.document.append(try encoder.makePrimitive(UInt64(value)))
+        encoder.document?.append(try encoder.makePrimitive(UInt64(value)))
     }
 
     mutating func encode(_ value: UInt64) throws {
-        encoder.document.append(try encoder.makePrimitive(value))
+        encoder.document?.append(try encoder.makePrimitive(value))
     }
 
     mutating func encode<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let primitive as Primitive:
-            encoder.document.append(primitive)
+            encoder.document?.append(primitive)
         default:
             let nestedEncoder = makeNestedEncoder()
             try value.encode(to: nestedEncoder)
@@ -388,7 +388,7 @@ fileprivate struct _BSONUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     }
 
     func makeNestedEncoder() -> _BSONEncoder {
-        let index = encoder.document.count
+        let index = encoder.document?.count ?? 0
         return encoder.nestedEncoder(forKey: BSONKey(stringValue: "\(index)", intValue: index))
     }
 
@@ -415,7 +415,7 @@ fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContain
     }
 
     mutating func encodeNil() throws {
-        encoder.primitive = Null()
+        encoder.primitive = nil
     }
 
     mutating func encode(_ value: Bool) throws {
