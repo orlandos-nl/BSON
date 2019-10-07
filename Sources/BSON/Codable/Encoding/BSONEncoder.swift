@@ -415,7 +415,7 @@ fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContain
     }
 
     mutating func encodeNil() throws {
-        encoder.primitive = nil
+        encoder.primitive = Null()
     }
 
     mutating func encode(_ value: Bool) throws {
