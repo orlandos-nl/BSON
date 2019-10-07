@@ -35,8 +35,12 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
         self.iterator = document.pairs
     }
     
-    func decodeNil() -> Bool {
-        if case .nothing = self.decoder.wrapped {
+    mutating func decodeNil() -> Bool {
+        guard let pair = self.iterator.next() else {
+            return false
+        }
+        
+        if pair.value is Null {
             return true
         }
         

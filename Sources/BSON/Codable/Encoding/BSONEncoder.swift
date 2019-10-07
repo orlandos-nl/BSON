@@ -486,5 +486,4 @@ fileprivate struct _BSONSingleValueEncodingContainer: SingleValueEncodingContain
             try value.encode(to: encoder)
         }
     }
-
 }

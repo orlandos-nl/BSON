@@ -24,11 +24,15 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     }
     
     func contains(_ key: K) -> Bool {
-        return self.document.keys.contains(decoder.converted(key.stringValue))
+        if let value = self.document[decoder.converted(key.stringValue)], !(value is Null) {
+            return true
+        } else {
+            return false
+        }
     }
     
     func decodeNil(forKey key: K) throws -> Bool {
-        return (self.contains(key) && self.document.typeIdentifier(of: decoder.converted(key.stringValue)) == .null)
+        return !self.contains(key)
     }
     
     func decode(_ type: Bool.Type, forKey key: K) throws -> Bool {

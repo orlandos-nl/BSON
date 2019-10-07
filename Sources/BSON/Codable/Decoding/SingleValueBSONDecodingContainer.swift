@@ -57,11 +57,11 @@ internal struct SingleValueBSONDecodingContainer: SingleValueDecodingContainer, 
     }
     
     func decodeNil() -> Bool {
-        if case .nothing = self.decoder.wrapped {
-            return true
+        if let primitive = self.decoder.primitive, !(primitive is Null) {
+            return false
         }
         
-        return false
+        return true
     }
     
     func decode(_ type: Bool.Type) throws -> Bool {
