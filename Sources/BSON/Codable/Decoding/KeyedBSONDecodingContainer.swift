@@ -153,18 +153,9 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
             return instance
         } else if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.document[key]) as! T
+        } else if let value = value as? T {
+            return value
         } else {
-            guard
-                let value = self.document[key]
-            else {
-                throw BSONValueNotFound(type: T.self, path: path(forKey: codingKey))
-            }
-            
-            // Decoding strategy for Primitives, like Date
-            if let value = value as? T {
-                return value
-            }
-            
             let decoderValue: DecoderValue
             if let document = value as? Document {
                 decoderValue = .document(document)
