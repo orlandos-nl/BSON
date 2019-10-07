@@ -261,7 +261,7 @@ extension BSONDecoder {
 }
 
 internal enum DecoderValue {
-    case primitive(Primitive)
+    case primitive(Primitive?)
     case nothing
     case document(Document)
     
@@ -355,11 +355,11 @@ internal struct _BSONDecoder: Decoder {
     }
     
     func lossyDecodeString(path: @autoclosure () -> [String]) throws -> String {
-        guard case .primitive(let value) = wrapped else {
+        guard case .primitive(let value) = wrapped, let unwrappedPrimitive = value else {
             throw BSONValueNotFound(type: String.self, path: path())
         }
         
-        return try self.lossyDecodeString(value: value)
+        return try self.lossyDecodeString(value: unwrappedPrimitive)
     }
     
     func lossyDecodeString(value: Primitive) throws -> String {
