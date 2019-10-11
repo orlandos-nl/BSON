@@ -1,3 +1,5 @@
+import Foundation
+
 internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     var codingPath: [CodingKey]
     
@@ -100,11 +102,19 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     }
     
     mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        if let type = T.self as? BSONDataType.Type {
+        if type is Primitive.Type {
+            let element = try self.nextElement().primitive
+            
+            if let value = element as? T {
+                return value
+            } else {
+                throw BSONTypeConversionError(from: element, to: type)
+            }
+        } else if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.nextElement().primitive) as! T
         } else {
             let decoder = try _BSONDecoder(wrapped: self.nextElement(), settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)
-            return try T.init(from: decoder)
+            return try type.init(from: decoder)
         }
     }
     
