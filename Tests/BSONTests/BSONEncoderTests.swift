@@ -18,6 +18,11 @@ class BSONEncoderTests: XCTestCase {
         XCTAssertEqual(user.username, copy.username)
         XCTAssertEqual(user.data, copy.data)
     }
+    
+    func testEncodeBSONNull() throws {
+        let string = try String(data: JSONEncoder().encode(Null()), encoding: .utf8)
+        XCTAssertEqual(string, "null")
+    }
 
     func testEncodeDocument() throws {
 //        for _ in 0..<1000 {
