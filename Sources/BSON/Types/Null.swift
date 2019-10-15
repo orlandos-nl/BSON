@@ -3,6 +3,16 @@ public struct Null: Primitive {
     /// Creates a new `Null`
     public init() {}
     
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        
+        if var container = container as? AnySingleValueBSONEncodingContainer {
+            try container.encode(primitive: self)
+        } else {
+            try container.encodeNil()
+        }
+    }
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
