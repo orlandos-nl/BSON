@@ -7,15 +7,16 @@ extension Document: Equatable {
         }
         
         if lhs.isArray {
-            return lhs.makeData() == rhs.makeData()
-        } else {
-            let lhsKeys = lhs.keys
+            let lhsBuffer = lhs.makeByteBuffer()
+            let rhsBuffer = lhs.makeByteBuffer()
             
-            if lhsKeys != rhs.keys {
+            return lhsBuffer == rhsBuffer
+        } else {
+            if lhs.count != rhs.count {
                 return false
             }
             
-            for key in lhsKeys {
+            for key in lhs.keys {
                 guard
                     let lhsValue = lhs[key],
                     let rhsValue = rhs[key],
