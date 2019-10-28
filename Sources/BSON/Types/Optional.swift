@@ -9,4 +9,15 @@ extension Optional where Wrapped == Primitive {
             self = document
         }
     }
+    
+    public subscript(index: Int) -> Primitive {
+        get {
+            return (self as! Document)[index]
+        }
+        set {
+            var document = self as! Document
+            document[index] = newValue
+            self = document
+        }
+    }
 }

@@ -115,6 +115,28 @@ final class BSONPublicTests: XCTestCase {
         assertValid(doc)
         XCTAssertEqual(doc["a"]["foo"] as? String, "bar")
     }
+    
+    func testExpandSubarray() {
+        let s = String(repeating: "sdasfgnsdkjfls;akdflnbkjfajd;sflklnbfsadkmlv", count: 100)
+        var doc = Document()
+        var array: Document = []
+        array.append("")
+        array.append("")
+        array.append("")
+        array.append("")
+        array.append("")
+        array.append("")
+        array.append("")
+        doc["arr"] = array
+        array[1] = s
+        doc["arr"] = array
+        array.append("String")
+        doc["arr"] = array
+        
+        XCTAssert(doc.validate().isValid)
+        XCTAssert(array.validate().isValid)
+        XCTAssertEqual((doc["arr"] as! Document)[1] as? String, s)
+    }
 
     func testperf() throws {
         for _ in 0..<10_000 {
