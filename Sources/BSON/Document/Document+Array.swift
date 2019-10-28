@@ -93,6 +93,11 @@ extension Document: ExpressibleByArrayLiteral {
                 let newValueEnd = valueOffset + newValueLength
                 let diff = oldValueLength - newValueLength
                 storage.moveWriterIndex(to: storage.readableBytes - diff)
+                
+                if oldValueLength < newValueLength {
+                    storage.reserveCapacity(storage.writerIndex + -diff)
+                }
+                
                 self.usedCapacity -= Int32(diff)
                 
                 moveBytes(
