@@ -92,12 +92,12 @@ extension Document: ExpressibleByArrayLiteral {
                 
                 let newValueEnd = valueOffset + newValueLength
                 let diff = oldValueLength - newValueLength
-                storage.moveWriterIndex(to: storage.readableBytes - diff)
                 
                 if oldValueLength < newValueLength {
                     storage.writeBytes(ContiguousArray<UInt8>(repeating: 0x00, count: -diff))
                 }
                 
+                storage.moveWriterIndex(to: storage.readableBytes - diff)
                 self.usedCapacity -= Int32(diff)
                 
                 moveBytes(
