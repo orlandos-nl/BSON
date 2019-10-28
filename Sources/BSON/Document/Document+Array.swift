@@ -109,7 +109,7 @@ extension Document: ExpressibleByArrayLiteral {
             case let string as String: // 0x0
                 let stringUtf8Length = string.utf8.count
                 reserveRoom(.string, 4 + stringUtf8Length + 1)
-                storage.setInteger(Int32(stringUtf8Length), at: valueOffset, endianness: .little)
+                storage.setInteger(Int32(stringUtf8Length + 1), at: valueOffset, endianness: .little)
                 storage.setString(string, at: valueOffset + 4)
                 storage.setInteger(0, at: valueOffset + 4 + stringUtf8Length, endianness: .little, as: UInt8.self)
             case let document as Document: // 0x03 (embedded document) or 0x04 (array)
