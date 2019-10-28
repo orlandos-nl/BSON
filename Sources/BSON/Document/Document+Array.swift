@@ -95,7 +95,7 @@ extension Document: ExpressibleByArrayLiteral {
                 storage.moveWriterIndex(to: storage.readableBytes - diff)
                 
                 if oldValueLength < newValueLength {
-                    storage.reserveCapacity(storage.writerIndex + -diff)
+                    storage.writeBytes(ContiguousArray<UInt8>(repeating: 0x00, count: -diff))
                 }
                 
                 self.usedCapacity -= Int32(diff)
