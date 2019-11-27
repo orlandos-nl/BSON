@@ -124,6 +124,12 @@ extension ObjectId: LosslessStringConvertible {
     }
 }
 
+extension ObjectId: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        self.hexString
+    }
+}
+
 fileprivate extension Int8 {
     func hexDecoded() -> Int8? {
         let byte: Int8
