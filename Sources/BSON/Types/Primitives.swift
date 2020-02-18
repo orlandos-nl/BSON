@@ -120,6 +120,16 @@ fileprivate struct CustomKey: CodingKey {
     }
 }
 
+extension Date: BSONDataType {
+    init(primitive: Primitive?) throws {
+        guard let value = primitive as? Date else {
+            throw BSONTypeConversionError(from: type(of: primitive), to: Date.self)
+        }
+        
+        self = value
+    }
+}
+
 extension ObjectId: Primitive {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
