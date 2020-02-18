@@ -2,6 +2,7 @@ import Foundation
 import BSON
 import XCTest
 
+@available(iOS 10.0, *)
 class BSONEncoderTests: XCTestCase {
     func testData() throws {
         struct User: Codable {
@@ -87,12 +88,14 @@ class BSONEncoderTests: XCTestCase {
 
     @available(OSX 10.12, *)
     func testEncoding() throws {
+        @available(iOS 10.0, *)
         struct Cat : Encodable {
             var _id = ObjectId()
             var name = "Fred"
             var sample: Float = 5.0
 
             #if !os(Linux)
+            @available(iOS 10.0, *)
             struct Tail : Encodable {
                 var length = Measurement(value: 30, unit: UnitLength.centimeters)
             }

@@ -246,6 +246,42 @@ extension Document: ExpressibleByArrayLiteral {
         appendValue(value, forKey: key)
     }
     
+    /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
+    public mutating func insert(contentsOf document: Document, at index: Int) {
+        Swift.assert(index <= count, "Value inserted at \(index) exceeds current count of \(count)")
+        
+        var document = Document(isArray: true)
+        
+        for i in 0..<self.count {
+            if i == index {
+                for value in document.values {
+                    document.append(value)
+                }
+            }
+            
+            document.append(self[i])
+        }
+        
+        self = document
+    }
+    
+    /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
+    public mutating func insert(_ value: Primitive, at index: Int) {
+        Swift.assert(index <= count, "Value inserted at \(index) exceeds current count of \(count)")
+        
+        var document = Document(isArray: true)
+        
+        for i in 0..<self.count {
+            if i == index {
+                document.append(value)
+            }
+            
+            document.append(self[i])
+        }
+        
+        self = document
+    }
+    
     public init(arrayLiteral elements: PrimitiveConvertible...) {
         self.init(array: elements.compactMap { $0.makePrimitive() } )
     }

@@ -168,6 +168,29 @@ final class BSONPublicTests: XCTestCase {
         }
     }
     
+    func testContainsKey() {
+        var doc = Document()
+        doc["_id"] = ObjectId()
+        
+        XCTAssertTrue(doc.containsKey("_id"))
+        XCTAssertFalse(doc.containsKey("_Id"))
+        XCTAssertFalse(doc.containsKey("id"))
+    }
+    
+    func testInsert() {
+        var doc = Document()
+        doc["name"] = "Joannis"
+        
+        doc.insert(ObjectId(), forKey: "_id", at: 0)
+        XCTAssertEqual(doc.keys, ["_id", "name"])
+        
+        doc.insert(ObjectId(), forKey: "parent", at: 1)
+        XCTAssertEqual(doc.keys, ["_id", "parent", "name"])
+        
+        doc.insert(ObjectId(), forKey: "parent2", at: 3)
+        XCTAssertEqual(doc.keys, ["_id", "parent", "name", "parent2"])
+    }
+    
     func testBinaryOverwrite() {
         struct User: Codable {
             let id = ObjectId()

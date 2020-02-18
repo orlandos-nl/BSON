@@ -37,6 +37,46 @@ extension Document: ExpressibleByDictionaryLiteral {
         return keys
     }
     
+    public func containsKey(_ key: String) -> Bool {
+        var index = 4
+        let keyLength = key.utf8.count
+
+        while index < storage.readableBytes {
+            guard
+                let typeNum = storage.getInteger(at: index, as: UInt8.self),
+                let type = TypeIdentifier(rawValue: typeNum)
+            else {
+                // If typeNum == 0, end of document
+                return false
+            }
+            
+            index += 1
+
+            guard
+                let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index)
+            else {
+                return false
+            }
+
+            if length == keyLength {
+                let isMatchingKey = storage.withUnsafeReadableBytes { pointer in
+                    memcmp(pointer.baseAddress! + index, key, length) == 0
+                }
+                
+                if isMatchingKey {
+                    return true
+                }
+            }
+            
+            index += length + 1 // including null terminator
+            guard skipValue(ofType: type, at: &index) else {
+                return false
+            }
+        }
+
+        return false
+    }
+    
     /// Tries to extract a value of type `P` from the value at key `key`
     internal subscript<P: Primitive>(key: String, as type: P.Type) -> P? {
         return self[key] as? P
@@ -57,6 +97,29 @@ extension Document: ExpressibleByDictionaryLiteral {
         for (key, value) in document {
             self.appendValue(value, forKey: key)
         }
+    }
+    
+    public mutating func insert(_ value: Primitive, forKey key: String, at index: Int) {
+        Swift.assert(index <= count, "Value inserted at \(index) exceeds current count of \(count)")
+        
+        var document = Document()
+        var pairs = self.pairs
+        var i = 0
+        
+        while let pair = pairs.next() {
+            if i == index {
+                document.appendValue(value, forKey: key)
+            }
+            
+            document.appendValue(pair.value, forKey: pair.key)
+            i += 1
+        }
+        
+        if index == i {
+            document.appendValue(value, forKey: key)
+        }
+        
+        self = document
     }
 
     public mutating func removeValue(forKey key: String) -> Primitive? {
