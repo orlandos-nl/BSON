@@ -37,6 +37,10 @@ public final class BSONEncoder {
     ///
     /// - The value fails to encode, or contains a nested value that fails to encode—this method throws the corresponding error.
     public func encodePrimitive(_ value: Encodable) throws -> Primitive? {
+        if let primitive = value as? Primitive {
+            return primitive
+        }
+        
         let encoder = _BSONEncoder(
             strategies: self.strategies,
             userInfo: self.userInfo

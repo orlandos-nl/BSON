@@ -137,6 +137,12 @@ final class BSONPublicTests: XCTestCase {
         XCTAssert(array.validate().isValid)
         XCTAssertEqual((doc["arr"] as! Document)[1] as? String, s)
     }
+    
+    func testEncodeSingleValue() throws {
+        let date = Date()
+        XCTAssertTrue(try BSONEncoder().encodePrimitive(date) is Date)
+        XCTAssertFalse(try BSONEncoder().encodePrimitive(date) is Double)
+    }
 
     func testperf() throws {
         for _ in 0..<10_000 {
