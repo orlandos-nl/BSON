@@ -143,6 +143,12 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertTrue(try BSONEncoder().encodePrimitive(date) is Date)
         XCTAssertFalse(try BSONEncoder().encodePrimitive(date) is Double)
     }
+    
+    func testDecodeSingleValue() throws {
+        let date = Date()
+        let sameDate = try BSONDecoder().decode(Date.self, fromPrimitive: date)
+        XCTAssertEqual(date, sameDate)
+    }
 
     func testperf() throws {
         for _ in 0..<10_000 {

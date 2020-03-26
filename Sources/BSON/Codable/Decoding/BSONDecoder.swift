@@ -250,6 +250,10 @@ extension BSONDecoderSettings.DoubleDecodingStrategy {
 
 extension BSONDecoder {
     public func decode<D: Decodable>(_ type: D.Type, fromPrimitive primitive: Primitive) throws -> D {
+        if let value = primitive as? D {
+            return value
+        }
+        
         let decoder = _BSONDecoder(wrapped: .primitive(primitive), settings: self.settings, codingPath: [], userInfo: self.userInfo)
         return try D(from: decoder)
     }
