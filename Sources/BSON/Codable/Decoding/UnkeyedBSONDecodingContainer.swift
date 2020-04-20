@@ -5,7 +5,7 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
         return self.values.count
     }
     
-    var isAtEnd: Bool { currentIndex >= values.count - 1 }
+    var isAtEnd: Bool { currentIndex >= values.count }
     
     var currentIndex: Int = 0
     let decoder: _BSONDecoder
