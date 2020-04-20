@@ -236,8 +236,9 @@ final class BSONPublicTests: XCTestCase {
             let string2 = id2.hexString
             let id3 = try ObjectId.make(from: string2)
             XCTAssertEqual(id, id3)
-            XCTAssertGreaterThanOrEqual(id3.date, Date().addingTimeInterval(-1))
-            XCTAssertLessThanOrEqual(id3.date, Date().addingTimeInterval(1))
+            // Apprantly -2 wasn't enough because my PC can sometimes be THAT slow
+            XCTAssertGreaterThanOrEqual(id3.date, Date().addingTimeInterval(-2))
+            XCTAssertLessThanOrEqual(id3.date, Date().addingTimeInterval(2))
         }
     }
     
