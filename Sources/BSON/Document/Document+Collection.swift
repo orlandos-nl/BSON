@@ -90,6 +90,7 @@ public struct DocumentPairIterator: IteratorProtocol, Sequence {
     
     /// The next index to be returned
     public private(set) var currentIndex = 0
+    public private(set) var currentBinaryIndex = 4
     
     /// If `true`, the end of this iterator has been reached
     public var isDrained: Bool {
@@ -110,9 +111,26 @@ public struct DocumentPairIterator: IteratorProtocol, Sequence {
         guard currentIndex < count else { return nil }
         defer { currentIndex += 1 }
 
-        let key = document.keys[currentIndex]
-        let value = document.values[currentIndex]
-
+        guard
+            let typeByte = document.storage.getByte(at: currentBinaryIndex),
+            let type = TypeIdentifier(rawValue: typeByte)
+        else {
+            return nil
+        }
+        
+        currentBinaryIndex += 1
+        
+        guard
+            let key = document.getKey(at: currentBinaryIndex),
+            document.skipKey(at: &currentBinaryIndex),
+            let valueLength = document.valueLength(forType: type, at: currentBinaryIndex),
+            let value = document.value(forType: type, at: currentBinaryIndex)
+        else {
+            return nil
+        }
+        
+        currentBinaryIndex += valueLength
+        
         return DocumentPair(index: currentIndex, key: key, value: value)
     }
 }
