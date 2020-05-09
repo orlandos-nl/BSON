@@ -302,6 +302,16 @@ internal enum DecoderValue {
     }
 }
 
+extension Primitive {
+    func unwrap<P: Primitive>(asType type: P.Type, path: [String]) throws -> P {
+        guard let primitive = self as? P else {
+            throw BSONValueNotFound(type: P.self, path: path)
+        }
+        
+        return primitive
+    }
+}
+
 internal struct _BSONDecoder: Decoder {
     var codingPath: [CodingKey]
     var keyPath: [String] {

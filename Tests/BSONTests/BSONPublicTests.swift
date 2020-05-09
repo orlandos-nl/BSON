@@ -149,6 +149,20 @@ final class BSONPublicTests: XCTestCase {
         let sameDate = try BSONDecoder().decode(Date.self, fromPrimitive: date)
         XCTAssertEqual(date, sameDate)
     }
+    
+    func testIteration() {
+        let doc: Document = [
+            "a", "b", "c", "d"
+        ]
+        
+        var iter = doc.makeIterator()
+        
+        XCTAssertEqual(iter.next()?.1 as? String, "a")
+        XCTAssertEqual(iter.next()?.1 as? String, "b")
+        XCTAssertEqual(iter.next()?.1 as? String, "c")
+        XCTAssertEqual(iter.next()?.1 as? String, "d")
+        XCTAssertNil(iter.next()?.1)
+    }
 
     func testperf() throws {
         for _ in 0..<10_000 {
@@ -236,8 +250,9 @@ final class BSONPublicTests: XCTestCase {
             let string2 = id2.hexString
             let id3 = try ObjectId.make(from: string2)
             XCTAssertEqual(id, id3)
-            XCTAssertGreaterThanOrEqual(id3.date, Date().addingTimeInterval(-1))
-            XCTAssertLessThanOrEqual(id3.date, Date().addingTimeInterval(1))
+            // Apprantly -2 wasn't enough because my PC can sometimes be THAT slow
+            XCTAssertGreaterThanOrEqual(id3.date, Date().addingTimeInterval(-2))
+            XCTAssertLessThanOrEqual(id3.date, Date().addingTimeInterval(2))
         }
     }
     

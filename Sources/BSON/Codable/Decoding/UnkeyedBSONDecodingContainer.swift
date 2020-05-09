@@ -2,32 +2,28 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     var codingPath: [CodingKey]
     
     var count: Int? {
-        return self.iterator.count
+        return self.values.count
     }
     
-    var isAtEnd: Bool {
-        return self.iterator.isDrained
-    }
+    var isAtEnd: Bool { currentIndex >= values.count }
     
-    var currentIndex: Int {
-        return self.iterator.currentIndex
-    }
-    
+    var currentIndex: Int = 0
     let decoder: _BSONDecoder
+    var values: [Primitive]
     
-    var iterator: DocumentPairIterator
-    
-    mutating func nextElement() throws -> DecoderValue {
-        guard let pair = iterator.next() else {
-            throw EndOfBSONDocument()
+    mutating func nextElement() -> Primitive? {
+        if isAtEnd {
+            return nil
         }
         
-        return .primitive(pair.value)
+        let value = values[currentIndex]
+        currentIndex += 1
+        return value
     }
     
     mutating func nextDecoder() throws -> _BSONDecoder {
         _BSONDecoder(
-            wrapped: try nextElement(),
+            wrapped: .primitive(nextElement()),
             settings: self.decoder.settings,
             codingPath: self.codingPath,
             userInfo: self.decoder.userInfo
@@ -41,15 +37,15 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
         
         self.decoder = decoder
         self.codingPath = codingPath
-        self.iterator = document.pairs
+        self.values = document.values
     }
     
     mutating func decodeNil() -> Bool {
-        guard let pair = self.iterator.next() else {
+        guard let value = nextElement() else {
             return false
         }
         
-        if pair.value is Null {
+        if value is Null {
             return true
         }
         
@@ -57,7 +53,10 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     }
     
     mutating func decode(_ type: Bool.Type) throws -> Bool {
-        return try self.nextElement().unwrap(asType: Bool.self, path: self.codingPath.path)
+        guard let primitive = self.nextElement() else {
+            throw EndOfBSONDocument()
+        }
+        return try primitive.unwrap(asType: Bool.self, path: self.codingPath.path)
     }
     
     mutating func decode(_ type: String.Type) throws -> String {
@@ -114,7 +113,7 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     
     mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
         if let type = T.self as? BSONDataType.Type {
-            return try type.init(primitive: self.nextElement().primitive) as! T
+            return try type.init(primitive: self.nextElement()) as! T
         } else {
             return try T.init(from: nextDecoder())
         }

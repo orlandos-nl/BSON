@@ -86,6 +86,14 @@ extension Document {
         guard skipKey(at: &index) else { return false }
         return skipValue(ofType: type, at: &index)
     }
+    
+    func getKey(at index: Int) -> String? {
+        guard let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index) else {
+            return nil
+        }
+        
+        return storage.getString(at: index, length: length)
+    }
 
     func matchesKey(_ key: String, at index: Int) -> Bool {
         guard let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index) else {
