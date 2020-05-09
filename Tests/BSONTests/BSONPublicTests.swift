@@ -149,6 +149,20 @@ final class BSONPublicTests: XCTestCase {
         let sameDate = try BSONDecoder().decode(Date.self, fromPrimitive: date)
         XCTAssertEqual(date, sameDate)
     }
+    
+    func testIteration() {
+        let doc: Document = [
+            "a", "b", "c", "d"
+        ]
+        
+        var iter = doc.makeIterator()
+        
+        XCTAssertEqual(iter.next()?.1 as? String, "a")
+        XCTAssertEqual(iter.next()?.1 as? String, "b")
+        XCTAssertEqual(iter.next()?.1 as? String, "c")
+        XCTAssertEqual(iter.next()?.1 as? String, "d")
+        XCTAssertNil(iter.next()?.1)
+    }
 
     func testperf() throws {
         for _ in 0..<10_000 {
