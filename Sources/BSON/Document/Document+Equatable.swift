@@ -8,7 +8,7 @@ extension Document: Equatable {
         
         if lhs.isArray {
             let lhsBuffer = lhs.makeByteBuffer()
-            let rhsBuffer = lhs.makeByteBuffer()
+            let rhsBuffer = rhs.makeByteBuffer()
             
             return lhsBuffer == rhsBuffer
         } else {
