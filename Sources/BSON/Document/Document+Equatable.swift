@@ -6,28 +6,21 @@ extension Document: Equatable {
             return false
         }
         
-        if lhs.isArray {
-            let lhsBuffer = lhs.makeByteBuffer()
-            let rhsBuffer = rhs.makeByteBuffer()
-            
-            return lhsBuffer == rhsBuffer
-        } else {
-            if lhs.count != rhs.count {
+        if lhs.count != rhs.count {
+            return false
+        }
+        
+        for key in lhs.keys {
+            guard
+                let lhsValue = lhs[key],
+                let rhsValue = rhs[key],
+                lhsValue.equals(rhsValue)
+            else {
                 return false
             }
-            
-            for key in lhs.keys {
-                guard
-                    let lhsValue = lhs[key],
-                    let rhsValue = rhs[key],
-                    lhsValue.equals(rhsValue)
-                else {
-                    return false
-                }
-            }
-            
-            return true
         }
+        
+        return true
     }
 }
 
