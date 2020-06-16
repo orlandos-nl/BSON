@@ -10,13 +10,26 @@ extension Document: Equatable {
             return false
         }
         
-        for key in lhs.keys {
-            guard
-                let lhsValue = lhs[key],
-                let rhsValue = rhs[key],
-                lhsValue.equals(rhsValue)
-            else {
-                return false
+        if lhs.isArray {
+            for i in 0..<lhs.count {
+                let lhsValue = lhs[i]
+                let rhsValue = rhs[i]
+                
+                guard
+                    lhsValue.equals(rhsValue)
+                else {
+                    return false
+                }
+            }
+        } else {
+            for key in lhs.keys {
+                guard
+                    let lhsValue = lhs[key],
+                    let rhsValue = rhs[key],
+                    lhsValue.equals(rhsValue)
+                else {
+                    return false
+                }
             }
         }
         

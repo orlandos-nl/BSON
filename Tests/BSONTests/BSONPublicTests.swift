@@ -145,10 +145,10 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testRemoveArray() throws {
-        var array: Document = ["A", "B", "C"]
+        var array: Document = ["ACXZCXZCXZZX", "BaSDASDASAS", "C"]
         XCTAssertEqual(array.values.count, 3)
         array.remove(at: 0)
-        XCTAssertEqual(array, ["B", "C"])
+        XCTAssertEqual(array, ["BaSDASDASAS", "C"])
     }
     
     func testDecodeSingleValue() throws {
