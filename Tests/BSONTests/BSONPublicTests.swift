@@ -144,6 +144,13 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertFalse(try BSONEncoder().encodePrimitive(date) is Double)
     }
     
+    func testRemoveArray() throws {
+        var array: Document = ["A", "B", "C"]
+        XCTAssertEqual(array.values.count, 3)
+        array.remove(at: 0)
+        XCTAssertEqual(array, ["B", "C"])
+    }
+    
     func testDecodeSingleValue() throws {
         let date = Date()
         let sameDate = try BSONDecoder().decode(Date.self, fromPrimitive: date)

@@ -246,6 +246,5 @@ extension Document {
     mutating func removeBytes(at index: Int, length: Int) {
         moveBytes(from: index + length, to: index, length: numericCast(self.usedCapacity) - index - length)
         storage.moveWriterIndex(to: storage.readableBytes - length)
-        self.usedCapacity -= Int32(length)
     }
 }

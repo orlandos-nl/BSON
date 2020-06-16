@@ -233,8 +233,6 @@ extension Document: ExpressibleByArrayLiteral {
         self.removeBytes(at: base, length: length)
     }
 
-
-    
     /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
     ///
     /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
