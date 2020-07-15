@@ -53,10 +53,10 @@ extension Document {
 }
 
 public struct BSONValueNotFound: Error, CustomStringConvertible {
-    let type: Any.Type
-    let path: [String]
+    public let type: Any.Type
+    public let path: [String]
     
-    var description: String {
+    public var description: String {
         return "Couldn't find type \(type) at path \"\(path)\""
     }
 }
