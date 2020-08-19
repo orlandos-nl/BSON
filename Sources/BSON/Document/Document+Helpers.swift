@@ -52,11 +52,11 @@ extension Document {
     }
 }
 
-struct BSONValueNotFound: Error, CustomStringConvertible {
-    let type: Any.Type
-    let path: [String]
+public struct BSONValueNotFound: Error, CustomStringConvertible {
+    public let type: Any.Type
+    public let path: [String]
     
-    var description: String {
+    public var description: String {
         return "Couldn't find type \(type) at path \"\(path)\""
     }
 }
