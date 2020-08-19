@@ -15,7 +15,7 @@ import BSON
     import Glibc
 #endif
 
-func assertValid(_ document: Document, file: StaticString = #file, line: UInt = #line) {
+func assertValid(_ document: Document, file: StaticString = #filePath, line: UInt = #line) {
     let result = document.validate()
     guard result.isValid else {
         XCTFail("document.validate() failed - pos: \(result.errorPosition ?? -1), reason: \(result.reason ?? "nil")", file: file, line: line)
@@ -23,7 +23,7 @@ func assertValid(_ document: Document, file: StaticString = #file, line: UInt = 
     }
 }
 
-func assertInvalid(_ document: Document, file: StaticString = #file, line: UInt = #line) {
+func assertInvalid(_ document: Document, file: StaticString = #filePath, line: UInt = #line) {
     let result = document.validate()
     guard !result.isValid else {
         XCTFail("Document validation succeeded but should not have", file: file, line: line)
@@ -180,7 +180,7 @@ final class BSONPublicTests: XCTestCase {
             doc["num"] = 42
             doc["subdoc"]["awesome"] = true
 
-            var doc2 = [
+            let doc2 = [
                 "_id": id,
                 "hello": "world",
                 "num": 42,
@@ -226,7 +226,7 @@ final class BSONPublicTests: XCTestCase {
     
     func testBinaryOverwrite() {
         struct User: Codable {
-            let id = ObjectId()
+            let id: ObjectId
             let data: Data
         }
         

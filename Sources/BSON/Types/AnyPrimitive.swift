@@ -1,6 +1,6 @@
 import Foundation
 
-public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable {
+public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable, Decodable {
     public static func == (lhs: AnyPrimitive, rhs: AnyPrimitive) -> Bool {
         return lhs.primitive.equals(rhs.primitive)
     }
@@ -60,6 +60,15 @@ public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable {
     
     public func encode(to encoder: Encoder) throws {
         try primitive.encode(to: encoder)
+    }
+    
+    public init(from decoder: Decoder) throws {
+        if let decoder = decoder as? _BSONDecoder {
+            self.primitive = decoder.primitive ?? Null()
+        } else {
+            // TODO: Unsupported decoding method
+            throw BSONTypeConversionError(from: Any.self, to: Primitive.self)
+        }
     }
 }
 

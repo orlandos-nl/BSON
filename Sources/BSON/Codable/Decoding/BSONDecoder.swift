@@ -157,33 +157,27 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         path: @autoclosure () -> [String]
     ) throws -> I {
         let key = decoder.converted(codingKey.stringValue)
-        guard let identifier = decoder.document?.typeIdentifier(of: key) else {
+        guard let value = decoder.document?[key] else {
             throw BSONValueNotFound(type: I.self, path: path())
         }
         
-        switch (self, identifier) {
-        case (.string, .string), (.adaptive, .string):
-            return try convert(from: decoder.wrapped.unwrap(asType: String.self, atKey: key, path: path()))
-        case (.int32, .int32), (.adaptive, .int32), (.anyInteger, .int32), (.roundingAnyNumber, .int32):
-            let int = try decoder.wrapped.unwrap(asType: Int32.self, atKey: key, path: path())
+        switch (self, value) {
+        case (.string, let string as String), (.adaptive, let string as String):
+            return try convert(from: string)
+        case (.int32, let int as Int32), (.adaptive, let int as Int32), (.anyInteger, let int as Int32), (.roundingAnyNumber, let int as Int32):
             return try int.convert(to: I.self)
-        case (.int64, .int64), (.adaptive, .int64), (.anyInteger, .int64), (.roundingAnyNumber, .int64):
-            let int = try decoder.wrapped.unwrap(asType: _BSON64BitInteger.self, atKey: key, path: path())
+        case (.int64, let int as Int), (.adaptive, let int as Int), (.anyInteger, let int as Int), (.roundingAnyNumber, let int as Int):
             return try int.convert(to: I.self)
-        case (.roundingAnyNumber, .double), (.adaptive, .double):
-            let double = try decoder.wrapped.unwrap(asType: Double.self, atKey: key, path: path())
+        case (.roundingAnyNumber, let double as Double), (.adaptive, let double as Double):
             return I(double)
         case (.custom(let strategy), _):
-            guard let value: I = try strategy(
-                key,
-                decoder.document?[key]
-            ) else {
+            guard let value: I = try strategy(key, value) else {
                 throw BSONValueNotFound(type: I.self, path: path())
             }
             
             return value
         default:
-            throw BSONTypeConversionError(from: decoder.document?[key], to: I.self)
+            throw BSONTypeConversionError(from: value, to: I.self)
         }
     }
 }

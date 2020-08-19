@@ -49,16 +49,7 @@ extension Data: BSONDataType {
     
     var primitive: Primitive {
         var buffer = Document.allocator.buffer(capacity: self.count)
-        buffer.writeWithUnsafeMutableBytes { writer in
-            let writer = writer.bindMemory(to: UInt8.self)
-            let size = self.count
-            return self.withUnsafeBytes { buffer in
-                writer.baseAddress!.initialize(from: buffer.baseAddress!.assumingMemoryBound(to: UInt8.self), count: buffer.count)
-                
-                return size
-            }
-        }
-        
+        buffer.writeBytes(self)
         return Binary(buffer: buffer)
     }
 }
@@ -67,20 +58,17 @@ extension Document: BSONDataType {
     public func encode(to encoder: Encoder) throws {
         if let encoder = encoder as? AnyBSONEncoder {
             try encoder.encode(document: self)
+        } else if self.isArray {
+            var container = encoder.unkeyedContainer()
+            
+            for value in self.values {
+                try container.encode(AnyEncodable(encodable: value))
+            }
         } else {
-            switch self.isArray {
-            case true:
-                var container = encoder.unkeyedContainer()
-                
-                for value in self.values {
-                    try container.encode(AnyEncodable(encodable: value))
-                }
-            case false:
-                var container = encoder.container(keyedBy: CustomKey.self)
-                
-                for pair in self.pairs {
-                    try container.encode(AnyEncodable(encodable: pair.value), forKey: CustomKey(stringValue: pair.key)!)
-                }
+            var container = encoder.container(keyedBy: CustomKey.self)
+            
+            for pair in self.pairs {
+                try container.encode(AnyEncodable(encodable: pair.value), forKey: CustomKey(stringValue: pair.key)!)
             }
         }
     }
@@ -157,22 +145,6 @@ struct BSONComparisonTypeMismatch: Error {
     let lhs: Primitive?
     let rhs: Primitive?
 }
-
-//extension Collection where Element == Primitive {
-//    public static func ==(lhs: Self, rhs: Self) -> Bool {
-//        guard lhs.count == rhs.count else {
-//            return false
-//        }
-//
-//        for set in zip(lhs, rhs) {
-//            guard set.0 == set.1 else {
-//                return false
-//            }
-//        }
-//
-//        return true
-//    }
-//}
 
 extension Int32: Primitive {}
 extension Date: Primitive {}
