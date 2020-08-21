@@ -20,22 +20,56 @@ public struct DocumentSlice: RandomAccessCollection {
 }
 
 public struct DocumentIterator: IteratorProtocol {
-    let document: Document
-    let count: Int
-    var index: DocumentIndex
+    /// The Document that is being iterated over
+    fileprivate let document: Document
     
-    init(document: Document) {
+    /// The next index to be returned
+    private var currentIndex = 0
+    private var currentBinaryIndex = 4
+    
+    /// If `true`, the end of this iterator has been reached
+    private var isDrained: Bool {
+        return count <= currentIndex
+    }
+    
+    /// The total amount of elements in this iterator (previous, current and upcoming elements)
+    private let count: Int
+    
+    /// Creates an iterator for a given Document
+    public init(document: Document) {
         self.document = document
         self.count = document.count
-        self.index = document.startIndex
     }
     
+    /// Returns the next element in the Document *unless* the last element was already returned
     public mutating func next() -> (String, Primitive)? {
-        let pair = document.pair(atIndex: index)
-        index.offset += 1
-        return pair
+        guard currentIndex < count else { return nil }
+        defer { currentIndex += 1 }
+
+        guard
+            let typeByte = document.storage.getByte(at: currentBinaryIndex),
+            let type = TypeIdentifier(rawValue: typeByte)
+        else {
+            return nil
+        }
+        
+        currentBinaryIndex += 1
+        
+        guard
+            let key = document.getKey(at: currentBinaryIndex),
+            document.skipKey(at: &currentBinaryIndex),
+            let valueLength = document.valueLength(forType: type, at: currentBinaryIndex),
+            let value = document.value(forType: type, at: currentBinaryIndex)
+        else {
+            return nil
+        }
+        
+        currentBinaryIndex += valueLength
+        
+        return (key, value)
     }
 }
+
 
 extension Document {
     func pair(atIndex index: DocumentIndex) -> (String, Primitive)? {
