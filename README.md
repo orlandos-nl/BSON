@@ -1,29 +1,27 @@
 # BSON
 
-[![Swift 3.1](https://img.shields.io/badge/swift-3.1-orange.svg)](https://swift.org)
+[![Swift 4.2](https://img.shields.io/badge/swift-4.2-orange.svg)](https://swift.org)
+[![Swift 5.3](https://img.shields.io/badge/swift-5.3-green.svg)](https://swift.org)
 ![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
 [![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson5)](https://travis-ci.org/OpenKitten/BSON)
 
-BSON 5 is the fastest BSON library speeding past all libraries including C. It's compliant to the whole C BSON specification test suite, and even passes official libraries in compliance slightly.
- 
-It's not only fast, it's also got an extremely easy and intuitive API for extraction.
+BSON 7 is a fast BSON library. It's compliant to the whole BSON specification test suite. The library parses the binary data on-demand, delaying copies until the last second.
 
 BSON is parsed and generated as specified for version 1.1 of the [BSON specification](http://bsonspec.org/spec.html).
 
-## Usage
+## Installation
 
-The supported method for using this library is trough the Swift Package manager, like this:
+BSIN uses the Swift Package Manager. Add MongoKitten to your dependencies in your Package.swift file:
 
 ```swift
-import PackageDescription
-
-let package = Package(
-    name: "MyApp",
-    dependencies: [.Package(url: "https://github.com/OpenKitten/BSON.git", majorVersion: 5)]
-)
+.package(url: "https://github.com/OpenKitten/BSON.git", from: "7.0.0")
 ```
 
-Create Documents naturally:
+Also, don't forget to add "BSON" as a dependency for your target.
+
+## Basic Usage
+
+Create Documents using Dictionary Literals:
 
 ```swift
 var userDocument: Document = [
@@ -85,11 +83,39 @@ Chain subscripts easily to find results without a hassle as shown underneath usi
 let obbutLastName = String(object["users"][1]["profile"]["lastName"]) // "Brandsma"
 ```
 
-Check the [documentation](http://docs.openkitten.org/bson/) for more information.
+### Nested Documents
 
-## Performance
+Complex array and dictionary literals may confuse the Swift type system. If this happens to you, make the literal explicitly a `Document` type:
 
-The performance in this BSON library is thanks to specialized algorithms per-operation with a centralized cache for indexed information. BSON is 100% lazy, so if you don't read data, it doesn't cost *any* performance.
+```swift
+var userDocument: Document = [
+	"username": "Joannis",
+	"online": true,
+	"age": 20,
+	"pi_constant": 3.14,
+	"profile": [
+		"firstName": "Joannis",
+		"lastName": "Orlandos",
+		"pets": [
+			[
+				"name": "Noodles",
+				"type": "Parrot"
+			] as Document,
+			[
+				"name": "Witje",
+				"type": "Rabbit"
+			]
+		] as Document
+	] as Document
+]
+```
+
+### Codable
+
+Document can be instantiated from [SwiftNIO](https://github.com/apple/swift-nio)'s `ByteBuffer` or `Foundation.Data`.
+You can validate the formatting of this document manually using the `.validate()` function. This will also specify where the data was found corrupt.
+
+If you pass a `Document` or `Primitive` into the `BSONDecoder` you can decode any `Decodable` type if the formats match. Likewise, `BSONEncoder` can encode your Swift types into a `Document`.
 
 ## Supported Types
 
