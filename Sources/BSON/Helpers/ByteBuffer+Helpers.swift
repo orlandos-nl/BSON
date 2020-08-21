@@ -28,8 +28,9 @@ extension ByteBuffer {
     func firstRelativeIndexOf(byte: UInt8, startingAt: Int) -> Int? {
         withUnsafeReadableBytes { buffer -> Int? in
             var i = startingAt
+            let count = buffer.count
             
-            while i < buffer.count {
+            while i < count {
                 if buffer[i] == 0 {
                     return i - startingAt
                 }
