@@ -26,15 +26,18 @@ extension ByteBuffer {
     
     /// Returns the first index at which `byte` appears, starting from the reader position
     func firstRelativeIndexOf(byte: UInt8, startingAt: Int) -> Int? {
-        var i = 0
-        while let candidate = self.getInteger(at: startingAt + i, endianness: .little, as: UInt8.self) {
-            if candidate == byte {
-                return i
-            } else {
+        withUnsafeReadableBytes { buffer -> Int? in
+            var i = startingAt
+            
+            while i < buffer.count {
+                if buffer[i] == 0 {
+                    return i - startingAt
+                }
+                
                 i += 1
             }
+            
+            return nil
         }
-        
-        return nil
     }
 }
