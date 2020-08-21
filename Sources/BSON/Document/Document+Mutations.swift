@@ -47,7 +47,7 @@ extension Document {
 
         let length = index - base
 
-        #if swift(>=5.0)
+        #if compiler(>=5)
         let valid = key.utf8.withContiguousStorageIfAvailable { key -> Bool in
             if key.count != length {
                 return false
@@ -57,13 +57,17 @@ extension Document {
                 return memcmp(key.baseAddress!, storage.baseAddress! + index, length) == 0
             }
         }
-
+        
         if let valid = valid {
             return valid
         }
         #endif
-
-        return key == storage.getString(at: base, length: length)
+        
+        if key.utf8.count != length {
+            return false
+        } else {
+            return key == storage.getString(at: base, length: length)
+        }
     }
 
     func skipValue(ofType type: TypeIdentifier, at index: inout Int) -> Bool {
@@ -99,8 +103,8 @@ extension Document {
         guard let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index) else {
             return false
         }
-
-        #if swift(>=5.0)
+        
+        #if compiler(>=5)
         let valid = key.utf8.withContiguousStorageIfAvailable { key -> Bool in
             if key.count != length {
                 return false
@@ -110,13 +114,17 @@ extension Document {
                 return memcmp(key.baseAddress!, storage.baseAddress! + index, length) == 0
             }
         }
-
+        
         if let valid = valid {
             return valid
         }
         #endif
-
-        return key == storage.getString(at: index, length: length)
+        
+        if key.utf8.count != length {
+            return false
+        } else {
+            return key == storage.getString(at: base, length: length)
+        }
     }
 
     func value(forType type: TypeIdentifier, at offset: Int) -> Primitive? {
