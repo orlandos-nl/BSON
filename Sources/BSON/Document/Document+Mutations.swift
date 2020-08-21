@@ -123,7 +123,7 @@ extension Document {
         if key.utf8.count != length {
             return false
         } else {
-            return key == storage.getString(at: base, length: length)
+            return key == storage.getString(at: index, length: length)
         }
     }
 
