@@ -21,7 +21,7 @@ extension Document: ExpressibleByDictionaryLiteral {
             index += 1
 
             guard
-                let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index),
+                let length = storage.firstRelativeIndexOf(startingAt: index),
                 let key = storage.getString(at: index, length: length)
             else {
                 return keys
@@ -53,7 +53,7 @@ extension Document: ExpressibleByDictionaryLiteral {
             index += 1
 
             guard
-                let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index)
+                let length = storage.firstRelativeIndexOf(startingAt: index)
             else {
                 return false
             }

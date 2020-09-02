@@ -116,6 +116,12 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(doc["a"]["foo"] as? String, "bar")
     }
     
+    func testShrinkingDocument() {
+        var doc: Document = ["hello"]
+        doc[0] = "ello"
+        XCTAssertTrue(doc.validate().isValid)
+    }
+    
     func testExpandSubarray() {
         let s = String(repeating: "sdasfgnsdkjfls;akdflnbkjfajd;sflklnbfsadkmlv", count: 100)
         var doc = Document()

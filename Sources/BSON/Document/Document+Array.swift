@@ -105,6 +105,7 @@ extension Document: ExpressibleByArrayLiteral {
                     to: newValueEnd,
                     length: movedLength
                 )
+                storage.moveWriterIndex(to: storage.writerIndex - diff)
             }
             
             switch newValue {

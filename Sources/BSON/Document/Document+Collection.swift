@@ -10,7 +10,7 @@ extension Document: RandomAccessCollection {
         let type = TypeIdentifier(rawValue: storage.getByte(at: offset)!)!
         offset += 1
         
-        let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset)!
+        let length = storage.firstRelativeIndexOf(startingAt: offset)!
         let key = storage.getString(at: offset, length: length)!
         offset += length + 1
         

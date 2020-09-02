@@ -25,7 +25,7 @@ extension ByteBuffer {
     }
     
     /// Returns the first index at which `byte` appears, starting from the reader position
-    func firstRelativeIndexOf(byte: UInt8, startingAt: Int) -> Int? {
+    func firstRelativeIndexOf(startingAt: Int) -> Int? {
         withUnsafeReadableBytes { buffer -> Int? in
             var i = startingAt
             let count = buffer.count

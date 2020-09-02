@@ -32,11 +32,11 @@ extension Document {
             // no data
             return 0
         case .regex:
-            guard let patternEndOffset = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset) else {
+            guard let patternEndOffset = storage.firstRelativeIndexOf(startingAt: offset) else {
                 return nil
             }
             
-            guard let optionsEndOffset = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset + patternEndOffset + 1) else {
+            guard let optionsEndOffset = storage.firstRelativeIndexOf(startingAt: offset + patternEndOffset + 1) else {
                 return nil
             }
             
@@ -121,14 +121,14 @@ extension Document {
             return MaxKey()
         case .regex:
             guard
-                let patternEnd = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset),
+                let patternEnd = storage.firstRelativeIndexOf(startingAt: offset),
                 let pattern = storage.getString(at: offset, length: patternEnd - 1)
             else {
                 return nil
             }
 
             guard
-                let optionsEnd = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset + patternEnd),
+                let optionsEnd = storage.firstRelativeIndexOf(startingAt: offset + patternEnd),
                 let options = storage.getString(at: offset + patternEnd, length: optionsEnd - 1)
             else {
                 return nil

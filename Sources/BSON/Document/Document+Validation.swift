@@ -70,7 +70,7 @@ extension Document {
         
         /// Moves the reader index past the CString and returns `true` if a CString (null terminated string) is present
         func hasCString() -> Bool {
-            guard let length = buffer.firstRelativeIndexOf(byte: 0x00, startingAt: currentIndex) else {
+            guard let length = buffer.firstRelativeIndexOf(startingAt: currentIndex) else {
                 return false
             }
 
@@ -134,7 +134,7 @@ extension Document {
             currentIndex += 1
 
             /// Check for key
-            guard let keyLengthWithoutNull = buffer.firstRelativeIndexOf(byte: 0x00, startingAt: currentIndex) else {
+            guard let keyLengthWithoutNull = buffer.firstRelativeIndexOf(startingAt: currentIndex) else {
                 return errorFound(reason: "Could not parse the element key")
             }
             

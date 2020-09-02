@@ -30,7 +30,7 @@ extension Document {
     }
 
     func skipKey(at index: inout Int) -> Bool {
-        if let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index) {
+        if let length = storage.firstRelativeIndexOf(startingAt: index) {
             index += length + 1 // including null terminator
             return true
         }
@@ -92,7 +92,7 @@ extension Document {
     }
     
     func getKey(at index: Int) -> String? {
-        guard let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index) else {
+        guard let length = storage.firstRelativeIndexOf(startingAt: index) else {
             return nil
         }
         
@@ -100,7 +100,7 @@ extension Document {
     }
 
     func matchesKey(_ key: String, at index: Int) -> Bool {
-        guard let length = storage.firstRelativeIndexOf(byte: 0x00, startingAt: index) else {
+        guard let length = storage.firstRelativeIndexOf(startingAt: index) else {
             return false
         }
         
@@ -193,13 +193,13 @@ extension Document {
             // Still need to check the key's size
             return MaxKey()
         case .regex:
-            guard let patternEnd = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset), let pattern = storage.getString(at: offset, length: patternEnd - 1) else {
+            guard let patternEnd = storage.firstRelativeIndexOf(startingAt: offset), let pattern = storage.getString(at: offset, length: patternEnd - 1) else {
                 return nil
             }
 
             let offset = offset + patternEnd
 
-            guard let optionsEnd = storage.firstRelativeIndexOf(byte: 0x00, startingAt: offset), let options = storage.getString(at: offset, length: optionsEnd - 1) else {
+            guard let optionsEnd = storage.firstRelativeIndexOf(startingAt: offset), let options = storage.getString(at: offset, length: optionsEnd - 1) else {
                 return nil
             }
 
