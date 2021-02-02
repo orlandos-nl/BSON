@@ -74,7 +74,7 @@ extension Document: BSONDataType {
     }
     
     public init(from decoder: Decoder) throws {
-        if let decoder = decoder as? AnySingleValueBSONDecodingContainer {
+        if let decoder = try decoder.singleValueContainer() as? AnySingleValueBSONDecodingContainer {
             self = try decoder.decodeDocument()
             return
         }
