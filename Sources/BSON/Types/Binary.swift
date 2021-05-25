@@ -93,6 +93,7 @@ public struct Binary: Primitive, Hashable {
                 try self.data.encode(to: encoder)
             }
         } else {
+            try self.data.encode(to: encoder)
         }
     }
     
