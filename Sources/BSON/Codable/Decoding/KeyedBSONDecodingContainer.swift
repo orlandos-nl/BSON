@@ -1,3 +1,5 @@
+import Foundation
+
 internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainerProtocol {
     typealias Key = K
     
@@ -155,6 +157,25 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
         let key = decoder.converted(codingKey.stringValue)
         if let instance = self as? T {
             return instance
+        } else if T.self == Date.self {
+            do {
+                return try Date(primitive: self.document[key]) as! T
+            } catch {
+                if decoder.settings.decodeDateFromTimestamp {
+                    switch self.document[key] {
+                    case let int as Int:
+                        return Date(timeIntervalSince1970: Double(int)) as! T
+                    case let int as Int32:
+                        return Date(timeIntervalSince1970: Double(int)) as! T
+                    case let double as Double:
+                        return Date(timeIntervalSince1970: double) as! T
+                    default:
+                        throw error
+                    }
+                } else {
+                    throw error
+                }
+            }
         } else if let type = T.self as? BSONDataType.Type {
             return try type.init(primitive: self.document[key]) as! T
         } else {
