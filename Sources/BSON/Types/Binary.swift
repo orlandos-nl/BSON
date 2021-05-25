@@ -85,7 +85,15 @@ public struct Binary: Primitive, Hashable {
     }
     
     public func encode(to encoder: Encoder) throws {
-        try self.data.encode(to: encoder)
+        if encoder is AnyBSONEncoder {
+            let container = encoder.singleValueContainer()
+            if var container = container as? AnySingleValueBSONEncodingContainer {
+                try container.encode(primitive: self)
+            } else {
+                try self.data.encode(to: encoder)
+            }
+        } else {
+        }
     }
     
     /// The amount of data, in bytes, stored in this Binary
