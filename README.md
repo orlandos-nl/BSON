@@ -13,7 +13,7 @@ Be sure to read our [full documentation](https://orlandos.nl/docs/mongokitten/ar
 
 ## Installation
 
-BSIN uses the Swift Package Manager. Add MongoKitten to your dependencies in your Package.swift file:
+BSON uses the Swift Package Manager. Add BSON to your dependencies in your Package.swift file:
 
 ```swift
 .package(url: "https://github.com/OpenKitten/BSON.git", from: "7.0.0")
