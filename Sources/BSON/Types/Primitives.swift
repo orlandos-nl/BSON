@@ -79,9 +79,56 @@ extension Document: BSONDataType {
             return
         }
         
-        // TODO: Implement decoding a document from a non-BSON decoder
-        // TODO: Replace this with a central BSON decoding error type
-        throw UnsupportedDocumentDecoding()
+        struct Key: CodingKey {
+            var stringValue: String
+            var intValue: Int? { nil }
+            
+            init?(intValue: Int) { nil }
+            
+            init(stringValue: String) {
+                self.stringValue = stringValue
+            }
+        }
+        
+        let container = try decoder.container(keyedBy: Key.self)
+        var document = Document()
+        
+        nextKey: for key in container.allKeys {
+            if try container.decodeNil(forKey: key) {
+                continue nextKey
+            }
+            
+            if let string = try? container.decode(String.self, forKey: key) {
+                document[key.stringValue] = string
+                continue nextKey
+            }
+            
+            if let int = try? container.decode(Int.self, forKey: key) {
+                document[key.stringValue] = int
+                continue nextKey
+            }
+            
+            if let int = try? container.decode(Int32.self, forKey: key) {
+                document[key.stringValue] = int
+                continue nextKey
+            }
+            
+            if let double = try? container.decode(Double.self, forKey: key) {
+                document[key.stringValue] = double
+                continue nextKey
+            }
+            
+            if let bool = try? container.decode(Bool.self, forKey: key) {
+                document[key.stringValue] = bool
+                continue nextKey
+            }
+            
+            // TODO: Niche Int cases
+            
+            throw UnsupportedDocumentDecoding()
+        }
+        
+        self = document
     }
     
     init(primitive: Primitive?) throws {

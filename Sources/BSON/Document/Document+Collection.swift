@@ -19,6 +19,10 @@ extension Document: RandomAccessCollection {
         return (key, value)
     }
     
+    public subscript(bounds: Range<DocumentIndex>) -> DocumentSlice {
+        DocumentSlice(document: self, startIndex: bounds.lowerBound, endIndex: bounds.upperBound)
+    }
+    
     public typealias Iterator = DocumentIterator
     public typealias SubSequence = DocumentSlice
     public typealias Index = DocumentIndex
