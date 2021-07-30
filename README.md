@@ -9,9 +9,11 @@ BSON 7 is a fast BSON library. It's compliant to the whole BSON specification te
 
 BSON is parsed and generated as specified for version 1.1 of the [BSON specification](http://bsonspec.org/spec.html).
 
+Be sure to read our [full documentation](https://orlandos.nl/docs/mongokitten/articles/bson).
+
 ## Installation
 
-BSIN uses the Swift Package Manager. Add MongoKitten to your dependencies in your Package.swift file:
+BSON uses the Swift Package Manager. Add BSON to your dependencies in your Package.swift file:
 
 ```swift
 .package(url: "https://github.com/OpenKitten/BSON.git", from: "7.0.0")
