@@ -112,7 +112,7 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     }
     
     mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        if let type = T.self as? BSONDataType.Type {
+        if let type = T.self as? BSONPrimitiveConvertible.Type {
             return try type.init(primitive: self.nextElement()) as! T
         } else {
             return try T.init(from: nextDecoder())

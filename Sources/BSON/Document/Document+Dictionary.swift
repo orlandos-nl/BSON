@@ -83,14 +83,8 @@ extension Document: ExpressibleByDictionaryLiteral {
     }
     
     /// Creates a new Document from a Dictionary literal
-    public init(dictionaryLiteral elements: (String, PrimitiveConvertible)...) {
-        self.init(elements: elements.lazy.compactMap { key, value in
-            guard let primitive = value.makePrimitive() else {
-                return nil // continue
-            }
-            
-            return (key, primitive)
-        })
+    public init(dictionaryLiteral elements: (String, Primitive)...) {
+        self.init(elements: elements)
     }
     
     public mutating func append(contentsOf document: Document) {
@@ -227,12 +221,11 @@ extension Document: ExpressibleByDictionaryLiteral {
             storage.writeString(javascript.code)
             storage.writeInteger(0, endianness: .little, as: UInt8.self)
             storage.writeBuffer(&scopeBuffer)
-        case let bsonData as BSONDataType:
+        case let bsonData as BSONPrimitiveRepresentable:
             self.appendValue(bsonData.primitive, forKey: key)
             return
         default:
-//            guard let data = primitive as? BSONDataType else {
-            assertionFailure("Currently unsupported type \(primitive)")
+            assertionFailure("Currently unsupported type \(value)")
             return
         }
 
@@ -240,25 +233,20 @@ extension Document: ExpressibleByDictionaryLiteral {
     }
     
     /// Creates a new Document with the given elements
-    // TODO: @_specialize ?
-    public init<S: Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, PrimitiveConvertible) {
+    public init<S: Sequence>(elements: S, isArray: Bool = false) where S.Element == (String, Primitive) {
         self.init(isArray: isArray)
         for (key, value) in elements {
-            guard let value = value.makePrimitive() else {
-                continue
-            }
-            
             self.appendValue(value, forKey: key)
         }
     }
 }
 
-extension Dictionary where Key == String, Value == Primitive {
-    public init(document: Document) {
-        self.init()
-        
-        for (key, value) in document {
-            self[key] = value
+extension Dictionary: BSONPrimitiveRepresentable, Primitive where Key == String, Value: Primitive {
+    public var primitive: Primitive {
+        var document = Document(isArray: false)
+        for (key, value) in self {
+            document[key] = value
         }
+        return document
     }
 }

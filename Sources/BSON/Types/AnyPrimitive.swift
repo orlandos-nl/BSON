@@ -1,6 +1,6 @@
 import Foundation
 
-public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable, Decodable {
+public struct AnyPrimitive: PrimitiveEncodable, Hashable, Encodable, Decodable {
     public static func == (lhs: AnyPrimitive, rhs: AnyPrimitive) -> Bool {
         return lhs.primitive.equals(rhs.primitive)
     }
@@ -41,7 +41,7 @@ public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable, Decodable
             value.hash(into: &hasher)
         case let value as JavaScriptCodeWithScope:
             value.hash(into: &hasher)
-        case let value as BSONDataType:
+        case let value as BSONPrimitiveRepresentable:
             AnyPrimitive(value.primitive).hash(into: &hasher)
         default:
             fatalError("Invalid primitive")
@@ -54,8 +54,8 @@ public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable, Decodable
         self.primitive = primitive
     }
     
-    public func makePrimitive() -> Primitive? {
-        return primitive
+    public func encodePrimitive() throws -> Primitive {
+        primitive
     }
     
     public func encode(to encoder: Encoder) throws {
@@ -72,7 +72,7 @@ public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable, Decodable
     }
 }
 
-public struct EitherPrimitive<L: Primitive, R: Primitive>: PrimitiveConvertible, Sendable, Encodable {
+public struct EitherPrimitive<L: Primitive, R: Primitive>: PrimitiveEncodable, Sendable, Encodable {
     private enum Value: Sendable {
         case l(L)
         case r(R)
@@ -109,8 +109,8 @@ public struct EitherPrimitive<L: Primitive, R: Primitive>: PrimitiveConvertible,
         self.value = .r(value)
     }
     
-    public func makePrimitive() -> Primitive? {
-        return primitive
+    public func encodePrimitive() throws -> Primitive {
+        primitive
     }
     
     public func encode(to encoder: Encoder) throws {

@@ -44,59 +44,28 @@ final class BSONPublicTests: XCTestCase {
         super.setUp()
     }
 
-    static var allTests : [(String, (BSONPublicTests) -> () throws -> Void)] {
-        return [
-            ("testDocumentLockup", testDocumentLockup),
-            ("testBasicUsage", testBasicUsage),
-            ("testObjectIdUniqueness", testObjectIdUniqueness),
-            ("testDecoding", testDecoding),
-            ("testDictionaryLiteral", testDictionaryLiteral),
-//            ("testDocumentCollectionFunctionality", testDocumentCollectionFunctionality),
-//            ("testInitializedFromData", testInitializedFromData),
-//            ("testArrayRelatedFunctions", testArrayRelatedFunctions),
-//            ("testMultipleDocumentsInitialization", testMultipleDocumentsInitialization),
-//            ("testInitFromFoundationData", testInitFromFoundationData),
-//            ("testSerialization", testSerialization),
-//            ("testValidation", testValidation),
-//            ("testObjectId", testObjectId),
-//            ("testObjectIdString", testObjectIdString),
-//            ("testObjectIdHash", testObjectIdHash ),
-//            ("testDocumentIndexes", testDocumentIndexes),
-//            ("testComparison", testComparison),
-//            ("testMultiSyntax", testMultiSyntax),
-//            ("testDocumentCombineOperators", testDocumentCombineOperators),
-//            ("testDocumentFlattening", testDocumentFlattening),
-//            ("testTypeChecking", testTypeChecking),
-//            ("testCacheCorruption", testCacheCorruption),
-//            ("testBinaryEquatable", testBinaryEquatable),
-//            ("testUsingDictionaryAsPrimitive", testUsingDictionaryAsPrimitive)
-        ]
-    }
-
-    let kittenDocument: Document = {
-        return [
-            "doubleTest": 0.04,
-            "stringTest": "foo",
-            "documentTest": [
-                "documentSubDoubleTest": 13.37,
-                "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
-            ] as Document,
-            "nonRandomObjectId": ObjectId("0123456789ABCDEF01234567"),
-            "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
-            "cool32bitNumber": Int32(9001),
-            "cool64bitNumber": 21312153,
-            "code": JavaScriptCode("console.log(\"Hello there\");"),
-            "codeWithScope": JavaScriptCodeWithScope("console.log(\"Hello there\");", scope: ["hey": "hello"]),
-            "nothing": Null(),
-            "data": Binary(subType: .generic, buffer: binaryData),
-            "boolFalse": false,
-            "boolTrue": true,
-            "timestamp": Timestamp(increment: 2000, timestamp: 8),
-            "regex": RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: ""),
-            "minKey": MinKey(),
-            "maxKey": MaxKey()
-        ] as Document
-    }()
+    let kittenDocument: Document = [
+        "doubleTest": 0.04,
+        "stringTest": "foo",
+        "documentTest": [
+            "documentSubDoubleTest": 13.37,
+            "subArray": ["henk", "fred", "kaas", "goudvis"] as Document
+        ] as Document,
+        "nonRandomObjectId": ObjectId("0123456789ABCDEF01234567")!,
+        "currentTime": Date(timeIntervalSince1970: Double(1453589266)),
+        "cool32bitNumber": Int32(9001),
+        "cool64bitNumber": 21312153,
+        "code": JavaScriptCode("console.log(\"Hello there\");"),
+        "codeWithScope": JavaScriptCodeWithScope("console.log(\"Hello there\");", scope: ["hey": "hello"]),
+        "nothing": Null(),
+        "data": Binary(subType: .generic, buffer: binaryData),
+        "boolFalse": false,
+        "boolTrue": true,
+        "timestamp": Timestamp(increment: 2000, timestamp: 8),
+        "regex": RegularExpression(pattern: "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", options: ""),
+        "minKey": MinKey(),
+        "maxKey": MaxKey()
+    ]
 
     func testBasicUsage() {
         var doc = Document()

@@ -157,7 +157,7 @@ internal struct SingleValueBSONDecodingContainer: SingleValueDecodingContainer, 
     }
     
     func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        if let type = T.self as? BSONDataType.Type {
+        if let type = T.self as? BSONPrimitiveConvertible.Type {
             return try type.init(primitive: self.decoder.primitive) as! T
         } else {
             let decoder = _BSONDecoder(wrapped: self.decoder.wrapped, settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)

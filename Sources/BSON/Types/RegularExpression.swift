@@ -65,8 +65,8 @@ extension NSRegularExpression {
     }
 }
 
-extension NSRegularExpression: PrimitiveConvertible {
-    public func makePrimitive() -> Primitive? {
+extension NSRegularExpression: PrimitiveEncodable {
+    public func encodePrimitive() throws -> Primitive {
         return RegularExpression(self)
     }
 }

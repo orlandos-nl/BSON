@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol Primitive: Codable, Sendable, PrimitiveConvertible, PrimitiveEncodable {}
+public protocol Primitive: Codable, Sendable {}
 
 extension Primitive {
     public func encodePrimitive() throws -> Primitive {
@@ -8,16 +8,12 @@ extension Primitive {
     }
 }
 
-internal protocol BSONDataType: Primitive {
+internal protocol BSONPrimitiveRepresentable: Primitive {
     var primitive: Primitive { get }
-    init(primitive: Primitive?) throws
 }
 
-extension BSONDataType {
-    var primitive: Primitive { return self }
-    public func encodePrimitive() throws -> Primitive {
-        primitive
-    }
+internal protocol BSONPrimitiveConvertible: BSONPrimitiveRepresentable {
+    init(primitive: Primitive?) throws
 }
 
 internal protocol AnyBSONEncoder {
@@ -47,7 +43,7 @@ fileprivate struct AnyEncodable: Encodable {
     }
 }
 
-extension Data: BSONDataType, @unchecked Sendable {
+extension Data: BSONPrimitiveConvertible, @unchecked Sendable {
     init(primitive: Primitive?) throws {
         guard let value = primitive, let binary = value as? Binary else {
             throw BSONTypeConversionError(from: type(of: primitive), to: Data.self)
@@ -63,7 +59,7 @@ extension Data: BSONDataType, @unchecked Sendable {
     }
 }
 
-extension Document: BSONDataType {
+extension Document {
     public func encode(to encoder: Encoder) throws {
         if let encoder = encoder as? AnyBSONEncoder {
             try encoder.encode(document: self)
@@ -139,14 +135,6 @@ extension Document: BSONDataType {
         
         self = document
     }
-    
-    init(primitive: Primitive?) throws {
-        guard let document = primitive as? Document else {
-            throw BSONTypeConversionError(from: primitive, to: Document.self)
-        }
-        
-        self = document
-    }
 }
 
 fileprivate struct CustomKey: CodingKey {
@@ -161,16 +149,6 @@ fileprivate struct CustomKey: CodingKey {
     init?(intValue: Int) {
         self.intValue = intValue
         self.stringValue = intValue.description
-    }
-}
-
-extension Date: BSONDataType {
-    init(primitive: Primitive?) throws {
-        guard let value = primitive as? Date else {
-            throw BSONTypeConversionError(from: type(of: primitive), to: Date.self)
-        }
-        
-        self = value
     }
 }
 

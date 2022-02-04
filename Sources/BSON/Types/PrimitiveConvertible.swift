@@ -1,48 +1,24 @@
-/// Implemented by types that are convertible to a primitive
-public protocol PrimitiveConvertible {
-    func makePrimitive() -> Primitive?
-}
-
 public protocol PrimitiveEncodable {
     func encodePrimitive() throws -> Primitive
 }
 
-extension Primitive {
-    public func makePrimitive() -> Primitive? {
-        return self
-    }
-}
-
 // - MARK: Sequences
 
-fileprivate extension Sequence where Element: PrimitiveConvertible {
-    func makeDocument() -> Document {
-        return Document(elements: self.enumerated().map { ("\($0)", $1 as PrimitiveConvertible) }, isArray: true)
+extension Array: PrimitiveEncodable where Element: Encodable {
+    public func encodePrimitive() throws -> Primitive {
+        return try BSONEncoder().encode(self)
     }
 }
 
-extension Array: PrimitiveConvertible where Element: PrimitiveConvertible {
-    public func makePrimitive() -> Primitive? {
-        return self.makeDocument()
+extension Set: PrimitiveEncodable where Element: Encodable {
+    public func encodePrimitive() throws -> Primitive {
+        return try BSONEncoder().encode(self)
     }
 }
 
-// TODO: Discuss: Should set be PrimitiveConvertible? Maybe it is, because it is also a sequence.
-extension Set: PrimitiveConvertible where Element: PrimitiveConvertible {
-    public func makePrimitive() -> Primitive? {
-        return self.makeDocument()
-    }
-}
-
-extension Dictionary: PrimitiveConvertible where Key == String, Value: PrimitiveConvertible {
-    public func makePrimitive() -> Primitive? {
-        return Document(elements: self.compactMap { element in
-            guard let primitive = element.value.makePrimitive() else {
-                return nil // continue
-            }
-            
-            return (element.key, primitive)
-        })
+extension Dictionary: PrimitiveEncodable where Key == String, Value: Encodable {
+    public func encodePrimitive() throws -> Primitive {
+        return try BSONEncoder().encode(self)
     }
 }
 
@@ -60,11 +36,13 @@ fileprivate enum BSONInternalUnknownTypeForPrimitiveConvertibleConversion: Primi
     }
 }
 
-extension Optional: PrimitiveConvertible where Wrapped: PrimitiveConvertible {
-    public func makePrimitive() -> Primitive? {
+extension Optional: PrimitiveEncodable where Wrapped: PrimitiveEncodable {
+    public func encodePrimitive() throws -> Primitive {
         switch self {
-        case .none: return nil
-        case .some(let wrapped): return wrapped.makePrimitive()
+        case .none:
+            return Null()
+        case .some(let wrapped):
+            return try wrapped.encodePrimitive()
         }
     }
 }

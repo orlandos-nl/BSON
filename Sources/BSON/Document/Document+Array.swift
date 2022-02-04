@@ -207,12 +207,10 @@ extension Document: ExpressibleByArrayLiteral {
                 offset += 1
                 
                 storage.setBuffer(scopeBuffer, at: offset)
-            case let bsonData as BSONDataType:
-                if let value = bsonData.makePrimitive() {
-                    self[index] = value
-                }
+            case let bsonData as BSONPrimitiveRepresentable:
+                self[index] = bsonData.primitive
             default:
-                assertionFailure("Currently unsupported type \(primitive)")
+                assertionFailure("Currently unsupported type \(newValue)")
                 return
             }
         }
@@ -239,8 +237,6 @@ extension Document: ExpressibleByArrayLiteral {
 
     /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
     ///
-    /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
-    ///
     /// - parameter value: The `Value` to append
     public mutating func append(_ value: Primitive) {
         let key = String(self.count)
@@ -248,7 +244,15 @@ extension Document: ExpressibleByArrayLiteral {
         appendValue(value, forKey: key)
     }
     
-    /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
+    /// Appends a `Value` to this `Document` where this `Document` acts like an `Array`
+    ///
+    /// - parameter value: The `Value` to append
+    public mutating func append<PE: PrimitiveEncodable>(_ value: PE) throws {
+        let key = String(self.count)
+        
+        try appendValue(value.encodePrimitive(), forKey: key)
+    }
+    
     public mutating func insert(contentsOf document: Document, at index: Int) {
         Swift.assert(index <= count, "Value inserted at \(index) exceeds current count of \(count)")
         
@@ -267,7 +271,10 @@ extension Document: ExpressibleByArrayLiteral {
         self = document
     }
     
-    /// TODO: Analyze what should happen with `Dictionary`-like documents and this function
+    public mutating func insert<PE: PrimitiveEncodable>(_ value: PE, at index: Int) throws {
+        try insert(value.encodePrimitive(), at: index)
+    }
+    
     public mutating func insert(_ value: Primitive, at index: Int) {
         Swift.assert(index <= count, "Value inserted at \(index) exceeds current count of \(count)")
         
@@ -284,22 +291,30 @@ extension Document: ExpressibleByArrayLiteral {
         self = document
     }
     
-    public init(arrayLiteral elements: PrimitiveConvertible...) {
-        self.init(array: elements.compactMap { $0.makePrimitive() } )
+    public init(arrayLiteral elements: Primitive...) {
+        self.init(isArray: true)
+        
+        for element in elements {
+            self.append(element)
+        }
     }
     
     /// Converts an array of Primitives to a BSON ArrayDocument
-    public init(array: [Primitive]) {
+    public init(array: [PrimitiveEncodable]) throws {
         self.init(isArray: true)
         
         for element in array {
-            self.append(element)
+            try self.append(element.encodePrimitive())
         }
     }
 }
 
-extension Array where Element == Primitive {
-    public init(valuesOf document: Document) {
-        self = document.values
+extension Array: BSONPrimitiveRepresentable, Primitive where Element: Primitive {
+    public var primitive: Primitive {
+        var document = Document(isArray: true)
+        for value in self {
+            document.append(value)
+        }
+        return document
     }
 }

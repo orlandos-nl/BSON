@@ -159,7 +159,11 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
             return instance
         } else if T.self == Date.self {
             do {
-                return try Date(primitive: self.document[key]) as! T
+                guard let date = document[key] as? T else {
+                    throw BSONTypeConversionError(from: document[key], to: Date.self)
+                }
+                
+                return date
             } catch {
                 if decoder.settings.decodeDateFromTimestamp {
                     switch self.document[key] {
@@ -176,7 +180,7 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
                     throw error
                 }
             }
-        } else if let type = T.self as? BSONDataType.Type {
+        } else if let type = T.self as? BSONPrimitiveConvertible.Type {
             return try type.init(primitive: self.document[key]) as! T
         } else {
             let value = self.document[key]
