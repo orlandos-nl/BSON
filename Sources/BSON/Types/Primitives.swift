@@ -47,7 +47,7 @@ fileprivate struct AnyEncodable: Encodable {
     }
 }
 
-extension Data: BSONDataType {
+extension Data: BSONDataType, @unchecked Sendable {
     init(primitive: Primitive?) throws {
         guard let value = primitive, let binary = value as? Binary else {
             throw BSONTypeConversionError(from: type(of: primitive), to: Data.self)
@@ -203,7 +203,7 @@ struct BSONComparisonTypeMismatch: Error {
 }
 
 extension Int32: Primitive {}
-extension Date: Primitive {}
+extension Date: Primitive, @unchecked Sendable {}
 
 #if (arch(i386) || arch(arm)) && BSONInt64Primitive
 internal typealias _BSON64BitInteger = Int64

@@ -1,7 +1,7 @@
 import Foundation
 import NIO
 
-public struct Binary: Primitive, Hashable, Sendable {
+public struct Binary: Primitive, Hashable, @unchecked Sendable {
     public static func == (lhs: Binary, rhs: Binary) -> Bool {
         return lhs.subType.identifier == rhs.subType.identifier && lhs.storage == rhs.storage
     }
