@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol Primitive: Codable, Sendable {}
+public protocol Primitive: Codable, Sendable, PrimitiveEncodable {}
 
 extension Primitive {
     public func encodePrimitive() throws -> Primitive {
