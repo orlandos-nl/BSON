@@ -72,8 +72,8 @@ public struct AnyPrimitive: PrimitiveConvertible, Hashable, Encodable, Decodable
     }
 }
 
-public struct EitherPrimitive<L: Primitive, R: Primitive>: PrimitiveConvertible, Encodable {
-    private enum Value {
+public struct EitherPrimitive<L: Primitive, R: Primitive>: PrimitiveConvertible, Sendable, Encodable {
+    private enum Value: Sendable {
         case l(L)
         case r(R)
     }

@@ -3,6 +3,10 @@ public protocol PrimitiveConvertible {
     func makePrimitive() -> Primitive?
 }
 
+public protocol PrimitiveEncodable {
+    func encodePrimitive() throws -> Primitive
+}
+
 extension Primitive {
     public func makePrimitive() -> Primitive? {
         return self

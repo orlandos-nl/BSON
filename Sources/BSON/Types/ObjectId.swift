@@ -6,7 +6,7 @@ private struct InvalidObjectIdString: Error {
     var hex: String
 }
 
-public struct ObjectId {
+public struct ObjectId: Sendable {
     /// The internal Storage Buffer
     let _timestamp: UInt32
     let _random: UInt64

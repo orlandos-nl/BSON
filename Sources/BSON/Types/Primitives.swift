@@ -1,6 +1,12 @@
 import Foundation
 
-public protocol Primitive: Codable, PrimitiveConvertible {}
+public protocol Primitive: Codable, Sendable, PrimitiveConvertible, PrimitiveEncodable {}
+
+extension Primitive {
+    public func encodePrimitive() throws -> Primitive {
+        self
+    }
+}
 
 internal protocol BSONDataType: Primitive {
     var primitive: Primitive { get }
@@ -9,6 +15,9 @@ internal protocol BSONDataType: Primitive {
 
 extension BSONDataType {
     var primitive: Primitive { return self }
+    public func encodePrimitive() throws -> Primitive {
+        primitive
+    }
 }
 
 internal protocol AnyBSONEncoder {
