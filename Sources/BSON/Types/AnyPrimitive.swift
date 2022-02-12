@@ -48,7 +48,7 @@ public struct AnyPrimitive: PrimitiveEncodable, Hashable, Encodable, Decodable {
         }
     }
     
-    private let primitive: Primitive
+    public let primitive: Primitive
     
     public init(_ primitive: Primitive) {
         self.primitive = primitive
@@ -78,7 +78,7 @@ public struct EitherPrimitive<L: Primitive, R: Primitive>: PrimitiveEncodable, S
         case r(R)
     }
     private let value: Value
-    private var primitive: Primitive {
+    public var primitive: Primitive {
         switch value {
         case .l(let l):
             return l
