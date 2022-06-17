@@ -31,10 +31,7 @@ public struct ObjectId: Sendable {
 
     /// Decodes the ObjectID from the provided (24 character) hexString
     public init?(_ hex: String) {
-        let storage = UnsafeMutablePointer<UInt8>.allocate(capacity: 12)
-        defer {
-            storage.deallocate()
-        }
+        var buffer = ByteBufferAllocator().buffer(capacity: 12)
         
         let cString = hex.utf8CString
         
@@ -44,7 +41,6 @@ public struct ObjectId: Sendable {
         }
         
         var input = 0
-        var output = 0
         while input < 23 {
             guard
                 let c1 = cString[input].hexDecoded(),
@@ -53,14 +49,13 @@ public struct ObjectId: Sendable {
                 return nil
             }
             
-            storage[output] = UInt8(bitPattern: c1 << 4) | UInt8(bitPattern: c2)
+            buffer.writeInteger(UInt8(bitPattern: c1 << 4) | UInt8(bitPattern: c2))
             
             input = input &+ 2
-            output = output &+ 1
         }
         
-        _timestamp = storage.withMemoryRebound(to: UInt32.self, capacity: 1) { $0.pointee.bigEndian }
-        _random = storage.advanced(by: 4).withMemoryRebound(to: UInt64.self, capacity: 1) { $0.pointee.bigEndian }
+        _timestamp = buffer.readInteger()!
+        _random = buffer.readInteger()!
     }
     
     /// The 12 bytes represented as 24-character hex-string
