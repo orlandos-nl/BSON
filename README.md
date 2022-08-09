@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
 [![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson5)](https://travis-ci.org/OpenKitten/BSON)
 
-BSON 7 is a fast BSON library. It's compliant to the whole BSON specification test suite. The library parses the binary data on-demand, delaying copies until the last second.
+BSON 8 is a fast BSON library. It's compliant to the whole BSON specification test suite. The library parses the binary data on-demand, delaying copies until the last second.
 
 BSON is parsed and generated as specified for version 1.1 of the [BSON specification](http://bsonspec.org/spec.html).
 
@@ -16,7 +16,7 @@ Be sure to read our [full documentation](https://orlandos.nl/docs/mongokitten/ar
 BSON uses the Swift Package Manager. Add BSON to your dependencies in your Package.swift file:
 
 ```swift
-.package(url: "https://github.com/OpenKitten/BSON.git", from: "7.0.0")
+.package(url: "https://github.com/OpenKitten/BSON.git", from: "8.0.0")
 ```
 
 Also, don't forget to add "BSON" as a dependency for your target.
