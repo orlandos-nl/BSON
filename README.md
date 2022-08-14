@@ -9,7 +9,7 @@ BSON 8 is a fast BSON library. It's compliant to the whole BSON specification te
 
 BSON is parsed and generated as specified for version 1.1 of the [BSON specification](http://bsonspec.org/spec.html).
 
-Be sure to read our [full documentation](https://orlandos.nl/docs/mongokitten/articles/bson).
+Be sure to read our [full documentation](https://orlandos.nl/docs/mongokitten/articles/bson) and [API reference](https://swiftinit.org/reference/bson).
 
 ## Installation
 
