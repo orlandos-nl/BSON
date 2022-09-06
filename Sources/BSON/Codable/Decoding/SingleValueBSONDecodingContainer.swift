@@ -1,3 +1,5 @@
+import Foundation
+
 internal struct SingleValueBSONDecodingContainer: SingleValueDecodingContainer, AnySingleValueBSONDecodingContainer {
     var codingPath: [CodingKey]
     
@@ -157,7 +159,30 @@ internal struct SingleValueBSONDecodingContainer: SingleValueDecodingContainer, 
     }
     
     func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        if let type = T.self as? BSONPrimitiveConvertible.Type {
+        if T.self == Date.self {
+            do {
+                guard let date = self.decoder.primitive as? T else {
+                    throw BSONTypeConversionError(from: self.decoder.primitive, to: Date.self)
+                }
+                
+                return date
+            } catch {
+                if decoder.settings.decodeDateFromTimestamp {
+                    switch self.decoder.primitive {
+                    case let int as Int:
+                        return Date(timeIntervalSince1970: Double(int)) as! T
+                    case let int as Int32:
+                        return Date(timeIntervalSince1970: Double(int)) as! T
+                    case let double as Double:
+                        return Date(timeIntervalSince1970: double) as! T
+                    default:
+                        throw error
+                    }
+                } else {
+                    throw error
+                }
+            }
+        } else if let type = T.self as? BSONPrimitiveConvertible.Type {
             return try type.init(primitive: self.decoder.primitive) as! T
         } else {
             let decoder = _BSONDecoder(wrapped: self.decoder.wrapped, settings: self.decoder.settings, codingPath: self.codingPath, userInfo: self.decoder.userInfo)

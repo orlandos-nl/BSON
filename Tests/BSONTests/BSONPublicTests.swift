@@ -199,6 +199,57 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(doc.keys, ["_id", "parent", "name", "parent2"])
     }
     
+    func testDateCodables() throws {
+        @propertyWrapper
+        struct Field<C: Codable>: Codable {
+            public let key: String?
+            private var _wrappedValue: C?
+            
+            public var wrappedValue: C {
+                get { _wrappedValue! }
+                set { _wrappedValue = newValue }
+            }
+            
+            public init(from decoder: Decoder) throws {
+                guard let key = decoder.codingPath.last?.stringValue else {
+                    fatalError()
+                }
+                
+                self.key = key
+                
+                let container = try decoder.singleValueContainer()
+                self._wrappedValue = try container.decode(C.self)
+            }
+            
+            public init(wrappedValue: C) {
+                self.key = nil
+                self._wrappedValue = wrappedValue
+            }
+            
+            public func encode(to encoder: Encoder) throws {
+                var container = encoder.singleValueContainer()
+                try container.encode(_wrappedValue!)
+            }
+        }
+        
+        struct Entity: Codable {
+            @Field var _id: ObjectId
+            @Field var date: Date
+            @Field var dates: [Date]
+        }
+        
+        let entity = Entity(_id: ObjectId(), date: Date(), dates: [Date(), Date().addingTimeInterval(1)])
+        let document = try BSONEncoder().encode(entity)
+        XCTAssertTrue(document["date"] is Date)
+        let entity2 = try BSONDecoder().decode(Entity.self, from: document)
+        XCTAssertEqual(entity._id, entity2._id)
+        XCTAssertEqual(entity.date.timeIntervalSince1970, entity2.date.timeIntervalSince1970, accuracy: 0.01)
+        XCTAssertEqual(entity.dates.count, entity2.dates.count)
+        for i in 0..<entity.dates.count {
+            XCTAssertEqual(entity.dates[i].timeIntervalSince1970, entity2.dates[i].timeIntervalSince1970, accuracy: 0.01)
+        }
+    }
+    
     func testBinaryOverwrite() {
         struct User: Codable {
             let id: ObjectId

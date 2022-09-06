@@ -1,3 +1,5 @@
+import Foundation
+
 internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     var codingPath: [CodingKey]
     
@@ -112,7 +114,31 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
     }
     
     mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
-        if let type = T.self as? BSONPrimitiveConvertible.Type {
+        if T.self == Date.self {
+            let element = nextElement()
+            do {
+                guard let date = element as? T else {
+                    throw BSONTypeConversionError(from: element, to: Date.self)
+                }
+                
+                return date
+            } catch {
+                if decoder.settings.decodeDateFromTimestamp {
+                    switch element {
+                    case let int as Int:
+                        return Date(timeIntervalSince1970: Double(int)) as! T
+                    case let int as Int32:
+                        return Date(timeIntervalSince1970: Double(int)) as! T
+                    case let double as Double:
+                        return Date(timeIntervalSince1970: double) as! T
+                    default:
+                        throw error
+                    }
+                } else {
+                    throw error
+                }
+            }
+        } else if let type = T.self as? BSONPrimitiveConvertible.Type {
             return try type.init(primitive: self.nextElement()) as! T
         } else {
             return try T.init(from: nextDecoder())
