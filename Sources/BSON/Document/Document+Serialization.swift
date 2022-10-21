@@ -1,5 +1,5 @@
 import Foundation
-import NIO
+import NIOCore
 
 extension Document {
     public func makeData() -> Data {

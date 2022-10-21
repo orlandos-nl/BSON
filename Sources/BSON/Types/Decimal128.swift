@@ -1,4 +1,4 @@
-import NIO
+import NIOCore
 
 /// A BSON Decimal128 value
 ///

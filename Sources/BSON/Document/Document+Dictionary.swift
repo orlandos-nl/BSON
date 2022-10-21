@@ -1,5 +1,5 @@
 import Foundation
-import NIO
+import NIOCore
 
 extension Document: ExpressibleByDictionaryLiteral {
     /// Gets all top level keys in this Document

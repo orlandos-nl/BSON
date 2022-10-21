@@ -1,5 +1,5 @@
 import Foundation
-import NIO
+import NIOCore
 
 /// An error that occurs if the ObjectId was initialized with an invalid HexString
 private struct InvalidObjectIdString: Error {

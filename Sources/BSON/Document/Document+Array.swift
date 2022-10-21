@@ -1,5 +1,5 @@
 import Foundation
-import NIO
+import NIOCore
 
 extension Document: ExpressibleByArrayLiteral {
     /// Gets all top level values in this Document

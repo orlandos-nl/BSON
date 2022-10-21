@@ -1,5 +1,5 @@
 import Foundation
-import NIO
+import NIOCore
 
 public struct Binary: Primitive, Hashable, @unchecked Sendable {
     public static func == (lhs: Binary, rhs: Binary) -> Bool {
