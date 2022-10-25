@@ -10,7 +10,7 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "BSON", 
+            name: "BSON",
             targets: ["BSON"])
         ],
     dependencies: [
@@ -18,14 +18,14 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "BSON", 
+            name: "BSON",
             dependencies: [
                 .product(name: "NIOCore", package: "swift-nio"),
             ]
         ),
         .testTarget(
             name: "BSONTests",
-            dependencies: ["BSON"]),
+            dependencies: ["BSON"])
         ],
     swiftLanguageVersions: [.v4_2]
 )
