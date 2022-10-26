@@ -1,4 +1,4 @@
-import NIO
+import NIOCore
 
 public struct ValidationResult {
     public internal(set) var errorPosition: Int?

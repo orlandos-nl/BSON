@@ -1,4 +1,4 @@
-import NIO
+import NIOCore
 
 extension ByteBuffer {
     func getDouble(at offset: Int) -> Double? {

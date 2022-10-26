@@ -20,7 +20,7 @@ let package = Package(
         .target(
             name: "BSON",
             dependencies: [
-                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOCore", package: "swift-nio"),
             ]
         ),
         .testTarget(

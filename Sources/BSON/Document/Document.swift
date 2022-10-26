@@ -1,5 +1,5 @@
 import Foundation
-import NIO
+import NIOCore
 
 // TODO: ByteBuffer is missing Sendable annotation, but is Sendable
 public struct Document: Primitive, @unchecked Sendable {
