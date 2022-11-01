@@ -1,26 +1,57 @@
-extension Document: RandomAccessCollection {
+extension Document: RandomAccessCollection, MutableCollection {
     public subscript(position: DocumentIndex) -> (String, Primitive) {
-        var offset = 4
-        for _ in 0..<position.offset {
-            guard self.skipKeyValuePair(at: &offset) else {
-                fatalError("DocumentIndex exceeded Document bounds")
+        get {
+            var offset = 4
+            for _ in 0..<position.offset {
+                guard self.skipKeyValuePair(at: &offset) else {
+                    fatalError("DocumentIndex exceeded Document bounds")
+                }
+            }
+            
+            let type = TypeIdentifier(rawValue: storage.getByte(at: offset)!)!
+            offset += 1
+            
+            let length = storage.firstRelativeIndexOf(startingAt: offset)!
+            let key = storage.getString(at: offset, length: length)!
+            offset += length + 1
+            
+            let value = self.value(forType: type, at: offset)!
+            
+            return (key, value)
+        }
+        set {
+            guard let key = self.getKey(at: position.offset) else {
+                fatalError("Attempting to change a value out of bounds")
+            }
+            
+            if key == newValue.0 {
+                // Same key, just change the value
+                self[key] = newValue.1
+            } else {
+                self[key] = nil
+                self[newValue.0] = newValue.1
             }
         }
-        
-        let type = TypeIdentifier(rawValue: storage.getByte(at: offset)!)!
-        offset += 1
-        
-        let length = storage.firstRelativeIndexOf(startingAt: offset)!
-        let key = storage.getString(at: offset, length: length)!
-        offset += length + 1
-        
-        let value = self.value(forType: type, at: offset)!
-
-        return (key, value)
     }
     
     public subscript(bounds: Range<DocumentIndex>) -> DocumentSlice {
-        DocumentSlice(document: self, startIndex: bounds.lowerBound, endIndex: bounds.upperBound)
+        get {
+            DocumentSlice(document: self, startIndex: bounds.lowerBound, endIndex: bounds.upperBound)
+        }
+        set {
+            let start = bounds.lowerBound.offset
+            let end = bounds.upperBound.offset
+            var index = end
+            
+            while index != start {
+                index -= 1
+                remove(at: index)
+            }
+            
+            for (key, value) in newValue.document {
+                self[key] = value
+            }
+        }
     }
     
     public typealias Iterator = DocumentIterator

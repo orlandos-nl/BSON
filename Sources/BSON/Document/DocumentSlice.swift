@@ -1,4 +1,4 @@
-public struct DocumentSlice: RandomAccessCollection {
+public struct DocumentSlice: RandomAccessCollection, MutableCollection {
     public func index(before i: DocumentIndex) -> DocumentIndex {
         return DocumentIndex(offset: i.offset - 1)
     }
@@ -8,17 +8,35 @@ public struct DocumentSlice: RandomAccessCollection {
     }
     
     public subscript(position: DocumentIndex) -> (String, Primitive) {
-        return document.pair(atIndex: position)!
+        get { document[position] }
+        set {
+            guard let key = document.getKey(at: position.offset) else {
+                fatalError("Attempting to change a value out of bounds")
+            }
+            
+            if key == newValue.0 {
+                // Same key, just change the value
+                document[key] = newValue.1
+            } else {
+                document[key] = nil
+                document[newValue.0] = newValue.1
+            }
+        }
     }
     
     public subscript(bounds: Range<DocumentIndex>) -> DocumentSlice {
-        DocumentSlice(document: document, startIndex: bounds.lowerBound, endIndex: bounds.upperBound)
+        get {
+            DocumentSlice(document: document, startIndex: bounds.lowerBound, endIndex: bounds.upperBound)
+        }
+        set {
+            document[bounds] = newValue
+        }
     }
     
     public typealias Element = (String, Primitive)
     public typealias SubSequence = DocumentSlice
     
-    let document: Document
+    var document: Document
     public let startIndex: DocumentIndex
     public let endIndex: DocumentIndex
 }
