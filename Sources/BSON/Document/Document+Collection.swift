@@ -65,7 +65,7 @@ extension Document: RandomAccessCollection {
     }
 }
 
-public struct DocumentIndex: Comparable {
+public struct DocumentIndex: Comparable, Hashable {
     /// The offset in the Document to look for
     var offset: Int
     

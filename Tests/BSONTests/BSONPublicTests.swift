@@ -6,7 +6,7 @@
 //  Copyright © 2016 Robbert Brandsma. All rights reserved.
 //
 
-import NIO
+import NIOCore
 import Foundation
 import XCTest
 import BSON
@@ -199,7 +199,7 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(doc.keys, ["_id", "parent", "name", "parent2"])
     }
     
-    func testDateCodables() throws {
+    func testWrappedDateCodables() throws {
         @propertyWrapper
         struct Field<C: Codable>: Codable {
             public let key: String?
@@ -241,6 +241,27 @@ final class BSONPublicTests: XCTestCase {
         let entity = Entity(_id: ObjectId(), date: Date(), dates: [Date(), Date().addingTimeInterval(1)])
         let document = try BSONEncoder().encode(entity)
         XCTAssertTrue(document["date"] is Date)
+        XCTAssertTrue(document["dates"][0] is Date)
+        let entity2 = try BSONDecoder().decode(Entity.self, from: document)
+        XCTAssertEqual(entity._id, entity2._id)
+        XCTAssertEqual(entity.date.timeIntervalSince1970, entity2.date.timeIntervalSince1970, accuracy: 0.01)
+        XCTAssertEqual(entity.dates.count, entity2.dates.count)
+        for i in 0..<entity.dates.count {
+            XCTAssertEqual(entity.dates[i].timeIntervalSince1970, entity2.dates[i].timeIntervalSince1970, accuracy: 0.01)
+        }
+    }
+    
+    func testDateCodables() throws {
+        struct Entity: Codable {
+            var _id: ObjectId
+            var date: Date
+            var dates: [Date]
+        }
+        
+        let entity = Entity(_id: ObjectId(), date: Date(), dates: [Date(), Date().addingTimeInterval(1)])
+        let document = try BSONEncoder().encode(entity)
+        XCTAssertTrue(document["date"] is Date)
+        XCTAssertTrue(document["dates"][0] is Date)
         let entity2 = try BSONDecoder().decode(Entity.self, from: document)
         XCTAssertEqual(entity._id, entity2._id)
         XCTAssertEqual(entity.date.timeIntervalSince1970, entity2.date.timeIntervalSince1970, accuracy: 0.01)

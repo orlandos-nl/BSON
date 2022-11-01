@@ -6,7 +6,6 @@
 //
 
 import XCTest
-import BSON
 
 class ObjectIdTests: XCTestCase {
 
