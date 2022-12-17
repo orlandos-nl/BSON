@@ -96,6 +96,7 @@ extension Document: RandomAccessCollection, MutableCollection {
     }
 }
 
+/// A type that can be used as a key in a `Document`.
 public struct DocumentIndex: Comparable, Hashable {
     /// The offset in the Document to look for
     var offset: Int
@@ -119,12 +120,15 @@ public struct DocumentPair {
     public var value: Primitive
 }
 
+/// An iterator that iterates over each pair in a `Document`.
 public struct DocumentPairIterator: IteratorProtocol, Sequence {
     /// The Document that is being iterated over
     fileprivate let document: Document
     
-    /// The next index to be returned
+    /// The next index to be returned. This is incremented after each call to `next()`
     public private(set) var currentIndex = 0
+
+    /// The current index in the binary representation of the Document.
     public private(set) var currentBinaryIndex = 4
     
     /// If `true`, the end of this iterator has been reached

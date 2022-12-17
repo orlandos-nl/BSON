@@ -6,11 +6,15 @@ private struct InvalidObjectIdString: Error {
     var hex: String
 }
 
+/// A BSON ObjectId. This can represent a 12-byte value consisting of a 4-byte timestamp, a 3-byte machine identifier, a 2-byte process id, and a 3-byte counter.
+/// The timestamp is the number of seconds since the Unix epoch. The machine identifier, process id, and counter are random values in new ObjectId values.
+/// See https://docs.mongodb.com/manual/reference/method/ObjectId/
 public struct ObjectId: Sendable {
     /// The internal Storage Buffer
     let _timestamp: UInt32
     let _random: UInt64
  
+    /// Generates a new ObjectId. This is the default initializer.
     public init() {
         self._timestamp = UInt32(Date().timeIntervalSince1970)
         self._random = .random(in: .min ... .max)
@@ -21,6 +25,7 @@ public struct ObjectId: Sendable {
         _random = random
     }
     
+    /// Creates an ObjectId from a 24-character hex string. Throws an error if the string is invalid.
     public static func make(from hex: String) throws -> ObjectId {
         guard let me = self.init(hex) else {
             throw InvalidObjectIdString(hex: hex)
@@ -29,7 +34,7 @@ public struct ObjectId: Sendable {
         return me
     }
 
-    /// Decodes the ObjectID from the provided (24 character) hexString
+    /// Decodes the ObjectID from the provided (24 character) hexString. Returns nil if the string is invalid.
     public init?(_ hex: String) {
         var buffer = ByteBufferAllocator().buffer(capacity: 12)
         
@@ -58,7 +63,7 @@ public struct ObjectId: Sendable {
         _random = buffer.readInteger()!
     }
     
-    /// The 12 bytes represented as 24-character hex-string
+    /// The 12 bytes represented as 24-character hex-string. This is the default string representation of an ObjectId.
     public var hexString: String {
         var data = Data()
         data.reserveCapacity(24)
@@ -88,7 +93,7 @@ public struct ObjectId: Sendable {
         return String(data: data, encoding: .utf8)!
     }
     
-    /// The creation date of this ObjectId
+    /// The creation date of this ObjectId.
     public var date: Date {
         return Date(timeIntervalSince1970: Double(_timestamp))
     }

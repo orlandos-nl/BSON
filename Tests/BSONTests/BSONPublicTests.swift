@@ -76,6 +76,57 @@ final class BSONPublicTests: XCTestCase {
         XCTAssertEqual(doc.keys, ["int32"])
     }
     
+    func testDocumentToJSON() throws {
+        let id = ObjectId()
+        let org1 = ObjectId()
+        let org2 = ObjectId()
+        let now = Date()
+        let document: Document = [
+            "_id": id,
+            "name": "Joannis",
+            "createdAt": now,
+            "admin": true,
+            "organizations": [
+                org1, org2
+            ],
+            "profile": [
+                "email": "joannis@responsive.software"
+            ],
+            "null": Null(),
+            "map": [
+                "a": 0,
+                "b": 1
+            ]
+        ]
+        
+        let json = try JSONEncoder().encode(document)
+        struct User: Codable, Equatable {
+            struct Profile: Codable, Equatable {
+                let email: String
+            }
+            
+            let _id: ObjectId
+            let name: String
+            let createdAt: Date
+            let admin: Bool
+            let organizations: [ObjectId]
+            let profile: Profile
+            let null: String?
+            let map: [String: Int]
+        }
+        
+        let user = try JSONDecoder().decode(User.self, from: json)
+        XCTAssertEqual(user._id, id)
+        XCTAssertEqual(user.name, "Joannis")
+        XCTAssertEqual(user.createdAt.timeIntervalSince1970, now.timeIntervalSince1970, accuracy: 0.01)
+        XCTAssertEqual(user.admin, true)
+        XCTAssertEqual(user.organizations, [org1, org2])
+        XCTAssertEqual(user.profile.email, "joannis@responsive.software")
+        XCTAssertEqual(user.null, nil)
+        XCTAssertEqual(user.map["a"], 0)
+        XCTAssertEqual(user.map["b"], 1)
+    }
+    
     func testSubdocumentBasicAccess()  throws{
         var doc = Document()
         let subdoc = ["foo": "bar"] as Document

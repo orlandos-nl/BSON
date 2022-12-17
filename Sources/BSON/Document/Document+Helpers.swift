@@ -52,6 +52,7 @@ extension Document {
     }
 }
 
+/// Thrown when a value is not found in a document.
 public struct BSONValueNotFound: Error, CustomStringConvertible {
     public let type: Any.Type
     public let path: [String]

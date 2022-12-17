@@ -1,6 +1,6 @@
 import Foundation
 
-/// A helper that is able to decode BSON data types into a `Decodable` type
+/// A helper that is able to decode BSON data types into a `Decodable` type. 
 public struct BSONDecoder {
     /// The configuration used for decoding
     public var settings: BSONDecoderSettings

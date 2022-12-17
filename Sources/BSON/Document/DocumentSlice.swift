@@ -36,8 +36,13 @@ public struct DocumentSlice: RandomAccessCollection, MutableCollection {
     public typealias Element = (String, Primitive)
     public typealias SubSequence = DocumentSlice
     
+    /// The Document that is being sliced
     var document: Document
+
+    /// The index of the first element in the slice
     public let startIndex: DocumentIndex
+
+    /// The index after the last element in the slice
     public let endIndex: DocumentIndex
 }
 

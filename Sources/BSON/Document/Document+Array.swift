@@ -172,7 +172,8 @@ extension Document: ExpressibleByArrayLiteral {
                 storage.setInteger(int, at: valueOffset, endianness: .little)
             case let decimal128 as Decimal128:
                 reserveRoom(.decimal128, 16)
-                storage.setBytes(decimal128.storage, at: valueOffset)
+                storage.setInteger(decimal128.low, at: valueOffset)
+                storage.setInteger(decimal128.high, at: valueOffset + 8)
             case is MaxKey: // 0x7F
                 reserveRoom(.maxKey, 0)
             case is MinKey: // 0xFF

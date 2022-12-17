@@ -1,6 +1,8 @@
 import Foundation
 import NIOCore
 
+/// A BSON Binary. This is used for storing binary data in MongoDB
+/// See https://docs.mongodb.com/manual/reference/bson-types/#binary
 public struct Binary: Primitive, Hashable, @unchecked Sendable {
     public static func == (lhs: Binary, rhs: Binary) -> Bool {
         return lhs.subType.identifier == rhs.subType.identifier && lhs.storage == rhs.storage
@@ -13,13 +15,25 @@ public struct Binary: Primitive, Hashable, @unchecked Sendable {
         }
     }
     
+    /// The different types of binary data that can be stored in a Binary instance. The identifier is the byte that is stored in the BSON document.
+    /// See https://docs.mongodb.com/manual/reference/bson-types/#binary
     public enum SubType: Sendable {
+        /// A generic binary type. The identifier is 0x00.
         case generic
+
+        /// A function type. The identifier is 0x01.
         case function
+
+        /// A UUID type. The identifier is 0x04.
         case uuid
+
+        /// An MD5 type. The identifier is 0x05.
         case md5
+
+        /// A user defined type. The identifier is any byte other than 0x00, 0x01, 0x04, or 0x05.
         case userDefined(UInt8)
         
+        /// Initializes a SubType from a byte. If the byte is not a valid identifier, the SubType will be set to .userDefined.
         init(_ byte: UInt8) {
             switch byte {
             case 0x00: self = .generic
@@ -30,6 +44,7 @@ public struct Binary: Primitive, Hashable, @unchecked Sendable {
             }
         }
         
+        /// The byte that represents this SubType
         var identifier: UInt8 {
             switch self {
             case .generic: return 0x00

@@ -1,3 +1,4 @@
+/// A JavaScript code. This is used for storing JavaScript functions in MongoDB.
 public struct JavaScriptCode: Primitive, ExpressibleByStringLiteral, Hashable {
     public var code: String
     
@@ -10,6 +11,7 @@ public struct JavaScriptCode: Primitive, ExpressibleByStringLiteral, Hashable {
     }
 }
 
+/// A JavaScript code with scope. This is used for storing JavaScript functions in MongoDB.
 public struct JavaScriptCodeWithScope: Primitive, Hashable {
     public var code: String
     public var scope: Document

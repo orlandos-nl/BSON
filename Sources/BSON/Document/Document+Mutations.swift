@@ -241,11 +241,14 @@ extension Document {
         case .int32:
             return self.storage.getInteger(at: offset, endianness: .little, as: Int32.self)
         case .decimal128:
-            guard let slice = storage.getBytes(at: offset, length: 16) else {
+            guard
+                let low: UInt64 = storage.getInteger(at: offset),
+                let high: UInt64 = storage.getInteger(at: offset + 8)
+            else {
                 return nil
             }
 
-            return Decimal128(slice)
+            return Decimal128(low: low, high: high)
         }
     }
     
