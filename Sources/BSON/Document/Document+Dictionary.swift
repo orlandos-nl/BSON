@@ -198,7 +198,8 @@ extension Document: ExpressibleByDictionaryLiteral {
             storage.writeInteger(int, endianness: .little)
         case let decimal128 as Decimal128:
             writeKey(.decimal128)
-            storage.writeBytes(decimal128.storage)
+            storage.writeInteger(decimal128.low)
+            storage.writeInteger(decimal128.high)
         case is MaxKey: // 0x7F
             writeKey(.maxKey)
         case is MinKey: // 0xFF
