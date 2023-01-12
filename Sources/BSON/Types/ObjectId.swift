@@ -124,6 +124,10 @@ extension ObjectId: LosslessStringConvertible {
     }
 }
 
+extension ObjectId: Identifiable {
+    public var id: Self { self }
+}
+
 fileprivate extension Int8 {
     func hexDecoded() -> Int8? {
         let byte: Int8
