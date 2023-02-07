@@ -219,12 +219,18 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
     }
     
     func superDecoder() throws -> Decoder {
-        // TODO: Use `super` key
-        return decoder
+        let value = self.document[self.decoder.converted(BSONKey.super.stringValue)]
+        let decoderValue: DecoderValue = (value as? Document).map({ .document($0) }) ?? .primitive(value)
+        let decoder = _BSONDecoder(wrapped: decoderValue, settings: self.decoder.settings, codingPath: self.codingPath + [BSONKey.super], userInfo: self.decoder.userInfo)
+
+        return decoder // N.B.: Can't use `self.superDecoder(forKey: BSONKey.super)` due to generic constraint
     }
     
     func superDecoder(forKey key: K) throws -> Decoder {
-        // TODO: Respect given key
+        let value = self.document[self.decoder.converted(key.stringValue)]
+        let decoderValue: DecoderValue = (value as? Document).map({ .document($0) }) ?? .primitive(value)
+        let decoder = _BSONDecoder(wrapped: decoderValue, settings: self.decoder.settings, codingPath: self.codingPath + [key], userInfo: self.decoder.userInfo)
+
         return decoder
     }
 }
