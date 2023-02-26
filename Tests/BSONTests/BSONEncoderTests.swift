@@ -85,6 +85,20 @@ class BSONEncoderTests: XCTestCase {
         let codedDocument = try BSONEncoder().encode(floatArray)
         XCTAssertEqual(codedDocument["0"] as? Double, 4)
     }
+    
+    func testDecodeDateFromDouble() throws {
+        let date = Date()
+        let document: Document = [
+            "date": date.timeIntervalSince1970
+        ]
+        
+        struct DateContainer: Codable {
+            let date: Date
+        }
+        
+        let container = try BSONDecoder().decode(DateContainer.self, from: document)
+        XCTAssertEqual(date, container.date)
+    }
 
     @available(OSX 10.12, *)
     func testEncoding() throws {
