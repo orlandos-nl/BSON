@@ -157,11 +157,13 @@ fileprivate struct CustomKey: CodingKey {
 
 extension Date: BSONDataType {
     init(primitive: Primitive?) throws {
-        guard let value = primitive as? Date else {
+        if let value = primitive as? Date {
+            self = value
+        } else if let value = primitive as? Double {
+            self = Date(timeIntervalSince1970: value)
+        } else {
             throw BSONTypeConversionError(from: type(of: primitive), to: Date.self)
         }
-        
-        self = value
     }
 }
 
