@@ -158,7 +158,7 @@ public struct BSONDecoderSettings {
     /// If `true`, allows decoding ObjectIds from Strings if they're formatted as a 24-character hexString
     public var decodeObjectIdFromString: Bool = false
     
-    /// If `true`, allows decoding ObjectIds from Strings if they're formatted as a 24-character hexString
+    /// If `true`, allows decoding Date from a Double (TimeInterval)
     public var decodeDateFromTimestamp: Bool = true
     
     /// A strategy that is applied when encountering a request to decode a `Float`

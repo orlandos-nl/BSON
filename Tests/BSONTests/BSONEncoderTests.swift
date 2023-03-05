@@ -97,7 +97,7 @@ class BSONEncoderTests: XCTestCase {
         }
         
         let container = try BSONDecoder().decode(DateContainer.self, from: document)
-        XCTAssertEqual(date, container.date)
+        XCTAssertEqual(date.timeIntervalSince1970, container.date.timeIntervalSince1970)
     }
 
     @available(OSX 10.12, *)
