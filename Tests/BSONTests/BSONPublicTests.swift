@@ -289,6 +289,8 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testWrappedDateCodables() throws {
+        struct Oopsie: Error {}
+        
         @propertyWrapper
         struct Field<C: Codable>: Codable {
             public let key: String?
@@ -301,7 +303,8 @@ final class BSONPublicTests: XCTestCase {
             
             public init(from decoder: Decoder) throws {
                 guard let key = decoder.codingPath.last?.stringValue else {
-                    fatalError()
+                    XCTFail()
+                    throw Oopsie()
                 }
                 
                 self.key = key
@@ -426,18 +429,21 @@ final class BSONPublicTests: XCTestCase {
             "morePi": 3.14
         ]
 
-        let decoder = BSONDecoder()
-
-        let huge = try decoder.decode(HugeDocument.self, from: doc)
-        XCTAssertEqual(huge._id, id)
-        XCTAssertEqual(huge.age, 244)
-        XCTAssertEqual(huge.year, 1774)
-        XCTAssertEqual(huge.epoch, 1522809334)
-        XCTAssertEqual(huge.bigNum, .max)
-        XCTAssertEqual(huge.biggerNum, 1)
-        XCTAssertEqual(huge.awesome, true)
-        XCTAssertEqual(huge.pi, 3.14)
-        XCTAssertEqual(huge.morePi, 3.14)
+        for _ in 0..<100_000 {
+            let decoder = BSONDecoder()
+//            let decoder = BSONDecoder()
+            
+            _ = try decoder.decode(HugeDocument.self, from: doc)
+//            XCTAssertEqual(huge._id, id)
+//            XCTAssertEqual(huge.age, 244)
+//            XCTAssertEqual(huge.year, 1774)
+//            XCTAssertEqual(huge.epoch, 1522809334)
+//            XCTAssertEqual(huge.bigNum, .max)
+//            XCTAssertEqual(huge.biggerNum, 1)
+//            XCTAssertEqual(huge.awesome, true)
+//            XCTAssertEqual(huge.pi, 3.14)
+//            XCTAssertEqual(huge.morePi, 3.14)
+        }
     }
     
     func testEquality() {

@@ -25,7 +25,7 @@ fileprivate extension String {
 
 extension Document {
     /// Validates the given `buffer` as a Document
-    static func validate(buffer: ByteBuffer, asArray validateAsArray: Bool) -> ValidationResult {
+    static func validate(buffer: ByteBuffer) -> ValidationResult {
         var currentIndex = 0
 
         func errorFound(reason: String, key: String? = nil) -> ValidationResult {
@@ -91,7 +91,7 @@ extension Document {
                 return errorFound(reason: .notEnoughBytesForValue)
             }
             
-            var recursiveValidation = Document.validate(buffer: subBuffer, asArray: array)
+            var recursiveValidation = Document.validate(buffer: subBuffer)
             currentIndex += Int(documentLength)
             
             guard recursiveValidation.isValid else {
@@ -253,6 +253,6 @@ extension Document {
     ///
     /// If `validatingRecursively` is `true` the subdocuments will be traversed, too
     public func validate() -> ValidationResult {
-        return Document.validate(buffer: storage, asArray: self.isArray)
+        return Document.validate(buffer: storage)
     }
 }
