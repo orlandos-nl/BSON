@@ -25,13 +25,13 @@ extension ByteBuffer {
     }
     
     /// Returns the first index at which `byte` appears, starting from the reader position
-    func firstRelativeIndexOf(startingAt: Int) -> Int? {
+    func firstRelativeIndexOf(matchingByte match: UInt8 = 0x00, startingAt: Int) -> Int? {
         withUnsafeReadableBytes { buffer -> Int? in
             var i = startingAt
             let count = buffer.count
             
             while i < count {
-                if buffer[i] == 0 {
+                if buffer[i] == match {
                     return i - startingAt
                 }
                 

@@ -1,5 +1,5 @@
 import Foundation
-import BSON
+@testable import BSON
 import XCTest
 
 @available(iOS 10.0, *)

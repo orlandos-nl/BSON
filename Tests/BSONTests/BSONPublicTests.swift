@@ -9,7 +9,7 @@
 import NIOCore
 import Foundation
 import XCTest
-import BSON
+@testable import BSON
 
 #if os(Linux)
     import Glibc
@@ -140,6 +140,35 @@ final class BSONPublicTests: XCTestCase {
         var doc: Document = ["hello"]
         doc[0] = "ello"
         XCTAssertTrue(doc.validate().isValid)
+    }
+    
+    func testKittenArrayEquatability() {
+        var copy = kittenDocument
+        
+        XCTAssertEqual(copy, kittenDocument)
+        copy.isArray = true
+        var array = Document(isArray: true)
+        for value in kittenDocument.values {
+            array.append(value)
+        }
+        XCTAssertEqual(copy, array)
+    }
+    
+    func testEquatability() {
+        var array: Document = [
+            "a": 0,
+            "b": 1,
+            "z": 2
+        ]
+        
+        var array2: Document = [0, 1, 2]
+        
+        XCTAssertNotEqual(array, array2)
+        array.isArray = true
+        XCTAssertEqual(array, array2)
+        array.isArray = false
+        array2.isArray = false
+        XCTAssertNotEqual(array, array2)
     }
     
     func testExpandSubarray() {

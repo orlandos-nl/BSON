@@ -6,30 +6,94 @@ extension Document: Equatable {
             return false
         }
         
-        if lhs.count != rhs.count {
+        var lhsBuffer = lhs.storage
+        var rhsBuffer = rhs.storage
+        
+        guard lhsBuffer.readableBytes > 4, rhsBuffer.readableBytes > 4 else {
+            return false
+        }
+        
+        lhsBuffer.moveReaderIndex(forwardBy: 4)
+        rhsBuffer.moveReaderIndex(forwardBy: 4)
+        
+        // Check the next LHS value type
+        guard
+            let lhsTypeId: UInt8 = lhsBuffer.readInteger(),
+            let lhsType = TypeIdentifier(rawValue: lhsTypeId)
+        else {
+            // Both counts end here
+            if
+                let rhsTypeId: UInt8 = rhsBuffer.readInteger()
+            {
+                return rhsTypeId == 0
+            } else {
+                return true
+            }
+        }
+        
+        // Check the next RHS value type
+        guard
+            let rhsTypeId: UInt8 = rhsBuffer.readInteger(),
+            let rhsType = TypeIdentifier(rawValue: rhsTypeId)
+        else {
+            return false
+        }
+        
+        // Both types must match
+        guard lhsType == rhsType else {
+            return false
+        }
+        
+        // Since they're both the same, this is now our type
+        let type = lhsType
+        
+        guard
+            let lhsLength = lhsBuffer.firstRelativeIndexOf(startingAt: 0),
+            lhsLength + 1 < lhsBuffer.readableBytes,
+            let rhsLength = rhsBuffer.firstRelativeIndexOf(startingAt: 0),
+            rhsLength + 1 < rhsBuffer.readableBytes
+        else {
+            // Corrupt buffer
             return false
         }
         
         if lhs.isArray {
-            for i in 0..<lhs.count {
-                let lhsValue = lhs[i]
-                let rhsValue = rhs[i]
-                
-                guard
-                    lhsValue.equals(rhsValue)
-                else {
-                    return false
-                }
+            // For arrays, only care about indices. Not keys
+            // Skip until after the null terminator
+            lhsBuffer.moveReaderIndex(forwardBy: lhsLength + 1)
+            rhsBuffer.moveReaderIndex(forwardBy: rhsLength + 1)
+        } else {
+            let lhsKey = lhsBuffer.readString(length: lhsLength)
+            let rhsKey = rhsBuffer.readString(length: rhsLength)
+            
+            guard lhsKey == rhsKey else {
+                return false
+            }
+            
+            // Skip null terminator
+            lhsBuffer.moveReaderIndex(forwardBy: 1)
+            rhsBuffer.moveReaderIndex(forwardBy: 1)
+        }
+        
+        guard
+            let lhsLength = lhs.valueLength(forType: lhsType, at: lhsBuffer.readerIndex),
+            let rhsLength = rhs.valueLength(forType: rhsType, at: rhsBuffer.readerIndex),
+            let lhsSlice = lhsBuffer.readSlice(length: Int(lhsLength)),
+            let rhsSlice = rhsBuffer.readSlice(length: Int(rhsLength))
+        else {
+            return false
+        }
+        
+        if type == .array || type == .document {
+            let lhsSubDocument = Document(buffer: lhsSlice, isArray: type == .array)
+            let rhsSubDocument = Document(buffer: rhsSlice, isArray: type == .array)
+            
+            guard lhsSubDocument == rhsSubDocument else {
+                return false
             }
         } else {
-            for key in lhs.keys {
-                guard
-                    let lhsValue = lhs[key],
-                    let rhsValue = rhs[key],
-                    lhsValue.equals(rhsValue)
-                else {
-                    return false
-                }
+            guard lhsSlice == rhsSlice else {
+                return false
             }
         }
         
