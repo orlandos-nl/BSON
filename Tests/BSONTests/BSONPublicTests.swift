@@ -143,14 +143,23 @@ final class BSONPublicTests: XCTestCase {
     }
     
     func testKittenArrayEquatability() {
+        XCTAssertEqual(kittenDocument.count, 17)
+        
         var copy = kittenDocument
         
         XCTAssertEqual(copy, kittenDocument)
         copy.isArray = true
+        XCTAssertEqual(copy.values.count, 17)
+        
+        XCTAssertTrue(copy.validate().isValid)
+        
         var array = Document(isArray: true)
+        
         for value in kittenDocument.values {
             array.append(value)
         }
+        
+        XCTAssertEqual(array.count, 17)
         XCTAssertEqual(copy, array)
     }
     

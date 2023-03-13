@@ -17,6 +17,7 @@ extension Document: ExpressibleByArrayLiteral {
                 return values
             }
 
+            // Advance beyond type identifier
             index += 1
             guard skipKey(at: &index) else {
                 return values
@@ -204,7 +205,7 @@ extension Document: ExpressibleByArrayLiteral {
                 storage.setString(javascript.code, at: offset)
                 offset += utf8Size
                 
-                storage.setInteger(0, at: offset, endianness: .little, as: UInt8.self)
+                storage.setInteger(0 as UInt8, at: offset)
                 offset += 1
                 
                 storage.setBuffer(scopeBuffer, at: offset)

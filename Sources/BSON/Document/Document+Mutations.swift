@@ -83,11 +83,16 @@ extension Document {
         guard
             let typeId = storage.getInteger(at: index, as: UInt8.self),
             let type = TypeIdentifier(rawValue: typeId)
-        else { return false }
+        else {
+            return false
+        }
 
         index += 1
 
-        guard skipKey(at: &index) else { return false }
+        guard skipKey(at: &index) else {
+            return false
+        }
+        
         return skipValue(ofType: type, at: &index)
     }
     
@@ -193,13 +198,13 @@ extension Document {
             // Still need to check the key's size
             return MaxKey()
         case .regex:
-            guard let patternEnd = storage.firstRelativeIndexOf(startingAt: offset), let pattern = storage.getString(at: offset, length: patternEnd - 1) else {
+            guard let patternEnd = storage.firstRelativeIndexOf(startingAt: offset), let pattern = storage.getString(at: offset, length: patternEnd) else {
                 return nil
             }
 
-            let offset = offset + patternEnd
+            let offset = offset + patternEnd + 1
 
-            guard let optionsEnd = storage.firstRelativeIndexOf(startingAt: offset), let options = storage.getString(at: offset, length: optionsEnd - 1) else {
+            guard let optionsEnd = storage.firstRelativeIndexOf(startingAt: offset), let options = storage.getString(at: offset, length: optionsEnd) else {
                 return nil
             }
 
@@ -219,17 +224,22 @@ extension Document {
             }
 
             guard
-                let codeLength = self.storage.getInteger(at: offset &+ 4, endianness: .little, as: Int32.self),
-                let code = self.storage.getString(at: offset &+ 8, length: numericCast(length) - 1)
-                else {
-                    return nil
+                let codeLength = self.storage.getInteger(at: offset + 4, endianness: .little, as: Int32.self),
+                let code = self.storage.getString(at: offset + 8, length: Int(codeLength) - 1)
+            else {
+                return nil
             }
+            
+            let documentOffset = offset + 4 + 4 + Int(codeLength)
 
             guard
-                let documentLength = self.storage.getInteger(at: offset &+ 8 &+ numericCast(codeLength), endianness: .little, as: Int32.self),
-                let slice = self.storage.getSlice(at: offset, length: numericCast(documentLength))
-                else {
-                    return nil
+                // Offset + JSCodeWithScope Length + Code Length + Code UTF8
+                let documentLength = self.storage.getInteger(at: documentOffset, endianness: .little, as: Int32.self),
+                // Length == JSCodeWithScope Length + Code Length + Code UTF8 + Document
+                length == 4 + 4 + Int(codeLength) + Int(documentLength),
+                let slice = self.storage.getSlice(at: documentOffset, length: numericCast(documentLength))
+            else {
+                return nil
             }
 
             let scope = Document(
