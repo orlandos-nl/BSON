@@ -79,61 +79,70 @@ extension Document {
     }
     
     public init(from decoder: Decoder) throws {
-        if let decoder = try decoder.singleValueContainer() as? AnySingleValueBSONDecodingContainer {
-            self = try decoder.decodeDocument()
+        switch decoder {
+        case let decoder as _FastBSONDecoder<Document>:
+            self = decoder.value
             return
+        case let decoder as _BSONDecoder:
+            let primitive = decoder.primitive
+            guard let document = primitive as? Document else {
+                throw BSONTypeConversionError(from: primitive, to: Document.self)
+            }
+            
+            self = document
+            return
+        default:
+            struct Key: CodingKey {
+                var stringValue: String
+                var intValue: Int? { nil }
+                
+                init?(intValue: Int) { nil }
+                
+                init(stringValue: String) {
+                    self.stringValue = stringValue
+                }
+            }
+            
+            let container = try decoder.container(keyedBy: Key.self)
+            var document = Document()
+            
+            nextKey: for key in container.allKeys {
+                if try container.decodeNil(forKey: key) {
+                    continue nextKey
+                }
+                
+                if let string = try? container.decode(String.self, forKey: key) {
+                    document[key.stringValue] = string
+                    continue nextKey
+                }
+                
+                if let int = try? container.decode(Int.self, forKey: key) {
+                    document[key.stringValue] = int
+                    continue nextKey
+                }
+                
+                if let int = try? container.decode(Int32.self, forKey: key) {
+                    document[key.stringValue] = int
+                    continue nextKey
+                }
+                
+                if let double = try? container.decode(Double.self, forKey: key) {
+                    document[key.stringValue] = double
+                    continue nextKey
+                }
+                
+                if let bool = try? container.decode(Bool.self, forKey: key) {
+                    document[key.stringValue] = bool
+                    continue nextKey
+                }
+                
+                // TODO: Niche Int cases
+                
+                throw UnsupportedDocumentDecoding()
+            }
+            
+            self = document
         }
-        
-        struct Key: CodingKey {
-            var stringValue: String
-            var intValue: Int? { nil }
-            
-            init?(intValue: Int) { nil }
-            
-            init(stringValue: String) {
-                self.stringValue = stringValue
-            }
-        }
-        
-        let container = try decoder.container(keyedBy: Key.self)
-        var document = Document()
-        
-        nextKey: for key in container.allKeys {
-            if try container.decodeNil(forKey: key) {
-                continue nextKey
-            }
-            
-            if let string = try? container.decode(String.self, forKey: key) {
-                document[key.stringValue] = string
-                continue nextKey
-            }
-            
-            if let int = try? container.decode(Int.self, forKey: key) {
-                document[key.stringValue] = int
-                continue nextKey
-            }
-            
-            if let int = try? container.decode(Int32.self, forKey: key) {
-                document[key.stringValue] = int
-                continue nextKey
-            }
-            
-            if let double = try? container.decode(Double.self, forKey: key) {
-                document[key.stringValue] = double
-                continue nextKey
-            }
-            
-            if let bool = try? container.decode(Bool.self, forKey: key) {
-                document[key.stringValue] = bool
-                continue nextKey
-            }
-            
-            // TODO: Niche Int cases
-            
-            throw UnsupportedDocumentDecoding()
-        }
-        
-        self = document
     }
 }
 
@@ -164,11 +173,20 @@ extension ObjectId: Primitive {
     }
     
     public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        
-        if let container = container as? AnySingleValueBSONDecodingContainer {
-            self = try container.decodeObjectId()
-        } else {
+        switch decoder {
+        case let decoder as _FastBSONDecoder<ObjectId>:
+            self = decoder.value
+            return
+        case let decoder as _BSONDecoder:
+            let primitive = decoder.primitive
+            guard let value = primitive as? ObjectId else {
+                throw BSONTypeConversionError(from: primitive, to: ObjectId.self)
+            }
+            
+            self = value
+            return
+        default:
+            let container = try decoder.singleValueContainer()
             let string = try container.decode(String.self)
             self = try ObjectId.make(from: string)
         }

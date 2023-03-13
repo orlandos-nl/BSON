@@ -35,22 +35,32 @@ extension Document: ExpressibleByArrayLiteral {
         return values
     }
     
+    @inline(__always)
+    internal func typeAndValueOffset(at index: Int) -> (TypeIdentifier, Int)? {
+        var offset = 4
+        for _ in 0..<index {
+            guard skipKeyValuePair(at: &offset) else {
+                return nil
+            }
+        }
+        
+        guard
+            let typeId = storage.getInteger(at: offset, as: UInt8.self),
+            let type = TypeIdentifier(rawValue: typeId)
+        else {
+            return nil
+        }
+        
+        return (type, offset)
+    }
+    
     public subscript(index: Int) -> Primitive {
         get {
-            var offset = 4
-            for _ in 0..<index {
-                guard skipKeyValuePair(at: &offset) else {
-                    fatalError("Index \(index) out of range")
-                }
-            }
-
-            guard
-                let typeId = storage.getInteger(at: offset, as: UInt8.self),
-                let type = TypeIdentifier(rawValue: typeId)
-            else {
+            guard let (type, _offset) = typeAndValueOffset(at: index) else {
                 fatalError("Index \(index) out of range")
             }
 
+            var offset = _offset
             guard skipKey(at: &offset), let value = self.value(forType: type, at: offset) else {
                 fatalError("Index \(index) out of range")
             }

@@ -20,6 +20,30 @@ extension ByteBuffer {
         return ObjectId(timestamp: timestamp, random: random)
     }
     
+    func getBSONString(at offset: Int) -> String? {
+        guard let length = getInteger(at: offset, endianness: .little, as: Int32.self) else {
+            return nil
+        }
+        
+        // Omit the null terminator as we don't use/need that in Swift
+        return getString(at: offset &+ 4, length: numericCast(length) - 1)
+    }
+    
+    func getBSONBinary(at offset: Int) -> Binary? {
+        guard let length = getInteger(at: offset, endianness: .little, as: Int32.self) else {
+            return nil
+        }
+        
+        guard
+            let subType = getByte(at: offset &+ 4),
+            let slice = getSlice(at: offset &+ 5, length: numericCast(length))
+        else {
+            return nil
+        }
+        
+        return Binary(subType: Binary.SubType(subType), buffer: slice)
+    }
+    
     func getByte(at offset: Int) -> UInt8? {
         return self.getInteger(at: offset, endianness: .little, as: UInt8.self)
     }

@@ -102,6 +102,14 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
     }
     
     /// Decodes the `value` without key to an integer of type `I` using the current strategy
+    @_specialize(where I == UInt8)
+    @_specialize(where I == Int8)
+    @_specialize(where I == UInt16)
+    @_specialize(where I == Int16)
+    @_specialize(where I == UInt32)
+    @_specialize(where I == Int32)
+    @_specialize(where I == UInt)
+    @_specialize(where I == Int)
     internal func decode(
         from decoder: _BSONDecoder,
         path: @autoclosure () -> [String]
