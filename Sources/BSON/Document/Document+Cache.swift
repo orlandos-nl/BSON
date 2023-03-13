@@ -151,14 +151,19 @@ extension Document {
             
             guard
                 let codeLength = self.storage.getInteger(at: offset &+ 4, endianness: .little, as: Int32.self),
-                let code = self.storage.getString(at: offset &+ 8, length: numericCast(length) - 1)
+                let code = self.storage.getString(at: offset &+ 8, length: numericCast(codeLength) - 1)
             else {
                 return nil
             }
             
+            let documentOffset = offset + 4 + 4 + Int(codeLength)
+            
             guard
-                let documentLength = self.storage.getInteger(at: offset &+ 8 &+ numericCast(codeLength), endianness: .little, as: Int32.self),
-                let slice = self.storage.getSlice(at: offset, length: numericCast(documentLength))
+                // Offset + JSCodeWithScope Length + Code Length + Code UTF8
+                let documentLength = self.storage.getInteger(at: documentOffset, endianness: .little, as: Int32.self),
+                // Length == JSCodeWithScope Length + Code Length + Code UTF8 + Document
+                length == 4 + 4 + Int(codeLength) + Int(documentLength),
+                let slice = self.storage.getSlice(at: documentOffset, length: numericCast(documentLength))
             else {
                 return nil
             }

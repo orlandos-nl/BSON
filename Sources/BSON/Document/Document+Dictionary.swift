@@ -220,7 +220,7 @@ extension Document: ExpressibleByDictionaryLiteral {
             storage.writeInteger(Int32(primitiveLength), endianness: .little) // header
             storage.writeInteger(Int32(codeLength), endianness: .little) // string (code)
             storage.writeString(javascript.code)
-            storage.writeInteger(0, endianness: .little, as: UInt8.self)
+            storage.writeInteger(0 as UInt8)
             storage.writeBuffer(&scopeBuffer)
         case let bsonData as BSONPrimitiveRepresentable:
             self.appendValue(bsonData.primitive, forKey: key)

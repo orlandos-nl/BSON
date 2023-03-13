@@ -1,34 +1,42 @@
 extension Document {
+    internal func typeAndValueOffset(forKey key: String) -> (TypeIdentifier, Int)? {
+        var offset = 4
+        
+        repeat {
+            guard
+                let typeId = storage.getInteger(at: offset, as: UInt8.self),
+                let type = TypeIdentifier(rawValue: typeId)
+            else {
+                return nil
+            }
+            
+            offset += 1
+            
+            let matches = matchesKey(key, at: offset)
+            guard skipKey(at: &offset) else {
+                return nil
+            }
+            
+            if matches {
+                return (type, offset)
+            }
+            
+            guard skipValue(ofType: type, at: &offset) else {
+                return nil
+            }
+        } while offset + 1 < storage.readableBytes
+        
+        return nil
+    }
+    
     /// Extracts any `Primitive` fom the value at key `key`
     public subscript(key: String) -> Primitive? {
         get {
-            var offset = 4
-
-            repeat {
-                guard
-                    let typeId = storage.getInteger(at: offset, as: UInt8.self),
-                    let type = TypeIdentifier(rawValue: typeId)
-                else {
-                    return nil
-                }
-
-                offset += 1
-
-                let matches = matchesKey(key, at: offset)
-                guard skipKey(at: &offset) else {
-                    return nil
-                }
-
-                if matches {
-                    return value(forType: type, at: offset)
-                }
-
-                guard skipValue(ofType: type, at: &offset) else {
-                    return nil
-                }
-            } while offset + 1 < storage.readableBytes
-
-            return nil
+            guard let (type, offset) = typeAndValueOffset(forKey: key) else {
+                return nil
+            }
+            
+            return value(forType: type, at: offset)
         }
         set {
             var offset = 4

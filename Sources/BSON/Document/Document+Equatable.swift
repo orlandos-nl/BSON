@@ -1,39 +1,179 @@
 import Foundation
 
 extension Document: Equatable {
+    private func equateAsArray(with rhs: Document) -> Bool {
+        var lhsBuffer = self.storage
+        var rhsBuffer = rhs.storage
+        
+        guard lhsBuffer.readableBytes > 4, rhsBuffer.readableBytes > 4 else {
+            return false
+        }
+        
+        lhsBuffer.moveReaderIndex(forwardBy: 4)
+        rhsBuffer.moveReaderIndex(forwardBy: 4)
+        
+        while let byte = lhsBuffer.getByte(at: lhsBuffer.readerIndex), byte != 0x00 {
+            // Check the next LHS value type
+            guard
+                let lhsTypeId: UInt8 = lhsBuffer.readInteger(),
+                let lhsType = TypeIdentifier(rawValue: lhsTypeId)
+            else {
+                // Both counts end here
+                if
+                    let rhsTypeId: UInt8 = rhsBuffer.readInteger()
+                {
+                    return rhsTypeId == 0
+                } else {
+                    return true
+                }
+            }
+            
+            // Check the next RHS value type
+            guard
+                let rhsTypeId: UInt8 = rhsBuffer.readInteger(),
+                let rhsType = TypeIdentifier(rawValue: rhsTypeId)
+            else {
+                return false
+            }
+            
+            // Both types must match
+            guard lhsType == rhsType else {
+                return false
+            }
+            
+            // Since they're both the same, this is now our type
+            let type = lhsType
+            
+            guard
+                let lhsLength = lhsBuffer.firstRelativeIndexOf(startingAt: 0),
+                lhsLength + 1 < lhsBuffer.readableBytes,
+                let rhsLength = rhsBuffer.firstRelativeIndexOf(startingAt: 0),
+                rhsLength + 1 < rhsBuffer.readableBytes
+            else {
+                // Corrupt buffer
+                return false
+            }
+            
+            // For arrays, only care about indices. Not keys
+            // Skip until after the null terminator
+            lhsBuffer.moveReaderIndex(forwardBy: lhsLength + 1)
+            rhsBuffer.moveReaderIndex(forwardBy: rhsLength + 1)
+            
+            guard
+                let lhsLength = self.valueLength(forType: lhsType, at: lhsBuffer.readerIndex),
+                let rhsLength = rhs.valueLength(forType: rhsType, at: rhsBuffer.readerIndex),
+                let lhsSlice = lhsBuffer.readSlice(length: Int(lhsLength)),
+                let rhsSlice = rhsBuffer.readSlice(length: Int(rhsLength))
+            else {
+                return false
+            }
+            
+            if type == .array || type == .document {
+                let lhsSubDocument = Document(buffer: lhsSlice, isArray: type == .array)
+                let rhsSubDocument = Document(buffer: rhsSlice, isArray: type == .array)
+                
+                guard lhsSubDocument == rhsSubDocument else {
+                    return false
+                }
+                // TODO: JSCode wit Scope also has a Document embedded in it
+            } else {
+                guard lhsLength == rhsLength, lhsSlice == rhsSlice else {
+                    return false
+                }
+            }
+        }
+        
+        if let byte = rhsBuffer.getByte(at: rhsBuffer.readerIndex), byte != 0x00 {
+            // RHS had more data
+            return false
+        }
+        
+        return true
+    }
+    
+    private func equateAsDictionary(with rhs: Document) -> Bool {
+        var lhsBuffer = self.storage
+        let rhsBuffer = rhs.storage
+        
+        guard lhsBuffer.readableBytes > 4, rhsBuffer.readableBytes > 4 else {
+            return false
+        }
+        
+        lhsBuffer.moveReaderIndex(forwardBy: 4)
+        
+        var count = 0
+        let rhsCount = rhs.count
+        
+        while let byte = lhsBuffer.getByte(at: lhsBuffer.readerIndex), byte != 0x00 {
+            count += 1
+            
+            // Early exit, rhs has less fields than lhs
+            if count > rhsCount {
+                return false
+            }
+            
+            // Read the next LHS value type
+            guard
+                let lhsTypeId: UInt8 = lhsBuffer.readInteger(),
+                let lhsType = TypeIdentifier(rawValue: lhsTypeId)
+            else {
+                // Unknown type identifier
+                return false
+            }
+            
+            guard
+                let lhsKey = lhsBuffer.readNullTerminatedString(),
+                let (rhsType, rhsOffset) = rhs.typeAndValueOffset(forKey: lhsKey)
+            else {
+                // Corrupt buffer
+                return false
+            }
+            
+            // Both types must match
+            guard lhsType == rhsType else {
+                return false
+            }
+            
+            // Since they're both the same, this is now our type
+            let type = lhsType
+            
+            guard
+                let lhsLength = self.valueLength(forType: lhsType, at: lhsBuffer.readerIndex),
+                let rhsLength = rhs.valueLength(forType: rhsType, at: rhsOffset),
+                let lhsSlice = lhsBuffer.readSlice(length: Int(lhsLength)),
+                let rhsSlice = rhsBuffer.getSlice(at: rhsOffset, length: Int(rhsLength))
+            else {
+                return false
+            }
+            
+            if type == .array || type == .document {
+                let lhsSubDocument = Document(buffer: lhsSlice, isArray: type == .array)
+                let rhsSubDocument = Document(buffer: rhsSlice, isArray: type == .array)
+                
+                guard lhsSubDocument == rhsSubDocument else {
+                    return false
+                }
+            } else {
+                guard lhsSlice == rhsSlice else {
+                    return false
+                }
+            }
+        }
+        
+        // Ensure lhs and rhs had all their fields scanned
+        return count == rhsCount
+    }
+    
     public static func == (lhs: Document, rhs: Document) -> Bool {
         if lhs.isArray != rhs.isArray {
             return false
         }
         
-        if lhs.count != rhs.count {
-            return false
-        }
-        
         if lhs.isArray {
-            for i in 0..<lhs.count {
-                let lhsValue = lhs[i]
-                let rhsValue = rhs[i]
-                
-                guard
-                    lhsValue.equals(rhsValue)
-                else {
-                    return false
-                }
-            }
+            return lhs.equateAsArray(with: rhs)
         } else {
-            for key in lhs.keys {
-                guard
-                    let lhsValue = lhs[key],
-                    let rhsValue = rhs[key],
-                    lhsValue.equals(rhsValue)
-                else {
-                    return false
-                }
-            }
+            return lhs.equateAsDictionary(with: rhs)
         }
-        
-        return true
     }
 }
 
