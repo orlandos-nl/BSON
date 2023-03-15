@@ -50,21 +50,7 @@ struct _FastKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     }
     
     func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
-        #if (arch(i386) || arch(arm)) && BSONInt64Primitive
-        let expectedType: TypeIdentifier = .int32
-        #else
-        let expectedType: TypeIdentifier = .int64
-        #endif
-        
-        guard
-            let (foundType, offset) = document.typeAndValueOffset(forKey: key.stringValue),
-            foundType == expectedType,
-            let int: Int = document.storage.getInteger(at: offset, endianness: .little)
-        else {
-            throw BSONValueNotFound(type: Int.self, path: codingPath.map(\.stringValue))
-        }
-        
-        return int
+        try decodeFixedWidthInteger(forKey: key)
     }
     
     func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
@@ -76,27 +62,11 @@ struct _FastKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     }
     
     func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32 {
-        guard
-            let (type, offset) = document.typeAndValueOffset(forKey: key.stringValue),
-            type == .int32,
-            let int: Int32 = document.storage.getInteger(at: offset, endianness: .little)
-        else {
-            throw BSONValueNotFound(type: Int32.self, path: codingPath.map(\.stringValue))
-        }
-        
-        return int
+        try decodeFixedWidthInteger(forKey: key)
     }
     
     func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
-        guard
-            let (type, offset) = document.typeAndValueOffset(forKey: key.stringValue),
-            type == .int64,
-            let int: Int64 = document.storage.getInteger(at: offset, endianness: .little)
-        else {
-            throw BSONValueNotFound(type: Int64.self, path: codingPath.map(\.stringValue))
-        }
-        
-        return int
+        try decodeFixedWidthInteger(forKey: key)
     }
     
     func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
