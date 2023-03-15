@@ -9,7 +9,7 @@
 import NIOCore
 import Foundation
 import XCTest
-@testable import BSON
+import BSON
 
 #if os(Linux)
     import Glibc
@@ -160,7 +160,10 @@ final class BSONPublicTests: XCTestCase {
         }
         
         XCTAssertEqual(array.count, 17)
-        XCTAssertEqual(copy, array)
+        
+        for _ in 0..<10_00_000 {
+            XCTAssertEqual(copy, array)
+        }
     }
     
     func testEquatability() {

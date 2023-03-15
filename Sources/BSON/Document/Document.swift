@@ -25,7 +25,7 @@ public struct Document: Primitive, @unchecked Sendable {
     }
     
     /// Dictates whether this `Document` is an `Array` or `Dictionary`-like type
-    public internal(set) var isArray: Bool
+    public var isArray: Bool
 
     /// Creates a new empty BSONDocument
     ///

@@ -378,11 +378,16 @@ struct _FastSingleValueContainer<P: Primitive>: SingleValueDecodingContainer, An
     }
     
     func decode(_ type: Int.Type) throws -> Int {
-        if let value = value as? Int {
+        switch value {
+        case let value as Int:
             return value
+        case let value as Int32:
+            return Int(value)
+        case let value as _BSON64BitInteger where value >= Int.min && value <= Int.max:
+            return Int(value)
+        default:
+            throw BSONValueNotFound(type: Int.self, path: codingPath.map(\.stringValue))
         }
-        
-        throw BSONValueNotFound(type: Int.self, path: codingPath.map(\.stringValue))
     }
     
     func decode(_ type: Int8.Type) throws -> Int8 {
@@ -394,19 +399,25 @@ struct _FastSingleValueContainer<P: Primitive>: SingleValueDecodingContainer, An
     }
     
     func decode(_ type: Int32.Type) throws -> Int32 {
-        if let value = value as? Int32 {
+        switch value {
+        case let value as Int32:
             return value
+        case let value as _BSON64BitInteger where value >= Int32.min && value <= Int32.max:
+            return Int32(value)
+        default:
+            throw BSONValueNotFound(type: Int32.self, path: codingPath.map(\.stringValue))
         }
-        
-        throw BSONValueNotFound(type: Int32.self, path: codingPath.map(\.stringValue))
     }
     
     func decode(_ type: Int64.Type) throws -> Int64 {
-        if let value = value as? Int64 {
-            return value
+        switch value {
+        case let value as Int64:
+            return Int64(value)
+        case let value as _BSON64BitInteger:
+            return Int64(value)
+        default:
+            throw BSONValueNotFound(type: Int32.self, path: codingPath.map(\.stringValue))
         }
-        
-        throw BSONValueNotFound(type: Int64.self, path: codingPath.map(\.stringValue))
     }
     
     func decode(_ type: UInt.Type) throws -> UInt {
