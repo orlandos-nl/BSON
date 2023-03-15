@@ -116,8 +116,18 @@ struct _FastKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
             }
             
             return F(int)
+        case .double:
+            guard
+                let double = document.storage.getDouble(at: offset),
+                double >= Double(F.min),
+                double <= Double(F.max)
+            else {
+                throw BSONValueNotFound(type: F.self, path: codingPath.map(\.stringValue) + [key.stringValue])
+            }
+            
+            return F(double)
         default:
-            throw BSONValueNotFound(type: F.self, path: codingPath.map(\.stringValue))
+            throw BSONValueNotFound(type: F.self, path: codingPath.map(\.stringValue) + [key.stringValue])
         }
     }
     
@@ -127,7 +137,7 @@ struct _FastKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
             type == .boolean,
             let int: UInt8 = document.storage.getInteger(at: offset, endianness: .little)
         else {
-            throw BSONValueNotFound(type: Bool.self, path: codingPath.map(\.stringValue))
+            throw BSONValueNotFound(type: Bool.self, path: codingPath.map(\.stringValue) + [key.stringValue])
         }
         
         return int == 0x01
@@ -139,7 +149,7 @@ struct _FastKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
             type == .string,
             let string = document.storage.getBSONString(at: offset)
         else {
-            throw BSONValueNotFound(type: String.self, path: codingPath.map(\.stringValue))
+            throw BSONValueNotFound(type: String.self, path: codingPath.map(\.stringValue) + [key.stringValue])
         }
         
         return string
@@ -151,7 +161,7 @@ struct _FastKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
             type == .double,
             let double = document.storage.getDouble(at: offset)
         else {
-            throw BSONValueNotFound(type: Double.self, path: codingPath.map(\.stringValue))
+            throw BSONValueNotFound(type: String.self, path: codingPath.map(\.stringValue) + [key.stringValue])
         }
         
         return double
@@ -690,6 +700,16 @@ struct _FastUnkeyedContainer: UnkeyedDecodingContainer {
             
             currentIndex += 1
             return F(int)
+        case .double:
+            guard
+                let double = document.storage.getDouble(at: offset),
+                double >= Double(F.min),
+                double <= Double(F.max)
+            else {
+                throw BSONValueNotFound(type: F.self, path: codingPath.map(\.stringValue))
+            }
+            
+            return F(double)
         default:
             throw BSONValueNotFound(type: F.self, path: codingPath.map(\.stringValue))
         }

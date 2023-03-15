@@ -138,6 +138,13 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
             case (let int as Int, _):
                 return try int.convert(to: I.self)
             case (let double as Double, .roundingAnyNumber), (let double as Double, .adaptive):
+                guard
+                    double >= Double(I.min),
+                    double <= Double(I.max)
+                else {
+                    throw DecodingError.typeMismatch(Double.self, .init(codingPath: [], debugDescription: "The IntegerDecodingStrategy is adaptive, but the Double could not be converted to \(I.self)"))
+                }
+                
                 return I(double)
             case (let string as String, .adaptive):
                 guard let int = I(string) else {
@@ -177,6 +184,13 @@ extension BSONDecoderSettings.IntegerDecodingStrategy {
         case (.int64, let int as Int), (.adaptive, let int as Int), (.anyInteger, let int as Int), (.roundingAnyNumber, let int as Int):
             return try int.convert(to: I.self)
         case (.roundingAnyNumber, let double as Double), (.adaptive, let double as Double):
+            guard
+                double >= Double(I.min),
+                double <= Double(I.max)
+            else {
+                throw DecodingError.typeMismatch(Double.self, .init(codingPath: [], debugDescription: "The IntegerDecodingStrategy is adaptive, but the Double could not be converted to \(I.self)"))
+            }
+            
             return I(double)
         case (.custom(let strategy), _):
             guard let value: I = try strategy(key, value) else {
