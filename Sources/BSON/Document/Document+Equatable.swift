@@ -31,13 +31,9 @@ extension Document: Equatable {
             // Check the next RHS value type
             guard
                 let rhsTypeId: UInt8 = rhsBuffer.readInteger(),
-                let rhsType = TypeIdentifier(rawValue: rhsTypeId)
+                let rhsType = TypeIdentifier(rawValue: rhsTypeId),
+                lhsType == rhsType
             else {
-                return false
-            }
-            
-            // Both types must match
-            guard lhsType == rhsType else {
                 return false
             }
             
@@ -59,6 +55,9 @@ extension Document: Equatable {
             lhsBuffer.moveReaderIndex(forwardBy: lhsLength + 1)
             rhsBuffer.moveReaderIndex(forwardBy: rhsLength + 1)
             
+            let lhsValueIndex = lhsBuffer.readerIndex
+            let rhsValueIndex = rhsBuffer.readerIndex
+            
             guard
                 let lhsLength = self.valueLength(forType: lhsType, at: lhsBuffer.readerIndex),
                 let rhsLength = rhs.valueLength(forType: rhsType, at: rhsBuffer.readerIndex),
@@ -75,7 +74,15 @@ extension Document: Equatable {
                 guard lhsSubDocument == rhsSubDocument else {
                     return false
                 }
-                // TODO: JSCode wit Scope also has a Document embedded in it
+            } else if type == .javascriptWithScope {
+                // Shortcut for a less commonly used type
+                guard
+                    let lhsValue = self.value(forType: .javascriptWithScope, at: lhsValueIndex) as? JavaScriptCodeWithScope,
+                    let rhsValue = rhs.value(forType: .javascriptWithScope, at: rhsValueIndex) as? JavaScriptCodeWithScope,
+                    lhsValue == rhsValue
+                else {
+                    return false
+                }
             } else {
                 guard lhsLength == rhsLength, lhsSlice == rhsSlice else {
                     return false
