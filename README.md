@@ -16,7 +16,7 @@ Be sure to read our [full documentation](https://orlandos.nl/docs/mongokitten/ar
 BSON uses the Swift Package Manager. Add BSON to your dependencies in your Package.swift file:
 
 ```swift
-.package(url: "https://github.com/OpenKitten/BSON.git", from: "8.0.0")
+.package(url: "https://github.com/orlandos-nl/BSON.git", from: "8.0.0")
 ```
 
 Also, don't forget to add "BSON" as a dependency for your target.
