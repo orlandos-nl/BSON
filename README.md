@@ -1,11 +1,10 @@
 # BSON
 
-[![Swift 4.2](https://img.shields.io/badge/swift-4.2-orange.svg)](https://swift.org)
-[![Swift 5.3](https://img.shields.io/badge/swift-5.3-green.svg)](https://swift.org)
+[![Swift 5.8](https://img.shields.io/badge/swift-5.8-green.svg)](https://swift.org/download)
 ![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
 [![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson5)](https://travis-ci.org/OpenKitten/BSON)
 
-BSON 8 is a fast BSON library. It's compliant to the whole BSON specification test suite. The library parses the binary data on-demand, delaying copies until the last second.
+A fast BSON library, compliant to the whole BSON specification test suite. The library parses the binary data on-demand, delaying copies until the last second.
 
 BSON is parsed and generated as specified for version 1.1 of the [BSON specification](http://bsonspec.org/spec.html).
 
