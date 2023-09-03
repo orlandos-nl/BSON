@@ -1,8 +1,5 @@
 # BSON
 
-[![Swift 5.8](https://img.shields.io/badge/swift-5.8-green.svg)](https://swift.org/download)
-![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
-
 A fast BSON library, compliant to the whole BSON specification test suite. The library parses the binary data on-demand, delaying copies until the last second.
 
 BSON is parsed and generated as specified for version 1.1 of the [BSON specification](http://bsonspec.org/spec.html).
