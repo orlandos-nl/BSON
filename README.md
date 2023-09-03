@@ -22,14 +22,14 @@ Create Documents using Dictionary Literals:
 
 ```swift
 var userDocument: Document = [
-	"username": "Joannis",
-	"online": true,
-	"age": 20,
-	"pi_constant": 3.14,
-	"profile": [
-		"firstName": "Joannis",
-		"lastName": "Orlandos"
-	]
+  "username": "Joannis",
+  "online": true,
+  "age": 20,
+  "pi_constant": 3.14,
+  "profile": [
+    "firstName": "Joannis",
+    "lastName": "Orlandos"
+  ]
 ]
 
 let favouriteNumbers: Document = [1, 3, 7, 14, 21, 24, 34]
@@ -58,20 +58,20 @@ Chain subscripts easily to find results without a hassle as shown underneath usi
 ```json
 {
   "users": [
-  	{
-  		"username": "Joannis",
-  		"profile": {
-  		  "firstName": "Joannis",
-  		  "lastName": "Orlandos"
-  		}
-  	},
-  	{
-  		"username": "Obbut",
-  		"profile": {
-  		  "firstName": "Robbert",
-  		  "lastName": "Brandsma"
-  		}
-  	}
+    {
+      "username": "Joannis",
+      "profile": {
+        "firstName": "Joannis",
+        "lastName": "Orlandos"
+      }
+    },
+    {
+      "username": "Obbut",
+      "profile": {
+        "firstName": "Robbert",
+        "lastName": "Brandsma"
+      }
+    }
   ]
 }
 ```
@@ -86,24 +86,24 @@ Complex array and dictionary literals may confuse the Swift type system. If this
 
 ```swift
 var userDocument: Document = [
-	"username": "Joannis",
-	"online": true,
-	"age": 20,
-	"pi_constant": 3.14,
-	"profile": [
-		"firstName": "Joannis",
-		"lastName": "Orlandos",
-		"pets": [
-			[
-				"name": "Noodles",
-				"type": "Parrot"
-			] as Document,
-			[
-				"name": "Witje",
-				"type": "Rabbit"
-			]
-		] as Document
-	] as Document
+  "username": "Joannis",
+  "online": true,
+  "age": 20,
+  "pi_constant": 3.14,
+  "profile": [
+    "firstName": "Joannis",
+    "lastName": "Orlandos",
+    "pets": [
+        [
+          "name": "Noodles",
+          "type": "Parrot"
+        ] as Document,
+        [
+          "name": "Witje",
+          "type": "Rabbit"
+        ]
+      ] as Document
+    ] as Document
 ]
 ```
 
