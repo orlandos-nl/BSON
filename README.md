@@ -113,26 +113,3 @@ Document can be instantiated from [SwiftNIO](https://github.com/apple/swift-nio)
 You can validate the formatting of this document manually using the `.validate()` function. This will also specify where the data was found corrupt.
 
 If you pass a `Document` or `Primitive` into the `BSONDecoder` you can decode any `Decodable` type if the formats match. Likewise, `BSONEncoder` can encode your Swift types into a `Document`.
-
-## Supported Types
-
-All non-deprecated BSON 1.1 types are supported.
-
-- Double
-- String
-- Document
-- Array
-- ObjectId
-- Bool
-- DateTime
-- 32-bit integer
-- 64-bit integer
-- Null value
-- Binary
-- Regular Expression
-- Min Key
-- Max Key
-- Timestamp
-- Javascript Code
-- Javascript Code with Scope
-- Decimal128
