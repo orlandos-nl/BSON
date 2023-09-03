@@ -25,7 +25,8 @@ let package = Package(
         ),
         .testTarget(
             name: "BSONTests",
-            dependencies: ["BSON"])
-        ],
+            dependencies: ["BSON"]
+        )
+    ],
     swiftLanguageVersions: [.v4_2]
 )

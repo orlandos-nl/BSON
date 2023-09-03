@@ -1,0 +1,28 @@
+name: Swift
+
+on:
+  push:
+    branches:
+      - master/7.0
+  pull_request:
+    branches:
+      - master/7.0
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift-version: ["5.7", "5.8"]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift-version }}
+
+      - name: Run tests
+        run: swift test
