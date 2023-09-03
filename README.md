@@ -2,7 +2,6 @@
 
 [![Swift 5.8](https://img.shields.io/badge/swift-5.8-green.svg)](https://swift.org/download)
 ![License](https://img.shields.io/github/license/openkitten/mongokitten.svg)
-[![Build Status](https://api.travis-ci.org/OpenKitten/BSON.svg?branch=bson5)](https://travis-ci.org/OpenKitten/BSON)
 
 A fast BSON library, compliant to the whole BSON specification test suite. The library parses the binary data on-demand, delaying copies until the last second.
 
