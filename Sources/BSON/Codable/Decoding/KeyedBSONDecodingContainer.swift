@@ -165,20 +165,22 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
                 
                 return date
             } catch {
-                if decoder.settings.decodeDateFromTimestamp {
-                    switch self.document[key] {
+                let date: Date?
+                let strategy = decoder.settings.timestampToDateDecodingStrategy
+                switch self.document[key] {
                     case let int as Int:
-                        return Date(timeIntervalSince1970: Double(int)) as! T
+                        date = strategy.convertTimeStampToDate(TimeInterval(int))
                     case let int as Int32:
-                        return Date(timeIntervalSince1970: Double(int)) as! T
+                        date = strategy.convertTimeStampToDate(TimeInterval(int))
                     case let double as Double:
-                        return Date(timeIntervalSince1970: double) as! T
+                        date = strategy.convertTimeStampToDate(double)
                     default:
                         throw error
-                    }
-                } else {
+                }
+                guard let returnDate = date as? T else {
                     throw error
                 }
+                return returnDate
             }
         } else if let type = T.self as? BSONPrimitiveConvertible.Type {
             return try type.init(primitive: self.document[key]) as! T
@@ -236,5 +238,20 @@ internal struct KeyedBSONDecodingContainer<K: CodingKey>: KeyedDecodingContainer
         let decoder = _BSONDecoder(wrapped: decoderValue, settings: self.decoder.settings, codingPath: self.codingPath + [key], userInfo: self.decoder.userInfo)
 
         return decoder
+    }
+}
+
+extension BSONDecoderSettings.TimestampToDateDecodingStrategy {
+
+    func convertTimeStampToDate(_ timestamp: TimeInterval) -> Date? {
+
+        switch self {
+            case .never:
+                return nil
+            case .relativeToUnixEpoch:
+                return Date(timeIntervalSince1970: timestamp)
+            case .relativeToReferenceDate:
+                return Date(timeIntervalSinceReferenceDate: timestamp)
+        }
     }
 }
