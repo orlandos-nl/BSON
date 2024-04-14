@@ -206,4 +206,11 @@ public struct BSONDecoderSettings {
     
     /// A strategy that is applied when encountering a request to decode a `UInt`
     public var uintDecodingStrategy: IntegerDecodingStrategy<UInt>
+
+    public func with(timestampToDateDecodingStrategy: TimestampToDateDecodingStrategy) -> Self {
+
+        var settings = self
+        settings.timestampToDateDecodingStrategy = timestampToDateDecodingStrategy
+        return settings
+    }
 }
