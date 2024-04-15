@@ -12,6 +12,7 @@ public struct BSONDecoderSettings {
             filterDollarPrefix: false,
             stringDecodingStrategy: .string,
             decodeObjectIdFromString: false,
+            timestampToDateDecodingStrategy: .never,
             floatDecodingStrategy: .double,
             doubleDecodingStrategy: .double,
             int8DecodingStrategy: .anyInteger,
@@ -34,6 +35,7 @@ public struct BSONDecoderSettings {
             filterDollarPrefix: false,
             stringDecodingStrategy: .adaptive,
             decodeObjectIdFromString: true,
+            timestampToDateDecodingStrategy: .relativeToReferenceDate,
             floatDecodingStrategy: .adaptive,
             doubleDecodingStrategy: .adaptive,
             int8DecodingStrategy: .adaptive,
@@ -169,7 +171,7 @@ public struct BSONDecoderSettings {
     public var decodeObjectIdFromString: Bool = false
     
     /// A strategy to apply when converting time interval to date objects
-    public var timestampToDateDecodingStrategy: TimestampToDateDecodingStrategy = .relativeToUnixEpoch
+    public var timestampToDateDecodingStrategy: TimestampToDateDecodingStrategy = .relativeToReferenceDate
 
     /// A strategy that is applied when encountering a request to decode a `Float`
     public var floatDecodingStrategy: FloatDecodingStrategy
