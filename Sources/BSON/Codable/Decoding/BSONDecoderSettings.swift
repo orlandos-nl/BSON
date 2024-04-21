@@ -197,7 +197,18 @@ public struct BSONDecoderSettings {
     /// If `true`, allows decoding Date from a Double (TimeInterval)
     public var decodeDateFromTimestamp: Bool {
         get { timestampToDateDecodingStrategy != .never }
-        set { timestampToDateDecodingStrategy = newValue ? .relativeToUnixEpoch : .never }
+        set(decodeDateFromTimestamp) { 
+            switch timestampToDateDecodingStrategy {
+            case .never:
+                if decodeDateFromTimestamp {
+                    timestampToDateDecodingStrategy = .relativeToUnixEpoch
+                }
+            case .relativeToReferenceDate, .relativeToUnixEpoch:
+                if !decodeDateFromTimestamp {
+                    timestampToDateDecodingStrategy = .never
+                }
+            }
+        }
     }
     
     /// A strategy to apply when converting time interval to date objects
