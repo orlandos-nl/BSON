@@ -9,7 +9,7 @@ public struct BSONDecoder {
     public var userInfo: [CodingUserInfoKey: Any] = [:]
     
     /// Creates a new decoder using fresh settings
-    public init(settings: BSONDecoderSettings = .adaptive) {
+    public init(settings: BSONDecoderSettings = .default) {
         self.settings = settings
     }
 }
@@ -269,12 +269,20 @@ extension BSONDecoder {
         if let value = primitive as? D {
             return value
         }
+
+        if self.settings.fastPath {
+            return try FastBSONDecoder().decode(D.self, from: primitive)
+        }
         
         let decoder = _BSONDecoder(wrapped: .primitive(primitive), settings: self.settings, codingPath: [], userInfo: self.userInfo)
         return try D(from: decoder)
     }
         
     public func decode<D: Decodable>(_ type: D.Type, from document: Document) throws -> D {
+        if self.settings.fastPath {
+            return try FastBSONDecoder().decode(D.self, from: document)
+        }
+
         let decoder = _BSONDecoder(wrapped: .document(document), settings: self.settings, codingPath: [], userInfo: self.userInfo)
         return try D(from: decoder)
     }

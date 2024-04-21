@@ -123,20 +123,22 @@ internal struct UnkeyedBSONDecodingContainer: UnkeyedDecodingContainer {
                 
                 return date
             } catch {
-                if decoder.settings.decodeDateFromTimestamp {
-                    switch element {
+                let date: Date?
+                let strategy = decoder.settings.timestampToDateDecodingStrategy
+                switch element {
                     case let int as Int:
-                        return Date(timeIntervalSince1970: Double(int)) as! T
+                        date = strategy.convertTimeStampToDate(TimeInterval(int))
                     case let int as Int32:
-                        return Date(timeIntervalSince1970: Double(int)) as! T
+                        date = strategy.convertTimeStampToDate(TimeInterval(int))
                     case let double as Double:
-                        return Date(timeIntervalSince1970: double) as! T
+                        date = strategy.convertTimeStampToDate(double)
                     default:
                         throw error
-                    }
-                } else {
+                }
+                guard let returnDate = date as? T else {
                     throw error
                 }
+                return returnDate
             }
         } else if let type = T.self as? BSONPrimitiveConvertible.Type {
             return try type.init(primitive: self.nextElement()) as! T

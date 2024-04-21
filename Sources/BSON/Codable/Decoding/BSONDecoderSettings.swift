@@ -6,48 +6,72 @@ public struct BSONDecoderSettings {
     ///
     /// - Float: Decode from Double
     /// - Non-native Integer types: .anyInteger
-    public static var strict: BSONDecoderSettings {
-        return .init(
-            decodeNullAsNil: false,
-            filterDollarPrefix: false,
-            stringDecodingStrategy: .string,
-            decodeObjectIdFromString: false,
-            floatDecodingStrategy: .double,
-            doubleDecodingStrategy: .double,
-            int8DecodingStrategy: .anyInteger,
-            int16DecodingStrategy: .anyInteger,
-            int32DecodingStrategy: .int32,
-            int64DecodingStrategy: .int64,
-            intDecodingStrategy: .anyInteger,
-            uint8DecodingStrategy: .anyInteger,
-            uint16DecodingStrategy: .anyInteger,
-            uint32DecodingStrategy: .anyInteger,
-            uint64DecodingStrategy: .anyInteger,
-            uintDecodingStrategy: .anyInteger
-        )
-    }
+    public static let strict: BSONDecoderSettings = BSONDecoderSettings(
+        fastPath: false,
+        decodeNullAsNil: false,
+        filterDollarPrefix: false,
+        stringDecodingStrategy: .string,
+        decodeObjectIdFromString: false,
+        timestampToDateDecodingStrategy: .never,
+        floatDecodingStrategy: .double,
+        doubleDecodingStrategy: .double,
+        int8DecodingStrategy: .anyInteger,
+        int16DecodingStrategy: .anyInteger,
+        int32DecodingStrategy: .int32,
+        int64DecodingStrategy: .int64,
+        intDecodingStrategy: .anyInteger,
+        uint8DecodingStrategy: .anyInteger,
+        uint16DecodingStrategy: .anyInteger,
+        uint32DecodingStrategy: .anyInteger,
+        uint64DecodingStrategy: .anyInteger,
+        uintDecodingStrategy: .anyInteger
+    )
+    
+    /// Uses ``FastBSONDecoder``
+    public static let fastPath: BSONDecoderSettings = BSONDecoderSettings(
+        fastPath: true,
+        decodeNullAsNil: false,
+        filterDollarPrefix: false,
+        stringDecodingStrategy: .string,
+        decodeObjectIdFromString: false,
+        timestampToDateDecodingStrategy: .never,
+        floatDecodingStrategy: .double,
+        doubleDecodingStrategy: .double,
+        int8DecodingStrategy: .anyInteger,
+        int16DecodingStrategy: .anyInteger,
+        int32DecodingStrategy: .int32,
+        int64DecodingStrategy: .int64,
+        intDecodingStrategy: .anyInteger,
+        uint8DecodingStrategy: .anyInteger,
+        uint16DecodingStrategy: .anyInteger,
+        uint32DecodingStrategy: .anyInteger,
+        uint64DecodingStrategy: .anyInteger,
+        uintDecodingStrategy: .anyInteger
+    )
+
+    public static var `default`: BSONDecoderSettings = .adaptive
     
     /// Tries to decode values, even if the types do not match. Some precision loss is possible.
-    public static var adaptive: BSONDecoderSettings {
-        return .init(
-            decodeNullAsNil: true,
-            filterDollarPrefix: false,
-            stringDecodingStrategy: .adaptive,
-            decodeObjectIdFromString: true,
-            floatDecodingStrategy: .adaptive,
-            doubleDecodingStrategy: .adaptive,
-            int8DecodingStrategy: .adaptive,
-            int16DecodingStrategy: .adaptive,
-            int32DecodingStrategy: .adaptive,
-            int64DecodingStrategy: .adaptive,
-            intDecodingStrategy: .adaptive,
-            uint8DecodingStrategy: .adaptive,
-            uint16DecodingStrategy: .adaptive,
-            uint32DecodingStrategy: .adaptive,
-            uint64DecodingStrategy: .adaptive,
-            uintDecodingStrategy: .adaptive
-        )
-    }
+    public static let adaptive: BSONDecoderSettings = BSONDecoderSettings(
+        fastPath: false,
+        decodeNullAsNil: true,
+        filterDollarPrefix: false,
+        stringDecodingStrategy: .adaptive,
+        decodeObjectIdFromString: true,
+        timestampToDateDecodingStrategy: .relativeToUnixEpoch,
+        floatDecodingStrategy: .adaptive,
+        doubleDecodingStrategy: .adaptive,
+        int8DecodingStrategy: .adaptive,
+        int16DecodingStrategy: .adaptive,
+        int32DecodingStrategy: .adaptive,
+        int64DecodingStrategy: .adaptive,
+        intDecodingStrategy: .adaptive,
+        uint8DecodingStrategy: .adaptive,
+        uint16DecodingStrategy: .adaptive,
+        uint32DecodingStrategy: .adaptive,
+        uint64DecodingStrategy: .adaptive,
+        uintDecodingStrategy: .adaptive
+    )
     
     /// A strategy used to decode `P` from a BSON `Primitive?` value
     ///
@@ -147,7 +171,19 @@ public struct BSONDecoderSettings {
         /// This may be used for applying fallback values or other custom behaviour
         case custom(DecodingStrategy<String>)
     }
-    
+
+    public enum TimestampToDateDecodingStrategy {
+
+        /// Do not convert, and throw an error
+        case never
+        /// Convert the timestamp relative to the  unix epoch
+        case relativeToUnixEpoch
+        /// Convert the timestamp relative to the reference date, 1st of January 2000.
+        case relativeToReferenceDate
+    }
+
+    public var fastPath: Bool
+
     /// If `true`, BSON Null values will be regarded as `nil`
     public var decodeNullAsNil: Bool = true
     public var filterDollarPrefix = false
@@ -157,10 +193,27 @@ public struct BSONDecoderSettings {
     
     /// If `true`, allows decoding ObjectIds from Strings if they're formatted as a 24-character hexString
     public var decodeObjectIdFromString: Bool = false
-    
+
     /// If `true`, allows decoding Date from a Double (TimeInterval)
-    public var decodeDateFromTimestamp: Bool = true
+    public var decodeDateFromTimestamp: Bool {
+        get { timestampToDateDecodingStrategy != .never }
+        set(decodeDateFromTimestamp) { 
+            switch timestampToDateDecodingStrategy {
+            case .never:
+                if decodeDateFromTimestamp {
+                    timestampToDateDecodingStrategy = .relativeToUnixEpoch
+                }
+            case .relativeToReferenceDate, .relativeToUnixEpoch:
+                if !decodeDateFromTimestamp {
+                    timestampToDateDecodingStrategy = .never
+                }
+            }
+        }
+    }
     
+    /// A strategy to apply when converting time interval to date objects
+    public var timestampToDateDecodingStrategy: TimestampToDateDecodingStrategy = .relativeToReferenceDate
+
     /// A strategy that is applied when encountering a request to decode a `Float`
     public var floatDecodingStrategy: FloatDecodingStrategy
     
@@ -196,4 +249,11 @@ public struct BSONDecoderSettings {
     
     /// A strategy that is applied when encountering a request to decode a `UInt`
     public var uintDecodingStrategy: IntegerDecodingStrategy<UInt>
+
+    public func with(timestampToDateDecodingStrategy: TimestampToDateDecodingStrategy) -> Self {
+
+        var settings = self
+        settings.timestampToDateDecodingStrategy = timestampToDateDecodingStrategy
+        return settings
+    }
 }
