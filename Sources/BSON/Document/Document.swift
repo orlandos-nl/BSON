@@ -1,8 +1,7 @@
 import Foundation
 import NIOCore
 
-// TODO: ByteBuffer is missing Sendable annotation, but is Sendable
-public struct Document: Primitive, @unchecked Sendable {
+public struct Document: Primitive, Sendable {
     static let allocator = ByteBufferAllocator()
     
     /// The internal storage engine that stores BSON in it's original binary form

@@ -1,90 +1,102 @@
+import NIOConcurrencyHelpers
+
 /// A configuration structs that contains all strategies for (lossy) decoding values
-public struct BSONDecoderSettings {
+public struct BSONDecoderSettings: Sendable {
     /// Decodes values only if they are exactly matching the expectation.
     ///
     /// For non-BSON types, the following mapping applies:
     ///
     /// - Float: Decode from Double
     /// - Non-native Integer types: .anyInteger
-    public static let strict: BSONDecoderSettings = BSONDecoderSettings(
-        fastPath: false,
-        decodeNullAsNil: false,
-        filterDollarPrefix: false,
-        stringDecodingStrategy: .string,
-        decodeObjectIdFromString: false,
-        timestampToDateDecodingStrategy: .never,
-        floatDecodingStrategy: .double,
-        doubleDecodingStrategy: .double,
-        int8DecodingStrategy: .anyInteger,
-        int16DecodingStrategy: .anyInteger,
-        int32DecodingStrategy: .int32,
-        int64DecodingStrategy: .int64,
-        intDecodingStrategy: .anyInteger,
-        uint8DecodingStrategy: .anyInteger,
-        uint16DecodingStrategy: .anyInteger,
-        uint32DecodingStrategy: .anyInteger,
-        uint64DecodingStrategy: .anyInteger,
-        uintDecodingStrategy: .anyInteger
-    )
-    
-    /// Uses ``FastBSONDecoder``
-    public static let fastPath: BSONDecoderSettings = BSONDecoderSettings(
-        fastPath: true,
-        decodeNullAsNil: false,
-        filterDollarPrefix: false,
-        stringDecodingStrategy: .string,
-        decodeObjectIdFromString: false,
-        timestampToDateDecodingStrategy: .never,
-        floatDecodingStrategy: .double,
-        doubleDecodingStrategy: .double,
-        int8DecodingStrategy: .anyInteger,
-        int16DecodingStrategy: .anyInteger,
-        int32DecodingStrategy: .int32,
-        int64DecodingStrategy: .int64,
-        intDecodingStrategy: .anyInteger,
-        uint8DecodingStrategy: .anyInteger,
-        uint16DecodingStrategy: .anyInteger,
-        uint32DecodingStrategy: .anyInteger,
-        uint64DecodingStrategy: .anyInteger,
-        uintDecodingStrategy: .anyInteger
-    )
+    public static var strict: BSONDecoderSettings {
+        BSONDecoderSettings(
+            fastPath: false,
+            decodeNullAsNil: false,
+            filterDollarPrefix: false,
+            stringDecodingStrategy: .string,
+            decodeObjectIdFromString: false,
+            timestampToDateDecodingStrategy: .never,
+            floatDecodingStrategy: .double,
+            doubleDecodingStrategy: .double,
+            int8DecodingStrategy: .anyInteger,
+            int16DecodingStrategy: .anyInteger,
+            int32DecodingStrategy: .int32,
+            int64DecodingStrategy: .int64,
+            intDecodingStrategy: .anyInteger,
+            uint8DecodingStrategy: .anyInteger,
+            uint16DecodingStrategy: .anyInteger,
+            uint32DecodingStrategy: .anyInteger,
+            uint64DecodingStrategy: .anyInteger,
+            uintDecodingStrategy: .anyInteger
+        )
+    }
 
-    public static var `default`: BSONDecoderSettings = .adaptive
-    
+    /// Uses ``FastBSONDecoder``
+    public static var fastPath: BSONDecoderSettings {
+        BSONDecoderSettings(
+            fastPath: true,
+            decodeNullAsNil: false,
+            filterDollarPrefix: false,
+            stringDecodingStrategy: .string,
+            decodeObjectIdFromString: false,
+            timestampToDateDecodingStrategy: .never,
+            floatDecodingStrategy: .double,
+            doubleDecodingStrategy: .double,
+            int8DecodingStrategy: .anyInteger,
+            int16DecodingStrategy: .anyInteger,
+            int32DecodingStrategy: .int32,
+            int64DecodingStrategy: .int64,
+            intDecodingStrategy: .anyInteger,
+            uint8DecodingStrategy: .anyInteger,
+            uint16DecodingStrategy: .anyInteger,
+            uint32DecodingStrategy: .anyInteger,
+            uint64DecodingStrategy: .anyInteger,
+            uintDecodingStrategy: .anyInteger
+        )
+    }
+
+    private static let _default = NIOLockedValueBox<BSONDecoderSettings>(.adaptive)
+    public static var `default`: BSONDecoderSettings {
+        get { _default.withLockedValue { $0 } }
+        set { _default.withLockedValue { $0 = newValue } }
+    }
+
     /// Tries to decode values, even if the types do not match. Some precision loss is possible.
-    public static let adaptive: BSONDecoderSettings = BSONDecoderSettings(
-        fastPath: false,
-        decodeNullAsNil: true,
-        filterDollarPrefix: false,
-        stringDecodingStrategy: .adaptive,
-        decodeObjectIdFromString: true,
-        timestampToDateDecodingStrategy: .relativeToUnixEpoch,
-        floatDecodingStrategy: .adaptive,
-        doubleDecodingStrategy: .adaptive,
-        int8DecodingStrategy: .adaptive,
-        int16DecodingStrategy: .adaptive,
-        int32DecodingStrategy: .adaptive,
-        int64DecodingStrategy: .adaptive,
-        intDecodingStrategy: .adaptive,
-        uint8DecodingStrategy: .adaptive,
-        uint16DecodingStrategy: .adaptive,
-        uint32DecodingStrategy: .adaptive,
-        uint64DecodingStrategy: .adaptive,
-        uintDecodingStrategy: .adaptive
-    )
-    
+    public static var adaptive: BSONDecoderSettings {
+        BSONDecoderSettings(
+            fastPath: false,
+            decodeNullAsNil: true,
+            filterDollarPrefix: false,
+            stringDecodingStrategy: .adaptive,
+            decodeObjectIdFromString: true,
+            timestampToDateDecodingStrategy: .relativeToUnixEpoch,
+            floatDecodingStrategy: .adaptive,
+            doubleDecodingStrategy: .adaptive,
+            int8DecodingStrategy: .adaptive,
+            int16DecodingStrategy: .adaptive,
+            int32DecodingStrategy: .adaptive,
+            int64DecodingStrategy: .adaptive,
+            intDecodingStrategy: .adaptive,
+            uint8DecodingStrategy: .adaptive,
+            uint16DecodingStrategy: .adaptive,
+            uint32DecodingStrategy: .adaptive,
+            uint64DecodingStrategy: .adaptive,
+            uintDecodingStrategy: .adaptive
+        )
+    }
+
     /// A strategy used to decode `P` from a BSON `Primitive?` value
     ///
     /// If the key (`String`) is nil the value was not associated with a Dictionary Document.
     ///
     /// If the value (`Primitive`) is nil, the value was not found at all but can be overwritten with a default
-    public typealias DecodingStrategy<P> = (String?, Primitive?) throws -> P?
-    
+    public typealias DecodingStrategy<P> = @Sendable (String?, Primitive?) throws -> P?
+
     /// A strategy used to decode float values
     /// Floats are not a native BSON type
     ///
     /// WARNING: This API may have cases added to it, do *not* manually switch over them
-    public enum FloatDecodingStrategy {
+    public enum FloatDecodingStrategy: Sendable {
         case string
         case double
         case adaptive
@@ -95,7 +107,7 @@ public struct BSONDecoderSettings {
     /// Floats are not a native BSON type
     ///
     /// WARNING: This API may have cases added to it, do *not* manually switch over them
-    public enum IntegerDecodingStrategy<I: FixedWidthInteger> {
+    public enum IntegerDecodingStrategy<I: FixedWidthInteger>: Sendable {
         /// Decodes this integer type only from Strings
         case string
         
@@ -122,7 +134,7 @@ public struct BSONDecoderSettings {
     /// Although Doubles are a native BSON type, lossy conversion may be favourable in certain circumstances
     ///
     /// WARNING: This API may have cases added to it, do *not* manually switch over them
-    public enum DoubleDecodingStrategy {
+    public enum DoubleDecodingStrategy: Sendable {
         /// Decodes only the correct type. No lossy decoding.
         case double
         
@@ -148,7 +160,7 @@ public struct BSONDecoderSettings {
     /// A strategy used to influence decoding Strings
     ///
     /// WARNING: This API may have cases added to it, do *not* manually switch over them
-    public enum StringDecodingStrategy {
+    public enum StringDecodingStrategy: Sendable {
         /// Decode only strings themselves
         case string
         
@@ -172,7 +184,7 @@ public struct BSONDecoderSettings {
         case custom(DecodingStrategy<String>)
     }
 
-    public enum TimestampToDateDecodingStrategy {
+    public enum TimestampToDateDecodingStrategy: Sendable {
 
         /// Do not convert, and throw an error
         case never
