@@ -31,7 +31,7 @@ func assertInvalid(_ document: Document, file: StaticString = #filePath, line: U
     }
 }
 
-var binaryData: ByteBuffer = {
+let binaryData: ByteBuffer = {
     let alloc = ByteBufferAllocator()
     var buffer = alloc.buffer(capacity: 5)
     buffer.writeBytes([34,34,34,34,34])
