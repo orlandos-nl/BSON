@@ -163,7 +163,11 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             return self.document?[converted(key.stringValue)]
         }
         set {
-            self.document?[converted(key.stringValue)] = newValue
+            if let newValue = newValue {
+                self.document?.appendValue(newValue, forKey: converted(key.stringValue))
+            } else {
+                self.document?.removeValue(forKey: converted(key.stringValue))
+            }
         }
     }
 
@@ -227,7 +231,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
     mutating func encodeNil(forKey key: Key) throws {
         switch encoder.strategies.keyedNilEncodingStrategy {
         case .null:
-            encoder.document?[encoder.converted(key.stringValue)] = BSON.Null()
+            encoder.document?.appendValue(BSON.Null(), forKey: encoder.converted(key.stringValue)) 
         case .omitted:
             return
         }
