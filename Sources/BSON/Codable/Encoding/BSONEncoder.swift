@@ -24,7 +24,7 @@ public final class BSONEncoder {
 
         try value.encode(to: encoder)
 
-        guard encoder.target == .document, let document = encoder.document else {
+        guard case .document(let document) = encoder.target else {
             throw BSONEncoderError.encodableNotDocument
         }
 
@@ -71,20 +71,39 @@ public final class BSONEncoder {
 
 fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     enum Target {
-        case document
-        case primitive
+        case document(Document)
+        case primitive(Primitive?)
     }
 
     var target: Target?
     var document: Document? {
-        didSet {
-            writer?(document)
+        get {
+            switch target {
+            case .document(let document):
+                document
+            case .primitive(let primitive):
+                nil
+            case nil:
+                nil
+            }
+        }
+        set {
+            target = .document(newValue ?? [:])
         }
     }
-
     var primitive: Primitive? {
-        didSet {
-            writer?(primitive)
+        get {
+            switch target {
+            case .document(let document):
+                document
+            case .primitive(let primitive):
+                primitive
+            case nil:
+                nil
+            }
+        }
+        set {
+            target = .primitive(newValue)
         }
     }
 
@@ -107,9 +126,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey {
-        self.target = .document
-        self.document = Document()
-
+        self.target = .document(Document())
         let container = _BSONKeyedEncodingContainer<Key>(
             encoder: self,
             codingPath: codingPath
@@ -119,8 +136,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     func unkeyedContainer() -> UnkeyedEncodingContainer {
-        self.target = .document
-        self.document = Document()
+        self.target = .document(Document())
 
         return _BSONUnkeyedEncodingContainer(
             encoder: self,
@@ -129,7 +145,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
     }
 
     func singleValueContainer() -> SingleValueEncodingContainer {
-        self.target = .primitive
+        self.target = .primitive(nil)
 
         return _BSONSingleValueEncodingContainer(
             encoder: self,
@@ -139,7 +155,7 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
 
     // MARK: Encoding
     func encode(document: Document) throws {
-        self.document = document
+        self.target = .document(document)
     }
 
     subscript(key: CodingKey) -> Primitive? {
