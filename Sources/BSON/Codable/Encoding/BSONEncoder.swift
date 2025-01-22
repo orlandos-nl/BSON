@@ -88,7 +88,8 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             }
         }
         set {
-            target = .document(newValue ?? [:])
+            let document = newValue ?? [:]
+            target = .document(document)
         }
     }
     var primitive: Primitive? {
@@ -105,6 +106,10 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
         set {
             target = .primitive(newValue)
         }
+    }
+
+    deinit {
+        writer?(primitive)
     }
 
     // MARK: Configuration
@@ -210,7 +215,8 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
         )
 
         encoder.writer = { [weak self] primitive in
-            self?[key] = primitive
+            guard let self = self else { return }
+            self[key] = primitive
         }
 
         return encoder
