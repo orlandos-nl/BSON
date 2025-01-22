@@ -88,7 +88,8 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             }
         }
         set {
-            target = .document(newValue ?? [:])
+            let document = newValue ?? [:]
+            target = .document(document)
         }
     }
     var primitive: Primitive? {
@@ -105,6 +106,10 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
         set {
             target = .primitive(newValue)
         }
+    }
+
+    deinit {
+        writer?(primitive)
     }
 
     // MARK: Configuration
@@ -163,7 +168,11 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
             return self.document?[converted(key.stringValue)]
         }
         set {
-            self.document?[converted(key.stringValue)] = newValue
+            if let newValue = newValue {
+                self.document?.appendValue(newValue, forKey: converted(key.stringValue))
+            } else {
+                self.document?.removeValue(forKey: converted(key.stringValue))
+            }
         }
     }
 
@@ -206,7 +215,8 @@ fileprivate final class _BSONEncoder: Encoder, AnyBSONEncoder {
         )
 
         encoder.writer = { [weak self] primitive in
-            self?[key] = primitive
+            guard let self = self else { return }
+            self[key] = primitive
         }
 
         return encoder
@@ -227,7 +237,7 @@ fileprivate struct _BSONKeyedEncodingContainer<Key: CodingKey> : KeyedEncodingCo
     mutating func encodeNil(forKey key: Key) throws {
         switch encoder.strategies.keyedNilEncodingStrategy {
         case .null:
-            encoder.document?[encoder.converted(key.stringValue)] = BSON.Null()
+            encoder.document?.appendValue(BSON.Null(), forKey: encoder.converted(key.stringValue)) 
         case .omitted:
             return
         }
