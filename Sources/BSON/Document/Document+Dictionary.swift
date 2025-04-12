@@ -243,11 +243,15 @@ extension Document: ExpressibleByDictionaryLiteral {
 }
 
 extension Dictionary: BSONPrimitiveRepresentable, Primitive where Key == String, Value: Primitive {
-    public var primitive: Primitive {
+    public var document: Document {
         var document = Document(isArray: false)
         for (key, value) in self {
             document[key] = value
         }
+        return document
+    }
+    
+    public var primitive: Primitive {
         return document
     }
 }
