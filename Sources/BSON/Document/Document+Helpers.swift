@@ -1,5 +1,5 @@
 extension Document {
-    internal func typeIdentifier(of key: String) -> TypeIdentifier? {
+    public func typeIdentifier(forKey key: String) -> TypeIdentifier? {
         var index = 4
 
         while index < storage.readableBytes {
@@ -27,7 +27,7 @@ extension Document {
         return nil
     }
 
-    internal func typeIdentifier(at index: Int) -> TypeIdentifier? {
+    public func typeIdentifier(at index: Int) -> TypeIdentifier? {
         var offset = 4
 
         for _ in 0..<index {
