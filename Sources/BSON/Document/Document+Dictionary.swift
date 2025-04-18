@@ -255,3 +255,36 @@ extension Dictionary: BSONPrimitiveRepresentable, Primitive where Key == String,
         return document
     }
 }
+
+extension Dictionary where Key == String, Value == Primitive {
+    public var document: Document {
+        var document = Document(isArray: false)
+        for (key, value) in self {
+            document[key] = value
+        }
+        return document
+    }
+}
+
+extension Document {
+    public init(dictionary: [String: Primitive]) {
+        self.init(isArray: false)
+        for (key, value) in dictionary {
+            self.appendValue(value, forKey: key)
+        }
+    }
+
+    public init<Value>(dictionary: [String: Value]) throws where Value: Primitive {
+        self.init(isArray: false)
+        for (key, value) in dictionary {
+            self.appendValue(try value.encodePrimitive(), forKey: key)
+        }
+    }
+
+    public init<Value>(dictionary: [String: Value]) throws where Value: PrimitiveEncodable {
+        self.init(isArray: false)
+        for (key, value) in dictionary {
+            self.appendValue(try value.encodePrimitive(), forKey: key)
+        }
+    }
+}
