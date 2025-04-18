@@ -237,7 +237,7 @@ struct _FastKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     }
     
     func decodeNil(forKey key: Key) throws -> Bool {
-        guard let type = document.typeIdentifier(of: key.stringValue) else {
+        guard let type = document.typeIdentifier(forKey: key.stringValue) else {
             return true
         }
         
